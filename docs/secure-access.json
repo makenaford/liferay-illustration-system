@@ -147,7 +147,7 @@
           "type": "group",
           "x": 294,
           "y": 114,
-          "width": 123.20999999999998,
+          "width": 124,
           "height": 10,
           "layout": {
             "direction": "horizontal",
@@ -215,7 +215,7 @@
         ],
         "align": "start"
       },
-      "surface": "glass1"
+      "surface": "glass2"
     },
     {
       "type": "subCard",
@@ -237,7 +237,7 @@
           "x": 294,
           "y": 247.04,
           "width": 140,
-          "height": 60.96300000000005,
+          "height": 62,
           "layout": {
             "direction": "vertical",
             "gap": 2,
@@ -285,8 +285,8 @@
               "type": "group",
               "x": 294,
               "y": 298,
-              "width": 55.88760000000002,
-              "height": 10.003000000000043,
+              "width": 56,
+              "height": 12,
               "layout": {
                 "direction": "horizontal",
                 "gap": 4,
@@ -327,7 +327,7 @@
         ],
         "align": "start"
       },
-      "surface": "glass1"
+      "surface": "glass2"
     }
   ]
 }

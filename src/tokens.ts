@@ -201,6 +201,28 @@ export interface Tokens {
     success: string;
     /** `Accent/Aqua`. */
     info: string;
+    /**
+     * Text drawn ON a filled status chip. Dark mode's success green is light
+     * enough that white text on it fails contrast, so this flips while
+     * `text.onAccent` (which sits on the much darker brand blue) does not.
+     */
+    onStatus: string;
+  };
+
+  /**
+   * The scheme's neutral "ink" — the single colour every decorative neutral
+   * tint is drawn from at low opacity: skeleton bars, progress tracks, chart
+   * grid lines, the `static` card's hairline, and light mode's cast shadows.
+   *
+   * It is one token because those things must agree; when they were eight
+   * separate literals they drifted, and `#101828` in particular is not in the
+   * palette at all — it is light mode's shadow ink, which the primitives were
+   * copying by hand.
+   */
+  neutral: {
+    ink: string;
+    /** Sits on a saturated fill (a toggle knob on the accent gradient). */
+    onFill: string;
   };
 
   text: {
@@ -282,6 +304,13 @@ export interface Tokens {
  * stack. Previously a guess, because the Figma exports had every string
  * outlined to paths and the typeface was undetectable.
  */
+/**
+ * Light mode's neutral ink. Not a palette token — it is the colour the design
+ * system's own light shadows and hairlines are specified in, so it lives here
+ * as one named constant rather than as a literal in nine places.
+ */
+const INK = '#101828';
+
 const FONT_FAMILY =
   '"Source Sans 3", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
 
@@ -447,7 +476,15 @@ export const dark: Tokens = {
   status: {
     success: D('status-success-success-icon'),
     info: D('accent-aqua'),
+    onStatus: D('neutral-00'),
   },
+  neutral: {
+    // Dark tints are white at low alpha — `Action/Neutral/Default`, which is
+    // #FFFFFF in both schemes, is that colour by name.
+    ink: D('action-neutral-default'),
+    onFill: D('action-neutral-default'),
+  },
+
   text: {
     primary: D('surfaces-text-primary'),
     muted: D('surfaces-text-secondary'),
@@ -522,8 +559,8 @@ export const light: Tokens = {
       fill: { angle: 60, stops: [{ color: '#ADC9FF', opacity: 0.1 }, { color: STEP_02.color, opacity: STEP_02.opacity }] },
       line: { angle: 225, stops: [{ color: '#6FA0FF', opacity: 0.6 }, { color: '#6FA0FF', opacity: 0.4 }] },
       shadow: [
-        { dy: 8, blur: 20, color: '#101828', opacity: 0.08 },
-        { dy: 1, blur: 3, color: '#101828', opacity: 0.06 },
+        { dy: 8, blur: 20, color: INK, opacity: 0.08 },
+        { dy: 1, blur: 3, color: INK, opacity: 0.06 },
       ],
       blur: GLASS_BLUR,
     },
@@ -532,8 +569,8 @@ export const light: Tokens = {
       fill: { angle: 60, stops: [{ color: '#ADC9FF', opacity: 0.18 }, { color: STEP_02.color, opacity: 0.04 }] },
       line: { angle: 225, stops: [{ color: '#6FA0FF', opacity: 0.8 }, { color: '#6FA0FF', opacity: 0.5 }] },
       shadow: [
-        { dy: 18, blur: 40, color: '#101828', opacity: 0.14 },
-        { dy: 3, blur: 8, color: '#101828', opacity: 0.1 },
+        { dy: 18, blur: 40, color: INK, opacity: 0.14 },
+        { dy: 3, blur: 8, color: INK, opacity: 0.1 },
       ],
       blur: GLASS_BLUR,
     },
@@ -580,8 +617,8 @@ export const light: Tokens = {
     },
     /** Cut INTO its parent: inputs, log rows, wells. */
     sunken: {
-      fill: { angle: 180, stops: [{ color: '#101828', opacity: 0.04 }, { color: '#101828', opacity: 0.04 }] },
-      line: { angle: 225, stops: [{ color: '#101828', opacity: 0.1 }, { color: '#101828', opacity: 0.06 }] },
+      fill: { angle: 180, stops: [{ color: INK, opacity: 0.04 }, { color: INK, opacity: 0.04 }] },
+      line: { angle: 225, stops: [{ color: INK, opacity: 0.1 }, { color: INK, opacity: 0.06 }] },
       recessed: true,
     },
   },
@@ -620,8 +657,8 @@ export const light: Tokens = {
     litEdge: '#FFFFFF',
     litEdgeOpacity: 0,
     shadow: [
-      { dy: 8, blur: 20, color: '#101828', opacity: 0.08 },
-      { dy: 1, blur: 3, color: '#101828', opacity: 0.06 },
+      { dy: 8, blur: 20, color: INK, opacity: 0.08 },
+      { dy: 1, blur: 3, color: INK, opacity: 0.06 },
     ],
     backdropBlur: GLASS_BLUR,
   },
@@ -631,7 +668,7 @@ export const light: Tokens = {
     blueOpacity: 0.25,
     translucent: '#FFFFFF',
     translucentOpacity: 0.1,
-    staticLine: '#101828',
+    staticLine: INK,
     staticLineOpacity: 0.06,
   },
   accent: {
@@ -647,7 +684,13 @@ export const light: Tokens = {
   status: {
     success: L('status-success-success-icon'),
     info: L('accent-aqua'),
+    onStatus: L('action-neutral-inverted'),
   },
+  neutral: {
+    ink: INK,
+    onFill: L('action-neutral-default'),
+  },
+
   text: {
     primary: L('surfaces-text-primary'),
     muted: L('surfaces-text-secondary'),
@@ -657,7 +700,7 @@ export const light: Tokens = {
   chart: {
     primary: L('surfaces-text-primary'),
     secondary: L('brand-primary-primary'),
-    gridLine: '#101828',
+    gridLine: INK,
     gridLineOpacity: 0.12,
   },
   brandGradient: {

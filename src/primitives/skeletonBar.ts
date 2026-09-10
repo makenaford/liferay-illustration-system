@@ -26,7 +26,7 @@ export function SkeletonBar(ctx: Ctx, props: SkeletonBarProps): VNode {
     width,
     height,
     rx: height / 2,
-    fill: light ? '#101828' : '#FFFFFF',
+    fill: ctx.tokens.neutral.ink,
     'fill-opacity': light ? 0.09 : 0.1,
     'data-el': 'skeleton-bar',
   });

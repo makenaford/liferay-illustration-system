@@ -60,7 +60,7 @@ export function MapDots(ctx: Ctx, props: MapDotsProps): VNode {
   return h('g', { 'data-el': 'map-dots' }, [
     h(
       'g',
-      { fill: light ? '#8C96A9' : '#70A2FF', 'fill-opacity': light ? 0.55 : 0.45 },
+      { fill: light ? tk.text.subtle : tk.accent.soft, 'fill-opacity': light ? 0.55 : 0.45 },
       dots,
     ),
     ...markers.map(([u, v]) =>

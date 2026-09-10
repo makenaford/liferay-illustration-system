@@ -1,6 +1,6 @@
 {
   "id": "ai-visibility-dashboard",
-  "name": "Group 1000006504",
+  "name": "AI Visibility Dashboard",
   "layout": "dashboard",
   "canvas": {
     "width": 578,
@@ -78,7 +78,7 @@
         "padding": 8,
         "align": "start"
       },
-      "surface": "glass1"
+      "surface": "glass2"
     },
     {
       "type": "badge",
@@ -134,7 +134,7 @@
         "padding": 8,
         "align": "start"
       },
-      "surface": "glass1"
+      "surface": "glass2"
     },
     {
       "type": "badge",
@@ -189,7 +189,7 @@
         "padding": 8,
         "align": "start"
       },
-      "surface": "glass1"
+      "surface": "glass2"
     },
     {
       "type": "badge",
@@ -252,7 +252,7 @@
         "padding": 12,
         "align": "start"
       },
-      "surface": "glass1"
+      "surface": "glass2"
     },
     {
       "type": "subCard",
@@ -301,7 +301,7 @@
         "padding": 12,
         "align": "start"
       },
-      "surface": "glass1"
+      "surface": "glass2"
     },
     {
       "type": "subCard",
@@ -350,11 +350,11 @@
         "padding": 12,
         "align": "start"
       },
-      "surface": "glass1"
+      "surface": "glass2"
     },
     {
       "type": "subCard",
-      "x": 286,
+      "x": 284,
       "y": 234,
       "width": 216,
       "height": 96,
@@ -397,12 +397,12 @@
         "padding": 10,
         "align": "start"
       },
-      "surface": "glass1"
+      "surface": "glass2"
     },
     {
       "type": "subCard",
       "x": 338,
-      "y": 256,
+      "y": 254,
       "width": 216,
       "height": 100,
       "children": [
@@ -426,7 +426,7 @@
           "type": "progress",
           "x": 350,
           "y": 303.83,
-          "width": 176.5,
+          "width": 176,
           "value": 0.537,
           "label": "AI Search (Google SGE, Bing AI)"
         },
@@ -434,7 +434,7 @@
           "type": "progress",
           "x": 350,
           "y": 323.1,
-          "width": 176.5,
+          "width": 176,
           "value": 0.349,
           "label": "AI Chatbots (ChatGPT, Claude, Gemini)"
         },
@@ -442,7 +442,7 @@
           "type": "progress",
           "x": 350,
           "y": 342.38,
-          "width": 176.5,
+          "width": 176,
           "value": 0.154,
           "label": "AI Assistants & Other Sources"
         }

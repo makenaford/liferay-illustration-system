@@ -135,8 +135,8 @@
           "type": "group",
           "x": 398,
           "y": 73.94800000000001,
-          "width": 46.59699999999998,
-          "height": 33.386999999999986,
+          "width": 48,
+          "height": 34,
           "layout": {
             "direction": "vertical",
             "gap": 10,
@@ -172,7 +172,7 @@
         ],
         "align": "start"
       },
-      "surface": "glass3"
+      "surface": "glass2"
     },
     {
       "type": "card",
@@ -192,7 +192,9 @@
             "direction": "horizontal",
             "gap": 32,
             "padding": 0,
-            "align": "start"
+            "align": "start",
+            "hugHeight": true,
+            "hugWidth": true
           },
           "children": [
             {
@@ -213,7 +215,8 @@
                 "direction": "horizontal",
                 "gap": 4,
                 "padding": 0,
-                "align": "start"
+                "align": "start",
+                "hugHeight": true
               },
               "children": [
                 {
@@ -261,7 +264,7 @@
         "padding": 12,
         "align": "start"
       },
-      "surface": "glass3"
+      "surface": "glass2"
     }
   ]
 }

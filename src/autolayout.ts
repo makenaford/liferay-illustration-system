@@ -243,8 +243,17 @@ function progressLabelRise(el: Extract<Element, { type: 'progress' }>): number {
 function layoutContainer(el: Container): Element {
   const spec = el.layout!;
   const p = pad(spec);
-  const kids = (el.children ?? []).map(resolveElement);
-  if (!kids.length) return { ...el, children: kids } as Element;
+  /*
+   * Children are placed FIRST and resolved after.
+   *
+   * Resolving first was a real bug: a nested container laid its own children
+   * out around its authored x/y, and then `placeAt` moved the container
+   * without moving what was inside it. The container's box travelled and its
+   * contents stayed behind — silently, because the box is invisible.
+   * Measuring does not need resolved children, so the order is free.
+   */
+  const kids = el.children ?? [];
+  if (!kids.length) return { ...el, children: [] } as Element;
 
   const size = containerSize({ ...el, children: kids });
   const horizontal = spec.direction === 'horizontal';
@@ -345,7 +354,7 @@ function layoutContainer(el: Container): Element {
     }
 
     cursor += mainOf(s) + gap + spread;
-    return placeAt(next as Element, x, y, s);
+    return resolveElement(placeAt(next as Element, x, y, s));
   });
 
   return {

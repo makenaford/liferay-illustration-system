@@ -128,7 +128,7 @@
           "x": 92,
           "y": 170,
           "width": 174,
-          "height": 13,
+          "height": 14,
           "layout": {
             "direction": "horizontal",
             "gap": 4,
@@ -136,7 +136,7 @@
               0,
               0,
               0,
-              28
+              24
             ],
             "align": "baseline"
           },
@@ -167,7 +167,7 @@
         "padding": 12,
         "align": "start"
       },
-      "surface": "glass1"
+      "surface": "glass2"
     },
     {
       "type": "card",
@@ -203,7 +203,7 @@
           "x": 596,
           "y": 170,
           "width": 174,
-          "height": 13,
+          "height": 14,
           "layout": {
             "direction": "horizontal",
             "gap": 4,
@@ -211,7 +211,7 @@
               0,
               0,
               0,
-              28
+              24
             ],
             "align": "baseline"
           },
@@ -242,11 +242,11 @@
         "padding": 12,
         "align": "start"
       },
-      "surface": "glass1"
+      "surface": "glass2"
     },
     {
       "type": "card",
-      "x": 92,
+      "x": 80,
       "y": 312,
       "width": 198,
       "height": 130,
@@ -278,7 +278,7 @@
           "x": 104,
           "y": 416,
           "width": 174,
-          "height": 13.003000000000043,
+          "height": 14,
           "layout": {
             "direction": "horizontal",
             "gap": 4,
@@ -286,7 +286,7 @@
               0,
               0,
               0,
-              28
+              24
             ],
             "align": "start"
           },
@@ -317,7 +317,7 @@
         "padding": 12,
         "align": "start"
       },
-      "surface": "glass1"
+      "surface": "glass2"
     },
     {
       "type": "card",
@@ -353,7 +353,7 @@
           "x": 596,
           "y": 416,
           "width": 174,
-          "height": 13.003000000000043,
+          "height": 14,
           "layout": {
             "direction": "horizontal",
             "gap": 4,
@@ -361,7 +361,7 @@
               0,
               0,
               0,
-              28
+              24
             ],
             "align": "start"
           },
@@ -392,7 +392,7 @@
         "padding": 12,
         "align": "start"
       },
-      "surface": "glass1"
+      "surface": "glass2"
     },
     {
       "type": "card",
@@ -428,7 +428,7 @@
           "x": 346,
           "y": 502,
           "width": 174,
-          "height": 13.002999999999929,
+          "height": 14,
           "layout": {
             "direction": "horizontal",
             "gap": 4,
@@ -436,7 +436,7 @@
               0,
               0,
               0,
-              28
+              24
             ],
             "align": "start"
           },
@@ -467,7 +467,7 @@
         "padding": 12,
         "align": "start"
       },
-      "surface": "glass1"
+      "surface": "glass2"
     },
     {
       "type": "card",
@@ -503,7 +503,7 @@
         ],
         "align": "start"
       },
-      "surface": "glass1"
+      "surface": "glass2"
     }
   ]
 }

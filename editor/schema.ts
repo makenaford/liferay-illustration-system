@@ -56,7 +56,13 @@ export type Field =
   | { key: string; label: string; kind: 'point' }
   | { key: string; label: string; kind: 'iconList' }
   /** A colour, chosen from the design-system palette with swatches. */
-  | { key: string; label: string; kind: 'token' };
+  | { key: string; label: string; kind: 'token' }
+  /**
+   * A file from the user's computer. Patches several props at once (markup
+   * plus viewBox, or data URI plus natural size), so the Inspector handles
+   * this kind through `onPatch` rather than the single-key `onChange`.
+   */
+  | { key: string; label: string; kind: 'file' };
 
 export const ROLES = Object.keys(TYPE_ROLES);
 export const WEIGHTS = ['regular', 'semibold', 'bold'] as const;
@@ -321,6 +327,7 @@ export const SCHEMA: Record<Element['type'], { label: string; fields: Field[] }>
   image: {
     label: 'Image',
     fields: [
+      { key: 'href', label: 'File', kind: 'file' },
       { key: 'alt', label: 'Description', kind: 'text' },
       ...XY,
       ...WH,
@@ -331,6 +338,7 @@ export const SCHEMA: Record<Element['type'], { label: string; fields: Field[] }>
   svg: {
     label: 'Imported SVG',
     fields: [
+      { key: 'body', label: 'File', kind: 'file' },
       { key: 'alt', label: 'Description', kind: 'text' },
       ...XY,
       ...WH,

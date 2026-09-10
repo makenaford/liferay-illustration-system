@@ -27,6 +27,7 @@ import { SCHEMA, type Field } from './schema.ts';
 import { TokenPicker } from './TokenPicker.tsx';
 import { AlignGrid, GapPicker, PaddingPicker } from './LayoutControls.tsx';
 import { DocumentPanel } from './DocumentPanel.tsx';
+import { FileField } from './FileField.tsx';
 
 /**
  * INSPECTOR — generated entirely from `schema.ts`.
@@ -62,6 +63,14 @@ export function Inspector() {
     if (!current) return;
     const next = { ...current, [key]: value } as Element;
     commit(replaceAt(st.doc, selected, next));
+  };
+
+  // A file replaces several props at once, so it cannot go through `update`.
+  const patch = (props: Record<string, unknown>) => {
+    const st = getState();
+    const current = elementAt(st.doc, selected);
+    if (!current) return;
+    commit(replaceAt(st.doc, selected, { ...current, ...props } as Element));
   };
 
   const isCard = el.type === 'card' || el.type === 'subCard' || el.type === 'group';
@@ -120,6 +129,7 @@ export function Inspector() {
             el={el}
             value={(el as unknown as Record<string, unknown>)[f.key]}
             onChange={(v) => update(f.key, v)}
+            onPatch={patch}
           />
         ))}
       </div>
@@ -463,11 +473,13 @@ function FieldRow({
   el,
   value,
   onChange,
+  onPatch,
 }: {
   field: Field;
   el: Element;
   value: unknown;
   onChange: (v: unknown) => void;
+  onPatch: (props: Record<string, unknown>) => void;
 }) {
   const wide =
     field.kind === 'token' ||
@@ -476,12 +488,13 @@ function FieldRow({
     field.kind === 'select' ||
     field.kind === 'numbers' ||
     field.kind === 'series' ||
+    field.kind === 'file' ||
     field.kind === 'iconList';
 
   return (
     <label className={`field${wide ? ' wide' : ''}`}>
       <span className="field-label">{field.label}</span>
-      <Control field={field} el={el} value={value} onChange={onChange} />
+      <Control field={field} el={el} value={value} onChange={onChange} onPatch={onPatch} />
     </label>
   );
 }
@@ -491,13 +504,18 @@ function Control({
   el,
   value,
   onChange,
+  onPatch,
 }: {
   field: Field;
   el: Element;
   value: unknown;
   onChange: (v: unknown) => void;
+  onPatch: (props: Record<string, unknown>) => void;
 }) {
   switch (field.kind) {
+    case 'file':
+      return <FileField el={el} onPatch={onPatch} />;
+
     case 'number':
       return (
         <input

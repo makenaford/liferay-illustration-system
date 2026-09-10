@@ -47,7 +47,7 @@ export function Avatar(ctx: Ctx, props: AvatarProps): VNode {
       cx,
       cy,
       r,
-      fill: light ? '#8C96A9' : '#FFFFFF',
+      fill: light ? tk.text.subtle : tk.neutral.ink,
       'fill-opacity': light ? 0.28 : 0.23,
     }),
     initials

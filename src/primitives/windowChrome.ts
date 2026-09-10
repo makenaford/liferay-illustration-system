@@ -38,8 +38,8 @@ export function WindowChrome(ctx: Ctx, props: WindowChromeProps): VNode {
           gradientTransform: `translate(${cx + r} ${y - r}) scale(${r * 3.2})`,
         },
         [
-          h('stop', { 'stop-color': light ? tk.text.subtle : '#FFFFFF', 'stop-opacity': 0.4 }),
-          h('stop', { offset: 1, 'stop-color': light ? tk.text.subtle : '#FFFFFF', 'stop-opacity': 0.05 }),
+          h('stop', { 'stop-color': light ? tk.text.subtle : tk.neutral.ink, 'stop-opacity': 0.4 }),
+          h('stop', { offset: 1, 'stop-color': light ? tk.text.subtle : tk.neutral.ink, 'stop-opacity': 0.05 }),
         ],
       ),
     );

@@ -573,6 +573,114 @@ elements **by their label text** meant four node cards that all read
 "Last Sync 2s Ago" got one card's coordinates written into all of them. Keys
 have to be unique, and a visible string is not.
 
+## The conformance audit
+
+`npm run audit` checks the nine documents against the system and reports
+without fixing anything, because most findings are judgement calls: a 6px gap
+is off-scale but might be deliberate. It checks:
+
+- **surface** — every card and subCard names a surface that exists in the set,
+  and no legacy `variant` alias survives
+- **off-grid** — authored coordinates and sizes are multiples of the 2px base
+  unit. Children of an auto-layout container are exempt on the axes they do
+  not own, and a hugged axis is measured rather than authored, so the grid
+  does not apply to it
+- **gap / padding off-scale** — spacing that is not a step on the scale
+- **overflow** — a child drawn outside the box that contains it
+- **row / column misalignment** — sibling panels whose tops, bottoms, or side
+  edges nearly line up but do not
+
+The last one needs a definition of "nearly", and getting it wrong makes the
+report useless in both directions. It settled on: compare only panels (a
+heading's right edge has no business lining up with a card's), ignore pairs
+that are centre-aligned or stacked one over the other, and treat a difference
+that is both ≥16px and exactly on the spacing scale as a deliberate stagger
+rather than drift. Drift is the range where a mistake is invisible.
+
+### What the first run found
+
+**196 findings.** After the fixes below, **0**.
+
+| Rule | Found | Resolution |
+|---|---|---|
+| Surface inconsistency | 31 | One rule, applied — see below |
+| Off-grid sizes | 22 | `npm run snap:sizes` |
+| Padding off-scale | 6 | Snapped to the nearest step |
+| Column / row misalignment | 12 | 2 were real drift; the rest were centring, stacking or a deliberate stagger the check could not see |
+| Overflow | 2 | One was a layout **bug**, below |
+| Gap off-scale | 1 | The price table, rebuilt as a real table |
+
+The other 145 were the checker's fault, not the documents': it was measuring
+resolved coordinates, so every text baseline and hug height computed from font
+metrics came back "off-grid". Fractional is what a measurement *is*. The check
+now runs on authored values.
+
+### The surface rule
+
+Five illustrations drew their top-level panels on `glass1` — the *nested tile*
+surface, which has no shadow — and three drew them on `glass3`, the *floating
+overlay*. The same visual role, three different treatments, because the
+documents were ported before the surface set existed.
+
+`npm run surfaces:conform` replaces taste with depth:
+
+| Position | Surface |
+|---|---|
+| Depth 0, resting on the stage | `glass2` — the default card |
+| Depth 0, covering an *earlier* sibling | `glass3` — floating overlay |
+| Depth 1+ | `glass1` — nested tile, no shadow |
+
+Only the panel drawn on top is the overlay. Document order is paint order, so
+"covers an earlier sibling" is the test; the first pass promoted both sides of
+an overlap and turned base panels into overlays.
+
+Surfaces chosen for *meaning* rather than elevation — `highlighted`,
+`gradient`, `outline`, `sunken`, `solid` — are left alone. They are saying
+something the depth rule cannot. 31 panels changed.
+
+### A real layout bug, found by an overflow of 4.98px
+
+`resolveLayout` resolved each child **before** placing it. A nested container
+therefore laid its own children out around its authored `x`/`y`, and then
+`placeAt` moved the container without moving what was inside it: the box
+travelled and its contents stayed behind.
+
+It was invisible because the box is invisible. It surfaced as one group
+reported 4.98px outside its parent; the minimal repro put two icons at x=0 and
+x=24 inside a group placed at x=65.97.
+
+The fix is an ordering change — place first, resolve after; measuring never
+needed resolved children — and it corrects every nested container in the set.
+
+### The price table was not a table
+
+The b2b contract-pricing table was four independent rows: a header with `gap:
+114` and three body rows with `gap: 40`. The gap was the audit's off-scale
+finding, but the gap was the symptom. Nothing made the header's columns land
+above the body's, and they did not.
+
+It is now four rows of the same width with `justify: 'between'`, so the first
+column is flush left and the last flush right in every row, header included.
+
+### Colour that was not tokenised
+
+Eight literals were still painted by hand in the primitives — skeleton bars,
+progress tracks, the toggle knob, the window-chrome dots, avatar placeholders,
+map dots, the success chip's text. `#101828` in particular is **not in the
+palette at all**: it is light mode's shadow ink, which tokens.ts already used
+in nine places as a literal and the primitives were copying by eye.
+
+It is now one named constant behind two semantic tokens:
+
+- `neutral.ink` — the colour every decorative neutral tint is drawn from at
+  low opacity (skeletons, tracks, grid lines, the `static` hairline, light
+  mode's cast shadows). One token because those things must agree.
+- `status.onStatus` — text on a filled status chip. Dark mode's success green
+  is light enough that white text on it fails contrast, so this flips where
+  `text.onAccent` (which sits on the much darker brand blue) does not.
+
+No primitive contains a colour literal any more.
+
 ## The documents are on-grid
 
 `npm run normalize` snaps every coordinate and size to the 2px base unit and
@@ -675,7 +783,7 @@ wins on systematised speed instead.
 | **Grid** | Snap to 1/2/4/8px (default 2, the scale's base unit), a toggleable grid overlay, and `shift` to bypass. Nudge steps by the grid too. |
 | **Colour tokens** | Every colour control is a picker showing the actual **swatch and hex**, resolved in the current theme — semantic tones first, then the whole design-system palette, searchable. |
 | **Z-order** | Back / backward / forward / front, in the inspector and on `[` `]` / `⌘[` `⌘]`. Inside an auto-layout container the same control reorders the flow, and says so. |
-| **Import** | Bring in an SVG or a raster. SVGs are parsed, **sanitised** (`<script>` and inline handlers stripped), id-namespaced and inlined so they scale and export as one file. Rasters become data URIs, with a warning past 512 KB. |
+| **Import** | Bring in an SVG or a raster from your computer, from the Library's *Import* button or from an `Image`/`Imported SVG` element's **File** field in the Inspector. SVGs are parsed, **sanitised** (`<script>` and inline handlers stripped), id-namespaced and inlined so they scale and export as one file. Rasters become data URIs, with a warning past 512 KB. An element with no file yet draws as a dashed box rather than nothing, so it stays visible and selectable. |
 | **Auto layout** | Figma-shaped: a 3×3 alignment pad, `space between` / `stretch` / `baseline` toggles, gap and padding as one-click steps off the spacing scale (padding splits into vertical and horizontal), and Hug W/H. Per-child `grow` and `alignSelf`. Auto-placed children can't be dragged — their position is computed — so they reorder with arrows in Layers, which work at every depth. **detach** bakes positions back. |
 | **Card layout** | For absolute cards: content box drawn as a guide, padding from the spacing scale, and actions over children — align left/centre/right, fit widths, distribute, stack at 4/8/12, snap subtree to grid. |
 | **Clipboard** | ⌘C / ⌘X / ⌘V / ⌘D, plus buttons in the inspector. Works across documents and browser tabs; pasting into a different card preserves the element's offset *within* its card. |

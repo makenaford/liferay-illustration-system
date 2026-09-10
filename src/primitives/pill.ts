@@ -33,7 +33,7 @@ export function Pill(ctx: Ctx, props: PillProps): VNode {
     textColor = tk.text.primary;
   } else if (variant === 'success') {
     fill = tk.status.success;
-    textColor = tk.name === 'dark' ? '#070B13' : '#FFFFFF';
+    textColor = tk.status.onStatus;
   }
 
   const size = TYPE_ROLES[role].size;

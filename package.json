@@ -5,6 +5,7 @@
   "type": "module",
   "description": "Token-driven SVG illustration system and builder for Liferay marketing sites.",
   "scripts": {
+    "audit": "node --experimental-strip-types scripts/audit.ts",
     "autolayout": "node --experimental-strip-types scripts/autolayout.ts",
     "build": "vite build",
     "build:svg": "node --experimental-strip-types scripts/build.ts",
@@ -15,8 +16,10 @@
     "nest": "node --experimental-strip-types scripts/nest.ts",
     "normalize": "node --experimental-strip-types scripts/normalize.ts",
     "preview": "vite build && vite preview",
+    "snap:sizes": "node --experimental-strip-types scripts/snap-sizes.ts",
     "surface-pass": "node --experimental-strip-types scripts/surface-pass.ts",
     "surfaces": "node --experimental-strip-types scripts/surfaces.ts",
+    "surfaces:conform": "node --experimental-strip-types scripts/surface-conform.ts",
     "tokens": "node --experimental-strip-types scripts/build-tokens.ts",
     "typecheck": "tsc --noEmit"
   },

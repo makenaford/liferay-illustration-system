@@ -162,7 +162,7 @@
           "content": "If Segment = X Show Y"
         }
       ],
-      "surface": "glass3"
+      "surface": "glass2"
     },
     {
       "type": "toggle",

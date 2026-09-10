@@ -61,7 +61,7 @@ export function ProgressRow(ctx: Ctx, props: ProgressRowProps): VNode {
       width,
       height,
       rx: height / 2,
-      fill: light ? '#101828' : '#FFFFFF',
+      fill: tk.neutral.ink,
       'fill-opacity': light ? 0.08 : 0.1,
     }),
     h('rect', {

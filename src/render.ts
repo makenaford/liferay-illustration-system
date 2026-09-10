@@ -1,4 +1,4 @@
-import { h, rawNode, createCtx, toSVGString, type Ctx, type VNode } from './vsvg.ts';
+import { h, text, rawNode, createCtx, toSVGString, type Ctx, type VNode } from './vsvg.ts';
 import { themes, type ThemeName } from './tokens.ts';
 import {
   Stage,
@@ -182,6 +182,9 @@ function renderElementInner(ctx: Ctx, el: Element, path?: string): VNode | null 
       return renderSpotIcon(ctx, el);
 
     case 'image': {
+      // An element with no file yet would render nothing at all — invisible
+      // and unselectable. Draw the empty box so it can be found and filled.
+      if (!el.href) return placeholderBox(ctx, el, 'Image');
       const clipId = el.radius ? ctx.uid('imgclip') : null;
       if (clipId) {
         ctx.defs.push(
@@ -206,6 +209,7 @@ function renderElementInner(ctx: Ctx, el: Element, path?: string): VNode | null 
     }
 
     case 'svg': {
+      if (!el.body) return placeholderBox(ctx, el, 'SVG');
       const [vx, vy, vw, vh] = el.viewBox;
       // `contain` keeps the aspect ratio by scaling on the tighter axis.
       const sx = el.width / vw;
@@ -226,6 +230,44 @@ function renderElementInner(ctx: Ctx, el: Element, path?: string): VNode | null 
       );
     }
   }
+}
+
+/**
+ * An asset element with no file yet. Drawn as a dashed box so the empty
+ * element is visible and selectable in the editor instead of being a
+ * zero-pixel hit target; a finished illustration has none of these.
+ */
+function placeholderBox(
+  ctx: Ctx,
+  el: { x: number; y: number; width: number; height: number },
+  label: string,
+): VNode {
+  const t = ctx.tokens;
+  return h('g', { 'data-el': 'placeholder' }, [
+    h('rect', {
+      x: el.x,
+      y: el.y,
+      width: el.width,
+      height: el.height,
+      rx: 4,
+      fill: 'none',
+      stroke: t.text.subtle,
+      'stroke-width': 1,
+      'stroke-dasharray': '4 3',
+    }),
+    text(
+      'text',
+      {
+        x: el.x + el.width / 2,
+        y: el.y + el.height / 2 + 3,
+        'text-anchor': 'middle',
+        'font-family': t.font.family,
+        'font-size': 8,
+        fill: t.text.subtle,
+      },
+      label,
+    ),
+  ]);
 }
 
 /**

@@ -42,6 +42,6 @@ export function Toggle(ctx: Ctx, props: ToggleProps): VNode {
 
   return h('g', { 'data-el': `toggle-${on ? 'on' : 'off'}` }, [
     h('rect', { x, y, width, height, rx: height / 2, fill: `url(#${gradId})` }),
-    h('circle', { cx: knobCx, cy: y + height / 2, r: knobR, fill: '#FFFFFF' }),
+    h('circle', { cx: knobCx, cy: y + height / 2, r: knobR, fill: ctx.tokens.neutral.onFill }),
   ]);
 }

@@ -21,6 +21,8 @@ export interface EditorState {
   /** Snap step in canvas px. 0 disables snapping. */
   snapStep: number;
   showGrid: boolean;
+  /** Figma-style alignment guides while dragging. */
+  smartGuides: boolean;
   /** Card padding used by the layout actions and the padding guide. */
   padding: number;
 }
@@ -49,6 +51,7 @@ export function initStore(doc: Doc) {
       showOutlines: false,
       snapStep: LAYOUT.grid,
       showGrid: false,
+      smartGuides: true,
       padding: LAYOUT.cardPadding,
     },
     past: [],

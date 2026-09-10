@@ -13,6 +13,7 @@ import { isResizable, movedDeep, resizedTo } from './geometry.ts';
 import { boundsOf, type Box } from './bounds.ts';
 import { snap } from './grid.ts';
 import { contentBox } from './layout.ts';
+import { alignmentSnap, edgeSnap, type Guide, type Target } from './guides.ts';
 import { isContainer as isContainerEl, resolveLayout } from '../src/autolayout.ts';
 import { parentOf } from './state.ts';
 
@@ -28,15 +29,19 @@ export function Canvas() {
   const snapStep = useEditor((s) => s.snapStep);
   const showGrid = useEditor((s) => s.showGrid);
   const padding = useEditor((s) => s.padding);
+  const smartGuides = useEditor((s) => s.smartGuides);
 
   const docRef = useRef<HTMLDivElement>(null);
   const [box, setBox] = useState<Box | null>(null);
+  const [guides, setGuides] = useState<Guide[]>([]);
   const drag = useRef<{
     mode: DragMode;
     startX: number;
     startY: number;
     origin: Box | null;
     moved: boolean;
+    /** Boxes the drag can align to. Collected once, on pointer down. */
+    targets: Target[];
   } | null>(null);
 
   /*
@@ -46,6 +51,41 @@ export function Canvas() {
    * in the source document rather than on where the element actually is.
    */
   const resolved = useMemo(() => resolveLayout(doc), [doc]);
+
+  /**
+   * What a drag can align to: its siblings, the box that contains it, and
+   * the artboard. Siblings are what a designer is usually lining up with, so
+   * the container and the artboard are weighted slightly weaker and only win
+   * when nothing else is close.
+   */
+  const alignTargets = (path: string): Target[] => {
+    const art = doc.artboard ?? doc.canvas;
+    const parent = parentOf(path);
+    const container = parent ? elementAt(resolved, parent) : null;
+    const siblings = (
+      container
+        ? ((container as { children?: typeof resolved.elements }).children ?? [])
+        : resolved.elements
+    ) as typeof resolved.elements;
+
+    const out: Target[] = [];
+    siblings.forEach((el, i) => {
+      const sibPath = parent ? `${parent}.${i}` : String(i);
+      if (sibPath === path) return;
+      const node = docRef.current?.querySelector<SVGGraphicsElement>(
+        `[data-path="${sibPath}"]`,
+      );
+      const b = boundsOf(el, node ?? null);
+      if (b && b.width > 0 && b.height > 0) out.push({ box: b, weight: 0 });
+    });
+
+    if (container) {
+      const b = boundsOf(container, null);
+      if (b) out.push({ box: b, weight: 0.75 });
+    }
+    out.push({ box: { x: 0, y: 0, width: art.width, height: art.height }, weight: 0.75 });
+    return out;
+  };
 
   /** True when this element's position is computed by a parent container. */
   const isAutoPlaced = (path: string | null) => {
@@ -87,7 +127,7 @@ export function Canvas() {
   const onPointerDown = (e: React.PointerEvent) => {
     // Middle-drag or space-drag pans.
     if (e.button === 1 || e.altKey) {
-      drag.current = { mode: { kind: 'pan' }, startX: e.clientX, startY: e.clientY, origin: null, moved: false };
+      drag.current = { mode: { kind: 'pan' }, startX: e.clientX, startY: e.clientY, origin: null, moved: false, targets: [] };
       (e.target as Element).setPointerCapture?.(e.pointerId);
       return;
     }
@@ -102,6 +142,7 @@ export function Canvas() {
         startY: e.clientY,
         origin: box,
         moved: false,
+        targets: selected ? alignTargets(selected) : [],
       };
       return;
     }
@@ -120,6 +161,7 @@ export function Canvas() {
         startY: e.clientY,
         origin: el ? boundsOf(el, hit ?? null) : null,
         moved: false,
+        targets: alignTargets(path),
       };
     }
   };
@@ -159,13 +201,34 @@ export function Canvas() {
       const origin = d.origin;
       let sx = dx;
       let sy = dy;
-      if (!e.shiftKey && snapStep > 0 && origin) {
-        sx = snap(origin.x + dx, snapStep) - origin.x;
-        sy = snap(origin.y + dy, snapStep) - origin.y;
-      } else if (!e.shiftKey) {
-        sx = Math.round(dx);
-        sy = Math.round(dy);
+      let hits: Guide[] = [];
+
+      /*
+       * Alignment beats the grid. A guide is only offered within a few
+       * screen pixels, and when one is showing it is the thing the designer
+       * is aiming at — snapping to the grid instead would land the element
+       * one or two pixels off the line it is visibly touching.
+       */
+      if (!e.shiftKey && smartGuides && origin) {
+        const at = { ...origin, x: origin.x + dx, y: origin.y + dy };
+        const a = alignmentSnap(at, d.targets, 5 / zoom);
+        if (a.guides.length) {
+          hits = a.guides;
+          if (a.dx !== 0 || a.guides.some((g) => g.axis === 'x')) sx = dx + a.dx;
+          if (a.dy !== 0 || a.guides.some((g) => g.axis === 'y')) sy = dy + a.dy;
+        }
       }
+
+      const snappedX = hits.some((g) => g.axis === 'x');
+      const snappedY = hits.some((g) => g.axis === 'y');
+      if (!e.shiftKey && snapStep > 0 && origin) {
+        if (!snappedX) sx = snap(origin.x + dx, snapStep) - origin.x;
+        if (!snappedY) sy = snap(origin.y + dy, snapStep) - origin.y;
+      } else if (!e.shiftKey) {
+        if (!snappedX) sx = Math.round(dx);
+        if (!snappedY) sy = Math.round(dy);
+      }
+      setGuides(hits);
       if (sx === 0 && sy === 0 && !d.moved) return;
       commit(replaceAt(st.doc, st.selected, movedDeep(el, sx, sy)), d.moved);
       if (origin) {
@@ -176,14 +239,39 @@ export function Canvas() {
       d.startY += sy * zoom;
     } else if (d.origin && isResizable(el)) {
       const c = d.mode.corner;
-      // Snap the resulting edge, for the same reason move snaps its
-      // destination — so widths land on the grid, not just change by it.
-      const fit = (edge: number) =>
-        e.shiftKey || snapStep <= 0 ? edge : snap(edge, snapStep);
-      const right = fit(d.origin.x + d.origin.width + dx);
-      const left = fit(d.origin.x + dx);
-      const bottom = fit(d.origin.y + d.origin.height + dy);
-      const top = fit(d.origin.y + dy);
+      const hits: Guide[] = [];
+      const movingX = c === 'se' || c === 'ne' ? 'right' : 'left';
+      const movingY = c === 'se' || c === 'sw' ? 'bottom' : 'top';
+
+      /*
+       * Snap the resulting edge, for the same reason a move snaps its
+       * destination — so widths land on the grid, not just change by it.
+       * A neighbour's edge or centre wins over the grid, same as a move.
+       *
+       * Only the two edges the dragged corner actually moves are snapped;
+       * running this over all four would draw guides for edges that are
+       * standing still.
+       */
+      const fit = (edge: number, axis: 'x' | 'y', moving: boolean) => {
+        if (e.shiftKey) return edge;
+        if (moving && smartGuides && d.origin) {
+          const span: readonly [number, number] =
+            axis === 'x'
+              ? [d.origin.y, d.origin.y + d.origin.height]
+              : [d.origin.x, d.origin.x + d.origin.width];
+          const a = edgeSnap(edge, d.targets, 5 / zoom, axis, span);
+          if (a.guide) {
+            hits.push(a.guide);
+            return a.value;
+          }
+        }
+        return snapStep <= 0 ? edge : snap(edge, snapStep);
+      };
+
+      const right = fit(d.origin.x + d.origin.width + dx, 'x', movingX === 'right');
+      const left = fit(d.origin.x + dx, 'x', movingX === 'left');
+      const bottom = fit(d.origin.y + d.origin.height + dy, 'y', movingY === 'bottom');
+      const top = fit(d.origin.y + dy, 'y', movingY === 'top');
       const rdx = c === 'se' || c === 'ne' ? right - (d.origin.x + d.origin.width) : left - d.origin.x;
       const rdy = c === 'se' || c === 'sw' ? bottom - (d.origin.y + d.origin.height) : top - d.origin.y;
       const w = d.origin.width + (c === 'se' || c === 'ne' ? rdx : -rdx);
@@ -193,12 +281,14 @@ export function Canvas() {
       if (c === 'sw' || c === 'nw') next = { ...next, x: d.origin.x + rdx } as typeof next;
       if (c === 'ne' || c === 'nw') next = { ...next, y: d.origin.y + rdy } as typeof next;
       commit(replaceAt(st.doc, st.selected, next), d.moved);
+      setGuides(hits);
     }
     d.moved = true;
   };
 
   const onPointerUp = () => {
     drag.current = null;
+    setGuides([]);
   };
 
   const onWheel = (e: React.WheelEvent) => {
@@ -318,6 +408,37 @@ export function Canvas() {
               strokeDasharray={`${3 / zoom} ${3 / zoom}`}
             />
           )}
+
+          {/*
+            * Alignment guides. Drawn under the selection so the handles stay
+            * grabbable, and with a tick at each end so a line that runs off
+            * the artboard still reads as a measurement rather than a border.
+            */}
+          {guides.map((g, i) => {
+            const t = 3 / zoom;
+            return (
+              <g key={i} className={`align-guide${g.kind === 'center' ? ' center' : ''}`}>
+                <line
+                  x1={g.axis === 'x' ? g.at : g.from}
+                  y1={g.axis === 'x' ? g.from : g.at}
+                  x2={g.axis === 'x' ? g.at : g.to}
+                  y2={g.axis === 'x' ? g.to : g.at}
+                  strokeWidth={1 / zoom}
+                  strokeDasharray={g.kind === 'center' ? `${4 / zoom} ${3 / zoom}` : undefined}
+                />
+                {[g.from, g.to].map((end, j) => (
+                  <line
+                    key={j}
+                    x1={g.axis === 'x' ? g.at - t : end}
+                    y1={g.axis === 'x' ? end : g.at - t}
+                    x2={g.axis === 'x' ? g.at + t : end}
+                    y2={g.axis === 'x' ? end : g.at + t}
+                    strokeWidth={1 / zoom}
+                  />
+                ))}
+              </g>
+            );
+          })}
 
           {box && (
             <g>

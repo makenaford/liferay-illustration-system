@@ -827,7 +827,8 @@ wins on systematised speed instead.
 | **Auto layout** | Figma-shaped: a 3×3 alignment pad, `space between` / `stretch` / `baseline` toggles, gap and padding as one-click steps off the spacing scale (padding splits into vertical and horizontal), and Hug W/H. Per-child `grow` and `alignSelf`. Auto-placed children can't be dragged — their position is computed — so they reorder with arrows in Layers, which work at every depth. **detach** bakes positions back. |
 | **Card layout** | For absolute cards: content box drawn as a guide, padding from the spacing scale, and actions over children — align left/centre/right, fit widths, distribute, stack at 4/8/12, snap subtree to grid. |
 | **Clipboard** | ⌘C / ⌘X / ⌘V / ⌘D, plus buttons in the inspector. Works across documents and browser tabs; pasting into a different card preserves the element's offset *within* its card. |
-| **Keyboard** | Arrows nudge 1px, shift-arrows 10px, shift-drag for sub-pixel, ⌫ delete, esc deselect, `t` theme, `o` outlines, ⌘Z / ⇧⌘Z. |
+| **Smart guides** | Figma-style alignment lines while dragging or resizing. Edges and centres, against siblings, the containing card and the artboard. A match both draws a line and pulls the element onto it. Toggle with `a`. |
+| **Keyboard** | Arrows nudge 1px, shift-arrows 10px, shift-drag for sub-pixel, ⌫ delete, esc deselect, `t` theme, `o` outlines, `g` grid, `a` guides, ⌘Z / ⇧⌘Z. |
 | **Inspector** | Generated entirely from `editor/schema.ts` — no per-element UI code. |
 | **Document panel** | Canvas size, hero panels, and ambient glows (with a live blur slider). |
 | **Layers** | The element tree, and the only place z-order changes. |
@@ -836,6 +837,42 @@ wins on systematised speed instead.
 | **Export** | Optimised SVG per theme, or the `.json` document. Editor metadata is stripped. |
 | **Undo** | Full history. A drag coalesces into one step, not sixty. |
 | **View** | ⌘scroll zoom, ⌥drag pan, zoom controls, and an outline overlay for debugging. |
+
+## Smart guides
+
+Alignment guides answer the question the grid cannot: *is this centred?* A
+2px grid tells you an element is on a round number, not that it shares a
+centre line with the card behind it.
+
+While an element is dragged or resized, its three lines on each axis — left,
+centre, right and top, middle, bottom — are compared against the same three
+lines on every sibling, on the box that contains it, and on the artboard.
+Anything within 5 screen pixels draws a line and snaps.
+
+Three decisions worth recording:
+
+**Alignment beats the grid.** When a guide is showing, that line is what the
+designer is aiming at; snapping to the grid instead lands the element a pixel
+or two off the line it is visibly touching. So the grid only applies on axes
+where no guide matched — per axis, not per drag, so an element can be guided
+horizontally and grid-snapped vertically at once. The cost is that a guided
+resize can leave an odd width; that is the same trade Figma makes.
+
+**Centre matches are drawn differently.** Centre-to-centre is pink and
+dashed, everything else is solid red. It is the case that is hardest to
+verify by eye and the one most often wrong by a pixel, so it should not look
+identical to an edge match. Centre also wins ties: when an element's left
+edge and its centre are both a hair from a line, the centre is what was
+meant.
+
+**Siblings outrank the container and the artboard**, which carry a small
+weight penalty and only win when nothing else is close. Otherwise the
+artboard's centre line captures every drag that passes near the middle of the
+canvas.
+
+Guides are red rather than the accent blue on purpose: the accent is already
+the selection, the grid and every primary control, and a guide in that colour
+disappears into the thing it is measuring.
 
 ## Architecture
 

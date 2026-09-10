@@ -35,6 +35,7 @@ export function App() {
   const outlines = useEditor((s) => s.showOutlines);
   const snapStep = useEditor((s) => s.snapStep);
   const showGrid = useEditor((s) => s.showGrid);
+  const smartGuides = useEditor((s) => s.smartGuides);
   const selected = useEditor((s) => s.selected);
   const [tab, setTab] = useState<Tab>('layers');
   const [source, setSource] = useState<{ filename: string; text: string } | null>(null);
@@ -104,6 +105,7 @@ export function App() {
       if (e.key === 't') setUI({ theme: getState().theme === 'dark' ? 'light' : 'dark' });
       if (e.key === 'o') setUI({ showOutlines: !getState().showOutlines });
       if (e.key === 'g') setUI({ showGrid: !getState().showGrid });
+      if (e.key === 'a') setUI({ smartGuides: !getState().smartGuides });
     };
     /**
      * Native clipboard events. Using these rather than the async Clipboard API
@@ -236,6 +238,15 @@ export function App() {
             ))}
           </select>
         </span>
+
+        <button
+          type="button"
+          className={smartGuides ? 'on' : ''}
+          onClick={() => setUI({ smartGuides: !smartGuides })}
+          title="Alignment guides while dragging — edges and centres (a)"
+        >
+          Guides
+        </button>
 
         <button
           type="button"

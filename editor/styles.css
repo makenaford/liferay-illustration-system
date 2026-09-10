@@ -526,6 +526,14 @@ button.mini:hover { border-color: var(--accent); color: var(--ink); }
   stroke-opacity: 0.75;
 }
 
+/*
+ * Alignment guides. Red rather than the accent blue on purpose: the accent
+ * is already the selection, the grid and every primary control, and a guide
+ * in that colour disappears into the thing it is measuring.
+ */
+.align-guide line { stroke: #ff4d6d; }
+.align-guide.center line { stroke: #ff8ad1; }
+
 /* ---- layout section --------------------------------------------------- */
 
 .layout-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; }

@@ -58,7 +58,13 @@ export function Canvas() {
 
   const tree = useMemo(() => {
     resetKeys();
-    return toReact(buildDocument(doc, theme, { annotate: true }));
+    // The editor works in ARTBOARD space: elements, grid, selection and drag
+    // all share one coordinate system, and only the export scales. So the
+    // preview is built as if the artboard were the canvas.
+    const art = doc.artboard ?? doc.canvas;
+    return toReact(
+      buildDocument({ ...doc, canvas: art, artboard: undefined }, theme, { annotate: true }),
+    );
   }, [doc, theme]);
 
   /* Selection box is re-measured after every render that could change it. */
@@ -232,7 +238,7 @@ export function Canvas() {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  const { width, height } = doc.canvas;
+  const { width, height } = doc.artboard ?? doc.canvas;
   const hs = 4 / zoom; // handles keep a constant on-screen size
 
   /*

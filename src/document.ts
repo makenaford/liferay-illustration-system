@@ -412,7 +412,22 @@ export interface Doc {
   name: string;
   /** Descriptive only — see the note at the top of this file. */
   layout: 'singlePanel' | 'twoUp' | 'hubSpoke' | 'beforeAfter' | 'dashboard' | 'bare';
+  /** The size this document EXPORTS at — the SVG's viewBox. */
   canvas: { width: number; height: number };
+  /**
+   * The coordinate space the elements are authored in, when it differs from
+   * the canvas.
+   *
+   * Every illustration in the set exports at one size so they drop into the
+   * same slot, but two were drawn on larger artboards. Rewriting their
+   * coordinates would mean rounding every one of them onto the grid and
+   * losing the alignment those documents were just corrected to, so the
+   * artboard is kept and the whole drawing is scaled to fit the canvas on
+   * the way out — uniformly, and centred. Vector output, so nothing is lost.
+   *
+   * Absent means the two are the same, which is the normal case.
+   */
+  artboard?: { width: number; height: number };
   /**
    * Ambient blooms. One to three, often anchored off-canvas. `blur` matters a
    * lot — see the note on `Glow` in primitives/stage.ts.

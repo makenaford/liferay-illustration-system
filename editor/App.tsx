@@ -327,6 +327,8 @@ export function App() {
           <footer className="statusbar">
             <span>
               {doc.canvas.width} × {doc.canvas.height}
+              {doc.artboard &&
+                ` · artboard ${doc.artboard.width} × ${doc.artboard.height}`}
             </span>
             <span>{countElements(doc.elements)} elements</span>
             <span>{selected ? `selected ${selected}` : 'nothing selected'}</span>

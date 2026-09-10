@@ -3,6 +3,10 @@
   "name": "Integrate All Systems",
   "layout": "hubSpoke",
   "canvas": {
+    "width": 560,
+    "height": 372
+  },
+  "artboard": {
     "width": 860,
     "height": 571
   },

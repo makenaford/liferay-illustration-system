@@ -63,6 +63,34 @@ export function DocumentPanel() {
         </label>
       </div>
 
+      {doc.artboard && (
+        <div className="section">
+          <div className="section-head">
+            <span>Artboard</span>
+          </div>
+          <p className="panel-note" style={{ padding: 0, marginBottom: 8 }}>
+            Drawn at {doc.artboard.width} × {doc.artboard.height} and scaled to
+            fit the {doc.canvas.width} × {doc.canvas.height} export
+            ({Math.round(
+              Math.min(
+                doc.canvas.width / doc.artboard.width,
+                doc.canvas.height / doc.artboard.height,
+              ) * 1000,
+            ) / 10}
+            %). You edit in artboard units.
+          </p>
+          <div className="layout-actions two">
+            <button
+              type="button"
+              title="Export at the artboard's own size instead"
+              onClick={() => patch({ canvas: { ...doc.artboard! }, artboard: undefined })}
+            >
+              Export 1:1
+            </button>
+          </div>
+        </div>
+      )}
+
       <Section
         title="Hero panels"
         onAdd={() =>

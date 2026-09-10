@@ -354,7 +354,12 @@ export function buildDocument(
   // Auto-layout containers compute their children's positions, so the
   // document is resolved before anything is drawn from it.
   doc = resolveLayout(doc);
-  const { width, height } = doc.canvas;
+  // Everything is drawn in the ARTBOARD's coordinate space and scaled to the
+  // canvas on the way out; the two are the same unless the document says
+  // otherwise. See `Doc.artboard`.
+  const out = doc.canvas;
+  const { width, height } = doc.artboard ?? out;
+  const fit = Math.min(out.width / width, out.height / height);
   const ctx = createCtx(themes[theme], `${doc.id}-${theme}`, { width, height });
   const ns = `${doc.id}-${theme}`;
 
@@ -395,12 +400,18 @@ export function buildDocument(
     ]),
   ];
 
+  const round4 = (n: number) => Math.round(n * 10000) / 10000;
+  const body = [
+    h('use', { href: `#${baseId}`, 'xlink:href': `#${baseId}` }),
+    content,
+  ];
+
   return h(
     'svg',
     {
-      width,
-      height,
-      viewBox: `0 0 ${width} ${height}`,
+      width: out.width,
+      height: out.height,
+      viewBox: `0 0 ${out.width} ${out.height}`,
       fill: 'none',
       xmlns: 'http://www.w3.org/2000/svg',
       'xmlns:xlink': 'http://www.w3.org/1999/xlink',
@@ -409,8 +420,20 @@ export function buildDocument(
     },
     [
       h('defs', {}, [...backdrops, ...ctx.defs]),
-      h('use', { href: `#${baseId}`, 'xlink:href': `#${baseId}` }),
-      content,
+      // No wrapper when the artboard IS the canvas, so the seven documents
+      // that never needed one keep byte-identical output.
+      ...(fit === 1
+        ? body
+        : [h(
+            'g',
+            {
+              'data-el': 'artboard',
+              transform:
+                `translate(${round4((out.width - width * fit) / 2)} ` +
+                `${round4((out.height - height * fit) / 2)}) scale(${round4(fit)})`,
+            },
+            body,
+          )]),
     ],
   );
 }

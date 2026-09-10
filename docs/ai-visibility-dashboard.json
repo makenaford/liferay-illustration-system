@@ -3,6 +3,10 @@
   "name": "AI Visibility Dashboard",
   "layout": "dashboard",
   "canvas": {
+    "width": 560,
+    "height": 372
+  },
+  "artboard": {
     "width": 578,
     "height": 386
   },

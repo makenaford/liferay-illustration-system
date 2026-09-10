@@ -573,6 +573,46 @@ elements **by their label text** meant four node cards that all read
 "Last Sync 2s Ago" got one card's coordinates written into all of them. Keys
 have to be unique, and a visible string is not.
 
+## One canvas
+
+All nine export at **560 × 372**, so they drop into the same slot.
+
+Two were not: `ai-visibility-dashboard` was drawn at 578 × 386 and
+`integrate-all-systems` at 860 × 571 — three different aspect ratios across
+the set.
+
+Rewriting their coordinates was the wrong fix. Scaling `integrate-all-systems`
+by 0.651 would have put every coordinate off the 2px grid, and snapping them
+back means up to 1px of error each — enough to undo the alignment those
+documents had just been corrected to. Type is worse: sizes come from a
+nine-step scale, so a 65% layout with 100% text is a redesign, not a resize.
+
+So the artboard is kept and the drawing is scaled to fit the canvas on the way
+out — uniformly, and centred. `Doc.artboard` holds the space the elements are
+authored in; `Doc.canvas` is what the SVG exports at. Absent means they are the
+same, which is the case for the other seven, and those seven emit no wrapper
+element at all, so their output is unchanged.
+
+| | Artboard | Canvas | Scale |
+|---|---|---|---|
+| `ai-visibility-dashboard` | 578 × 386 | 560 × 372 | 96.4% |
+| `integrate-all-systems` | 860 × 571 | 560 × 372 | 65.1% |
+| the other seven | — | 560 × 372 | 1:1 |
+
+Nothing is lost: it is vector output, and `integrate-all-systems` was already
+being *displayed* at the same width as the others, so its text was already
+effectively smaller. The scale makes the file say what the page was already
+doing.
+
+A contain-fit can leave a gutter where the aspect ratios do not match exactly
+— `ai-visibility-dashboard` draws 557.04px wide inside 560. It does not,
+because `Stage` overscans for the glows: rendering both illustrations over
+magenta and counting the pixels gives **zero** in either theme.
+
+The editor works in artboard units — elements, grid, selection and drag all
+share one coordinate system, and only the export scales. The Document panel
+names the artboard and offers **Export 1:1** to drop it.
+
 ## The conformance audit
 
 `npm run audit` checks the nine documents against the system and reports
@@ -881,7 +921,7 @@ be. The system clipboard can't carry that provenance, so it's the fallback.
 Driven in a real browser, not just typechecked: selection (including nested,
 via the layer tree), drag (Y 151 → 191, exactly 40 canvas px), undo, resize
 (W 182 → 224), theme toggle, adding from the library, the glow blur slider,
-document switching to the 860×571 hub-and-spoke, and export.
+document switching to the hub-and-spoke (860×571 artboard, 560×372 export), and export.
 
 Clipboard specifically: ⌘D cascades correctly (405 → 413 → 421) and works on
 nested children; copy-out-of-one-card / paste-into-another rebased to

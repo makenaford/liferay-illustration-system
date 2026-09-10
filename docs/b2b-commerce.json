@@ -1,0 +1,481 @@
+{
+  "id": "b2b-commerce",
+  "name": "Drive B2B Revenue with 24-7 Self-Serve Commerce",
+  "layout": "singlePanel",
+  "canvas": {
+    "width": 560,
+    "height": 372
+  },
+  "glow": [
+    {
+      "cx": 37,
+      "cy": 73.5,
+      "rx": 110,
+      "ry": 107.5,
+      "blur": 100
+    },
+    {
+      "cx": 467,
+      "cy": 278,
+      "rx": 120,
+      "ry": 117,
+      "blur": 100
+    }
+  ],
+  "panels": [
+    {
+      "x": 66,
+      "y": 48,
+      "width": 428,
+      "height": 276,
+      "surface": "glass2"
+    }
+  ],
+  "elements": [
+    {
+      "type": "icon",
+      "x": 78,
+      "y": 54,
+      "size": 12,
+      "icon": "package",
+      "tone": "accent"
+    },
+    {
+      "type": "text",
+      "x": 96,
+      "y": 64,
+      "role": "caption",
+      "content": "BLOCKY",
+      "weight": "semibold"
+    },
+    {
+      "type": "icon",
+      "x": 444,
+      "y": 54,
+      "size": 12,
+      "icon": "browser",
+      "tone": "subtle"
+    },
+    {
+      "type": "icon",
+      "x": 464,
+      "y": 54,
+      "size": 12,
+      "icon": "user",
+      "tone": "subtle"
+    },
+    {
+      "type": "subCard",
+      "x": 78,
+      "y": 84,
+      "width": 198,
+      "height": 124,
+      "children": [
+        {
+          "type": "text",
+          "x": 90,
+          "y": 101.7,
+          "role": "bodySmall",
+          "content": "Negotiated Contract Pricing Catalog"
+        },
+        {
+          "type": "subCard",
+          "x": 90,
+          "y": 109.34,
+          "width": 172,
+          "height": 58,
+          "radius": 4,
+          "children": [
+            {
+              "type": "group",
+              "x": 96,
+              "y": 122.7248,
+              "width": 159.97,
+              "height": 4.218199999999996,
+              "layout": {
+                "direction": "horizontal",
+                "gap": 114,
+                "padding": 0,
+                "align": "baseline"
+              },
+              "children": [
+                {
+                  "type": "text",
+                  "x": 96,
+                  "y": 126,
+                  "role": "micro",
+                  "content": "NAME",
+                  "weight": "semibold",
+                  "tone": "muted"
+                },
+                {
+                  "type": "text",
+                  "x": 255.97,
+                  "y": 126,
+                  "role": "micro",
+                  "content": "CONTRACT PRICE",
+                  "anchor": "end",
+                  "weight": "semibold",
+                  "tone": "muted"
+                }
+              ]
+            },
+            {
+              "type": "group",
+              "x": 96,
+              "y": 136,
+              "width": 162.45999999999998,
+              "height": 4.942999999999984,
+              "layout": {
+                "direction": "horizontal",
+                "gap": 40,
+                "padding": 0,
+                "align": "baseline"
+              },
+              "children": [
+                {
+                  "type": "text",
+                  "x": 96,
+                  "y": 140,
+                  "role": "micro",
+                  "content": "SKU-A001",
+                  "alignSelf": "end",
+                  "weight": "semibold",
+                  "tone": "muted"
+                },
+                {
+                  "type": "progress",
+                  "x": 155.39,
+                  "y": 136,
+                  "width": 50,
+                  "value": 0.564,
+                  "tone": "info"
+                },
+                {
+                  "type": "text",
+                  "x": 258.46,
+                  "y": 140,
+                  "role": "micro",
+                  "content": "$12.08",
+                  "anchor": "end",
+                  "alignSelf": "end",
+                  "weight": "semibold",
+                  "tone": "muted"
+                }
+              ],
+              "alignSelf": "stretch"
+            },
+            {
+              "type": "group",
+              "x": 96,
+              "y": 150,
+              "width": 162.45999999999998,
+              "height": 4.942999999999984,
+              "layout": {
+                "direction": "horizontal",
+                "gap": 40,
+                "padding": 0,
+                "align": "baseline"
+              },
+              "children": [
+                {
+                  "type": "text",
+                  "x": 96,
+                  "y": 154,
+                  "role": "micro",
+                  "content": "SKU-A002",
+                  "alignSelf": "end",
+                  "weight": "semibold",
+                  "tone": "muted"
+                },
+                {
+                  "type": "progress",
+                  "x": 155.39,
+                  "y": 150,
+                  "width": 50,
+                  "value": 0.242,
+                  "tone": "accent"
+                },
+                {
+                  "type": "text",
+                  "x": 258.46,
+                  "y": 154,
+                  "role": "micro",
+                  "content": "$10.49",
+                  "anchor": "end",
+                  "alignSelf": "end",
+                  "weight": "semibold",
+                  "tone": "muted"
+                }
+              ],
+              "alignSelf": "stretch"
+            },
+            {
+              "type": "group",
+              "x": 96,
+              "y": 166,
+              "width": 162.45999999999998,
+              "height": 4.942999999999984,
+              "layout": {
+                "direction": "horizontal",
+                "gap": 40,
+                "padding": 0,
+                "align": "baseline"
+              },
+              "children": [
+                {
+                  "type": "text",
+                  "x": 96,
+                  "y": 170,
+                  "role": "micro",
+                  "content": "SKU-A003",
+                  "alignSelf": "end",
+                  "weight": "semibold",
+                  "tone": "muted"
+                },
+                {
+                  "type": "progress",
+                  "x": 155.39,
+                  "y": 166,
+                  "width": 50,
+                  "value": 0.524,
+                  "tone": "info"
+                },
+                {
+                  "type": "text",
+                  "x": 258.46,
+                  "y": 170,
+                  "role": "micro",
+                  "content": "$15.78",
+                  "anchor": "end",
+                  "alignSelf": "end",
+                  "weight": "semibold",
+                  "tone": "muted"
+                }
+              ],
+              "alignSelf": "stretch"
+            }
+          ],
+          "layout": {
+            "direction": "vertical",
+            "gap": 10,
+            "padding": [
+              12,
+              6
+            ],
+            "align": "start"
+          },
+          "surface": "outline"
+        }
+      ],
+      "layout": {
+        "direction": "vertical",
+        "gap": 6,
+        "padding": 12,
+        "align": "start"
+      },
+      "surface": "glass1"
+    },
+    {
+      "type": "subCard",
+      "x": 284,
+      "y": 84,
+      "width": 198,
+      "height": 124,
+      "children": [
+        {
+          "type": "text",
+          "x": 296,
+          "y": 101.7,
+          "role": "bodySmall",
+          "content": "Actions & Cart"
+        },
+        {
+          "type": "button",
+          "x": 296,
+          "y": 115.34,
+          "width": 96,
+          "height": 26,
+          "radius": 4,
+          "variant": "outline",
+          "label": "Reorder from History",
+          "role": "micro",
+          "weight": "semibold",
+          "tone": "muted"
+        },
+        {
+          "type": "text",
+          "x": 296,
+          "y": 156.61,
+          "role": "micro",
+          "content": "Cart Total",
+          "weight": "semibold",
+          "tone": "muted"
+        },
+        {
+          "type": "text",
+          "x": 296,
+          "y": 181.66,
+          "role": "title",
+          "content": "$2,150.00",
+          "weight": "bold"
+        }
+      ],
+      "layout": {
+        "direction": "vertical",
+        "gap": 12,
+        "padding": 12,
+        "align": "start"
+      },
+      "surface": "glass1"
+    },
+    {
+      "type": "subCard",
+      "x": 78,
+      "y": 216,
+      "width": 198,
+      "height": 96,
+      "children": [
+        {
+          "type": "text",
+          "x": 90,
+          "y": 233.7,
+          "role": "bodySmall",
+          "content": "Orders Placed by Time"
+        },
+        {
+          "type": "barChart",
+          "x": 90,
+          "y": 259.34,
+          "width": 174,
+          "height": 36,
+          "data": [
+            35,
+            19.4,
+            24.3,
+            9.8,
+            16.1,
+            30
+          ]
+        }
+      ],
+      "layout": {
+        "direction": "vertical",
+        "gap": 24,
+        "padding": 12,
+        "align": "start"
+      },
+      "surface": "glass1"
+    },
+    {
+      "type": "subCard",
+      "x": 284,
+      "y": 216,
+      "width": 198,
+      "height": 96,
+      "children": [
+        {
+          "type": "text",
+          "x": 296,
+          "y": 233.7,
+          "role": "bodySmall",
+          "content": "Orders by region"
+        },
+        {
+          "type": "map",
+          "x": 296,
+          "y": 237.34,
+          "width": 174,
+          "height": 64,
+          "spacing": 4,
+          "markers": [
+            [
+              0.19,
+              0.26
+            ],
+            [
+              0.54,
+              0.46
+            ],
+            [
+              0.7,
+              0.24
+            ]
+          ]
+        }
+      ],
+      "layout": {
+        "direction": "vertical",
+        "gap": 2,
+        "padding": 12,
+        "align": "start"
+      },
+      "surface": "glass1"
+    },
+    {
+      "type": "card",
+      "x": 332,
+      "y": 126,
+      "width": 196,
+      "height": 116,
+      "sheen": "radial",
+      "children": [
+        {
+          "type": "group",
+          "x": 344,
+          "y": 140,
+          "width": 118.904,
+          "height": 24,
+          "layout": {
+            "direction": "horizontal",
+            "gap": 8,
+            "padding": 0,
+            "align": "start"
+          },
+          "children": [
+            {
+              "type": "icon",
+              "x": 344,
+              "y": 140,
+              "size": 24,
+              "icon": "check",
+              "tone": "accent"
+            },
+            {
+              "type": "text",
+              "x": 376,
+              "y": 155.04,
+              "role": "heading",
+              "content": "Order Confirmed",
+              "alignSelf": "center"
+            }
+          ],
+          "alignSelf": "stretch"
+        },
+        {
+          "type": "text",
+          "x": 344,
+          "y": 184.05,
+          "role": "bodySmall",
+          "content": "Time: 02:14 AM"
+        },
+        {
+          "type": "text",
+          "x": 344,
+          "y": 205.07,
+          "role": "micro",
+          "content": "(Placed without a sales rep)",
+          "weight": "semibold",
+          "tone": "muted"
+        }
+      ],
+      "layout": {
+        "direction": "vertical",
+        "gap": 16,
+        "padding": 12,
+        "align": "start"
+      },
+      "surface": "glass3"
+    }
+  ]
+}

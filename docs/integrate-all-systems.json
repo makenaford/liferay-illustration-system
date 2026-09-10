@@ -1,0 +1,509 @@
+{
+  "id": "integrate-all-systems",
+  "name": "Integrate All Systems",
+  "layout": "hubSpoke",
+  "canvas": {
+    "width": 860,
+    "height": 571
+  },
+  "glow": [
+    {
+      "cx": 13,
+      "cy": 50,
+      "rx": 86,
+      "ry": 84,
+      "blur": 100
+    },
+    {
+      "cx": 430,
+      "cy": 260,
+      "rx": 179,
+      "ry": 175,
+      "blur": 100
+    },
+    {
+      "cx": 877,
+      "cy": 607,
+      "rx": 121,
+      "ry": 118,
+      "blur": 100
+    }
+  ],
+  "elements": [
+    {
+      "type": "connector",
+      "from": [
+        278,
+        130
+      ],
+      "to": [
+        400,
+        182
+      ],
+      "route": "hv",
+      "radius": 24
+    },
+    {
+      "type": "connector",
+      "from": [
+        584,
+        130
+      ],
+      "to": [
+        470,
+        182
+      ],
+      "route": "hv",
+      "radius": 24
+    },
+    {
+      "type": "connector",
+      "from": [
+        290,
+        376
+      ],
+      "to": [
+        400,
+        322
+      ],
+      "route": "hv",
+      "radius": 24
+    },
+    {
+      "type": "connector",
+      "from": [
+        584,
+        376
+      ],
+      "to": [
+        470,
+        322
+      ],
+      "route": "hv",
+      "radius": 24
+    },
+    {
+      "type": "connector",
+      "from": [
+        432,
+        398
+      ],
+      "to": [
+        432,
+        322
+      ],
+      "route": "straight"
+    },
+    {
+      "type": "card",
+      "x": 80,
+      "y": 66,
+      "width": 198,
+      "height": 130,
+      "sheen": "radial",
+      "children": [
+        {
+          "type": "button",
+          "x": 92,
+          "y": 78,
+          "width": 174,
+          "height": 28,
+          "radius": 8,
+          "variant": "solid",
+          "align": "left",
+          "icon": "database",
+          "label": "SAP ERP",
+          "role": "bodySmall"
+        },
+        {
+          "type": "spotIcon",
+          "name": "database",
+          "x": 157,
+          "y": 116,
+          "size": 44,
+          "alignSelf": "center"
+        },
+        {
+          "type": "group",
+          "x": 92,
+          "y": 170,
+          "width": 174,
+          "height": 13,
+          "layout": {
+            "direction": "horizontal",
+            "gap": 4,
+            "padding": [
+              0,
+              0,
+              0,
+              28
+            ],
+            "align": "baseline"
+          },
+          "children": [
+            {
+              "type": "badge",
+              "x": 120,
+              "y": 170,
+              "label": "Synced",
+              "tone": "success"
+            },
+            {
+              "type": "text",
+              "x": 168,
+              "y": 177.67,
+              "role": "micro",
+              "content": "Last Sync 2s Ago",
+              "alignSelf": "center",
+              "weight": "semibold",
+              "tone": "muted"
+            }
+          ]
+        }
+      ],
+      "layout": {
+        "direction": "vertical",
+        "gap": 10,
+        "padding": 12,
+        "align": "start"
+      },
+      "surface": "glass1"
+    },
+    {
+      "type": "card",
+      "x": 584,
+      "y": 66,
+      "width": 198,
+      "height": 130,
+      "sheen": "radial",
+      "children": [
+        {
+          "type": "button",
+          "x": 596,
+          "y": 78,
+          "width": 174,
+          "height": 28,
+          "radius": 8,
+          "variant": "solid",
+          "align": "left",
+          "icon": "package",
+          "label": "PIM",
+          "role": "bodySmall"
+        },
+        {
+          "type": "spotIcon",
+          "name": "pim",
+          "x": 661,
+          "y": 116,
+          "size": 44,
+          "alignSelf": "center"
+        },
+        {
+          "type": "group",
+          "x": 596,
+          "y": 170,
+          "width": 174,
+          "height": 13,
+          "layout": {
+            "direction": "horizontal",
+            "gap": 4,
+            "padding": [
+              0,
+              0,
+              0,
+              28
+            ],
+            "align": "baseline"
+          },
+          "children": [
+            {
+              "type": "badge",
+              "x": 624,
+              "y": 170,
+              "label": "Synced",
+              "tone": "success"
+            },
+            {
+              "type": "text",
+              "x": 672,
+              "y": 177.67,
+              "role": "micro",
+              "content": "Last Sync 2s Ago",
+              "alignSelf": "center",
+              "weight": "semibold",
+              "tone": "muted"
+            }
+          ]
+        }
+      ],
+      "layout": {
+        "direction": "vertical",
+        "gap": 10,
+        "padding": 12,
+        "align": "start"
+      },
+      "surface": "glass1"
+    },
+    {
+      "type": "card",
+      "x": 92,
+      "y": 312,
+      "width": 198,
+      "height": 130,
+      "sheen": "radial",
+      "children": [
+        {
+          "type": "button",
+          "x": 104,
+          "y": 324,
+          "width": 174,
+          "height": 28,
+          "radius": 8,
+          "variant": "solid",
+          "align": "left",
+          "icon": "users",
+          "label": "Salesforce CRM",
+          "role": "bodySmall"
+        },
+        {
+          "type": "spotIcon",
+          "name": "personalization",
+          "x": 169,
+          "y": 362,
+          "size": 44,
+          "alignSelf": "center"
+        },
+        {
+          "type": "group",
+          "x": 104,
+          "y": 416,
+          "width": 174,
+          "height": 13.003000000000043,
+          "layout": {
+            "direction": "horizontal",
+            "gap": 4,
+            "padding": [
+              0,
+              0,
+              0,
+              28
+            ],
+            "align": "start"
+          },
+          "children": [
+            {
+              "type": "badge",
+              "x": 132,
+              "y": 416,
+              "label": "Synced",
+              "tone": "success"
+            },
+            {
+              "type": "text",
+              "x": 180,
+              "y": 428.06,
+              "role": "micro",
+              "content": "Last Sync 2s Ago",
+              "alignSelf": "end",
+              "weight": "semibold",
+              "tone": "muted"
+            }
+          ]
+        }
+      ],
+      "layout": {
+        "direction": "vertical",
+        "gap": 10,
+        "padding": 12,
+        "align": "start"
+      },
+      "surface": "glass1"
+    },
+    {
+      "type": "card",
+      "x": 584,
+      "y": 312,
+      "width": 198,
+      "height": 130,
+      "sheen": "radial",
+      "children": [
+        {
+          "type": "button",
+          "x": 596,
+          "y": 324,
+          "width": 174,
+          "height": 28,
+          "radius": 8,
+          "variant": "solid",
+          "align": "left",
+          "icon": "key",
+          "label": "Identity Provider",
+          "role": "bodySmall"
+        },
+        {
+          "type": "spotIcon",
+          "name": "security",
+          "x": 661,
+          "y": 362,
+          "size": 44,
+          "alignSelf": "center"
+        },
+        {
+          "type": "group",
+          "x": 596,
+          "y": 416,
+          "width": 174,
+          "height": 13.003000000000043,
+          "layout": {
+            "direction": "horizontal",
+            "gap": 4,
+            "padding": [
+              0,
+              0,
+              0,
+              28
+            ],
+            "align": "start"
+          },
+          "children": [
+            {
+              "type": "badge",
+              "x": 624,
+              "y": 416,
+              "label": "Synced",
+              "tone": "success"
+            },
+            {
+              "type": "text",
+              "x": 672,
+              "y": 428.06,
+              "role": "micro",
+              "content": "Last Sync 2s Ago",
+              "alignSelf": "end",
+              "weight": "semibold",
+              "tone": "muted"
+            }
+          ]
+        }
+      ],
+      "layout": {
+        "direction": "vertical",
+        "gap": 10,
+        "padding": 12,
+        "align": "start"
+      },
+      "surface": "glass1"
+    },
+    {
+      "type": "card",
+      "x": 334,
+      "y": 398,
+      "width": 198,
+      "height": 130,
+      "sheen": "radial",
+      "children": [
+        {
+          "type": "button",
+          "x": 346,
+          "y": 410,
+          "width": 174,
+          "height": 28,
+          "radius": 8,
+          "variant": "solid",
+          "align": "left",
+          "icon": "cart",
+          "label": "Ecommerce Shop",
+          "role": "bodySmall"
+        },
+        {
+          "type": "spotIcon",
+          "name": "commerce",
+          "x": 411,
+          "y": 448,
+          "size": 44,
+          "alignSelf": "center"
+        },
+        {
+          "type": "group",
+          "x": 346,
+          "y": 502,
+          "width": 174,
+          "height": 13.002999999999929,
+          "layout": {
+            "direction": "horizontal",
+            "gap": 4,
+            "padding": [
+              0,
+              0,
+              0,
+              28
+            ],
+            "align": "start"
+          },
+          "children": [
+            {
+              "type": "badge",
+              "x": 374,
+              "y": 502,
+              "label": "Updating",
+              "tone": "info"
+            },
+            {
+              "type": "text",
+              "x": 422,
+              "y": 514.06,
+              "role": "micro",
+              "content": "Last Sync 2s Ago",
+              "alignSelf": "end",
+              "weight": "semibold",
+              "tone": "muted"
+            }
+          ]
+        }
+      ],
+      "layout": {
+        "direction": "vertical",
+        "gap": 10,
+        "padding": 12,
+        "align": "start"
+      },
+      "surface": "glass1"
+    },
+    {
+      "type": "card",
+      "x": 342,
+      "y": 182,
+      "width": 182,
+      "height": 142,
+      "sheen": "linear",
+      "children": [
+        {
+          "type": "spotIcon",
+          "name": "dxp",
+          "x": 405,
+          "y": 202,
+          "size": 56,
+          "alignSelf": "center"
+        },
+        {
+          "type": "text",
+          "x": 430.59,
+          "y": 289.75,
+          "role": "title",
+          "content": "Liferay DXP",
+          "anchor": "middle"
+        }
+      ],
+      "layout": {
+        "direction": "vertical",
+        "gap": 20,
+        "padding": [
+          20,
+          48
+        ],
+        "align": "start"
+      },
+      "surface": "glass1"
+    }
+  ]
+}

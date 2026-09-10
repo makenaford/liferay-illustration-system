@@ -1,0 +1,35 @@
+{
+  "name": "liferay-illustration-system",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "Token-driven SVG illustration system and builder for Liferay marketing sites.",
+  "scripts": {
+    "autolayout": "node --experimental-strip-types scripts/autolayout.ts",
+    "build": "vite build",
+    "build:svg": "node --experimental-strip-types scripts/build.ts",
+    "bundle": "vite build && node --experimental-strip-types scripts/bundle-artifact.ts",
+    "dev": "vite",
+    "flatten": "node --experimental-strip-types scripts/flatten.ts",
+    "icons": "node --experimental-strip-types scripts/build-glass-icons.ts",
+    "nest": "node --experimental-strip-types scripts/nest.ts",
+    "normalize": "node --experimental-strip-types scripts/normalize.ts",
+    "preview": "vite build && vite preview",
+    "surface-pass": "node --experimental-strip-types scripts/surface-pass.ts",
+    "surfaces": "node --experimental-strip-types scripts/surfaces.ts",
+    "tokens": "node --experimental-strip-types scripts/build-tokens.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^26.5.0",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.7",
+    "@vitejs/plugin-react": "^6.1.1",
+    "typescript": "^7.0.2",
+    "vite": "^8.2.2"
+  },
+  "dependencies": {
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  }
+}

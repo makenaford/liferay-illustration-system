@@ -1,0 +1,206 @@
+{
+  "id": "launch-campaigns",
+  "name": "Launch Campaigns Across Channels Faster",
+  "layout": "singlePanel",
+  "canvas": {
+    "width": 560,
+    "height": 372
+  },
+  "glow": [
+    {
+      "cx": 281,
+      "cy": 187.5,
+      "rx": 164,
+      "ry": 160.5,
+      "blur": 60
+    }
+  ],
+  "panels": [
+    {
+      "x": 142,
+      "y": 48,
+      "width": 260,
+      "height": 276,
+      "surface": "glass2"
+    }
+  ],
+  "elements": [
+    {
+      "type": "chrome",
+      "x": 154,
+      "y": 66,
+      "radius": 4,
+      "gap": 11
+    },
+    {
+      "type": "text",
+      "x": 154,
+      "y": 104,
+      "role": "heading",
+      "content": "Content Brand Campaign"
+    },
+    {
+      "type": "subCard",
+      "x": 154,
+      "y": 128,
+      "width": 216,
+      "height": 46,
+      "radius": 24,
+      "children": [
+        {
+          "type": "avatar",
+          "cx": 176,
+          "cy": 152,
+          "r": 16,
+          "initials": "UO"
+        },
+        {
+          "type": "group",
+          "x": 200,
+          "y": 142.7248,
+          "width": 65.27999999999997,
+          "height": 20.00770000000003,
+          "layout": {
+            "direction": "vertical",
+            "gap": 8,
+            "padding": 0,
+            "align": "start"
+          },
+          "children": [
+            {
+              "type": "text",
+              "x": 200,
+              "y": 146,
+              "role": "micro",
+              "content": "Uge O.",
+              "weight": "semibold",
+              "tone": "muted"
+            },
+            {
+              "type": "text",
+              "x": 200,
+              "y": 160.99,
+              "role": "bodySmall",
+              "content": "Ready for launch?"
+            }
+          ],
+          "alignSelf": "center"
+        }
+      ],
+      "layout": {
+        "direction": "horizontal",
+        "gap": 8,
+        "padding": [
+          8,
+          6
+        ],
+        "align": "start"
+      },
+      "surface": "glass1"
+    },
+    {
+      "type": "subCard",
+      "x": 174,
+      "y": 184,
+      "width": 216,
+      "height": 46,
+      "radius": 24,
+      "children": [
+        {
+          "type": "group",
+          "x": 192,
+          "y": 192,
+          "width": 94.26499999999999,
+          "height": 32,
+          "layout": {
+            "direction": "vertical",
+            "gap": 8,
+            "padding": [
+              8.724799999999988,
+              0,
+              0,
+              0
+            ],
+            "align": "start"
+          },
+          "children": [
+            {
+              "type": "text",
+              "x": 192,
+              "y": 204,
+              "role": "micro",
+              "content": "Maria M",
+              "weight": "semibold",
+              "tone": "muted"
+            },
+            {
+              "type": "text",
+              "x": 192,
+              "y": 218.99,
+              "role": "bodySmall",
+              "content": "Website and Email Ready!"
+            }
+          ]
+        },
+        {
+          "type": "avatar",
+          "cx": 364.26,
+          "cy": 208,
+          "r": 16,
+          "initials": "MM"
+        }
+      ],
+      "layout": {
+        "direction": "horizontal",
+        "gap": 64,
+        "padding": [
+          8,
+          16
+        ],
+        "align": "start"
+      },
+      "surface": "glass1"
+    },
+    {
+      "type": "spotIcon",
+      "name": "campaigns",
+      "x": 322,
+      "y": 92,
+      "size": 76
+    },
+    {
+      "type": "iconGrid",
+      "x": 156,
+      "y": 288,
+      "columns": 4,
+      "size": 22,
+      "gapX": 34,
+      "icons": [
+        "browser",
+        "phone",
+        "mail",
+        "star"
+      ]
+    },
+    {
+      "type": "button",
+      "x": 314,
+      "y": 240,
+      "width": 126,
+      "height": 48,
+      "radius": 6,
+      "variant": "gradient",
+      "label": "Publish",
+      "role": "heading",
+      "tone": "onAccent"
+    },
+    {
+      "type": "icon",
+      "x": 428,
+      "y": 282,
+      "size": 24,
+      "icon": "cursor",
+      "tone": "primary"
+    }
+  ]
+}

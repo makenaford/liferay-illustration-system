@@ -1,0 +1,184 @@
+{
+  "id": "drive-conversions",
+  "name": "Drive Conversions with Tailored Experiences",
+  "layout": "twoUp",
+  "canvas": {
+    "width": 560,
+    "height": 372
+  },
+  "glow": [
+    {
+      "cx": 13,
+      "cy": 50,
+      "rx": 86,
+      "ry": 84,
+      "blur": 100
+    },
+    {
+      "cx": 501,
+      "cy": 311,
+      "rx": 86,
+      "ry": 84,
+      "blur": 100
+    }
+  ],
+  "panels": [
+    {
+      "x": 72,
+      "y": 108,
+      "width": 204,
+      "height": 214,
+      "surface": "glass2"
+    },
+    {
+      "x": 286,
+      "y": 108,
+      "width": 204,
+      "height": 214,
+      "surface": "glass2"
+    }
+  ],
+  "elements": [
+    {
+      "type": "button",
+      "x": 72,
+      "y": 52,
+      "width": 204,
+      "height": 48,
+      "radius": 8,
+      "variant": "solid",
+      "align": "left",
+      "icon": "building",
+      "label": "Enterprise Buyer",
+      "role": "subheading"
+    },
+    {
+      "type": "button",
+      "x": 286,
+      "y": 52,
+      "width": 204,
+      "height": 48,
+      "radius": 8,
+      "variant": "muted",
+      "align": "left",
+      "icon": "user",
+      "label": "Returning Customer",
+      "role": "subheading"
+    },
+    {
+      "type": "chrome",
+      "x": 92,
+      "y": 134,
+      "radius": 6,
+      "gap": 21
+    },
+    {
+      "type": "chrome",
+      "x": 306,
+      "y": 134,
+      "radius": 6,
+      "gap": 21
+    },
+    {
+      "type": "spotIcon",
+      "name": "personalization",
+      "x": 144,
+      "y": 158,
+      "size": 60
+    },
+    {
+      "type": "button",
+      "x": 92,
+      "y": 252,
+      "width": 162,
+      "height": 46,
+      "radius": 22,
+      "variant": "glass",
+      "icon": "dollar",
+      "label": "Request Contract Pricing",
+      "lines": [
+        "Request Contract",
+        "Pricing"
+      ],
+      "role": "bodySmall"
+    },
+    {
+      "type": "text",
+      "x": 306,
+      "y": 168,
+      "role": "display",
+      "content": "Welcome"
+    },
+    {
+      "type": "text",
+      "x": 306,
+      "y": 190,
+      "role": "display",
+      "content": "Back!"
+    },
+    {
+      "type": "avatar",
+      "cx": 438,
+      "cy": 176,
+      "r": 20
+    },
+    {
+      "type": "icon",
+      "x": 448,
+      "y": 186,
+      "size": 18,
+      "icon": "star",
+      "tone": "accent"
+    },
+    {
+      "type": "button",
+      "x": 306,
+      "y": 256,
+      "width": 162,
+      "height": 46,
+      "radius": 22,
+      "variant": "gradient",
+      "icon": "tag",
+      "label": "Exclusive Tailored Offer!",
+      "lines": [
+        "Exclusive Tailored",
+        "Offer!"
+      ],
+      "role": "bodySmall"
+    },
+    {
+      "type": "card",
+      "x": 48,
+      "y": 92,
+      "width": 214,
+      "height": 62,
+      "sheen": "linear",
+      "children": [
+        {
+          "type": "text",
+          "x": 62,
+          "y": 126,
+          "role": "heading",
+          "content": "If Segment = X Show Y"
+        }
+      ],
+      "surface": "glass3"
+    },
+    {
+      "type": "toggle",
+      "x": 228,
+      "y": 84,
+      "width": 42,
+      "height": 14,
+      "on": false
+    },
+    {
+      "type": "toggle",
+      "x": 228,
+      "y": 104,
+      "width": 42,
+      "height": 14,
+      "on": true
+    }
+  ]
+}

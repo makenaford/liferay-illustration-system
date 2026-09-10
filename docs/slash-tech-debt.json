@@ -1,0 +1,161 @@
+{
+  "id": "slash-tech-debt",
+  "name": "Slash Tech Debt & Software Costs",
+  "layout": "beforeAfter",
+  "canvas": {
+    "width": 560,
+    "height": 372
+  },
+  "glow": [
+    {
+      "cx": -5,
+      "cy": 31.5,
+      "rx": 68,
+      "ry": 65.5,
+      "blur": 100
+    },
+    {
+      "cx": 501,
+      "cy": 261,
+      "rx": 137,
+      "ry": 134,
+      "blur": 100
+    }
+  ],
+  "panels": [
+    {
+      "x": 56,
+      "y": 86,
+      "width": 218,
+      "height": 232,
+      "surface": "glass2"
+    },
+    {
+      "x": 288,
+      "y": 86,
+      "width": 218,
+      "height": 230,
+      "surface": "glass2"
+    }
+  ],
+  "elements": [
+    {
+      "type": "text",
+      "x": 164,
+      "y": 72,
+      "role": "title",
+      "content": "BEFORE",
+      "anchor": "middle"
+    },
+    {
+      "type": "text",
+      "x": 396,
+      "y": 72,
+      "role": "title",
+      "content": "AFTER",
+      "anchor": "middle"
+    },
+    {
+      "type": "button",
+      "x": 68,
+      "y": 98,
+      "width": 192,
+      "height": 30,
+      "radius": 8,
+      "variant": "glass",
+      "label": "Fragmented, Costly Tools",
+      "role": "bodySmall"
+    },
+    {
+      "type": "spotIcon",
+      "name": "costly",
+      "x": 128,
+      "y": 150,
+      "size": 72
+    },
+    {
+      "type": "iconGrid",
+      "x": 88,
+      "y": 240,
+      "columns": 4,
+      "size": 24,
+      "gapX": 44,
+      "gapY": 40,
+      "icons": [
+        "file",
+        "browser",
+        "chart",
+        "cart",
+        "globe",
+        "users",
+        "database",
+        "search"
+      ]
+    },
+    {
+      "type": "arrow",
+      "x": 268,
+      "y": 200,
+      "width": 26,
+      "thickness": 8
+    },
+    {
+      "type": "button",
+      "x": 300,
+      "y": 98,
+      "width": 192,
+      "height": 30,
+      "radius": 16,
+      "variant": "gradient",
+      "label": "Unified Platform",
+      "role": "bodySmall"
+    },
+    {
+      "type": "spotIcon",
+      "name": "composable",
+      "x": 352,
+      "y": 180,
+      "size": 80
+    },
+    {
+      "type": "icon",
+      "x": 320,
+      "y": 160,
+      "size": 16,
+      "icon": "database",
+      "tone": "soft"
+    },
+    {
+      "type": "icon",
+      "x": 464,
+      "y": 178,
+      "size": 16,
+      "icon": "cart",
+      "tone": "soft"
+    },
+    {
+      "type": "icon",
+      "x": 322,
+      "y": 262,
+      "size": 16,
+      "icon": "users",
+      "tone": "soft"
+    },
+    {
+      "type": "icon",
+      "x": 462,
+      "y": 258,
+      "size": 16,
+      "icon": "chart",
+      "tone": "soft"
+    },
+    {
+      "type": "icon",
+      "x": 448,
+      "y": 148,
+      "size": 14,
+      "icon": "clock",
+      "tone": "soft"
+    }
+  ]
+}

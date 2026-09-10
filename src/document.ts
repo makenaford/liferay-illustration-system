@@ -1,0 +1,431 @@
+/**
+ * DOCUMENT SCHEMA — what the editor saves and what the exporter reads.
+ *
+ * Design rules baked into these types:
+ *   - Coordinates are freeform (designers can place anything anywhere), but
+ *     `type` is a closed union, so nothing can be *created* outside the
+ *     library. That is the "freeform placement, zero freeform creation" line.
+ *   - No element carries a colour value. Every paint decision is a `tone`,
+ *     `variant`, or `role` that resolves through tokens. There is deliberately
+ *     no `fill: string` field anywhere in this file.
+ *   - `children` on containers makes composition recursive, so a chart can sit
+ *     in a card in a panel without new primitives.
+ *
+ * NOTE ON LAYOUT: this started with a `scene` union (SinglePanel / TwoUp /
+ * HubSpoke / BeforeAfter). Porting all nine illustrations showed those aren't
+ * different scenes at all — they're the same stage with a different number of
+ * panels. So `panels` is just an array, and `layout` is descriptive metadata
+ * for the editor's template picker rather than a renderer branch.
+ */
+
+import type { TypeRole, TypeWeight } from './primitives/text.ts';
+import type { SurfaceName } from './tokens.ts';
+
+export type Tone = 'accent' | 'success' | 'info' | 'neutral' | 'muted' | 'subtle';
+
+export interface PanelSpec {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  sheen?: 'radial' | 'linear';
+  surface?: SurfaceName;
+  radius?: number;
+}
+
+export interface TextEl extends LayoutChild {
+  type: 'text';
+  x: number;
+  y: number;
+  /** A step on the nine-step type scale. */
+  role: TypeRole;
+  content: string;
+  anchor?: 'start' | 'middle' | 'end';
+  /** Overrides the step's default weight. */
+  weight?: TypeWeight;
+  /**
+   * A semantic tone (`accent`, `muted`, …) or, as an override, any key in the
+   * generated palette. Still a token either way — there is no hex field.
+   */
+  tone?: string;
+}
+
+/**
+ * AUTO LAYOUT — a container that positions its own children.
+ *
+ * When a card carries this, its children's `x`/`y` are computed rather than
+ * read, so editing a string or a gap reflows everything inside. Modelled on
+ * flexbox (and so on Figma's auto-layout, which is the same model) because
+ * that is what a designer already has in their head.
+ */
+export interface LayoutSpec {
+  direction: 'vertical' | 'horizontal';
+  /** Space between children. Defaults to the `LAYOUT.gap` token. */
+  gap?: number;
+  /** One value, [y, x], or [top, right, bottom, left]. */
+  padding?: number | [number, number] | [number, number, number, number];
+  /**
+   * Cross-axis placement. `stretch` fills the container's other dimension;
+   * `baseline` (rows only) puts every child's first text baseline on one line.
+   */
+  align?: 'start' | 'center' | 'end' | 'stretch' | 'baseline';
+  /** Main-axis distribution. */
+  justify?: 'start' | 'center' | 'end' | 'between';
+  /** Shrink the container to its content on this axis. */
+  hugWidth?: boolean;
+  hugHeight?: boolean;
+}
+
+/** Per-child overrides, valid on any element inside a layout container. */
+export interface LayoutChild {
+  /** Share of the leftover main-axis space, flex-grow style. */
+  grow?: number;
+  /** Override the container's cross-axis alignment for this child. */
+  alignSelf?: 'start' | 'center' | 'end' | 'stretch' | 'baseline';
+}
+
+export interface CardEl extends LayoutChild {
+  type: 'card';
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  sheen?: 'radial' | 'linear';
+  /** Which surface from the token set to draw. */
+  surface?: SurfaceName;
+  radius?: number;
+  /** Turns this card into a reflowing container. */
+  layout?: LayoutSpec;
+  children?: Element[];
+}
+
+/**
+ * GROUP — a container with no appearance of its own.
+ *
+ * Auto-layout is a one-dimensional flow, so a two-dimensional arrangement is
+ * expressed as flows nested inside flows: a column of rows. A group is the
+ * intermediate that makes that possible without inventing a visual card that
+ * a designer never asked for. It draws nothing; it only positions.
+ */
+export interface GroupEl extends LayoutChild {
+  type: 'group';
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  layout?: LayoutSpec;
+  children?: Element[];
+}
+
+export interface SubCardEl extends LayoutChild {
+  type: 'subCard';
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  radius?: number;
+  variant?: 'sheen' | 'flat' | 'sunken' | 'accent';
+  /** Which surface from the token set to draw. Wins over `variant`. */
+  surface?: SurfaceName;
+  /** Turns this card into a reflowing container. */
+  layout?: LayoutSpec;
+  children?: Element[];
+}
+
+export interface PillEl extends LayoutChild {
+  type: 'pill';
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  label: string;
+  variant?: 'accent' | 'glass' | 'success';
+}
+
+export interface BadgeEl extends LayoutChild {
+  type: 'badge';
+  x: number;
+  y: number;
+  /** Omit to hug the label — see `badgeWidth`. */
+  width?: number;
+  height?: number;
+  label: string;
+  tone?: 'success' | 'info' | 'accent' | 'neutral';
+  dot?: boolean;
+  variant?: 'tonal' | 'ring' | 'gradient' | 'glass';
+}
+
+export interface ButtonEl extends LayoutChild {
+  type: 'button';
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  label: string;
+  variant?: 'solid' | 'outline' | 'glass' | 'gradient' | 'muted';
+  radius?: number;
+  icon?: string;
+  role?: TypeRole;
+  lines?: string[];
+  align?: 'center' | 'left';
+  padding?: number;
+}
+
+export interface ToggleEl extends LayoutChild {
+  type: 'toggle';
+  x: number;
+  y: number;
+  width?: number;
+  height?: number;
+  on: boolean;
+}
+
+export interface InputEl extends LayoutChild {
+  type: 'input';
+  x: number;
+  y: number;
+  width: number;
+  height?: number;
+  placeholder: string;
+  icon?: string;
+  radius?: number;
+  role?: TypeRole;
+}
+
+export interface ChromeEl extends LayoutChild {
+  type: 'chrome';
+  x: number;
+  y: number;
+  radius?: number;
+  gap?: number;
+  title?: string;
+}
+
+export interface LineChartEl extends LayoutChild {
+  type: 'lineChart';
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  series: {
+    data: number[];
+    role?: 'primary' | 'secondary' | 'success';
+    strokeWidth?: number;
+  }[];
+  gridLines?: number;
+  domain?: [number, number];
+  referenceLine?: number;
+}
+
+export interface BarChartEl extends LayoutChild {
+  type: 'barChart';
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  data: number[];
+  barRatio?: number;
+  gradient?: boolean;
+}
+
+export interface ProgressEl extends LayoutChild {
+  type: 'progress';
+  x: number;
+  y: number;
+  width: number;
+  value: number;
+  height?: number;
+  label?: string;
+  labelGap?: number;
+  tone?: 'accent' | 'info' | 'success';
+}
+
+export interface SkeletonEl extends LayoutChild {
+  type: 'skeleton';
+  x: number;
+  y: number;
+  width: number;
+  height?: number;
+}
+
+export interface StatEl extends LayoutChild {
+  type: 'stat';
+  x: number;
+  y: number;
+  value: string;
+  label?: string;
+  labelPosition?: 'above' | 'below';
+  valueRole?: TypeRole;
+  labelRole?: TypeRole;
+  anchor?: 'start' | 'middle' | 'end';
+}
+
+export interface IconEl extends LayoutChild {
+  type: 'icon';
+  x: number;
+  y: number;
+  size?: number;
+  /** Key into `ICONS`. Omitted renders a visible placeholder. */
+  icon?: string;
+  tone?: 'subtle' | 'accent' | 'primary' | 'onAccent' | 'soft';
+}
+
+export interface IconGridEl extends LayoutChild {
+  type: 'iconGrid';
+  x: number;
+  y: number;
+  icons: (string | null)[];
+  columns: number;
+  size?: number;
+  gapX?: number;
+  gapY?: number;
+  tone?: 'subtle' | 'accent' | 'primary' | 'soft';
+}
+
+export interface AvatarEl extends LayoutChild {
+  type: 'avatar';
+  cx: number;
+  cy: number;
+  r?: number;
+  initials?: string;
+  /** External URL. Never a data URI — see the note in Avatar. */
+  href?: string;
+}
+
+export interface ConnectorEl extends LayoutChild {
+  type: 'connector';
+  from: [number, number];
+  to: [number, number];
+  route?: 'hv' | 'vh' | 'straight';
+  radius?: number;
+  nodes?: boolean;
+  fade?: boolean;
+}
+
+export interface ArrowEl extends LayoutChild {
+  type: 'arrow';
+  x: number;
+  y: number;
+  width?: number;
+  thickness?: number;
+  direction?: 'right' | 'left' | 'up';
+  tone?: 'primary' | 'accent';
+}
+
+export interface MapEl extends LayoutChild {
+  type: 'map';
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  spacing?: number;
+  dotRadius?: number;
+  markers?: [number, number][];
+}
+
+export interface SpotIconEl extends LayoutChild {
+  type: 'spotIcon';
+  /**
+   * Key into `GLASS_ICONS` — the design system's glass icon set, imported by
+   * `npm run icons`. An unknown key renders a visible placeholder.
+   */
+  name: string;
+  x: number;
+  y: number;
+  size?: number;
+}
+
+/**
+ * A raster brought into the document.
+ *
+ * `href` is a URL or a data URI. A URL keeps the document small and is what
+ * production should use; a data URI makes the illustration self-contained,
+ * which is what an export needs. The editor writes data URIs and warns above
+ * half a megabyte, because that is how the original exports ended up carrying
+ * 33MB of base64.
+ */
+export interface ImageEl extends LayoutChild {
+  type: 'image';
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  href: string;
+  /** `cover` crops to fill, `contain` fits inside. */
+  fit?: 'cover' | 'contain';
+  /** Rounded corners, clipped. */
+  radius?: number;
+  /** Shown to a screen reader and in the layers panel. */
+  alt?: string;
+}
+
+/**
+ * Imported vector artwork, inlined.
+ *
+ * Kept distinct from `image` because it is genuinely different: it scales
+ * without loss, it themes if its source used `currentColor`, and its ids have
+ * to be namespaced or it will fight every other gradient on the page.
+ */
+export interface SvgEl extends LayoutChild {
+  type: 'svg';
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  /** The source viewBox, so the artwork maps onto the box correctly. */
+  viewBox: [number, number, number, number];
+  /** Markup with `__NS__`-prefixed ids — see `importSvg`. */
+  body: string;
+  /** `contain` preserves the aspect ratio; `fill` stretches. */
+  fit?: 'contain' | 'fill';
+  alt?: string;
+}
+
+export type Element =
+  | TextEl
+  | CardEl
+  | SubCardEl
+  | GroupEl
+  | PillEl
+  | BadgeEl
+  | ButtonEl
+  | ToggleEl
+  | InputEl
+  | ChromeEl
+  | LineChartEl
+  | BarChartEl
+  | ProgressEl
+  | SkeletonEl
+  | StatEl
+  | IconEl
+  | IconGridEl
+  | AvatarEl
+  | ConnectorEl
+  | ArrowEl
+  | MapEl
+  | SpotIconEl
+  | ImageEl
+  | SvgEl;
+
+export interface Doc {
+  id: string;
+  name: string;
+  /** Descriptive only — see the note at the top of this file. */
+  layout: 'singlePanel' | 'twoUp' | 'hubSpoke' | 'beforeAfter' | 'dashboard' | 'bare';
+  canvas: { width: number; height: number };
+  /**
+   * Ambient blooms. One to three, often anchored off-canvas. `blur` matters a
+   * lot — see the note on `Glow` in primitives/stage.ts.
+   */
+  glow?: {
+    cx: number;
+    cy: number;
+    rx: number;
+    ry: number;
+    blur?: number;
+    opacity?: number;
+  }[];
+  /** Hero glass panels, drawn under `elements`. Empty for bare layouts. */
+  panels?: PanelSpec[];
+  elements: Element[];
+}

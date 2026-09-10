@@ -1,0 +1,459 @@
+{
+  "id": "ai-visibility-dashboard",
+  "name": "Group 1000006504",
+  "layout": "dashboard",
+  "canvas": {
+    "width": 578,
+    "height": 386
+  },
+  "glow": [
+    {
+      "cx": 13,
+      "cy": 50,
+      "rx": 86,
+      "ry": 84,
+      "blur": 100
+    },
+    {
+      "cx": 501,
+      "cy": 251,
+      "rx": 147,
+      "ry": 144,
+      "blur": 100
+    }
+  ],
+  "panels": [
+    {
+      "x": 48,
+      "y": 24,
+      "width": 464,
+      "height": 318,
+      "surface": "glass2"
+    }
+  ],
+  "elements": [
+    {
+      "type": "subCard",
+      "x": 60,
+      "y": 36,
+      "width": 142,
+      "height": 60,
+      "children": [
+        {
+          "type": "text",
+          "x": 68,
+          "y": 47.92,
+          "role": "label",
+          "content": "Total Connections"
+        },
+        {
+          "type": "text",
+          "x": 68,
+          "y": 60.3,
+          "role": "heading",
+          "content": "12,847",
+          "weight": "bold"
+        },
+        {
+          "type": "text",
+          "x": 68,
+          "y": 68.24,
+          "role": "micro",
+          "content": "vs. 7,000 target",
+          "weight": "semibold",
+          "tone": "muted"
+        },
+        {
+          "type": "progress",
+          "x": 68,
+          "y": 71.18,
+          "width": 126,
+          "value": 0.085,
+          "tone": "info"
+        }
+      ],
+      "layout": {
+        "direction": "vertical",
+        "gap": 2,
+        "padding": 8,
+        "align": "start"
+      },
+      "surface": "glass1"
+    },
+    {
+      "type": "badge",
+      "x": 172,
+      "y": 44,
+      "label": "+14.2%",
+      "tone": "info",
+      "dot": false
+    },
+    {
+      "type": "subCard",
+      "x": 210,
+      "y": 36,
+      "width": 142,
+      "height": 60,
+      "children": [
+        {
+          "type": "text",
+          "x": 218,
+          "y": 47.92,
+          "role": "label",
+          "content": "Active Sessions"
+        },
+        {
+          "type": "text",
+          "x": 218,
+          "y": 60.3,
+          "role": "heading",
+          "content": "3,456",
+          "weight": "bold"
+        },
+        {
+          "type": "text",
+          "x": 218,
+          "y": 68.24,
+          "role": "micro",
+          "content": "Current, live traffic",
+          "weight": "semibold",
+          "tone": "muted"
+        },
+        {
+          "type": "progress",
+          "x": 218,
+          "y": 71.18,
+          "width": 126,
+          "value": 0.568,
+          "tone": "accent"
+        }
+      ],
+      "layout": {
+        "direction": "vertical",
+        "gap": 2,
+        "padding": 8,
+        "align": "start"
+      },
+      "surface": "glass1"
+    },
+    {
+      "type": "badge",
+      "x": 320,
+      "y": 44,
+      "label": "Active",
+      "tone": "success"
+    },
+    {
+      "type": "subCard",
+      "x": 358,
+      "y": 36,
+      "width": 142,
+      "height": 60,
+      "children": [
+        {
+          "type": "text",
+          "x": 366,
+          "y": 47.92,
+          "role": "label",
+          "content": "Total Views"
+        },
+        {
+          "type": "text",
+          "x": 366,
+          "y": 60.3,
+          "role": "heading",
+          "content": "645,789",
+          "weight": "bold"
+        },
+        {
+          "type": "text",
+          "x": 366,
+          "y": 68.24,
+          "role": "micro",
+          "content": "Last 30 days",
+          "weight": "semibold",
+          "tone": "muted"
+        },
+        {
+          "type": "progress",
+          "x": 366,
+          "y": 71.18,
+          "width": 126,
+          "value": 0.085,
+          "tone": "info"
+        }
+      ],
+      "layout": {
+        "direction": "vertical",
+        "gap": 2,
+        "padding": 8,
+        "align": "start"
+      },
+      "surface": "glass1"
+    },
+    {
+      "type": "badge",
+      "x": 474,
+      "y": 44,
+      "label": "+6.7%",
+      "tone": "info",
+      "dot": false
+    },
+    {
+      "type": "subCard",
+      "x": 60,
+      "y": 104,
+      "width": 216,
+      "height": 124,
+      "children": [
+        {
+          "type": "text",
+          "x": 72,
+          "y": 121.7,
+          "role": "bodySmall",
+          "content": "Engagement / Category"
+        },
+        {
+          "type": "progress",
+          "x": 72,
+          "y": 139.61,
+          "width": 192,
+          "value": 0.615,
+          "label": "Homepage"
+        },
+        {
+          "type": "progress",
+          "x": 72,
+          "y": 158.89,
+          "width": 192,
+          "value": 0.448,
+          "label": "Products"
+        },
+        {
+          "type": "progress",
+          "x": 72,
+          "y": 178.16,
+          "width": 192,
+          "value": 0.055,
+          "label": "Blog"
+        },
+        {
+          "type": "progress",
+          "x": 72,
+          "y": 197.44,
+          "width": 192,
+          "value": 0.318,
+          "label": "Docs"
+        }
+      ],
+      "layout": {
+        "direction": "vertical",
+        "gap": 8,
+        "padding": 12,
+        "align": "start"
+      },
+      "surface": "glass1"
+    },
+    {
+      "type": "subCard",
+      "x": 284,
+      "y": 104,
+      "width": 216,
+      "height": 124,
+      "children": [
+        {
+          "type": "text",
+          "x": 296,
+          "y": 121.7,
+          "role": "bodySmall",
+          "content": "Organic traffic growth"
+        },
+        {
+          "type": "lineChart",
+          "x": 296,
+          "y": 127.34,
+          "width": 192,
+          "height": 80,
+          "gridLines": 4,
+          "domain": [
+            0,
+            1
+          ],
+          "series": [
+            {
+              "role": "secondary",
+              "data": [
+                0.1,
+                0.225,
+                0.4,
+                0.4,
+                0.59,
+                0.51,
+                0.91
+              ]
+            }
+          ]
+        }
+      ],
+      "layout": {
+        "direction": "vertical",
+        "gap": 4,
+        "padding": 12,
+        "align": "start"
+      },
+      "surface": "glass1"
+    },
+    {
+      "type": "subCard",
+      "x": 60,
+      "y": 234,
+      "width": 216,
+      "height": 96,
+      "children": [
+        {
+          "type": "text",
+          "x": 72,
+          "y": 251.7,
+          "role": "bodySmall",
+          "content": "AI Visibility Score growth"
+        },
+        {
+          "type": "lineChart",
+          "x": 72,
+          "y": 257.34,
+          "width": 192,
+          "height": 56,
+          "gridLines": 4,
+          "domain": [
+            0,
+            1
+          ],
+          "series": [
+            {
+              "role": "success",
+              "data": [
+                0.08,
+                0.18,
+                0.3,
+                0.42,
+                0.58,
+                0.74,
+                0.92
+              ]
+            }
+          ]
+        }
+      ],
+      "layout": {
+        "direction": "vertical",
+        "gap": 4,
+        "padding": 12,
+        "align": "start"
+      },
+      "surface": "glass1"
+    },
+    {
+      "type": "subCard",
+      "x": 286,
+      "y": 234,
+      "width": 216,
+      "height": 96,
+      "children": [
+        {
+          "type": "text",
+          "x": 296,
+          "y": 249.7,
+          "role": "bodySmall",
+          "content": "AI Source Breakdown"
+        },
+        {
+          "type": "icon",
+          "x": 296,
+          "y": 259.34,
+          "size": 10,
+          "icon": "search",
+          "tone": "subtle"
+        },
+        {
+          "type": "icon",
+          "x": 296,
+          "y": 277.34,
+          "size": 10,
+          "icon": "bolt",
+          "tone": "subtle"
+        },
+        {
+          "type": "icon",
+          "x": 296,
+          "y": 295.34,
+          "size": 10,
+          "icon": "chat",
+          "tone": "subtle"
+        }
+      ],
+      "layout": {
+        "direction": "vertical",
+        "gap": 8,
+        "padding": 10,
+        "align": "start"
+      },
+      "surface": "glass1"
+    },
+    {
+      "type": "subCard",
+      "x": 338,
+      "y": 256,
+      "width": 216,
+      "height": 100,
+      "children": [
+        {
+          "type": "text",
+          "x": 350,
+          "y": 273.7,
+          "role": "bodySmall",
+          "content": "AI Source Breakdown"
+        },
+        {
+          "type": "text",
+          "x": 350,
+          "y": 286.61,
+          "role": "micro",
+          "content": "Growth contribution from top AI sources",
+          "weight": "semibold",
+          "tone": "muted"
+        },
+        {
+          "type": "progress",
+          "x": 350,
+          "y": 303.83,
+          "width": 176.5,
+          "value": 0.537,
+          "label": "AI Search (Google SGE, Bing AI)"
+        },
+        {
+          "type": "progress",
+          "x": 350,
+          "y": 323.1,
+          "width": 176.5,
+          "value": 0.349,
+          "label": "AI Chatbots (ChatGPT, Claude, Gemini)"
+        },
+        {
+          "type": "progress",
+          "x": 350,
+          "y": 342.38,
+          "width": 176.5,
+          "value": 0.154,
+          "label": "AI Assistants & Other Sources"
+        }
+      ],
+      "layout": {
+        "direction": "vertical",
+        "gap": 8,
+        "padding": 12,
+        "align": "start"
+      },
+      "surface": "highlighted"
+    }
+  ]
+}

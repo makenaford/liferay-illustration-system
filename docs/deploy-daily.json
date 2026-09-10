@@ -1,0 +1,267 @@
+{
+  "id": "deploy-daily",
+  "name": "Deploy Daily with Zero Downtime",
+  "layout": "singlePanel",
+  "canvas": {
+    "width": 560,
+    "height": 372
+  },
+  "glow": [
+    {
+      "cx": 277,
+      "cy": 272,
+      "rx": 168,
+      "ry": 164
+    }
+  ],
+  "panels": [
+    {
+      "x": 66,
+      "y": 46,
+      "width": 430,
+      "height": 280,
+      "surface": "glass2"
+    }
+  ],
+  "elements": [
+    {
+      "type": "text",
+      "x": 78,
+      "y": 78,
+      "role": "title",
+      "content": "Cloud Operations Dashboard"
+    },
+    {
+      "type": "text",
+      "x": 78,
+      "y": 96,
+      "role": "body",
+      "content": "Traffic Volume & Auto-Scaling",
+      "tone": "muted"
+    },
+    {
+      "type": "lineChart",
+      "x": 78,
+      "y": 96,
+      "width": 406,
+      "height": 204,
+      "gridLines": 8,
+      "domain": [
+        0,
+        1
+      ],
+      "referenceLine": 0.765,
+      "series": [
+        {
+          "role": "secondary",
+          "data": [
+            0.005,
+            0.01,
+            0.02,
+            0.03,
+            0.04,
+            0.05,
+            0.07,
+            0.14,
+            0.3,
+            0.42,
+            0.38,
+            0.24,
+            0.15,
+            0.11,
+            0.09,
+            0.08,
+            0.075,
+            0.07
+          ]
+        },
+        {
+          "role": "primary",
+          "data": [
+            0.02,
+            0.02,
+            0.03,
+            0.03,
+            0.04,
+            0.06,
+            0.14,
+            0.45,
+            0.74,
+            0.42,
+            0.16,
+            0.09,
+            0.07,
+            0.055,
+            0.05,
+            0.045,
+            0.04,
+            0.035
+          ]
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "x": 78,
+      "y": 152,
+      "role": "display",
+      "content": "15x"
+    },
+    {
+      "type": "pill",
+      "x": 406,
+      "y": 132,
+      "width": 78,
+      "height": 32,
+      "label": "0 Downtime",
+      "variant": "accent"
+    },
+    {
+      "type": "card",
+      "x": 340,
+      "y": 56,
+      "width": 144,
+      "height": 72,
+      "sheen": "linear",
+      "children": [
+        {
+          "type": "spotIcon",
+          "name": "dashboard",
+          "x": 352,
+          "y": 72,
+          "size": 40
+        },
+        {
+          "type": "group",
+          "x": 398,
+          "y": 73.94800000000001,
+          "width": 46.59699999999998,
+          "height": 33.386999999999986,
+          "layout": {
+            "direction": "vertical",
+            "gap": 10,
+            "padding": 0,
+            "align": "start"
+          },
+          "children": [
+            {
+              "type": "text",
+              "x": 398,
+              "y": 80,
+              "role": "bodySmall",
+              "content": "Uptime"
+            },
+            {
+              "type": "text",
+              "x": 398,
+              "y": 103.85,
+              "role": "title",
+              "content": "99.9%",
+              "weight": "bold"
+            }
+          ],
+          "alignSelf": "center"
+        }
+      ],
+      "layout": {
+        "direction": "horizontal",
+        "gap": 6,
+        "padding": [
+          16,
+          12
+        ],
+        "align": "start"
+      },
+      "surface": "glass3"
+    },
+    {
+      "type": "card",
+      "x": 78,
+      "y": 234,
+      "width": 182,
+      "height": 70,
+      "sheen": "linear",
+      "children": [
+        {
+          "type": "group",
+          "x": 90,
+          "y": 246,
+          "width": 158,
+          "height": 20,
+          "layout": {
+            "direction": "horizontal",
+            "gap": 32,
+            "padding": 0,
+            "align": "start"
+          },
+          "children": [
+            {
+              "type": "text",
+              "x": 90,
+              "y": 259.04,
+              "role": "heading",
+              "content": "Deploy Cadence",
+              "alignSelf": "center"
+            },
+            {
+              "type": "group",
+              "x": 204,
+              "y": 246,
+              "width": 44,
+              "height": 20,
+              "layout": {
+                "direction": "horizontal",
+                "gap": 4,
+                "padding": 0,
+                "align": "start"
+              },
+              "children": [
+                {
+                  "type": "icon",
+                  "x": 204,
+                  "y": 246,
+                  "size": 20,
+                  "icon": "clock",
+                  "tone": "subtle"
+                },
+                {
+                  "type": "icon",
+                  "x": 228,
+                  "y": 246,
+                  "size": 20,
+                  "icon": "calendar",
+                  "tone": "subtle"
+                }
+              ],
+              "alignSelf": "stretch"
+            }
+          ],
+          "alignSelf": "stretch"
+        },
+        {
+          "type": "text",
+          "x": 224.14,
+          "y": 279.83,
+          "role": "subheading",
+          "content": "Daily",
+          "alignSelf": "end"
+        },
+        {
+          "type": "text",
+          "x": 90,
+          "y": 293.43,
+          "role": "caption",
+          "content": "every 3 weeks",
+          "tone": "muted"
+        }
+      ],
+      "layout": {
+        "direction": "vertical",
+        "gap": 6,
+        "padding": 12,
+        "align": "start"
+      },
+      "surface": "glass3"
+    }
+  ]
+}

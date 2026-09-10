@@ -1,0 +1,348 @@
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { buildDocument } from '../src/render.ts';
+import { toReact, resetKeys } from './toReact.tsx';
+import {
+  commit,
+  elementAt,
+  getState,
+  replaceAt,
+  setUI,
+  useEditor,
+} from './state.ts';
+import { isResizable, movedDeep, resizedTo } from './geometry.ts';
+import { boundsOf, type Box } from './bounds.ts';
+import { snap } from './grid.ts';
+import { contentBox } from './layout.ts';
+import { isContainer as isContainerEl, resolveLayout } from '../src/autolayout.ts';
+import { parentOf } from './state.ts';
+
+type DragMode = { kind: 'move' } | { kind: 'resize'; corner: 'se' | 'sw' | 'ne' | 'nw' } | { kind: 'pan' };
+
+export function Canvas() {
+  const doc = useEditor((s) => s.doc);
+  const theme = useEditor((s) => s.theme);
+  const selected = useEditor((s) => s.selected);
+  const zoom = useEditor((s) => s.zoom);
+  const pan = useEditor((s) => s.pan);
+  const outlines = useEditor((s) => s.showOutlines);
+  const snapStep = useEditor((s) => s.snapStep);
+  const showGrid = useEditor((s) => s.showGrid);
+  const padding = useEditor((s) => s.padding);
+
+  const docRef = useRef<HTMLDivElement>(null);
+  const [box, setBox] = useState<Box | null>(null);
+  const drag = useRef<{
+    mode: DragMode;
+    startX: number;
+    startY: number;
+    origin: Box | null;
+    moved: boolean;
+  } | null>(null);
+
+  /*
+   * Auto-layout containers compute their children's coordinates, so the
+   * editor measures and hit-tests against the RESOLVED document. Without
+   * this the selection box would land on the stale coordinates still sitting
+   * in the source document rather than on where the element actually is.
+   */
+  const resolved = useMemo(() => resolveLayout(doc), [doc]);
+
+  /** True when this element's position is computed by a parent container. */
+  const isAutoPlaced = (path: string | null) => {
+    if (!path) return false;
+    const parent = parentOf(path);
+    if (!parent) return false;
+    const p = elementAt(doc, parent);
+    return !!(p && isContainerEl(p) && p.layout);
+  };
+
+  const tree = useMemo(() => {
+    resetKeys();
+    return toReact(buildDocument(doc, theme, { annotate: true }));
+  }, [doc, theme]);
+
+  /* Selection box is re-measured after every render that could change it. */
+  useLayoutEffect(() => {
+    if (!selected) {
+      setBox(null);
+      return;
+    }
+    const el = elementAt(resolved, selected);
+    if (!el) {
+      setBox(null);
+      return;
+    }
+    const node = docRef.current?.querySelector<SVGGraphicsElement>(
+      `[data-path="${selected}"]`,
+    );
+    setBox(boundsOf(el, node ?? null));
+  }, [selected, resolved, theme, zoom]);
+
+  const onPointerDown = (e: React.PointerEvent) => {
+    // Middle-drag or space-drag pans.
+    if (e.button === 1 || e.altKey) {
+      drag.current = { mode: { kind: 'pan' }, startX: e.clientX, startY: e.clientY, origin: null, moved: false };
+      (e.target as Element).setPointerCapture?.(e.pointerId);
+      return;
+    }
+    if (e.button !== 0) return;
+
+    const target = e.target as HTMLElement;
+    const handle = target.closest<HTMLElement>('[data-handle]');
+    if (handle && box) {
+      drag.current = {
+        mode: { kind: 'resize', corner: handle.dataset.handle as 'se' },
+        startX: e.clientX,
+        startY: e.clientY,
+        origin: box,
+        moved: false,
+      };
+      return;
+    }
+
+    const hit = target.closest<SVGGraphicsElement>('[data-path]');
+    const path = hit?.getAttribute('data-path') ?? null;
+    setUI({ selected: path });
+
+    // An auto-placed child cannot be dragged — its position is computed.
+    // Reorder it in the layers panel instead.
+    if (path && !isAutoPlaced(path)) {
+      const el = elementAt(resolved, path);
+      drag.current = {
+        mode: { kind: 'move' },
+        startX: e.clientX,
+        startY: e.clientY,
+        origin: el ? boundsOf(el, hit ?? null) : null,
+        moved: false,
+      };
+    }
+  };
+
+  const onPointerMove = (e: React.PointerEvent) => {
+    const d = drag.current;
+    if (!d) return;
+    const dx = (e.clientX - d.startX) / zoom;
+    const dy = (e.clientY - d.startY) / zoom;
+
+    if (d.mode.kind === 'pan') {
+      setUI({
+        pan: {
+          x: pan.x + (e.clientX - d.startX),
+          y: pan.y + (e.clientY - d.startY),
+        },
+      });
+      d.startX = e.clientX;
+      d.startY = e.clientY;
+      return;
+    }
+
+    if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5 && !d.moved) return;
+
+    const st = getState();
+    if (!st.selected) return;
+    const el = elementAt(st.doc, st.selected);
+    if (!el) return;
+
+    if (d.mode.kind === 'move') {
+      /*
+       * Snap the DESTINATION, not the delta. Snapping the delta preserves
+       * whatever off-grid offset the element started with, so nothing ever
+       * converges onto the grid; snapping where it lands is what pulls a
+       * document into alignment as you work it. Shift bypasses snapping.
+       */
+      const origin = d.origin;
+      let sx = dx;
+      let sy = dy;
+      if (!e.shiftKey && snapStep > 0 && origin) {
+        sx = snap(origin.x + dx, snapStep) - origin.x;
+        sy = snap(origin.y + dy, snapStep) - origin.y;
+      } else if (!e.shiftKey) {
+        sx = Math.round(dx);
+        sy = Math.round(dy);
+      }
+      if (sx === 0 && sy === 0 && !d.moved) return;
+      commit(replaceAt(st.doc, st.selected, movedDeep(el, sx, sy)), d.moved);
+      if (origin) {
+        origin.x += sx;
+        origin.y += sy;
+      }
+      d.startX += sx * zoom;
+      d.startY += sy * zoom;
+    } else if (d.origin && isResizable(el)) {
+      const c = d.mode.corner;
+      // Snap the resulting edge, for the same reason move snaps its
+      // destination — so widths land on the grid, not just change by it.
+      const fit = (edge: number) =>
+        e.shiftKey || snapStep <= 0 ? edge : snap(edge, snapStep);
+      const right = fit(d.origin.x + d.origin.width + dx);
+      const left = fit(d.origin.x + dx);
+      const bottom = fit(d.origin.y + d.origin.height + dy);
+      const top = fit(d.origin.y + dy);
+      const rdx = c === 'se' || c === 'ne' ? right - (d.origin.x + d.origin.width) : left - d.origin.x;
+      const rdy = c === 'se' || c === 'sw' ? bottom - (d.origin.y + d.origin.height) : top - d.origin.y;
+      const w = d.origin.width + (c === 'se' || c === 'ne' ? rdx : -rdx);
+      const h = d.origin.height + (c === 'se' || c === 'sw' ? rdy : -rdy);
+      let next = resizedTo(el, w, h);
+      // Dragging a west/north handle also moves the origin.
+      if (c === 'sw' || c === 'nw') next = { ...next, x: d.origin.x + rdx } as typeof next;
+      if (c === 'ne' || c === 'nw') next = { ...next, y: d.origin.y + rdy } as typeof next;
+      commit(replaceAt(st.doc, st.selected, next), d.moved);
+    }
+    d.moved = true;
+  };
+
+  const onPointerUp = () => {
+    drag.current = null;
+  };
+
+  const onWheel = (e: React.WheelEvent) => {
+    e.preventDefault();
+    if (e.ctrlKey || e.metaKey) {
+      const next = Math.min(6, Math.max(0.25, zoom * (1 - e.deltaY / 500)));
+      setUI({ zoom: next });
+    } else {
+      setUI({ pan: { x: pan.x - e.deltaX, y: pan.y - e.deltaY } });
+    }
+  };
+
+  /* Keyboard: nudge, delete, undo/redo live in App; this handles nudge. */
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const st = getState();
+      if (!st.selected) return;
+      if ((e.target as HTMLElement)?.matches('input, textarea, select')) return;
+      const st2 = getState();
+      const step = e.shiftKey ? 10 : Math.max(st2.snapStep, 1);
+      const delta: Record<string, [number, number]> = {
+        ArrowLeft: [-step, 0],
+        ArrowRight: [step, 0],
+        ArrowUp: [0, -step],
+        ArrowDown: [0, step],
+      };
+      const d = delta[e.key];
+      if (!d) return;
+      const parent = parentOf(st.selected);
+      const p = parent ? elementAt(st.doc, parent) : null;
+      if (p && isContainerEl(p) && p.layout) return;
+      e.preventDefault();
+      const el = elementAt(st.doc, st.selected);
+      if (el) commit(replaceAt(st.doc, st.selected, movedDeep(el, d[0], d[1])));
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
+  const { width, height } = doc.canvas;
+  const hs = 4 / zoom; // handles keep a constant on-screen size
+
+  /*
+   * The padding guide: when a card is selected, show the content box its
+   * children should align to. It's the difference between "nudge until it
+   * looks right" and "put it on the edge", and it's the same box the layout
+   * actions in the inspector operate on.
+   */
+  const selectedEl = selected ? elementAt(resolved, selected) : null;
+  const guide =
+    selectedEl && isContainerEl(selectedEl)
+      ? contentBox(
+          selectedEl,
+          selectedEl.layout && typeof selectedEl.layout.padding === 'number'
+            ? selectedEl.layout.padding
+            : padding,
+        )
+      : null;
+
+  // Drawn as one <path> rather than hundreds of <line>s: the grid is redrawn
+  // on every pan and zoom, and at step 2 on an 860pt canvas that is 600 nodes.
+  const gridPath = (() => {
+    if (!showGrid || snapStep <= 0) return null;
+    // Keep the on-screen density sane when zoomed out.
+    const step = snapStep * Math.max(1, Math.round(4 / (snapStep * zoom)));
+    let d = '';
+    for (let x = 0; x <= width; x += step) d += `M${x} 0V${height}`;
+    for (let y = 0; y <= height; y += step) d += `M0 ${y}H${width}`;
+    return d;
+  })();
+
+  return (
+    <div
+      className="viewport"
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+      onPointerLeave={onPointerUp}
+      onWheel={onWheel}
+    >
+      <div
+        className="stage"
+        style={{
+          transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+          width,
+          height,
+        }}
+      >
+        <div
+          className={`doc${outlines ? ' outlines' : ''}${
+            selected && isAutoPlaced(selected) ? ' auto-child' : ''
+          }`}
+          ref={docRef}
+          style={{ width, height }}
+        >
+          {tree}
+        </div>
+
+        <svg
+          className="overlay"
+          width={width}
+          height={height}
+          viewBox={`0 0 ${width} ${height}`}
+        >
+          {gridPath && (
+            <path d={gridPath} className="grid-lines" strokeWidth={0.5 / zoom} />
+          )}
+
+          {guide && (
+            <rect
+              x={guide.x}
+              y={guide.y}
+              width={guide.width}
+              height={guide.height}
+              className="pad-guide"
+              strokeWidth={1 / zoom}
+              strokeDasharray={`${3 / zoom} ${3 / zoom}`}
+            />
+          )}
+
+          {box && (
+            <g>
+              <rect
+                x={box.x}
+                y={box.y}
+                width={box.width}
+                height={box.height}
+                className="sel-rect"
+                strokeWidth={1 / zoom}
+              />
+              {(['nw', 'ne', 'sw', 'se'] as const).map((c) => {
+                const cx = box.x + (c === 'ne' || c === 'se' ? box.width : 0);
+                const cy = box.y + (c === 'sw' || c === 'se' ? box.height : 0);
+                return (
+                  <rect
+                    key={c}
+                    data-handle={c}
+                    x={cx - hs}
+                    y={cy - hs}
+                    width={hs * 2}
+                    height={hs * 2}
+                    className="sel-handle"
+                    strokeWidth={1 / zoom}
+                  />
+                );
+              })}
+            </g>
+          )}
+        </svg>
+      </div>
+    </div>
+  );
+}

@@ -61,7 +61,24 @@ export function Inspector() {
     const st = getState();
     const current = elementAt(st.doc, selected);
     if (!current) return;
-    const next = { ...current, [key]: value } as Element;
+    let next = { ...current, [key]: value } as Element;
+
+    /*
+     * Typing a width is a resize too. With the ratio locked, the other axis
+     * follows here exactly as it does on a handle drag — otherwise the lock
+     * would hold for the mouse and quietly not for the keyboard.
+     */
+    if (st.lockAspect && (key === 'width' || key === 'height') && typeof value === 'number') {
+      const box = current as Element & { width?: number; height?: number };
+      if (typeof box.width === 'number' && typeof box.height === 'number' && box.width > 0 && box.height > 0) {
+        const aspect = box.width / box.height;
+        const other = key === 'width'
+          ? { height: Math.round((value / aspect) * 100) / 100 }
+          : { width: Math.round(value * aspect * 100) / 100 };
+        next = { ...next, ...other } as Element;
+      }
+    }
+
     commit(replaceAt(st.doc, selected, next));
   };
 

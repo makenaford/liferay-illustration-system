@@ -36,6 +36,7 @@ export function App() {
   const snapStep = useEditor((s) => s.snapStep);
   const showGrid = useEditor((s) => s.showGrid);
   const smartGuides = useEditor((s) => s.smartGuides);
+  const lockAspect = useEditor((s) => s.lockAspect);
   const selected = useEditor((s) => s.selected);
   const [tab, setTab] = useState<Tab>('layers');
   const [source, setSource] = useState<{ filename: string; text: string } | null>(null);
@@ -106,6 +107,7 @@ export function App() {
       if (e.key === 'o') setUI({ showOutlines: !getState().showOutlines });
       if (e.key === 'g') setUI({ showGrid: !getState().showGrid });
       if (e.key === 'a') setUI({ smartGuides: !getState().smartGuides });
+      if (e.key === 'r') setUI({ lockAspect: !getState().lockAspect });
     };
     /**
      * Native clipboard events. Using these rather than the async Clipboard API
@@ -241,6 +243,15 @@ export function App() {
 
         <button
           type="button"
+          className={lockAspect ? 'on' : ''}
+          onClick={() => setUI({ lockAspect: !lockAspect })}
+          title="Lock proportions when resizing (r) — hold ⌘ while dragging to invert"
+        >
+          {lockAspect ? '🔒 Ratio' : 'Ratio'}
+        </button>
+
+        <button
+          type="button"
           className={smartGuides ? 'on' : ''}
           onClick={() => setUI({ smartGuides: !smartGuides })}
           title="Alignment guides while dragging — edges and centres (a)"
@@ -345,7 +356,7 @@ export function App() {
             <span>{selected ? `selected ${selected}` : 'nothing selected'}</span>
             {flash && <span className="flash">{flash}</span>}
             <span className="hint">
-              drag move · arrows nudge · ⌘C/⌘V/⌘D · [ ] z-order · g grid · t theme
+              drag move · arrows nudge · ⌘C/⌘V/⌘D · [ ] z-order · g grid · a guides · r ratio · t theme
             </span>
           </footer>
         </main>

@@ -828,7 +828,8 @@ wins on systematised speed instead.
 | **Card layout** | For absolute cards: content box drawn as a guide, padding from the spacing scale, and actions over children — align left/centre/right, fit widths, distribute, stack at 4/8/12, snap subtree to grid. |
 | **Clipboard** | ⌘C / ⌘X / ⌘V / ⌘D, plus buttons in the inspector. Works across documents and browser tabs; pasting into a different card preserves the element's offset *within* its card. |
 | **Smart guides** | Figma-style alignment lines while dragging or resizing. Edges and centres, against siblings, the containing card and the artboard. A match both draws a line and pulls the element onto it. Toggle with `a`. |
-| **Keyboard** | Arrows nudge 1px, shift-arrows 10px, shift-drag for sub-pixel, ⌫ delete, esc deselect, `t` theme, `o` outlines, `g` grid, `a` guides, ⌘Z / ⇧⌘Z. |
+| **Ratio lock** | Keep an element's proportions on resize — handle drags and the Inspector's W/H alike. Toggle with `r`; hold ⌘/Ctrl mid-drag to invert it for one gesture. |
+| **Keyboard** | Arrows nudge 1px, shift-arrows 10px, shift-drag for sub-pixel, ⌫ delete, esc deselect, `t` theme, `o` outlines, `g` grid, `a` guides, `r` ratio, ⌘Z / ⇧⌘Z. |
 | **Inspector** | Generated entirely from `editor/schema.ts` — no per-element UI code. |
 | **Document panel** | Canvas size, hero panels, and ambient glows (with a live blur slider). |
 | **Layers** | The element tree, and the only place z-order changes. |
@@ -837,6 +838,34 @@ wins on systematised speed instead.
 | **Export** | Optimised SVG per theme, or the `.json` document. Editor metadata is stripped. |
 | **Undo** | Full history. A drag coalesces into one step, not sixty. |
 | **View** | ⌘scroll zoom, ⌥drag pan, zoom controls, and an outline overlay for debugging. |
+
+## Resizing
+
+Resize works from the corner that **isn't** moving. The anchor is the opposite
+corner and it holds exactly for every handle, which is what makes dragging a
+north-west handle behave like dragging a south-east one — and what let the
+ratio lock drop in without four separate cases. The earlier version tracked
+per-axis deltas and special-cased west and north handles; the anchor model
+replaced it.
+
+**Ratio lock** (`r`, or the Ratio button) keeps proportions. The axis that
+moved further drives and the other is derived — measured as a *fraction of the
+original size*, not in pixels, so a wide short element doesn't always follow
+its width. Deriving both from the pointer would fight the constraint.
+
+Holding ⌘/Ctrl inverts the lock for one drag, the way shift bypasses snapping,
+so neither setting can trap you.
+
+Two details that matter:
+
+- **A derived edge drops its guide.** If the height is computed from the width,
+  nothing was snapped to on that axis, so showing an alignment line there would
+  be a lie. The guides are cleared when the lock engages.
+- **The Inspector's W and H honour it too.** Typing a width is a resize; the
+  lock holding for the mouse and quietly not for the keyboard would be worse
+  than no lock. A locked ratio can therefore produce a fractional height —
+  inherent to the feature, and `npm run audit` catches it if one lands in a
+  shipped document.
 
 ## Smart guides
 

@@ -30,6 +30,7 @@ export function Canvas() {
   const showGrid = useEditor((s) => s.showGrid);
   const padding = useEditor((s) => s.padding);
   const smartGuides = useEditor((s) => s.smartGuides);
+  const lockAspect = useEditor((s) => s.lockAspect);
 
   const docRef = useRef<HTMLDivElement>(null);
   const [box, setBox] = useState<Box | null>(null);
@@ -272,14 +273,49 @@ export function Canvas() {
       const left = fit(d.origin.x + dx, 'x', movingX === 'left');
       const bottom = fit(d.origin.y + d.origin.height + dy, 'y', movingY === 'bottom');
       const top = fit(d.origin.y + dy, 'y', movingY === 'top');
-      const rdx = c === 'se' || c === 'ne' ? right - (d.origin.x + d.origin.width) : left - d.origin.x;
-      const rdy = c === 'se' || c === 'sw' ? bottom - (d.origin.y + d.origin.height) : top - d.origin.y;
-      const w = d.origin.width + (c === 'se' || c === 'ne' ? rdx : -rdx);
-      const h = d.origin.height + (c === 'se' || c === 'sw' ? rdy : -rdy);
+      /*
+       * Resize around the corner that ISN'T moving.
+       *
+       * The anchor is the opposite corner, and it stays exactly where it was
+       * for every handle — which is what makes dragging a north-west handle
+       * behave like dragging a south-east one, and what lets the ratio lock
+       * drop in without four separate cases.
+       */
+      const anchorX = movingX === 'right' ? d.origin.x : d.origin.x + d.origin.width;
+      const anchorY = movingY === 'bottom' ? d.origin.y : d.origin.y + d.origin.height;
+      let edgeX = movingX === 'right' ? right : left;
+      let edgeY = movingY === 'bottom' ? bottom : top;
+
+      let w = Math.abs(edgeX - anchorX);
+      let h = Math.abs(edgeY - anchorY);
+
+      /*
+       * Ratio lock. ⌘/Ctrl inverts it for one drag, the way shift does for
+       * snapping, so neither setting traps you.
+       *
+       * The axis that moved further — measured as a fraction of the original
+       * size, not in pixels, so a wide short element doesn't always follow its
+       * width — drives, and the other is derived. Deriving both from the
+       * pointer would fight the constraint.
+       */
+      const locked = (lockAspect ? 1 : 0) ^ (e.metaKey || e.ctrlKey ? 1 : 0);
+      if (locked && d.origin.width > 0 && d.origin.height > 0) {
+        const aspect = d.origin.width / d.origin.height;
+        if (Math.abs(w - d.origin.width) / d.origin.width >=
+            Math.abs(h - d.origin.height) / d.origin.height) {
+          h = w / aspect;
+        } else {
+          w = h * aspect;
+        }
+        // Re-place the moving edges so the anchor corner holds.
+        edgeX = movingX === 'right' ? anchorX + w : anchorX - w;
+        edgeY = movingY === 'bottom' ? anchorY + h : anchorY - h;
+        // A derived edge was never snapped to, so its guide would be a lie.
+        hits.length = 0;
+      }
+
       let next = resizedTo(el, w, h);
-      // Dragging a west/north handle also moves the origin.
-      if (c === 'sw' || c === 'nw') next = { ...next, x: d.origin.x + rdx } as typeof next;
-      if (c === 'ne' || c === 'nw') next = { ...next, y: d.origin.y + rdy } as typeof next;
+      next = { ...next, x: Math.min(anchorX, edgeX), y: Math.min(anchorY, edgeY) } as typeof next;
       commit(replaceAt(st.doc, st.selected, next), d.moved);
       setGuides(hits);
     }

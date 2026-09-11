@@ -23,6 +23,8 @@ export interface EditorState {
   showGrid: boolean;
   /** Figma-style alignment guides while dragging. */
   smartGuides: boolean;
+  /** Keep an element's proportions when resizing it. */
+  lockAspect: boolean;
   /** Card padding used by the layout actions and the padding guide. */
   padding: number;
 }
@@ -52,6 +54,7 @@ export function initStore(doc: Doc) {
       snapStep: LAYOUT.grid,
       showGrid: false,
       smartGuides: true,
+      lockAspect: false,
       padding: LAYOUT.cardPadding,
     },
     past: [],

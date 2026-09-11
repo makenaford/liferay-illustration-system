@@ -25,7 +25,11 @@ export function Pill(ctx: Ctx, props: PillProps): VNode {
   // fill, or the status colour. No hairline on any of them — the design
   // system binds no stroke to the Label's filled or glass cells.
   let fill = tk.accent.base;
-  let textColor: string | undefined;
+  // An accent pill is brand blue in BOTH themes, so its label is the on-accent
+  // colour in both. Leaving this to the text default meant light mode drew
+  // near-black #262c37 on #0b5fff — it only looked right in dark mode, where
+  // the default happens to be near-white.
+  let textColor: string | undefined = tk.text.onAccent;
   const stroke: string | undefined = undefined;
 
   if (variant === 'glass') {

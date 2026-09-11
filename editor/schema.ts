@@ -16,9 +16,20 @@ import type { Element } from '../src/document.ts';
  * tokens, so a designer physically cannot place an off-system colour.
  */
 
-export type Field =
+/**
+ * A field descriptor, parameterised by the keys its element type actually has.
+ *
+ * This generic is the whole point. The Inspector writes `el[field.key]`, so a
+ * key that does not exist on the element silently does nothing — the control
+ * renders, accepts typing, and changes no artwork. That is exactly what
+ * happened when a type-scale migration blind-replaced the string `label`:
+ * five element types ended up with `key: 'subheading'`, and their Label field
+ * quietly stopped working. Binding the key to `keyof Element` turns that from
+ * a silent no-op into a compile error.
+ */
+export type Field<K extends string = string> =
   | {
-      key: string;
+      key: K;
       label: string;
       kind: 'number';
       step?: number;
@@ -30,10 +41,10 @@ export type Field =
        */
       default?: number;
     }
-  | { key: string; label: string; kind: 'text' }
-  | { key: string; label: string; kind: 'textarea' }
+  | { key: K; label: string; kind: 'text' }
+  | { key: K; label: string; kind: 'textarea' }
   | {
-      key: string;
+      key: K;
       label: string;
       kind: 'boolean';
       /**
@@ -44,25 +55,25 @@ export type Field =
       default?: boolean | ((el: Element) => boolean);
     }
   | {
-      key: string;
+      key: K;
       label: string;
       kind: 'select';
       options: readonly string[];
       /** Display text per option, where the raw value needs annotating. */
       labels?: Record<string, string>;
     }
-  | { key: string; label: string; kind: 'numbers'; label2?: string }
-  | { key: string; label: string; kind: 'series' }
-  | { key: string; label: string; kind: 'point' }
-  | { key: string; label: string; kind: 'iconList' }
+  | { key: K; label: string; kind: 'numbers'; label2?: string }
+  | { key: K; label: string; kind: 'series' }
+  | { key: K; label: string; kind: 'point' }
+  | { key: K; label: string; kind: 'iconList' }
   /** A colour, chosen from the design-system palette with swatches. */
-  | { key: string; label: string; kind: 'token' }
+  | { key: K; label: string; kind: 'token' }
   /**
    * A file from the user's computer. Patches several props at once (markup
    * plus viewBox, or data URI plus natural size), so the Inspector handles
    * this kind through `onPatch` rather than the single-key `onChange`.
    */
-  | { key: string; label: string; kind: 'file' };
+  | { key: K; label: string; kind: 'file' };
 
 export const ROLES = Object.keys(TYPE_ROLES);
 export const WEIGHTS = ['regular', 'semibold', 'bold'] as const;
@@ -80,18 +91,23 @@ export const SPOT_LABELS: Record<string, string> = Object.fromEntries(
   ]),
 );
 
-const XY: Field[] = [
+const XY: Field<'x' | 'y'>[] = [
   { key: 'x', label: 'X', kind: 'number' },
   { key: 'y', label: 'Y', kind: 'number' },
 ];
-const WH: Field[] = [
+const WH: Field<'width' | 'height'>[] = [
   { key: 'width', label: 'W', kind: 'number', min: 1 },
   { key: 'height', label: 'H', kind: 'number', min: 1 },
 ];
 
 const ICON_TONES = ['subtle', 'soft', 'accent', 'primary', 'body'] as const;
 
-export const SCHEMA: Record<Element['type'], { label: string; fields: Field[] }> = {
+/** The property names an element of type `T` actually carries. */
+type KeysOf<T extends Element['type']> = Extract<keyof Extract<Element, { type: T }>, string>;
+
+export const SCHEMA: {
+  [T in Element['type']]: { label: string; fields: Field<KeysOf<T>>[] };
+} = {
   text: {
     label: 'Text',
     fields: [
@@ -133,7 +149,7 @@ export const SCHEMA: Record<Element['type'], { label: string; fields: Field[] }>
   pill: {
     label: 'Pill',
     fields: [
-      { key: 'subheading', label: 'Label', kind: 'text' },
+      { key: 'label', label: 'Label', kind: 'text' },
       ...XY,
       ...WH,
       { key: 'variant', label: 'Variant', kind: 'select', options: ['accent', 'glass', 'success'] },
@@ -142,7 +158,7 @@ export const SCHEMA: Record<Element['type'], { label: string; fields: Field[] }>
   badge: {
     label: 'Badge',
     fields: [
-      { key: 'subheading', label: 'Label', kind: 'text' },
+      { key: 'label', label: 'Label', kind: 'text' },
       ...XY,
       { key: 'width', label: 'W', kind: 'number', min: 1 },
       { key: 'height', label: 'H', kind: 'number', min: 1, default: 13 },
@@ -170,7 +186,7 @@ export const SCHEMA: Record<Element['type'], { label: string; fields: Field[] }>
   button: {
     label: 'Button',
     fields: [
-      { key: 'subheading', label: 'Label', kind: 'text' },
+      { key: 'label', label: 'Label', kind: 'text' },
       ...XY,
       ...WH,
       {
@@ -234,7 +250,7 @@ export const SCHEMA: Record<Element['type'], { label: string; fields: Field[] }>
   progress: {
     label: 'Progress row',
     fields: [
-      { key: 'subheading', label: 'Label', kind: 'text' },
+      { key: 'label', label: 'Label', kind: 'text' },
       ...XY,
       { key: 'width', label: 'W', kind: 'number', min: 1 },
       { key: 'value', label: 'Value 0-1', kind: 'number', step: 0.01, min: 0 },
@@ -255,7 +271,7 @@ export const SCHEMA: Record<Element['type'], { label: string; fields: Field[] }>
     label: 'Stat block',
     fields: [
       { key: 'value', label: 'Value', kind: 'text' },
-      { key: 'subheading', label: 'Label', kind: 'text' },
+      { key: 'label', label: 'Label', kind: 'text' },
       ...XY,
       { key: 'valueRole', label: 'Value style', kind: 'select', options: ROLES },
       { key: 'labelRole', label: 'Label style', kind: 'select', options: ROLES },

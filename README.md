@@ -640,6 +640,22 @@ Two smaller ones: `barChart` gained `gridLines` (the same dashed rules the line
 chart already drew), and `lineChart` gained `markers` — a dot at each data
 point, which says "these are readings" rather than "this is a trend".
 
+### Two follow-ups
+
+**Light mode's `highlighted` was too quiet.** In dark, a blue cast shadow reads
+instantly against near-black; on a near-white stage the same shadow is barely a
+tint. This is the one card in an illustration saying "look here", and at 22%
+fill with a 55% edge it was not surviving being seen small. Light now carries a
+42% fill, a 95% edge and a 42% glow. The change is inside the `light` theme
+block only — `ai-visibility-dashboard.dark.svg` rebuilds byte-identical, which
+is the check that proves it.
+
+**The type steps were uneven.** Card titles at `heading` (12.6) sat 1.33x below
+the hero numbers and 1.56x above the body — a step that was nearly flat at the
+top and wide at the bottom. Moving them to `subheading` (10.8) and the table
+rows to `caption` (7.2) makes the three visible steps a consistent ~1.5x:
+16.7 / 10.8 / 7.2.
+
 The mockup's own title reads **"Top oportunities"**. The document spells it
 correctly; that is the third typo the port has turned up, after "Deploy
 Cadece" and "HIPPA".

@@ -143,7 +143,7 @@
           "type": "text",
           "x": 48,
           "y": 112,
-          "role": "heading",
+          "role": "subheading",
           "content": "Revenue Breakdown"
         },
         {
@@ -257,7 +257,7 @@
           "type": "text",
           "x": 298,
           "y": 112,
-          "role": "heading",
+          "role": "subheading",
           "content": "Quarterly Revenue"
         },
         {
@@ -359,7 +359,7 @@
           "type": "text",
           "x": 48,
           "y": 234,
-          "role": "heading",
+          "role": "subheading",
           "content": "Annual Growth"
         },
         {
@@ -449,7 +449,7 @@
           "type": "text",
           "x": 298,
           "y": 234,
-          "role": "heading",
+          "role": "subheading",
           "content": "Top opportunities"
         },
         {
@@ -464,21 +464,21 @@
           "type": "text",
           "x": 298,
           "y": 272,
-          "role": "bodySmall",
+          "role": "caption",
           "content": "Partner Service 1"
         },
         {
           "type": "text",
           "x": 298,
           "y": 292,
-          "role": "bodySmall",
+          "role": "caption",
           "content": "Co-Sell Service 2"
         },
         {
           "type": "text",
           "x": 298,
           "y": 312,
-          "role": "bodySmall",
+          "role": "caption",
           "content": "Partner Service 3"
         }
       ]

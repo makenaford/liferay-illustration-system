@@ -588,11 +588,20 @@ export const light: Tokens = {
      * material as its neighbours while still pulling the eye.
      */
     highlighted: {
-      fill: { angle: 60, stops: [{ color: '#ADC9FF', opacity: 0.22 }, { color: STEP_02.color, opacity: 0.03 }] },
-      line: { angle: 225, stops: [{ color: '#0B5FFF', opacity: 0.55 }, { color: '#0B5FFF', opacity: 0.25 }] },
+      /*
+       * Light mode's `highlighted` has to work harder than dark's.
+       *
+       * In dark, a blue cast shadow reads instantly against near-black. On a
+       * near-white stage the same shadow is barely a tint, so the emphasis has
+       * to come from the fill and the edge instead — this is the one card in
+       * an illustration that is saying "look here", and at 22% fill with a 55%
+       * edge it was not saying it loudly enough to survive being seen small.
+       */
+      fill: { angle: 60, stops: [{ color: '#ADC9FF', opacity: 0.42 }, { color: '#6FA0FF', opacity: 0.12 }] },
+      line: { angle: 225, stops: [{ color: '#0B5FFF', opacity: 0.95 }, { color: '#0B5FFF', opacity: 0.5 }] },
       shadow: [
-        { dy: 10, blur: 28, color: '#0B5FFF', opacity: 0.28 },
-        { dy: 2, blur: 6, color: '#0B5FFF', opacity: 0.16 },
+        { dy: 10, blur: 30, color: '#0B5FFF', opacity: 0.42 },
+        { dy: 2, blur: 6, color: '#0B5FFF', opacity: 0.24 },
       ],
       blur: GLASS_BLUR,
     },

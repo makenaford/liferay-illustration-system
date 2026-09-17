@@ -839,6 +839,22 @@ primitives that must agree pixel-for-pixel forever.
 
 ---
 
+## Seeing them in place
+
+`npm run showcase` writes `out/artifact/showcase.html` — every document, both
+themes, inlined as real SVG rather than screenshots. Three of them sit in the
+kind of marketing section they were drawn for, three run as a feature row, and
+all ten appear at full size on a contact sheet with their element counts.
+
+The page's theme control switches the artwork along with the chrome, which is
+the system's whole claim made rather than asserted: one source document, two
+renderings, no second file to keep in sync. It follows the viewer's OS theme
+until they choose otherwise.
+
+It is generated, not hand-written, for a practical reason — it embeds about
+1MB of artwork, and a page that has to be regenerated whenever a document
+changes should not be something anyone edits by hand.
+
 # The editor
 
 A standalone web app for composing illustrations from the library.

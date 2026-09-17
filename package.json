@@ -16,6 +16,7 @@
     "nest": "node --experimental-strip-types scripts/nest.ts",
     "normalize": "node --experimental-strip-types scripts/normalize.ts",
     "preview": "vite build && vite preview",
+    "showcase": "node --experimental-strip-types scripts/build-showcase.ts",
     "snap:sizes": "node --experimental-strip-types scripts/snap-sizes.ts",
     "surface-pass": "node --experimental-strip-types scripts/surface-pass.ts",
     "surfaces": "node --experimental-strip-types scripts/surfaces.ts",

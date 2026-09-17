@@ -230,6 +230,7 @@ export const SCHEMA: {
   lineChart: {
     label: 'Line chart',
     fields: [
+      { key: 'markers', label: 'Point dots', kind: 'boolean' },
       ...XY,
       ...WH,
       { key: 'series', label: 'Series', kind: 'series' },
@@ -240,6 +241,7 @@ export const SCHEMA: {
   barChart: {
     label: 'Bar chart',
     fields: [
+      { key: 'gridLines', label: 'Grid lines', kind: 'number', min: 0 },
       ...XY,
       ...WH,
       { key: 'data', label: 'Values', kind: 'numbers' },

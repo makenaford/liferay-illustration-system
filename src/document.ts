@@ -215,6 +215,8 @@ export interface LineChartEl extends LayoutChild {
   gridLines?: number;
   domain?: [number, number];
   referenceLine?: number;
+  /** A dot at every data point. */
+  markers?: boolean;
 }
 
 export interface BarChartEl extends LayoutChild {
@@ -223,9 +225,13 @@ export interface BarChartEl extends LayoutChild {
   y: number;
   width: number;
   height: number;
-  data: number[];
+  /** A single series. Ignored when `series` is set. */
+  data?: number[];
+  /** Two or more bars per category, drawn side by side — a comparison. */
+  series?: { data: (number | null)[]; tone?: 'accent' | 'soft' }[];
   barRatio?: number;
   gradient?: boolean;
+  gridLines?: number;
 }
 
 export interface ProgressEl extends LayoutChild {

@@ -237,6 +237,12 @@ export interface Tokens {
 
   chart: {
     primary: string;
+    /**
+     * The second series in a comparison chart. Far enough from `secondary`
+     * to read as a different thing at bar width — `accent/soft` is only one
+     * step off the primary in light mode and the two bars merge.
+     */
+    compare: string;
     secondary: string;
     gridLine: string;
     gridLineOpacity: number;
@@ -494,6 +500,7 @@ export const dark: Tokens = {
   chart: {
     primary: '#FFFFFF',
     secondary: D('brand-primary-primary'),
+    compare: D('brand-primary-lighten-3'),
     gridLine: '#FFFFFF',
     gridLineOpacity: 0.3,
   },
@@ -700,6 +707,7 @@ export const light: Tokens = {
   chart: {
     primary: L('surfaces-text-primary'),
     secondary: L('brand-primary-primary'),
+    compare: L('brand-primary-lighten-3'),
     gridLine: INK,
     gridLineOpacity: 0.12,
   },

@@ -613,6 +613,37 @@ The editor works in artboard units — elements, grid, selection and drag all
 share one coordinate system, and only the export scales. The Document panel
 names the artboard and offers **Export 1:1** to drop it.
 
+## Recreating a mockup
+
+`docs/partner-dashboard.json` is a partner-performance dashboard rebuilt from a
+Figma mockup. It is the first document authored in the system rather than
+ported into it, and it exposed three gaps worth recording — each fixed in the
+primitives rather than worked around in the document.
+
+**Bar charts could not compare two things.** `data` was a flat array with one
+colour. A paired bar chart — this quarter's two series side by side — had no
+way to be expressed. `BarChart` now takes `series`, each with a `tone`, and
+groups them per category.
+
+**A `null` datum leaves a slot empty.** Two differently-toned bars standing
+apart is a different picture from two shoulder to shoulder, and with grouping
+alone you can only draw the second. `series: [{data: [32, null]}, {data:
+[null, 88]}]` gives two categories with one bar each.
+
+**There was no second chart blue.** `accent/soft` is `Brand/Primary/Lighten/1`
+in light mode — one step off the primary — so a paired bar chart drew two bars
+that read as the same colour. Added `chart/compare`
+(`Brand/Primary/Lighten/3`), which is far enough away to survive being seen at
+bar width. That is 42 semantic tokens, not 41.
+
+Two smaller ones: `barChart` gained `gridLines` (the same dashed rules the line
+chart already drew), and `lineChart` gained `markers` — a dot at each data
+point, which says "these are readings" rather than "this is a trend".
+
+The mockup's own title reads **"Top oportunities"**. The document spells it
+correctly; that is the third typo the port has turned up, after "Deploy
+Cadece" and "HIPPA".
+
 ## The conformance audit
 
 `npm run audit` checks the nine documents against the system and reports

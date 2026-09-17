@@ -1,0 +1,487 @@
+{
+  "id": "partner-dashboard",
+  "name": "Partner Performance Dashboard",
+  "layout": "dashboard",
+  "canvas": {
+    "width": 560,
+    "height": 372
+  },
+  "glow": [
+    {
+      "cx": 120,
+      "cy": 60,
+      "rx": 150,
+      "ry": 140,
+      "blur": 100,
+      "opacity": 0.4
+    },
+    {
+      "cx": 470,
+      "cy": 320,
+      "rx": 160,
+      "ry": 150,
+      "blur": 100,
+      "opacity": 0.4
+    }
+  ],
+  "panels": [
+    {
+      "x": 24,
+      "y": 18,
+      "width": 512,
+      "height": 322,
+      "radius": 8,
+      "surface": "glass2"
+    }
+  ],
+  "elements": [
+    {
+      "type": "subCard",
+      "x": 36,
+      "y": 30,
+      "width": 156,
+      "height": 54,
+      "surface": "glass1",
+      "children": [
+        {
+          "type": "text",
+          "x": 46,
+          "y": 46,
+          "role": "label",
+          "content": "Registered",
+          "tone": "muted"
+        },
+        {
+          "type": "text",
+          "x": 46,
+          "y": 64,
+          "role": "title",
+          "content": "120"
+        },
+        {
+          "type": "progress",
+          "x": 46,
+          "y": 74,
+          "width": 136,
+          "value": 0.12
+        }
+      ]
+    },
+    {
+      "type": "subCard",
+      "x": 202,
+      "y": 30,
+      "width": 156,
+      "height": 54,
+      "surface": "glass1",
+      "children": [
+        {
+          "type": "text",
+          "x": 212,
+          "y": 46,
+          "role": "label",
+          "content": "Co-Sell",
+          "tone": "muted"
+        },
+        {
+          "type": "text",
+          "x": 212,
+          "y": 64,
+          "role": "title",
+          "content": "45"
+        },
+        {
+          "type": "progress",
+          "x": 212,
+          "y": 74,
+          "width": 136,
+          "value": 0.55
+        }
+      ]
+    },
+    {
+      "type": "subCard",
+      "x": 368,
+      "y": 30,
+      "width": 156,
+      "height": 54,
+      "surface": "glass1",
+      "children": [
+        {
+          "type": "text",
+          "x": 378,
+          "y": 46,
+          "role": "label",
+          "content": "Close Won",
+          "tone": "muted"
+        },
+        {
+          "type": "text",
+          "x": 378,
+          "y": 64,
+          "role": "title",
+          "content": "30"
+        },
+        {
+          "type": "progress",
+          "x": 378,
+          "y": 74,
+          "width": 136,
+          "value": 0.08
+        }
+      ]
+    },
+    {
+      "type": "subCard",
+      "x": 36,
+      "y": 92,
+      "width": 238,
+      "height": 114,
+      "surface": "glass1",
+      "children": [
+        {
+          "type": "text",
+          "x": 48,
+          "y": 112,
+          "role": "heading",
+          "content": "Revenue Breakdown"
+        },
+        {
+          "type": "text",
+          "x": 66,
+          "y": 128,
+          "role": "micro",
+          "content": "100K",
+          "tone": "muted",
+          "anchor": "end"
+        },
+        {
+          "type": "text",
+          "x": 66,
+          "y": 140,
+          "role": "micro",
+          "content": "80K",
+          "tone": "muted",
+          "anchor": "end"
+        },
+        {
+          "type": "text",
+          "x": 66,
+          "y": 150,
+          "role": "micro",
+          "content": "60K",
+          "tone": "muted",
+          "anchor": "end"
+        },
+        {
+          "type": "text",
+          "x": 66,
+          "y": 162,
+          "role": "micro",
+          "content": "40K",
+          "tone": "muted",
+          "anchor": "end"
+        },
+        {
+          "type": "text",
+          "x": 66,
+          "y": 172,
+          "role": "micro",
+          "content": "20K",
+          "tone": "muted",
+          "anchor": "end"
+        },
+        {
+          "type": "text",
+          "x": 66,
+          "y": 184,
+          "role": "micro",
+          "content": "0",
+          "tone": "muted",
+          "anchor": "end"
+        },
+        {
+          "type": "barChart",
+          "x": 72,
+          "y": 126,
+          "width": 186,
+          "height": 56,
+          "gridLines": 6,
+          "barRatio": 0.92,
+          "series": [
+            {
+              "data": [
+                32,
+                null
+              ],
+              "tone": "accent"
+            },
+            {
+              "data": [
+                null,
+                88
+              ],
+              "tone": "soft"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "x": 118,
+          "y": 196,
+          "role": "micro",
+          "content": "Liferay",
+          "tone": "muted",
+          "anchor": "middle"
+        },
+        {
+          "type": "text",
+          "x": 212,
+          "y": 196,
+          "role": "micro",
+          "content": "Partner",
+          "tone": "muted",
+          "anchor": "middle"
+        }
+      ]
+    },
+    {
+      "type": "subCard",
+      "x": 286,
+      "y": 92,
+      "width": 238,
+      "height": 114,
+      "surface": "glass1",
+      "children": [
+        {
+          "type": "text",
+          "x": 298,
+          "y": 112,
+          "role": "heading",
+          "content": "Quarterly Revenue"
+        },
+        {
+          "type": "text",
+          "x": 316,
+          "y": 128,
+          "role": "micro",
+          "content": "100K",
+          "tone": "muted",
+          "anchor": "end"
+        },
+        {
+          "type": "text",
+          "x": 316,
+          "y": 140,
+          "role": "micro",
+          "content": "80K",
+          "tone": "muted",
+          "anchor": "end"
+        },
+        {
+          "type": "text",
+          "x": 316,
+          "y": 150,
+          "role": "micro",
+          "content": "60K",
+          "tone": "muted",
+          "anchor": "end"
+        },
+        {
+          "type": "text",
+          "x": 316,
+          "y": 162,
+          "role": "micro",
+          "content": "40K",
+          "tone": "muted",
+          "anchor": "end"
+        },
+        {
+          "type": "text",
+          "x": 316,
+          "y": 172,
+          "role": "micro",
+          "content": "20K",
+          "tone": "muted",
+          "anchor": "end"
+        },
+        {
+          "type": "text",
+          "x": 316,
+          "y": 184,
+          "role": "micro",
+          "content": "0",
+          "tone": "muted",
+          "anchor": "end"
+        },
+        {
+          "type": "barChart",
+          "x": 322,
+          "y": 126,
+          "width": 186,
+          "height": 56,
+          "gridLines": 6,
+          "barRatio": 0.74,
+          "series": [
+            {
+              "data": [
+                30,
+                45,
+                56,
+                62,
+                78
+              ],
+              "tone": "accent"
+            },
+            {
+              "data": [
+                22,
+                40,
+                48,
+                70,
+                92
+              ],
+              "tone": "soft"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "subCard",
+      "x": 36,
+      "y": 214,
+      "width": 238,
+      "height": 114,
+      "surface": "glass1",
+      "children": [
+        {
+          "type": "text",
+          "x": 48,
+          "y": 234,
+          "role": "heading",
+          "content": "Annual Growth"
+        },
+        {
+          "type": "text",
+          "x": 66,
+          "y": 250,
+          "role": "micro",
+          "content": "100%",
+          "tone": "muted",
+          "anchor": "end"
+        },
+        {
+          "type": "text",
+          "x": 66,
+          "y": 264,
+          "role": "micro",
+          "content": "75%",
+          "tone": "muted",
+          "anchor": "end"
+        },
+        {
+          "type": "text",
+          "x": 66,
+          "y": 280,
+          "role": "micro",
+          "content": "50%",
+          "tone": "muted",
+          "anchor": "end"
+        },
+        {
+          "type": "text",
+          "x": 66,
+          "y": 294,
+          "role": "micro",
+          "content": "25%",
+          "tone": "muted",
+          "anchor": "end"
+        },
+        {
+          "type": "text",
+          "x": 66,
+          "y": 308,
+          "role": "micro",
+          "content": "0",
+          "tone": "muted",
+          "anchor": "end"
+        },
+        {
+          "type": "lineChart",
+          "x": 72,
+          "y": 248,
+          "width": 186,
+          "height": 58,
+          "gridLines": 4,
+          "markers": true,
+          "domain": [
+            0,
+            100
+          ],
+          "series": [
+            {
+              "data": [
+                4,
+                26,
+                44,
+                56,
+                68,
+                78,
+                92
+              ],
+              "role": "success",
+              "strokeWidth": 1.2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "subCard",
+      "x": 286,
+      "y": 214,
+      "width": 238,
+      "height": 114,
+      "surface": "highlighted",
+      "children": [
+        {
+          "type": "text",
+          "x": 298,
+          "y": 234,
+          "role": "heading",
+          "content": "Top opportunities"
+        },
+        {
+          "type": "text",
+          "x": 298,
+          "y": 250,
+          "role": "label",
+          "content": "Name",
+          "tone": "muted"
+        },
+        {
+          "type": "text",
+          "x": 298,
+          "y": 272,
+          "role": "bodySmall",
+          "content": "Partner Service 1"
+        },
+        {
+          "type": "text",
+          "x": 298,
+          "y": 292,
+          "role": "bodySmall",
+          "content": "Co-Sell Service 2"
+        },
+        {
+          "type": "text",
+          "x": 298,
+          "y": 312,
+          "role": "bodySmall",
+          "content": "Partner Service 3"
+        }
+      ]
+    }
+  ]
+}

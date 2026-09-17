@@ -20,6 +20,12 @@ export interface LineChartProps {
   /** Shared y-scale across series. Defaults to the combined data range. */
   domain?: [number, number];
   /**
+   * A dot at every data point. Reads as "these are the readings" rather than
+   * "this is a trend", which is the difference between a progress chart and a
+   * sparkline.
+   */
+  markers?: boolean;
+  /**
    * A horizontal accent rule at this data value, fading in from the left.
    * Used in the reference illustration to mark the "15x" threshold.
    */
@@ -103,6 +109,7 @@ export function LineChart(ctx: Ctx, props: LineChartProps): VNode {
     );
   }
 
+  const dots: VNode[] = [];
   const lines = series.map((s) => {
     const pts: [number, number][] = s.data.map((v, i) => [
       x + (width / Math.max(s.data.length - 1, 1)) * i,
@@ -115,6 +122,11 @@ export function LineChart(ctx: Ctx, props: LineChartProps): VNode {
         : s.role === 'success'
           ? tk.status.success
           : t.primary);
+    if (props.markers) {
+      for (const [px, py] of pts) {
+        dots.push(h('circle', { cx: px, cy: py, r: (s.strokeWidth ?? 1.5) * 1.1, fill: color }));
+      }
+    }
     return h('path', {
       d: monotonePath(pts),
       stroke: color,
@@ -153,5 +165,6 @@ export function LineChart(ctx: Ctx, props: LineChartProps): VNode {
     h('g', { 'data-el': 'grid' }, grid),
     refLine,
     ...lines,
+    ...dots,
   ]);
 }

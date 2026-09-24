@@ -160,6 +160,15 @@ button, input, select, textarea {
   pointer-events: none;
 }
 
+/* A chart value: drag vertically to change it. */
+.chart-handle {
+  fill: #fff;
+  stroke: var(--accent);
+  pointer-events: all;
+  cursor: ns-resize;
+}
+.chart-handle:hover { fill: var(--accent); }
+
 .sel-handle {
   fill: #fff;
   stroke: var(--accent);
@@ -299,7 +308,9 @@ button, input, select, textarea {
 .series-row { display: flex; gap: 5px; }
 .series-row select { flex: none; width: 92px; }
 .series-row input { flex: 1; min-width: 0; }
-.series-actions { display: flex; gap: 5px; }
+.series-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; }
+.series-count { display: inline-flex; align-items: center; gap: 4px; margin-right: auto; font-size: 11px; opacity: 0.8; }
+.series-hint { font-size: 11px; opacity: 0.55; }
 
 button.mini {
   background: var(--panel-2);

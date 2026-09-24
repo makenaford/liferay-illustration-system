@@ -18,8 +18,17 @@ import { isContainer as isContainerEl, resolveLayout } from '../src/autolayout.t
 import { parentOf } from './state.ts';
 import { useFileDrop } from './useFileDrop.ts';
 import { toggleSelect } from './grouping.ts';
+import { scaleOf, valueAt, withValue, type ChartScale } from './chartEdit.ts';
+import { linePoints } from '../src/primitives/lineChart.ts';
+import { barGeometry } from '../src/primitives/barChart.ts';
+import type { BarChartEl, LineChartEl } from '../src/document.ts';
 
-type DragMode = { kind: 'move' } | { kind: 'resize'; corner: 'se' | 'sw' | 'ne' | 'nw' } | { kind: 'pan' };
+type DragMode =
+  | { kind: 'move' }
+  | { kind: 'resize'; corner: 'se' | 'sw' | 'ne' | 'nw' }
+  | { kind: 'pan' }
+  /** Dragging one chart value; the plot box and scale are fixed at the start. */
+  | { kind: 'chart'; series: number; index: number; scale: ChartScale; top: number; height: number };
 
 export function Canvas() {
   const doc = useEditor((s) => s.doc);
@@ -189,6 +198,27 @@ export function Canvas() {
     if (e.button !== 0) return;
 
     const target = e.target as HTMLElement;
+
+    // A chart value handle: drag it up or down to change that one value.
+    const point = target.closest<SVGElement>('[data-chart]');
+    if (point && selected) {
+      const el = elementAt(resolved, selected);
+      const scale = el ? scaleOf(el) : null;
+      if (el && scale && (el.type === 'lineChart' || el.type === 'barChart')) {
+        const [series, index] = (point.dataset.chart ?? '0:0').split(':').map(Number);
+        drag.current = {
+          mode: { kind: 'chart', series, index, scale, top: el.y, height: el.height },
+          startX: e.clientX,
+          startY: e.clientY,
+          origin: null,
+          moved: false,
+          targets: [],
+        };
+        (e.target as Element).setPointerCapture?.(e.pointerId);
+        return;
+      }
+    }
+
     const handle = target.closest<HTMLElement>('[data-handle]');
     if (handle && box) {
       drag.current = {
@@ -235,6 +265,21 @@ export function Canvas() {
     if (!d) return;
     const dx = (e.clientX - d.startX) / zoom;
     const dy = (e.clientY - d.startY) / zoom;
+
+    if (d.mode.kind === 'chart') {
+      const st = getState();
+      const el = st.selected ? elementAt(st.doc, st.selected) : null;
+      const rect = stageRef.current?.getBoundingClientRect();
+      if (!el || !rect || (el.type !== 'lineChart' && el.type !== 'barChart')) return;
+      const { series, index, scale, top, height } = d.mode;
+      // Measured against the RESOLVED plot box captured at the start, since a
+      // chart inside auto-layout does not sit at its stored y.
+      const y = (e.clientY - rect.top) / zoom;
+      const v = valueAt({ ...el, y: top, height } as LineChartEl, scale, y);
+      commit(replaceAt(st.doc, st.selected!, withValue(el, scale, series, index, v)), d.moved);
+      d.moved = true;
+      return;
+    }
 
     if (d.mode.kind === 'pan') {
       setUI({
@@ -437,6 +482,51 @@ export function Canvas() {
 
   const { width, height } = doc.artboard ?? doc.canvas;
   const safe = safeArea(doc);
+
+  /*
+   * Value handles for the selected chart: a dot on every line point, a bar
+   * on every bar top. Positions come from the primitives' own geometry, so
+   * they sit exactly on what is drawn.
+   */
+  const chartHandles = (() => {
+    const el = selected && !also.length ? elementAt(resolved, selected) : null;
+    if (el?.type === 'lineChart') {
+      return linePoints(el as LineChartEl).flatMap((pts, si) =>
+        pts.map(([px, py], i) => (
+          <circle
+            key={`${si}:${i}`}
+            data-chart={`${si}:${i}`}
+            cx={px}
+            cy={py}
+            r={4 / zoom}
+            className="chart-handle"
+            strokeWidth={1.25 / zoom}
+          >
+            <title>{`Drag to change · ${(el as LineChartEl).series[si].data[i]}`}</title>
+          </circle>
+        )),
+      );
+    }
+    if (el?.type === 'barChart') {
+      const bars = barGeometry(el as BarChartEl);
+      return bars.bars.map((b) => (
+        <rect
+          key={`${b.series}:${b.index}`}
+          data-chart={`${b.series}:${b.index}`}
+          x={b.x}
+          y={b.y - 2.5 / zoom}
+          width={Math.max(b.width, 6 / zoom)}
+          height={5 / zoom}
+          rx={1.5 / zoom}
+          className="chart-handle"
+          strokeWidth={1.25 / zoom}
+        >
+          <title>{`Drag to change · ${bars.series[b.series].data[b.index]}`}</title>
+        </rect>
+      ));
+    }
+    return null;
+  })();
   const fileDrop = useFileDrop(stageRef, zoom, snapStep);
   const hs = 4 / zoom; // handles keep a constant on-screen size
 
@@ -577,6 +667,8 @@ export function Canvas() {
               </g>
             );
           })}
+
+          {chartHandles}
 
           {alsoBoxes.map((b, i) => (
             <rect

@@ -1,4 +1,4 @@
-import type { Element } from '../src/document.ts';
+import type { BarChartEl, Element, LineChartEl } from '../src/document.ts';
 import {
   commit,
   elementAt,
@@ -27,7 +27,7 @@ import { TokenPicker } from './TokenPicker.tsx';
 import { AlignGrid, GapPicker, PaddingPicker } from './LayoutControls.tsx';
 import { DocumentPanel } from './DocumentPanel.tsx';
 import { FileField } from './FileField.tsx';
-import { regenerateSeries } from './chartData.ts';
+import { BarSeriesEditor, LineSeriesEditor } from './ChartData.tsx';
 import { deleteSelection, groupSelection, ungroupSelected } from './grouping.ts';
 
 /**
@@ -557,6 +557,7 @@ function FieldRow({
     field.kind === 'select' ||
     field.kind === 'numbers' ||
     field.kind === 'series' ||
+    field.kind === 'bars' ||
     field.kind === 'file' ||
     field.kind === 'iconList';
 
@@ -698,84 +699,10 @@ function Control({
         />
       );
 
-    case 'series': {
-      const series = (Array.isArray(value) ? value : []) as {
-        data: number[];
-        role?: string;
-      }[];
-      const domain = (el as { domain?: [number, number] }).domain;
-      const regenerate = (i: number) => {
-        const next = [...series];
-        next[i] = { ...series[i], data: regenerateSeries(series[i].data, domain) };
-        onChange(next);
-      };
-      return (
-        <span className="series">
-          {series.map((s, i) => (
-            <span key={i} className="series-row">
-              <select
-                value={s.role ?? 'primary'}
-                onChange={(e) => {
-                  const next = [...series];
-                  next[i] = { ...s, role: e.target.value };
-                  onChange(next);
-                }}
-              >
-                {['primary', 'secondary', 'success'].map((r) => (
-                  <option key={r}>{r}</option>
-                ))}
-              </select>
-              <input
-                type="text"
-                value={s.data.join(', ')}
-                onChange={(e) => {
-                  const next = [...series];
-                  next[i] = {
-                    ...s,
-                    data: e.target.value
-                      .split(',')
-                      .map((v) => Number(v.trim()))
-                      .filter((n) => !Number.isNaN(n)),
-                  };
-                  onChange(next);
-                }}
-              />
-              {el.type === 'lineChart' && (
-                <button
-                  type="button"
-                  className="mini"
-                  title="Draw this line again at random — same points, same direction"
-                  aria-label={`Regenerate series ${i + 1}`}
-                  onClick={() => regenerate(i)}
-                >
-                  ↻
-                </button>
-              )}
-            </span>
-          ))}
-          <span className="series-actions">
-            <button
-              type="button"
-              className="mini"
-              onClick={() => onChange([...series, { role: 'primary', data: [0.2, 0.5, 0.8] }])}
-            >
-              + series
-            </button>
-            {el.type === 'lineChart' && series.length > 0 && (
-              <button
-                type="button"
-                className="mini"
-                title="Draw every line again at random"
-                onClick={() =>
-                  onChange(series.map((s) => ({ ...s, data: regenerateSeries(s.data, domain) })))
-                }
-              >
-                ↻ Regenerate {series.length > 1 ? 'all' : 'line'}
-              </button>
-            )}
-          </span>
-        </span>
-      );
-    }
+    case 'series':
+      return <LineSeriesEditor el={el as LineChartEl} onChange={onChange} />;
+
+    case 'bars':
+      return <BarSeriesEditor el={el as BarChartEl} onPatch={onPatch} />;
   }
 }

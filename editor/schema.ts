@@ -65,6 +65,8 @@ export type Field<K extends string = string> =
     }
   | { key: K; label: string; kind: 'numbers'; label2?: string }
   | { key: K; label: string; kind: 'series' }
+  /** A bar chart's values, stored as `data` or grouped `series`; patches both. */
+  | { key: K; label: string; kind: 'bars' }
   | { key: K; label: string; kind: 'point' }
   | { key: K; label: string; kind: 'iconList' }
   /** A colour, chosen from the design-system palette with swatches. */
@@ -245,7 +247,8 @@ export const SCHEMA: {
       { key: 'gridLines', label: 'Grid lines', kind: 'number', min: 0 },
       ...XY,
       ...WH,
-      { key: 'data', label: 'Values', kind: 'numbers' },
+      { key: 'series', label: 'Bars', kind: 'bars' },
+      { key: 'max', label: 'Scale max', kind: 'number', min: 0 },
       { key: 'barRatio', label: 'Bar width', kind: 'number', step: 0.05, min: 0.05, default: 0.68 },
       { key: 'gradient', label: 'Gradient', kind: 'boolean', default: true },
     ],

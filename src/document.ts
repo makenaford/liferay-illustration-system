@@ -232,6 +232,8 @@ export interface BarChartEl extends LayoutChild {
   barRatio?: number;
   gradient?: boolean;
   gridLines?: number;
+  /** The value the full height stands for; omit to scale to the tallest bar. */
+  max?: number;
 }
 
 export interface ProgressEl extends LayoutChild {

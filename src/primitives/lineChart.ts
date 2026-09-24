@@ -74,6 +74,28 @@ function monotonePath(pts: [number, number][]): string {
   return d;
 }
 
+/** The y-scale: the chart's domain, or the combined data range. */
+export function lineDomain(props: Pick<LineChartProps, 'series' | 'domain'>): [number, number] {
+  const all = props.series.flatMap((s) => s.data);
+  return props.domain ?? [Math.min(...all, 0), Math.max(...all, 1)];
+}
+
+/**
+ * Where each series' points are drawn — shared with the editor, so the
+ * drag handles sit exactly on the curve's points.
+ */
+export function linePoints(props: LineChartProps): [number, number][][] {
+  const { x, y, width, height } = props;
+  const [lo, hi] = lineDomain(props);
+  const span = hi - lo || 1;
+  return props.series.map((s) =>
+    s.data.map((v, i) => [
+      x + (width / Math.max(s.data.length - 1, 1)) * i,
+      y + height - ((v - lo) / span) * height,
+    ]),
+  );
+}
+
 /**
  * LINE CHART — data in, curve out.
  *
@@ -86,10 +108,9 @@ export function LineChart(ctx: Ctx, props: LineChartProps): VNode {
   const tk = ctx.tokens;
   const t = tk.chart;
 
-  const all = series.flatMap((s) => s.data);
-  const domain = props.domain ?? [Math.min(...all, 0), Math.max(...all, 1)];
-  const [lo, hi] = domain;
+  const [lo, hi] = lineDomain(props);
   const span = hi - lo || 1;
+  const points = linePoints(props);
 
   const grid: VNode[] = [];
   for (let i = 0; i < gridLines; i++) {
@@ -108,11 +129,8 @@ export function LineChart(ctx: Ctx, props: LineChartProps): VNode {
   }
 
   const dots: VNode[] = [];
-  const lines = series.map((s) => {
-    const pts: [number, number][] = s.data.map((v, i) => [
-      x + (width / Math.max(s.data.length - 1, 1)) * i,
-      y + height - ((v - lo) / span) * height,
-    ]);
+  const lines = series.map((s, si) => {
+    const pts = points[si];
     const color =
       s.color ??
       (s.role === 'secondary'

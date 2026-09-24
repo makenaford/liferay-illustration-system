@@ -17,6 +17,7 @@ import { alignmentSnap, edgeSnap, type Guide, type Target } from './guides.ts';
 import { isContainer as isContainerEl, resolveLayout } from '../src/autolayout.ts';
 import { parentOf } from './state.ts';
 import { useFileDrop } from './useFileDrop.ts';
+import { toggleSelect } from './grouping.ts';
 
 type DragMode = { kind: 'move' } | { kind: 'resize'; corner: 'se' | 'sw' | 'ne' | 'nw' } | { kind: 'pan' };
 
@@ -24,6 +25,7 @@ export function Canvas() {
   const doc = useEditor((s) => s.doc);
   const theme = useEditor((s) => s.theme);
   const selected = useEditor((s) => s.selected);
+  const also = useEditor((s) => s.also);
   const zoom = useEditor((s) => s.zoom);
   const pan = useEditor((s) => s.pan);
   const outlines = useEditor((s) => s.showOutlines);
@@ -45,6 +47,11 @@ export function Canvas() {
     moved: boolean;
     /** Boxes the drag can align to. Collected once, on pointer down. */
     targets: Target[];
+    /**
+     * Pressed on a child of the already-selected group: the press drags the
+     * group, and only a release without moving goes in to this child.
+     */
+    dive?: string;
   } | null>(null);
 
   /*
@@ -93,6 +100,34 @@ export function Canvas() {
     return out;
   };
 
+  /**
+   * What a click on `deepest` selects. Inside a group made with ⌘G — a group
+   * with no auto-layout — the first click takes the whole group, so dragging
+   * it moves everything in it; clicking again (or double-clicking) goes in to
+   * the element itself. Figma's rule. Auto-layout groups are rows and columns
+   * inside cards, not things anyone grouped, so they keep direct selection.
+   *
+   * Pressing on a child of the group that is ALREADY selected still grabs the
+   * group — that press is usually the start of a drag. `dive` is where a
+   * release without movement goes instead.
+   */
+  const pickTarget = (
+    deepest: string | null,
+    doubleClick: boolean,
+  ): { path: string | null; dive?: string } => {
+    if (!deepest || doubleClick) return { path: deepest };
+    let outer: string | null = null;
+    for (let p = parentOf(deepest); p; p = parentOf(p)) {
+      const el = elementAt(doc, p);
+      if (el?.type === 'group' && !el.layout) outer = p;
+    }
+    if (!outer) return { path: deepest };
+    const sel = getState().selected;
+    // Already working inside the group: clicks go straight to what was hit.
+    if (sel?.startsWith(`${outer}.`)) return { path: deepest };
+    return sel === outer ? { path: outer, dive: deepest } : { path: outer };
+  };
+
   /** True when this element's position is computed by a parent container. */
   const isAutoPlaced = (path: string | null) => {
     if (!path) return false;
@@ -130,6 +165,20 @@ export function Canvas() {
     setBox(boundsOf(el, node ?? null));
   }, [selected, resolved, theme, zoom]);
 
+  /* The rest of a multi-selection, drawn without handles. */
+  const [alsoBoxes, setAlsoBoxes] = useState<Box[]>([]);
+  useLayoutEffect(() => {
+    setAlsoBoxes(
+      also
+        .map((p) => {
+          const el = elementAt(resolved, p);
+          const node = docRef.current?.querySelector<SVGGraphicsElement>(`[data-path="${p}"]`);
+          return el ? boundsOf(el, node ?? null) : null;
+        })
+        .filter((b): b is Box => !!b),
+    );
+  }, [also, resolved, theme, zoom]);
+
   const onPointerDown = (e: React.PointerEvent) => {
     // Middle-drag or space-drag pans.
     if (e.button === 1 || e.altKey) {
@@ -153,8 +202,16 @@ export function Canvas() {
       return;
     }
 
-    const hit = target.closest<SVGGraphicsElement>('[data-path]');
-    const path = hit?.getAttribute('data-path') ?? null;
+    const deepest = target.closest<SVGGraphicsElement>('[data-path]');
+    const { path, dive } = pickTarget(deepest?.getAttribute('data-path') ?? null, e.detail >= 2);
+    const hit = path
+      ? docRef.current?.querySelector<SVGGraphicsElement>(`[data-path="${path}"]`) ?? null
+      : null;
+    // Shift-click builds a multi-selection for grouping; it never drags.
+    if (e.shiftKey && path) {
+      toggleSelect(path);
+      return;
+    }
     setUI({ selected: path });
 
     // An auto-placed child cannot be dragged — its position is computed.
@@ -168,6 +225,7 @@ export function Canvas() {
         origin: el ? boundsOf(el, hit ?? null) : null,
         moved: false,
         targets: alignTargets(path),
+        dive,
       };
     }
   };
@@ -328,6 +386,14 @@ export function Canvas() {
   };
 
   const onPointerUp = () => {
+    const d = drag.current;
+    if (d?.dive && !d.moved) setUI({ selected: d.dive });
+    drag.current = null;
+    setGuides([]);
+  };
+
+  // Leaving the viewport ends a drag but is not a click, so it never dives.
+  const onPointerLeave = () => {
     drag.current = null;
     setGuides([]);
   };
@@ -410,7 +476,7 @@ export function Canvas() {
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
-      onPointerLeave={onPointerUp}
+      onPointerLeave={onPointerLeave}
       onWheel={onWheel}
     >
       <div
@@ -511,6 +577,18 @@ export function Canvas() {
               </g>
             );
           })}
+
+          {alsoBoxes.map((b, i) => (
+            <rect
+              key={i}
+              x={b.x}
+              y={b.y}
+              width={b.width}
+              height={b.height}
+              className="sel-rect"
+              strokeWidth={1 / zoom}
+            />
+          ))}
 
           {box && (
             <g>

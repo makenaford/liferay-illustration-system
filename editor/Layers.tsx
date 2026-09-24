@@ -1,6 +1,7 @@
 import type { Element } from '../src/document.ts';
 import { SCHEMA } from './schema.ts';
 import { commit, elementAt, getState, reorderSibling, setUI, useEditor } from './state.ts';
+import { toggleSelect } from './grouping.ts';
 
 /**
  * LAYERS — the element tree, and the only place z-order can be changed.
@@ -45,7 +46,8 @@ function Row({
   rootCount: number;
 }) {
   const kids = (el as { children?: Element[] }).children ?? [];
-  const isSel = selected === path;
+  const inMulti = useEditor((s) => s.also.includes(path));
+  const isSel = selected === path || inMulti;
   const label = summarise(el);
 
   const move = (dir: -1 | 1) => {
@@ -66,7 +68,7 @@ function Row({
       <div
         className={`layer${isSel ? ' sel' : ''}`}
         style={{ paddingLeft: 8 + depth * 12 }}
-        onClick={() => setUI({ selected: path })}
+        onClick={(e) => (e.shiftKey ? toggleSelect(path) : setUI({ selected: path }))}
       >
         <span className="layer-type">{SCHEMA[el.type].label}</span>
         {(el.type === 'card' || el.type === 'subCard' || el.type === 'group') && el.layout && (

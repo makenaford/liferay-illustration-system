@@ -15,6 +15,12 @@ export interface EditorState {
   theme: ThemeName;
   /** Dot-delimited index path into `doc.elements`, e.g. `"4.1"`. */
   selected: string | null;
+  /**
+   * Further selected elements, shift-clicked in alongside `selected`. Always
+   * siblings of it, so group, delete and the rest act on one list. `selected`
+   * stays the one the inspector edits.
+   */
+  also: string[];
   zoom: number;
   pan: { x: number; y: number };
   showOutlines: boolean;
@@ -62,6 +68,7 @@ export function initStore(doc: Doc) {
       doc,
       theme: prefs?.theme ?? 'dark',
       selected: null,
+      also: [],
       zoom: prefs?.zoom ?? 1.4,
       pan: { x: 0, y: 0 },
       showOutlines: prefs?.showOutlines ?? false,
@@ -93,7 +100,10 @@ export const getState = () => store.state;
 
 /** Patch state without touching history (selection, zoom, theme). */
 export function setUI(patch: Partial<EditorState>) {
-  store.state = { ...store.state, ...patch };
+  // Choosing one element is choosing ONLY that one: every existing call that
+  // sets `selected` clears the multi-selection without having to know about it.
+  const also = 'selected' in patch && !('also' in patch) ? { also: [] } : {};
+  store.state = { ...store.state, ...patch, ...also };
   emit();
 }
 
@@ -120,7 +130,7 @@ export function undo() {
   const prev = store.past.pop();
   if (!prev) return;
   store.future = [store.state.doc, ...store.future];
-  store.state = { ...store.state, doc: prev, dirty: true };
+  store.state = { ...store.state, doc: prev, dirty: true, also: [] };
   emit();
 }
 
@@ -129,7 +139,7 @@ export function redo() {
   if (!next) return;
   store.past = [...store.past, store.state.doc];
   store.future = rest;
-  store.state = { ...store.state, doc: next };
+  store.state = { ...store.state, doc: next, also: [] };
   emit();
 }
 

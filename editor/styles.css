@@ -126,7 +126,8 @@ button, input, select, textarea {
 
 .stage { position: relative; transform-origin: center center; }
 
-.doc { position: absolute; inset: 0; }
+/* Dragging across SVG text would otherwise select it as text. */
+.doc { position: absolute; inset: 0; user-select: none; }
 .doc svg { display: block; }
 
 /* Every element group is addressable; this makes them all hoverable. */
@@ -176,6 +177,7 @@ button, input, select, textarea {
   display: flex;
   align-items: baseline;
   gap: 6px;
+  user-select: none;
   padding: 4px 8px;
   cursor: pointer;
   border-left: 2px solid transparent;
@@ -357,11 +359,12 @@ button.mini:hover { border-color: var(--accent); color: var(--ink); }
 
 .row-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 5px;
   padding: 8px 12px 0;
 }
 .row-actions button {
-  flex: 1;
+  flex: 1 0 auto;
   background: var(--panel-2);
   border: 1px solid var(--line);
   border-radius: var(--radius);
@@ -370,6 +373,7 @@ button.mini:hover { border-color: var(--accent); color: var(--ink); }
   font-size: 11.5px;
 }
 .row-actions button:hover { border-color: var(--accent); color: #fff; }
+.row-actions button:disabled { opacity: 0.45; cursor: not-allowed; border-color: var(--line); color: inherit; }
 .row-actions button.danger:hover { border-color: #b4443c; color: #ff9d95; }
 
 .statusbar .flash {

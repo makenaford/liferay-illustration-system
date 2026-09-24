@@ -4,7 +4,6 @@ import {
   elementAt,
   getState,
   parentOf as parentOfPath,
-  removeAt,
   reorderSibling,
   reorderToEdge,
   replaceAt,
@@ -29,6 +28,7 @@ import { AlignGrid, GapPicker, PaddingPicker } from './LayoutControls.tsx';
 import { DocumentPanel } from './DocumentPanel.tsx';
 import { FileField } from './FileField.tsx';
 import { regenerateSeries } from './chartData.ts';
+import { deleteSelection, groupSelection, ungroupSelected } from './grouping.ts';
 
 /**
  * INSPECTOR — generated entirely from `schema.ts`.
@@ -42,11 +42,13 @@ import { regenerateSeries } from './chartData.ts';
 export function Inspector() {
   const doc = useEditor((s) => s.doc);
   const selected = useEditor((s) => s.selected);
+  const also = useEditor((s) => s.also);
   const el = elementAt(doc, selected);
 
   // Nothing selected falls back to document-level properties, so the panel is
   // never dead space and the scene layers stay reachable.
   if (!el || !selected) return <DocumentPanel />;
+  if (also.length) return <MultiSelection count={also.length + 1} path={selected} />;
 
   const spec = SCHEMA[el.type];
 
@@ -124,15 +126,29 @@ export function Inspector() {
         <button
           type="button"
           className="danger"
-          onClick={() => {
-            const st = getState();
-            commit(removeAt(st.doc, selected));
-            setUI({ selected: null });
-          }}
+          onClick={() => deleteSelection()}
           title="Delete (⌫)"
         >
           Delete
         </button>
+        {el.type === 'group' ? (
+          <button type="button" onClick={() => ungroupSelected()} title="Ungroup (⇧⌘G)">
+            Ungroup
+          </button>
+        ) : (
+          <button
+            type="button"
+            disabled={autoPlaced}
+            onClick={() => groupSelection()}
+            title={
+              autoPlaced
+                ? 'Can’t group inside an auto-layout container'
+                : 'Wrap in a group (⌘G) — shift-click to add more first'
+            }
+          >
+            Group
+          </button>
+        )}
       </div>
       {autoPlaced && <ChildLayout path={selected} />}
       {isCard && <CardLayout path={selected} />}
@@ -156,6 +172,41 @@ export function Inspector() {
 }
 
 /** Per-child controls, shown when a container is positioning this element. */
+/**
+ * Several elements selected. The fields of one element would be misleading
+ * here, so the panel offers only what applies to the set.
+ */
+function MultiSelection({ count, path }: { count: number; path: string }) {
+  const doc = useEditor((s) => s.doc);
+  const parent = parentOfPath(path);
+  const parentEl = parent ? elementAt(doc, parent) : null;
+  const inFlow = !!(parentEl && (parentEl as { layout?: unknown }).layout);
+  return (
+    <div className="inspector">
+      <div className="inspector-head">
+        <span className="badge-type">{count} selected</span>
+      </div>
+      <div className="row-actions">
+        <button
+          type="button"
+          disabled={inFlow}
+          onClick={() => groupSelection()}
+          title={inFlow ? 'Can’t group inside an auto-layout container' : 'Group (⌘G)'}
+        >
+          Group
+        </button>
+        <button type="button" className="danger" onClick={() => deleteSelection()} title="Delete (⌫)">
+          Delete
+        </button>
+      </div>
+      <p className="panel-note">
+        Shift-click on the canvas or in Layers to add or remove items.
+        {inFlow && ' These sit in an auto-layout container, which positions them itself — group them outside it.'}
+      </p>
+    </div>
+  );
+}
+
 function ChildLayout({ path }: { path: string }) {
   const doc = useEditor((s) => s.doc);
   const el = elementAt(doc, path) as (Element & { grow?: number; alignSelf?: string }) | null;

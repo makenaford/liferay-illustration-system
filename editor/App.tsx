@@ -21,11 +21,11 @@ import {
   getState,
   initStore,
   redo,
-  removeAt,
   setUI,
   undo,
   useEditor,
 } from './state.ts';
+import { deleteSelection, groupSelection, ungroupSelected } from './grouping.ts';
 
 initStore(DOCS[0]);
 
@@ -110,6 +110,14 @@ export function App() {
         return;
       }
 
+      // ⌘G groups, ⇧⌘G ungroups — Figma's keys. Checked before the bare `g`
+      // grid toggle below, which only fires without a modifier.
+      if (mod && !typing && e.key.toLowerCase() === 'g') {
+        e.preventDefault();
+        setFlash(e.shiftKey ? ungroupSelected() : groupSelection());
+        return;
+      }
+
       // Z-order: [ and ] step, ⌘[ and ⌘] go all the way. Photoshop's keys,
       // and the same ones Figma uses.
       if (!typing && (e.key === '[' || e.key === ']')) {
@@ -130,11 +138,9 @@ export function App() {
       if (typing) return;
 
       if (e.key === 'Backspace' || e.key === 'Delete') {
-        const st = getState();
-        if (!st.selected) return;
+        if (!getState().selected) return;
         e.preventDefault();
-        commit(removeAt(st.doc, st.selected));
-        setUI({ selected: null });
+        deleteSelection();
       }
       if (e.key === 'Escape') setUI({ selected: null });
       // Bare `t` toggles the theme — ⌘D is now duplicate, so `d` moved off it.
@@ -424,7 +430,7 @@ export function App() {
             <span>{selected ? `selected ${selected}` : 'nothing selected'}</span>
             {flash && <span className="flash">{flash}</span>}
             <span className="hint">
-              drag move · arrows nudge · ⌘C/⌘V/⌘D · [ ] z-order · g grid · a guides · r ratio · t theme
+              drag move · ⇧click multi · ⌘G/⇧⌘G group · arrows nudge · ⌘C/⌘V/⌘D · [ ] z-order · g grid · a guides · r ratio · t theme
             </span>
           </footer>
         </main>

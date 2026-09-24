@@ -10,7 +10,26 @@ import type { VNode } from '../src/vsvg.ts';
  * primitive, so what you drag is exactly what you export.
  */
 
-/** SVG attributes React insists on receiving camelCased. */
+/**
+ * Attributes whose React name is not simply the camelCase of the SVG one —
+ * the namespaced ones. Everything else is handled by the rule below, because
+ * maintaining an exhaustive list is a losing game: `flood-color` was missing
+ * and every glass icon that used it logged a React warning.
+ */
+const SPECIAL: Record<string, string> = {
+  'xmlns:xlink': 'xmlnsXlink',
+  'xlink:href': 'xlinkHref',
+};
+
+/**
+ * React wants SVG presentation attributes camelCased: `flood-color` becomes
+ * `floodColor`. `data-` and `aria-` stay hyphenated, which is why they are
+ * checked before this runs.
+ */
+const camel = (name: string) =>
+  SPECIAL[name] ?? name.replace(/-([a-z])/g, (_, c: string) => c.toUpperCase());
+
+/** Kept for the handful of names that were already correct; see `camel`. */
 const CAMEL: Record<string, string> = {
   'clip-path': 'clipPath',
   'clip-rule': 'clipRule',
@@ -65,7 +84,7 @@ export function toReact(node: VNode): ReactNode {
     } else if (k.startsWith('data-') || k.startsWith('aria-')) {
       props[k] = v;
     } else {
-      props[CAMEL[k] ?? k] = v;
+      props[CAMEL[k] ?? camel(k)] = v;
     }
   }
 

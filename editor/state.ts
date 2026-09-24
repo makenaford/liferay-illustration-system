@@ -25,6 +25,10 @@ export interface EditorState {
   smartGuides: boolean;
   /** Keep an element's proportions when resizing it. */
   lockAspect: boolean;
+  /** The library is the landing screen; the editor opens onto one document. */
+  view: 'library' | 'editor';
+  /** Unsaved edits since the document was opened or last saved. */
+  dirty: boolean;
   /** Card padding used by the layout actions and the padding guide. */
   padding: number;
 }
@@ -42,20 +46,32 @@ function emit() {
   for (const l of listeners) l();
 }
 
+/**
+ * Load a document into the editor.
+ *
+ * Working preferences — theme, snapping, guides, the ratio lock — survive the
+ * swap. They describe how someone works, not what they are working on, and
+ * having them snap back to defaults every time an illustration is opened from
+ * the library would be its own small papercut. History does not survive: undo
+ * across two different documents is not a thing anyone wants.
+ */
 export function initStore(doc: Doc) {
+  const prefs = store?.state;
   store = {
     state: {
       doc,
-      theme: 'dark',
+      theme: prefs?.theme ?? 'dark',
       selected: null,
-      zoom: 1.4,
+      zoom: prefs?.zoom ?? 1.4,
       pan: { x: 0, y: 0 },
-      showOutlines: false,
-      snapStep: LAYOUT.grid,
-      showGrid: false,
-      smartGuides: true,
-      lockAspect: false,
-      padding: LAYOUT.cardPadding,
+      showOutlines: prefs?.showOutlines ?? false,
+      snapStep: prefs?.snapStep ?? LAYOUT.grid,
+      showGrid: prefs?.showGrid ?? false,
+      smartGuides: prefs?.smartGuides ?? true,
+      lockAspect: prefs?.lockAspect ?? false,
+      view: 'library',
+      dirty: false,
+      padding: prefs?.padding ?? LAYOUT.cardPadding,
     },
     past: [],
     future: [],
@@ -90,7 +106,13 @@ export function commit(next: Doc, coalesce = false) {
     store.past = [...store.past.slice(-99), store.state.doc];
     store.future = [];
   }
-  store.state = { ...store.state, doc: next };
+  store.state = { ...store.state, doc: next, dirty: true };
+  emit();
+}
+
+/** Called after a successful write to the library. */
+export function markSaved() {
+  store.state = { ...store.state, dirty: false };
   emit();
 }
 
@@ -98,7 +120,7 @@ export function undo() {
   const prev = store.past.pop();
   if (!prev) return;
   store.future = [store.state.doc, ...store.future];
-  store.state = { ...store.state, doc: prev };
+  store.state = { ...store.state, doc: prev, dirty: true };
   emit();
 }
 

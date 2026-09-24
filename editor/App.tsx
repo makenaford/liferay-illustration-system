@@ -5,13 +5,16 @@ import { Canvas } from './Canvas.tsx';
 import { Inspector } from './Inspector.tsx';
 import { Layers } from './Layers.tsx';
 import { Palette } from './Palette.tsx';
-import { DOCS, blankDoc } from './docs.ts';
+import { DOCS } from './docs.ts';
+import { Library } from './Library.tsx';
+import { save as saveToLibrary, backend } from './library.ts';
 import { copySelected, cutSelected, duplicateSelected, paste } from './clipboard.ts';
 import { copyText, saveFile } from './save.ts';
 import { SourceModal } from './SourceModal.tsx';
 import { LAYOUT } from '../src/tokens.ts';
 import { reorderSibling, reorderToEdge } from './state.ts';
 import {
+  markSaved,
   canRedo,
   canUndo,
   commit,
@@ -38,6 +41,9 @@ export function App() {
   const smartGuides = useEditor((s) => s.smartGuides);
   const lockAspect = useEditor((s) => s.lockAspect);
   const selected = useEditor((s) => s.selected);
+  const view = useEditor((s) => s.view);
+  const dirty = useEditor((s) => s.dirty);
+  const [store_, setStore_] = useState<'shared' | 'local' | 'none' | null>(null);
   const [tab, setTab] = useState<Tab>('layers');
   const [source, setSource] = useState<{ filename: string; text: string } | null>(null);
 
@@ -54,11 +60,40 @@ export function App() {
     return () => clearTimeout(t);
   }, [flash]);
 
+  useEffect(() => {
+    void backend().then((b) => setStore_(b.kind));
+  }, []);
+
+  /**
+   * Save the document back to the library. This is the whole point of the
+   * library view: an illustration you opened, changed and saved is the one
+   * everyone sees next.
+   */
+  const saveDoc = async () => {
+    try {
+      await saveToLibrary(getState().doc);
+      markSaved();
+      setFlash(
+        store_ === 'shared'
+          ? 'Saved to the shared library'
+          : 'Saved to this browser',
+      );
+    } catch (e) {
+      setFlash(`Could not save: ${(e as Error).message}`);
+    }
+  };
+
   /* Global shortcuts. Nudge lives in Canvas; these are document-level. */
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const typing = (e.target as HTMLElement)?.matches('input, textarea, select');
       const mod = e.metaKey || e.ctrlKey;
+
+      if (mod && e.key.toLowerCase() === 's') {
+        e.preventDefault();
+        void saveDoc();
+        return;
+      }
 
       if (mod && e.key.toLowerCase() === 'z') {
         e.preventDefault();
@@ -190,29 +225,29 @@ export function App() {
       text: renderDocument(doc, theme),
     });
 
+  // The library is the landing screen; the editor opens onto one document.
+  if (view === 'library') return <Library />;
+
+  const leave = () => {
+    if (dirty && !window.confirm('Leave without saving? Your changes to this illustration will be lost.')) return;
+    setUI({ view: 'library', selected: null });
+  };
+
   return (
     <div className="app">
       <header className="topbar">
-        <div className="brand">Illustration Builder</div>
+        <button type="button" className="back" onClick={leave} title="Back to the library">
+          ‹ Library
+        </button>
 
-        <select
-          className="doc-picker"
-          value={doc.id}
-          onChange={(e) => {
-            const next =
-              e.target.value === '__new'
-                ? blankDoc()
-                : DOCS.find((d) => d.id === e.target.value)!;
-            initStore(structuredClone(next));
-          }}
-        >
-          {DOCS.map((d) => (
-            <option key={d.id} value={d.id}>
-              {d.name}
-            </option>
-          ))}
-          <option value="__new">＋ New illustration</option>
-        </select>
+        <input
+          className="doc-name"
+          value={doc.name}
+          aria-label="Illustration name"
+          onChange={(e) => commit({ ...getState().doc, name: e.target.value })}
+        />
+
+        {dirty && <span className="unsaved" title="Unsaved changes">●</span>}
 
         <div className="spacer" />
 
@@ -302,6 +337,21 @@ export function App() {
             Reset
           </button>
         </span>
+
+        <span className="divider" />
+
+        <button
+          type="button"
+          className={dirty ? 'primary' : ''}
+          onClick={() => void saveDoc()}
+          title={
+            store_ === 'shared'
+              ? 'Save to the shared library (⌘S)'
+              : 'Save to this browser (⌘S)'
+          }
+        >
+          {dirty ? 'Save' : 'Saved'}
+        </button>
 
         <span className="divider" />
 

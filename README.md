@@ -1018,6 +1018,44 @@ The only external request is the Google Fonts stylesheet; with no network it
 falls back to the declared system stack and everything else still works,
 because React, the documents and the renderer are all inlined.
 
+# The library
+
+The editor opens onto a **library**, not a document. Every illustration in one
+grid, click to edit, save back.
+
+Thumbnails are the real renderer rather than stored images, so there is no
+export step between saving an illustration and seeing it — a thumbnail cannot
+go stale.
+
+## Where a save goes
+
+Two backends, chosen by what the page is running inside, because this editor
+ships to two places:
+
+| | Store | Scope |
+|---|---|---|
+| Published as an Artifact | `db` capability | **Shared** — everyone in the organization who can open the page sees your save |
+| Standalone or GitHub Pages | `localStorage` | That browser only |
+
+`claude.use('db')` settles after first paint and resolves `null` where the
+capability cannot run, so the library never blocks on it: it renders the
+shipped set immediately and fills in. The Save button says which store it is
+writing to rather than making you guess.
+
+**Declaring `db` makes the artifact organization-internal — it can no longer
+be shared by public link.** That is the correct trade for a team library, and
+the GitHub Pages copy remains the public one.
+
+## Shipped documents are seeds, not rows
+
+The ten built-in illustrations are always listed; a saved document with the
+same id *shadows* one. So **Revert** is a delete of the saved copy, not a
+restore from a backup nobody made — the built-in set cannot be damaged, and
+there is nothing to migrate when it changes.
+
+A new illustration gets an id derived from its name, uniquified against what
+is already there.
+
 # The editor
 
 A standalone web app for composing illustrations from the library.

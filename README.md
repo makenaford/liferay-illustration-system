@@ -917,7 +917,7 @@ wins on systematised speed instead.
 | **Layers** | The element tree, and the only place z-order changes. |
 | **Library** | 21 primitives grouped by kind. Adding with a card selected nests inside it. |
 | **Themes** | Toggle dark/light live; both render from the same document. |
-| **Export** | Optimised SVG per theme, or the `.json` document. Editor metadata is stripped. |
+| **Export** | **Copy SVG** puts the markup on the clipboard — paste onto a Figma canvas for editable vectors, and it needs no capability, so it works even where saving does not. **Save SVG** / **Save both** / **.json** write files through the viewer's download grant. Editor metadata is stripped either way. |
 | **Undo** | Full history. A drag coalesces into one step, not sixty. |
 | **View** | ⌘scroll zoom, ⌥drag pan, zoom controls, and an outline overlay for debugging. |
 

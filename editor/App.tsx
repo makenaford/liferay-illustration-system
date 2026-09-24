@@ -7,7 +7,7 @@ import { Layers } from './Layers.tsx';
 import { Palette } from './Palette.tsx';
 import { DOCS, blankDoc } from './docs.ts';
 import { copySelected, cutSelected, duplicateSelected, paste } from './clipboard.ts';
-import { saveFile } from './save.ts';
+import { copyText, saveFile } from './save.ts';
 import { SourceModal } from './SourceModal.tsx';
 import { LAYOUT } from '../src/tokens.ts';
 import { reorderSibling, reorderToEdge } from './state.ts';
@@ -160,7 +160,7 @@ export function App() {
     if (outcome.status === 'saved') say('Saved', label);
     else if (outcome.status === 'declined') setFlash('Save declined');
     else if (outcome.status === 'unavailable')
-      setFlash('Downloads unavailable here — use Copy SVG');
+      setFlash('Saving is unavailable in this viewer — use Copy SVG instead');
     else setFlash(`Save failed: ${outcome.message}`);
   };
 
@@ -171,6 +171,17 @@ export function App() {
       const name = `${doc.id}.${t}.svg`;
       report(name, await saveFile(name, renderDocument(doc, t), 'image/svg+xml'));
     }
+  };
+
+  /*
+   * Copy needs no capability, which is the point of having it next to Save.
+   * A download inside the viewer sandbox depends on a grant that can be
+   * declined or simply unavailable; pasting SVG markup onto a Figma canvas
+   * works everywhere and gives editable vectors rather than an image.
+   */
+  const copySvg = async () => {
+    const ok = await copyText(renderDocument(doc, theme));
+    setFlash(ok ? `Copied the ${theme} SVG — paste into Figma` : 'Could not reach the clipboard');
   };
 
   const showSource = () =>
@@ -296,6 +307,13 @@ export function App() {
 
         <button type="button" onClick={showSource} title="View and copy the SVG source">
           SVG source
+        </button>
+        <button
+          type="button"
+          onClick={() => void copySvg()}
+          title="Copy the SVG markup — paste straight into Figma as vectors"
+        >
+          Copy SVG
         </button>
         <button
           type="button"

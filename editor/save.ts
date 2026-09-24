@@ -49,6 +49,21 @@ export type SaveOutcome =
   | { status: 'unavailable' }
   | { status: 'error'; message: string };
 
+/**
+ * Every documented rejection code, turned into something a designer can act
+ * on. The default used to be the bare code, which told you a save had failed
+ * and nothing about what to do next.
+ */
+const REASON: Record<string, string> = {
+  rate_limited: 'a save prompt is already open — finish it, then try again',
+  too_large: 'the file is too large for this destination',
+  rejected_extension: 'this viewer will not accept .svg files',
+  extension_not_enabled: 'SVG saving is switched off in this viewer',
+  bad_request: 'the editor sent a malformed file — please report this',
+  request_unknown: 'the export request expired',
+  transform_error: 'the viewer could not process the file',
+};
+
 export async function saveFile(
   filename: string,
   text: string,
@@ -61,10 +76,14 @@ export async function saveFile(
       await ns.save({ filename, data: text });
       return { status: 'saved' };
     } catch (e) {
-      const code = (e as { code?: string })?.code;
+      const code = (e as { code?: string })?.code ?? '';
       if (code === 'declined') return { status: 'declined' };
-      if (code === 'unavailable' || code === 'not_granted') return { status: 'unavailable' };
-      return { status: 'error', message: code ?? 'save failed' };
+      // `capability_disabled` and `capability_removed` are lifecycle states
+      // that mean the same thing to a designer: saving is not available here.
+      if (['unavailable', 'not_granted', 'capability_disabled', 'capability_removed'].includes(code)) {
+        return { status: 'unavailable' };
+      }
+      return { status: 'error', message: REASON[code] ?? code ?? 'save failed' };
     }
   }
 

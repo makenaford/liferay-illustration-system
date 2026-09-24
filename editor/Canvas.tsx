@@ -440,24 +440,29 @@ export function Canvas() {
           {/*
             * The safe area. The margin outside it is tinted rather than just
             * outlined, so a card that strays into it is obvious without
-            * having to look for a line.
+            * having to look for a line. It follows the Guides toggle, the
+            * same as the snapping to it does.
             */}
-          <path
-            className="safe-area-margin"
-            fillRule="evenodd"
-            d={`M0 0H${width}V${height}H0Z M${safe.x} ${safe.y}V${safe.y + safe.height}H${
-              safe.x + safe.width
-            }V${safe.y}Z`}
-          />
-          <rect
-            x={safe.x}
-            y={safe.y}
-            width={safe.width}
-            height={safe.height}
-            className="safe-area"
-            strokeWidth={1 / zoom}
-            strokeDasharray={`${4 / zoom} ${4 / zoom}`}
-          />
+          {smartGuides && (
+            <>
+              <path
+                className="safe-area-margin"
+                fillRule="evenodd"
+                d={`M0 0H${width}V${height}H0Z M${safe.x} ${safe.y}V${safe.y + safe.height}H${
+                  safe.x + safe.width
+                }V${safe.y}Z`}
+              />
+              <rect
+                x={safe.x}
+                y={safe.y}
+                width={safe.width}
+                height={safe.height}
+                className="safe-area"
+                strokeWidth={1 / zoom}
+                strokeDasharray={`${4 / zoom} ${4 / zoom}`}
+              />
+            </>
+          )}
 
           {guide && (
             <rect

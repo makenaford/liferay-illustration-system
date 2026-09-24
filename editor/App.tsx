@@ -300,7 +300,7 @@ export function App() {
           type="button"
           className={smartGuides ? 'on' : ''}
           onClick={() => setUI({ smartGuides: !smartGuides })}
-          title="Alignment guides while dragging — edges and centres (a)"
+          title="Alignment guides while dragging, and the safe area — edges and centres (a)"
         >
           Guides
         </button>

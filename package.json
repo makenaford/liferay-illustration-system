@@ -11,6 +11,7 @@
     "build:svg": "node --experimental-strip-types scripts/build.ts",
     "bundle": "vite build && node --experimental-strip-types scripts/bundle-artifact.ts",
     "dev": "vite",
+    "font": "node --experimental-strip-types scripts/build-font.ts",
     "flatten": "node --experimental-strip-types scripts/flatten.ts",
     "icons": "node --experimental-strip-types scripts/build-glass-icons.ts",
     "nest": "node --experimental-strip-types scripts/nest.ts",
@@ -27,6 +28,7 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
+    "@fontsource/source-sans-3": "^5.3.0",
     "@types/node": "^26.5.0",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",

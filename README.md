@@ -34,6 +34,12 @@ SDS_PATH=~/work/liferay-sites-design-system npm run tokens
 Neither is needed to build — the generated files are committed — but they are
 how you pick up a change to the design file.
 
+**Every exported SVG embeds Source Sans 3** — only the weights it uses, about
+20 KB each — so it renders in the face its layout was measured in even as an
+`<img>` or a downloaded file, where it cannot load a web font. The faces come
+from `@fontsource/source-sans-3` (SIL OFL) via `npm run font`, and the output,
+`src/font.generated.ts`, is committed like the other generated files.
+
 `reference/` holds the nine original Figma exports (44 MB, two of them 21 MB
 each). They are kept because `out/compare.html` renders against them, so the
 port stays verifiable; move them to LFS or drop them if the repo weight

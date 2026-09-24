@@ -26,6 +26,7 @@ import {
 import { ICONS } from './icons.ts';
 import { paletteDark, paletteLight } from './palette.generated.ts';
 import { GLASS_ICONS } from './glassIcons.generated.ts';
+import { FONT_FACES } from './font.generated.ts';
 import type { Doc, Element } from './document.ts';
 import { resolveLayout } from './autolayout.ts';
 
@@ -331,6 +332,12 @@ export interface RenderOptions {
    * off for exports, which shouldn't carry editor metadata.
    */
   annotate?: boolean;
+  /**
+   * Embed the Source Sans 3 faces the drawing uses (`renderDocument` only).
+   * On by default, because an exported file cannot load the font any other
+   * way. Off where the host page already has it, e.g. the builder's library.
+   */
+  embedFont?: boolean;
 }
 
 /**
@@ -443,5 +450,40 @@ export function renderDocument(
   theme: ThemeName,
   options: RenderOptions = {},
 ): string {
-  return toSVGString(buildDocument(doc, theme, options));
+  const tree = buildDocument(doc, theme, options);
+  if (options.embedFont !== false) embedFont(tree);
+  return toSVGString(tree);
+}
+
+/**
+ * Add an `@font-face` for each Source Sans 3 weight the tree draws text in,
+ * as a data URI, so the file renders in its own face with no network — as an
+ * `<img>`, opened directly, or dropped into a page that never loaded the font.
+ * Only the weights actually used are embedded; about 20 KB each.
+ */
+function embedFont(tree: VNode) {
+  const weights = new Set<keyof typeof FONT_FACES>();
+  const walk = (n: VNode) => {
+    if (n.attrs['font-family'] !== undefined) {
+      const w = Number(n.attrs['font-weight'] ?? 400);
+      // Snap to the three faces the type scale uses.
+      weights.add(w >= 650 ? 700 : w >= 500 ? 600 : 400);
+    }
+    n.children.forEach(walk);
+  };
+  walk(tree);
+  if (!weights.size) return;
+
+  const css = [...weights]
+    .sort()
+    .map(
+      (w) =>
+        `@font-face{font-family:'Source Sans 3';font-style:normal;font-weight:${w};` +
+        `src:url(data:font/woff2;base64,${FONT_FACES[w]}) format('woff2')}`,
+    )
+    .join('');
+  const defs = tree.children.find((c) => c.tag === 'defs');
+  // Raw because it is CSS, not text to escape — and it is our own generated
+  // data, never user input, which is the condition `rawNode` asks for.
+  defs?.children.unshift(rawNode('style', {}, css));
 }

@@ -118,7 +118,8 @@ function Card({
 }) {
   // Rendering is cheap enough to do here and keeps the thumbnail honest — it
   // is the same call the export makes, so what you see is what you get.
-  const svg = useMemo(() => renderDocument(entry.doc, theme), [entry.doc, theme]);
+  // The builder already loads the font; embedding it in every card is waste.
+  const svg = useMemo(() => renderDocument(entry.doc, theme, { embedFont: false }), [entry.doc, theme]);
   const count = useMemo(() => countElements(entry.doc), [entry.doc]);
 
   return (

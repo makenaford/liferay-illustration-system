@@ -33,10 +33,12 @@ export function isResizable(el: Element): boolean {
 }
 
 export function resizedTo(el: Element, width: number, height: number): Element {
+  // A line's box is its run and rise, and 0 is the common case — a flat rule.
+  const min = el.type === 'line' ? 0 : 4;
   return {
     ...el,
-    width: round(Math.max(width, 4)),
-    height: round(Math.max(height, 4)),
+    width: round(Math.max(width, min)),
+    height: round(Math.max(height, min)),
   } as Element;
 }
 

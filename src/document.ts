@@ -308,6 +308,24 @@ export interface ConnectorEl extends LayoutChild {
   fade?: boolean;
 }
 
+/**
+ * A plain straight line from (x, y) to (x + width, y + height). Height 0 is a
+ * horizontal rule, width 0 a vertical one; anything else is a diagonal, which
+ * is what dragging a corner in the editor gives you.
+ */
+export interface LineEl extends LayoutChild {
+  type: 'line';
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  /** A semantic tone or any palette key — see `TextEl.tone`. */
+  tone?: string;
+  thickness?: number;
+  /** Round the ends. */
+  rounded?: boolean;
+}
+
 export interface ArrowEl extends LayoutChild {
   type: 'arrow';
   x: number;
@@ -408,6 +426,7 @@ export type Element =
   | AvatarEl
   | ConnectorEl
   | ArrowEl
+  | LineEl
   | MapEl
   | SpotIconEl
   | ImageEl

@@ -176,6 +176,27 @@ function renderElementInner(ctx: Ctx, el: Element, path?: string): VNode | null 
     case 'arrow':
       return Arrow(ctx, el);
 
+    case 'line': {
+      const x2 = el.x + el.width;
+      const y2 = el.y + el.height;
+      return h('g', { 'data-el': 'line' }, [
+        h('line', {
+          x1: el.x,
+          y1: el.y,
+          x2,
+          y2,
+          stroke: toneColor(ctx, el.tone ?? 'neutral-02'),
+          'stroke-width': el.thickness ?? 1,
+          'stroke-linecap': el.rounded ? 'round' : 'butt',
+        }),
+        // A hairline is nearly impossible to click, so the editor gets a wide
+        // invisible stroke to hit. Exports (no path) leave it out.
+        path !== undefined
+          ? h('line', { x1: el.x, y1: el.y, x2, y2, stroke: 'transparent', 'stroke-width': 8 })
+          : null,
+      ]);
+    }
+
     case 'map':
       return MapDots(ctx, el);
 

@@ -333,6 +333,17 @@ export const SCHEMA: {
       { key: 'tone', label: 'Tone', kind: 'select', options: ['primary', 'accent'] },
     ],
   },
+  line: {
+    label: 'Line',
+    fields: [
+      ...XY,
+      { key: 'width', label: 'Run (W)', kind: 'number' },
+      { key: 'height', label: 'Rise (H)', kind: 'number' },
+      { key: 'tone', label: 'Colour', kind: 'token' },
+      { key: 'thickness', label: 'Thickness', kind: 'number', min: 0.5, step: 0.5 },
+      { key: 'rounded', label: 'Round ends', kind: 'boolean' },
+    ],
+  },
   map: {
     label: 'Dot map',
     fields: [
@@ -413,6 +424,7 @@ export const DEFAULTS: Record<Element['type'], () => Element> = {
   avatar: () => ({ type: 'avatar', cx: 60, cy: 60, r: 16, initials: 'AB' }),
   connector: () => ({ type: 'connector', from: [40, 40], to: [160, 120], route: 'hv', radius: 12 }),
   arrow: () => ({ type: 'arrow', x: 40, y: 40, width: 30, thickness: 9, direction: 'right' }),
+  line: () => ({ type: 'line', x: 40, y: 40, width: 120, height: 0, tone: 'neutral-02', thickness: 1 }),
   map: () => ({ type: 'map', x: 40, y: 40, width: 168, height: 64, spacing: 4 }),
   spotIcon: () => ({ type: 'spotIcon', name: 'composable', x: 40, y: 40, size: 64 }),
   // Both are only ever created by the importer, which supplies the payload.
@@ -429,6 +441,6 @@ export const PALETTE: { group: string; types: Element['type'][] }[] = [
   { group: 'Type', types: ['text', 'stat'] },
   { group: 'Controls', types: ['button', 'pill', 'badge', 'toggle', 'input', 'chrome'] },
   { group: 'Data', types: ['lineChart', 'barChart', 'progress', 'map', 'skeleton'] },
-  { group: 'Graphics', types: ['spotIcon', 'icon', 'iconGrid', 'avatar', 'connector', 'arrow'] },
+  { group: 'Graphics', types: ['spotIcon', 'icon', 'iconGrid', 'avatar', 'line', 'connector', 'arrow'] },
   { group: 'Imported', types: ['image', 'svg'] },
 ];

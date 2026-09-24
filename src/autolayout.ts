@@ -84,6 +84,8 @@ export function measureElement(el: Element): Size {
       };
     case 'arrow':
       return { width: el.width ?? 30, height: el.thickness ?? 9 };
+    case 'line':
+      return { width: el.width, height: Math.max(el.height, el.thickness ?? 1) };
     case 'badge':
       return {
         width: el.width ?? badgeWidth(el.label, el.dot, el.tone),

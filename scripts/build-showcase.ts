@@ -216,6 +216,17 @@ h2.sec {
 .meta { display: flex; align-items: baseline; gap: 8px; margin-top: 12px; }
 .meta b { font-size: 14.5px; letter-spacing: -0.1px; }
 .meta code { font-family: var(--mono); font-size: 11px; color: var(--muted); margin-left: auto; white-space: nowrap; }
+.dl { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+.dl button {
+  font: 600 11.5px/1 var(--sans); color: var(--muted);
+  background: transparent; border: 1px solid var(--line); border-radius: 5px;
+  padding: 5px 9px; cursor: pointer; white-space: nowrap;
+}
+.dl button:hover { border-color: var(--accent); color: var(--ink); }
+.dl button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.dl button[data-state="done"] { border-color: var(--accent); color: var(--accent); }
+.dl button[data-state="failed"] { border-color: #d60e00; color: #d60e00; }
+.dl[hidden] { display: none; }
 .tag { font-family: var(--mono); font-size: 11px; color: var(--muted); }
 
 footer { border-top: 1px solid var(--line); padding-block: 28px 56px; color: var(--muted); font-size: 14px; }
@@ -291,6 +302,11 @@ ${docs
     (d) => `    <figure class="item" style="margin:0">
       ${art(d)}
       <figcaption class="meta"><b>${d.name}</b><code>${d.elements} el</code></figcaption>
+      <div class="dl" data-id="${d.id}">
+        <button type="button" data-export="light" hidden>Light .svg</button>
+        <button type="button" data-export="dark" hidden>Dark .svg</button>
+        <button type="button" data-copy="light">Copy markup</button>
+      </div>
     </figure>`,
   )
   .join('\n')}
@@ -301,6 +317,10 @@ ${docs
     live text in Source Sans 3, charts are drawn from data, and the glass is a real
     backdrop blur rather than a baked image &mdash; so every one of these is editable,
     searchable and re-themable after export.</p>
+    <p><b>Copy markup</b> puts the SVG source on your clipboard; pasting it straight
+    into a Figma canvas gives you editable vectors rather than an image. The
+    <b>.svg</b> buttons save a file and appear once the page can reach the viewer's
+    download permission.</p>
   </footer>
 </div>
 
@@ -324,6 +344,95 @@ ${docs
   var saved = null;
   try { saved = localStorage.getItem('showcase-theme'); } catch (e) {}
   paint(saved === 'light' || saved === 'dark' ? saved : 'system');
+
+  /* ---- export ---------------------------------------------------------
+     Both themes are already in the DOM, so the file is serialised from the
+     node rather than shipped a second time as a string. The inline copies
+     have their width/height stripped so CSS can size them; those go back on
+     the way out, because a standalone SVG with no intrinsic size lands in
+     other tools at whatever they feel like. */
+  function sourceFor(row, theme) {
+    var fig = row.closest('figure');
+    var svg = fig.querySelector('.t-' + theme + ' svg');
+    if (!svg) return null;
+    var clone = svg.cloneNode(true);
+    var box = (clone.getAttribute('viewBox') || '').split(/[\s,]+/);
+    if (box.length === 4) {
+      clone.setAttribute('width', box[2]);
+      clone.setAttribute('height', box[3]);
+    }
+    return new XMLSerializer().serializeToString(clone);
+  }
+
+  function flash(btn, label, state) {
+    var original = btn.getAttribute('data-label') || btn.textContent;
+    btn.setAttribute('data-label', original);
+    btn.textContent = label;
+    btn.setAttribute('data-state', state);
+    setTimeout(function () {
+      btn.textContent = original;
+      btn.removeAttribute('data-state');
+    }, 1800);
+  }
+
+  document.querySelectorAll('.dl [data-copy]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var row = btn.parentElement;
+      var theme = document.documentElement.getAttribute('data-theme');
+      if (theme !== 'light' && theme !== 'dark') {
+        theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      }
+      var text = sourceFor(row, theme);
+      if (!text) return;
+      var done = function () { flash(btn, 'Copied ' + theme, 'done'); };
+      var failed = function () { flash(btn, 'Copy failed', 'failed'); };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, function () { legacy(text) ? done() : failed(); });
+      } else {
+        legacy(text) ? done() : failed();
+      }
+    });
+  });
+
+  function legacy(text) {
+    try {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.setAttribute('readonly', '');
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      var ok = document.execCommand('copy');
+      ta.remove();
+      return ok;
+    } catch (e) { return false; }
+  }
+
+  /* The sandbox makes an <a download> link inert, so a real file save has
+     to go through the downloads capability. It resolves after first paint,
+     and resolves null when the viewer cannot run it, so the buttons start
+     hidden and are revealed only once there is something behind them. */
+  if (window.claude && window.claude.use) {
+    window.claude.use('downloads').then(function (downloads) {
+      if (!downloads) return;
+      document.querySelectorAll('.dl [data-export]').forEach(function (btn) {
+        btn.hidden = false;
+        btn.addEventListener('click', function () {
+          var row = btn.parentElement;
+          var theme = btn.getAttribute('data-export');
+          var text = sourceFor(row, theme);
+          if (!text) return;
+          btn.disabled = true;
+          downloads
+            .save({ filename: row.getAttribute('data-id') + '.' + theme + '.svg', data: text })
+            .then(function () { flash(btn, 'Saved', 'done'); },
+                  function () { flash(btn, 'Not saved', 'failed'); })
+            .then(function () { btn.disabled = false; });
+        });
+      });
+    }, function () { /* unavailable: the copy button still works */ });
+  }
 })();
 </script>
 `;

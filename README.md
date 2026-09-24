@@ -855,6 +855,25 @@ It is generated, not hand-written, for a practical reason — it embeds about
 1MB of artwork, and a page that has to be regenerated whenever a document
 changes should not be something anyone edits by hand.
 
+### Getting the artwork out of it
+
+Two exports per illustration, and the split between them is forced by the
+sandbox: **an `<a download>` link is inert inside an artifact**, so a real file
+save has to go through the `downloads` capability, which the viewer confirms
+and may decline. Those buttons therefore start hidden and are revealed only
+once `claude.use('downloads')` has resolved to something — a viewer who cannot
+run it sees no dead controls.
+
+**Copy markup** needs no capability and is the more useful of the two here:
+pasting SVG source onto a Figma canvas gives editable vectors rather than a
+flat image. It copies whichever theme the page is currently showing.
+
+Neither ships a second copy of the artwork. Both themes are already in the DOM,
+so the file is serialised from the node — with `width` and `height` put back
+from the `viewBox`, because the inline copies have them stripped so CSS can
+size them, and a standalone SVG with no intrinsic size lands in other tools at
+whatever they feel like.
+
 # The editor
 
 A standalone web app for composing illustrations from the library.

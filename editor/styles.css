@@ -283,6 +283,8 @@ button, input, select, textarea {
 .series { display: flex; flex-direction: column; gap: 5px; }
 .series-row { display: flex; gap: 5px; }
 .series-row select { flex: none; width: 92px; }
+.series-row input { flex: 1; min-width: 0; }
+.series-actions { display: flex; gap: 5px; }
 
 button.mini {
   background: var(--panel-2);

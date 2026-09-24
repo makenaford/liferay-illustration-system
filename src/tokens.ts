@@ -574,8 +574,10 @@ export const dark: Tokens = {
     primary: '#FFFFFF',
     secondary: D('brand-primary-primary'),
     compare: D('brand-primary-lighten-3'),
-    gridLine: '#FFFFFF',
-    gridLineOpacity: 0.3,
+    // `Neutral/02`, solid. In dark it is the step just above the card, so the
+    // rules sit behind the data rather than competing with a white series.
+    gridLine: D('neutral-02'),
+    gridLineOpacity: 1,
   },
   brandGradient: {
     from: D('brand-primary-lighten-1'),
@@ -813,8 +815,8 @@ export const light: Tokens = {
     primary: L('surfaces-text-primary'),
     secondary: L('brand-primary-primary'),
     compare: L('brand-primary-lighten-3'),
-    gridLine: INK,
-    gridLineOpacity: 0.12,
+    gridLine: L('neutral-02'),
+    gridLineOpacity: 1,
   },
   brandGradient: {
     from: L('brand-primary-lighten-1'),

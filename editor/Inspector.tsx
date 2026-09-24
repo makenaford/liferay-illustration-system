@@ -28,6 +28,7 @@ import { TokenPicker } from './TokenPicker.tsx';
 import { AlignGrid, GapPicker, PaddingPicker } from './LayoutControls.tsx';
 import { DocumentPanel } from './DocumentPanel.tsx';
 import { FileField } from './FileField.tsx';
+import { regenerateSeries } from './chartData.ts';
 
 /**
  * INSPECTOR — generated entirely from `schema.ts`.
@@ -651,6 +652,12 @@ function Control({
         data: number[];
         role?: string;
       }[];
+      const domain = (el as { domain?: [number, number] }).domain;
+      const regenerate = (i: number) => {
+        const next = [...series];
+        next[i] = { ...series[i], data: regenerateSeries(series[i].data, domain) };
+        onChange(next);
+      };
       return (
         <span className="series">
           {series.map((s, i) => (
@@ -682,15 +689,40 @@ function Control({
                   onChange(next);
                 }}
               />
+              {el.type === 'lineChart' && (
+                <button
+                  type="button"
+                  className="mini"
+                  title="Draw this line again at random — same points, same direction"
+                  aria-label={`Regenerate series ${i + 1}`}
+                  onClick={() => regenerate(i)}
+                >
+                  ↻
+                </button>
+              )}
             </span>
           ))}
-          <button
-            type="button"
-            className="mini"
-            onClick={() => onChange([...series, { role: 'primary', data: [0.2, 0.5, 0.8] }])}
-          >
-            + series
-          </button>
+          <span className="series-actions">
+            <button
+              type="button"
+              className="mini"
+              onClick={() => onChange([...series, { role: 'primary', data: [0.2, 0.5, 0.8] }])}
+            >
+              + series
+            </button>
+            {el.type === 'lineChart' && series.length > 0 && (
+              <button
+                type="button"
+                className="mini"
+                title="Draw every line again at random"
+                onClick={() =>
+                  onChange(series.map((s) => ({ ...s, data: regenerateSeries(s.data, domain) })))
+                }
+              >
+                ↻ Regenerate {series.length > 1 ? 'all' : 'line'}
+              </button>
+            )}
+          </span>
         </span>
       );
     }

@@ -77,8 +77,7 @@ export function BarChart(ctx: Ctx, props: BarChartProps): VNode {
         y2: gy,
         stroke: tk.chart.gridLine,
         'stroke-opacity': tk.chart.gridLineOpacity,
-        'stroke-width': 0.312,
-        'stroke-dasharray': '0.62 0.62',
+        'stroke-width': 0.5,
       }),
     );
   }

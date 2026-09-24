@@ -15,7 +15,7 @@ export interface LineChartProps {
   width: number;
   height: number;
   series: Series[];
-  /** Horizontal dashed rules. Count matches the exports' 8. */
+  /** Horizontal rules, solid `Neutral/02`. Count matches the exports' 8. */
   gridLines?: number;
   /** Shared y-scale across series. Defaults to the combined data range. */
   domain?: [number, number];
@@ -102,9 +102,7 @@ export function LineChart(ctx: Ctx, props: LineChartProps): VNode {
         y2: gy,
         stroke: t.gridLine,
         'stroke-opacity': t.gridLineOpacity,
-        'stroke-width': 0.312,
-        'stroke-linejoin': 'round',
-        'stroke-dasharray': '0.62 0.62',
+        'stroke-width': 0.5,
       }),
     );
   }

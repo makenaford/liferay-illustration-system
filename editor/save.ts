@@ -57,8 +57,8 @@ export type SaveOutcome =
 const REASON: Record<string, string> = {
   rate_limited: 'a save prompt is already open — finish it, then try again',
   too_large: 'the file is too large for this destination',
-  rejected_extension: 'this viewer will not accept .svg files',
-  extension_not_enabled: 'SVG saving is switched off in this viewer',
+  rejected_extension: 'this viewer will not accept that file type',
+  extension_not_enabled: 'saving this file type is switched off in this viewer',
   bad_request: 'the editor sent a malformed file — please report this',
   request_unknown: 'the export request expired',
   transform_error: 'the viewer could not process the file',
@@ -66,7 +66,7 @@ const REASON: Record<string, string> = {
 
 export async function saveFile(
   filename: string,
-  text: string,
+  text: string | Blob,
   mime: string,
 ): Promise<SaveOutcome> {
   const ns = await downloads();
@@ -91,7 +91,7 @@ export async function saveFile(
   // say so rather than pretending the click worked.
   if (isHosted()) return { status: 'unavailable' };
 
-  const url = URL.createObjectURL(new Blob([text], { type: mime }));
+  const url = URL.createObjectURL(text instanceof Blob ? text : new Blob([text], { type: mime }));
   const a = document.createElement('a');
   a.href = url;
   a.download = filename;

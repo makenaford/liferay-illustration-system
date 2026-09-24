@@ -26,6 +26,7 @@ import {
   useEditor,
 } from './state.ts';
 import { deleteSelection, groupSelection, ungroupSelected } from './grouping.ts';
+import { svgToPng } from './png.ts';
 
 initStore(DOCS[0]);
 
@@ -51,6 +52,7 @@ export function App() {
   // invisible — nothing on screen changes when you press copy — and silence
   // reads as "the shortcut didn't work".
   const [flash, setFlash] = useState<string | null>(null);
+  const [pngScale, setPngScale] = useState(2);
   const say = (verb: string, what: string | null) => {
     if (what) setFlash(`${verb} ${what}`);
   };
@@ -211,6 +213,21 @@ export function App() {
       // Exported without `annotate`, so no editor metadata ships.
       const name = `${doc.id}.${t}.svg`;
       report(name, await saveFile(name, renderDocument(doc, t), 'image/svg+xml'));
+    }
+  };
+
+  /*
+   * PNG of the current theme, from the same export SVG the Save SVG button
+   * writes — so the raster and the vector cannot disagree. See `svgToPng`.
+   */
+  const exportPng = async () => {
+    const suffix = pngScale === 1 ? '' : `@${pngScale}x`;
+    const name = `${doc.id}.${theme}${suffix}.png`;
+    try {
+      const png = await svgToPng(renderDocument(doc, theme), doc.canvas.width, doc.canvas.height, pngScale);
+      report(name, await saveFile(name, png, 'image/png'));
+    } catch (err) {
+      setFlash(`Could not render the PNG — ${(err as Error).message}`);
     }
   };
 
@@ -386,6 +403,25 @@ export function App() {
         >
           Save both
         </button>
+        <span className="png-export">
+          <button
+            type="button"
+            onClick={() => void exportPng()}
+            title={`Save the ${theme} illustration as a PNG, ${doc.canvas.width * pngScale} × ${doc.canvas.height * pngScale}px`}
+          >
+            Save PNG
+          </button>
+          <select
+            aria-label="PNG scale"
+            value={pngScale}
+            onChange={(e) => setPngScale(Number(e.target.value))}
+            title="PNG size, as a multiple of the canvas"
+          >
+            <option value={1}>1×</option>
+            <option value={2}>2×</option>
+            <option value={3}>3×</option>
+          </select>
+        </span>
         <button
           type="button"
           onClick={() =>

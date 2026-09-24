@@ -65,6 +65,19 @@ button, input, select, textarea {
 
 .topbar button:hover:not(:disabled) { border-color: #3a4150; background: #262b33; }
 .topbar button:disabled { opacity: 0.4; cursor: default; }
+.png-export { display: inline-flex; }
+.png-export button { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+/* Styled like the snap select, joined to the button so they read as one control. */
+.png-export select {
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  margin-left: -1px;
+  padding: 5px 6px;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+}
 .topbar button.on { background: var(--accent); border-color: var(--accent); }
 .topbar button.primary { background: var(--accent); border-color: var(--accent); font-weight: 600; }
 

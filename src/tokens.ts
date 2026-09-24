@@ -330,8 +330,18 @@ const font = {
 /** `.cardRoot[data-align]` draws 8; `radius.tokens.json` calls the set 9. */
 const radius = { panel: 8, card: 8, pill: 999 };
 
-/** `--sds-glass-blur: 50px`. Shared, like `Glass Step 02`. */
-const GLASS_BLUR = 50;
+/**
+ * The backdrop blur, in CSS px — `backdropPane` halves it for the Gaussian
+ * sigma, so this is 10 in SVG terms.
+ *
+ * The design system ships `--sds-glass-blur: 50px`, and 50 is right over a
+ * live page, where the blur is destroying real detail behind the card. Over an
+ * illustration's smooth stage there is no detail to destroy, so a 50px blur
+ * only softened the glow bleeding through the pane into an even wash and cost
+ * a wide filter region on every card. At 20 the bleed still reads as
+ * refraction and keeps some shape.
+ */
+const GLASS_BLUR = 20;
 /** `Glass Step 02` — the same in both themes. */
 const STEP_02 = { color: '#8C96A9', opacity: 0.03 };
 

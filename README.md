@@ -430,6 +430,14 @@ Every original sits in a comment beside its replacement in `tokens.ts`, so
 going back to the shipped numbers is one edit rather than an archaeology
 problem.
 
+**The blur radius moved too: 50 → 20.** The design system ships
+`--sds-glass-blur: 50px`, and 50 is right over a live page, where the blur is
+destroying real detail behind the card. Over a smooth stage there is no detail
+to destroy, so 50 only softened the glow bleeding through the pane into an even
+wash — and cost a filter region of `blur × 3` = 150px of padding on every card,
+against 60px now. `backdropPane` halves the CSS value for the Gaussian sigma,
+so this is `stdDeviation="10"` in the output.
+
 **`gradient` is sampled, not invented.** It comes from node `268:7322` in the
 Marketing UI Assets Repo — the "0 OPEN VULNERABILITIES" card. Reading the
 render back pixel by pixel: it holds `#0b5fff`, which is `Brand/Primary`

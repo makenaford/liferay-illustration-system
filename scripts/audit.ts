@@ -248,6 +248,80 @@ function alignmentWalk(doc: Doc, el: Element, path: string) {
   }
 }
 
+/**
+ * The box a top-level element occupies, in artboard units. Props only, the
+ * same way the editor's selection bounds work — nothing here needs a DOM.
+ */
+function extent(el: Element): Box | null {
+  const t = textRect(el);
+  if (t) return t;
+  switch (el.type) {
+    case 'avatar': {
+      const r = el.r ?? 11.875;
+      return { x: el.cx - r, y: el.cy - r, width: r * 2, height: r * 2 };
+    }
+    case 'connector': {
+      // The end nodes are drawn a few pixels past the endpoints.
+      const [x0, y0] = el.from;
+      const [x1, y1] = el.to;
+      return {
+        x: Math.min(x0, x1) - 3,
+        y: Math.min(y0, y1) - 3,
+        width: Math.abs(x1 - x0) + 6,
+        height: Math.abs(y1 - y0) + 6,
+      };
+    }
+    case 'icon':
+    case 'spotIcon': {
+      const s = el.size ?? (el.type === 'icon' ? 20 : 48);
+      return { x: el.x, y: el.y, width: s, height: s };
+    }
+  }
+  const b = el as unknown as Partial<Box>;
+  if (typeof b.x === 'number' && typeof b.y === 'number' && typeof b.width === 'number' && typeof b.height === 'number') {
+    return b as Box;
+  }
+  return null;
+}
+
+/**
+ * Clear space at the exported edge. Every illustration drops into a slot on
+ * a page, and a drawing that runs to within a few pixels of its own edge
+ * reads as cropped there. Measured in EXPORT pixels, after the artboard is
+ * fitted into the canvas, since that is the edge the page sees.
+ */
+function canvasInset(doc: Doc) {
+  const art = doc.artboard ?? doc.canvas;
+  const fit = Math.min(doc.canvas.width / art.width, doc.canvas.height / art.height);
+  const ox = (doc.canvas.width - art.width * fit) / 2;
+  const oy = (doc.canvas.height - art.height * fit) / 2;
+  const min = LAYOUT.canvasInset;
+
+  const check = (b: Box, path: string, what: string) => {
+    const sides = {
+      left: b.x * fit + ox,
+      top: b.y * fit + oy,
+      right: doc.canvas.width - ((b.x + b.width) * fit + ox),
+      bottom: doc.canvas.height - ((b.y + b.height) * fit + oy),
+    };
+    const tight = Object.entries(sides).filter(([, v]) => v < min - 0.01);
+    if (tight.length) {
+      add(
+        doc.name,
+        path,
+        'canvas-inset',
+        `${what} sits ${tight.map(([k, v]) => `${round(v)}px from the ${k}`).join(', ')} edge — minimum is ${min}`,
+      );
+    }
+  };
+
+  (doc.panels ?? []).forEach((p, i) => check(p, `panel.${i}`, 'panel'));
+  doc.elements.forEach((el, i) => {
+    const b = extent(el);
+    if (b) check(b, String(i), el.type);
+  });
+}
+
 const files = readdirSync(DOCS).filter((f) => f.endsWith('.json')).sort();
 for (const f of files) {
   const raw = JSON.parse(readFileSync(join(DOCS, f), 'utf8')) as Doc;
@@ -255,6 +329,7 @@ for (const f of files) {
   const resolved = resolveLayout(raw);
   alignment(resolved, resolved.elements, 'stage');
   textCollisions(resolved, resolved.elements, 'stage');
+  canvasInset(resolved);
   resolved.elements.forEach((el, i) => alignmentWalk(resolved, el, String(i)));
 }
 
@@ -277,3 +352,7 @@ for (const [rule, list] of [...byRule].sort((a, b) => b[1].length - a[1].length)
   }
   console.log();
 }
+
+// CI runs this before every deploy, so a finding has to stop the build —
+// otherwise the audit is a report nobody reads.
+if (findings.length) process.exitCode = 1;

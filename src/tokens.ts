@@ -835,6 +835,13 @@ export const LAYOUT = {
   gap: 8,
   /** Tighter gap, for label/value pairs and dense rows. */
   gapTight: 4,
+  /**
+   * Minimum clear space between the drawing and the exported edge, in export
+   * pixels. Measured after an `artboard` is scaled into the canvas, because
+   * that is the edge a page actually crops against. Glows are exempt: they
+   * are meant to bleed.
+   */
+  canvasInset: 20,
   /** The snap grid. Half the 8-step, so 2, 4, 6 and 12 all land on it. */
   grid: 2,
   /** Offered in the editor's snap control. */

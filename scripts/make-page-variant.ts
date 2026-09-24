@@ -66,7 +66,7 @@ const doc: Doc = {
   artboard: { width: 560, height: 372 },
   elements: [
     ...structuredClone(base.elements),
-    spotlight(6, 58, 104, 'Services Opportunity', 'analytics', '5X'),
+    spotlight(8, 58, 104, 'Services Opportunity', 'analytics', '5X'),
     spotlight(436, 204, 114, 'Deal Pipelines', 'dashboard', ''),
   ],
 };

@@ -9,7 +9,7 @@
   "glow": [
     {
       "cx": 120,
-      "cy": 60,
+      "cy": 62,
       "rx": 150,
       "ry": 140,
       "blur": 100,
@@ -17,7 +17,7 @@
     },
     {
       "cx": 470,
-      "cy": 320,
+      "cy": 322,
       "rx": 160,
       "ry": 150,
       "blur": 100,
@@ -27,7 +27,7 @@
   "panels": [
     {
       "x": 24,
-      "y": 18,
+      "y": 20,
       "width": 512,
       "height": 322,
       "radius": 8,
@@ -38,7 +38,7 @@
     {
       "type": "subCard",
       "x": 36,
-      "y": 30,
+      "y": 32,
       "width": 156,
       "height": 54,
       "surface": "glass1",
@@ -46,7 +46,7 @@
         {
           "type": "text",
           "x": 46,
-          "y": 46,
+          "y": 48,
           "role": "label",
           "content": "Registered",
           "tone": "muted"
@@ -54,14 +54,14 @@
         {
           "type": "text",
           "x": 46,
-          "y": 64,
+          "y": 66,
           "role": "title",
           "content": "120"
         },
         {
           "type": "progress",
           "x": 46,
-          "y": 74,
+          "y": 76,
           "width": 136,
           "value": 0.12,
           "tone": "accent"
@@ -71,7 +71,7 @@
     {
       "type": "subCard",
       "x": 202,
-      "y": 30,
+      "y": 32,
       "width": 156,
       "height": 54,
       "surface": "glass1",
@@ -79,7 +79,7 @@
         {
           "type": "text",
           "x": 212,
-          "y": 46,
+          "y": 48,
           "role": "label",
           "content": "Co-Sell",
           "tone": "muted"
@@ -87,14 +87,14 @@
         {
           "type": "text",
           "x": 212,
-          "y": 64,
+          "y": 66,
           "role": "title",
           "content": "45"
         },
         {
           "type": "progress",
           "x": 212,
-          "y": 74,
+          "y": 76,
           "width": 136,
           "value": 0.55,
           "tone": "accent"
@@ -104,7 +104,7 @@
     {
       "type": "subCard",
       "x": 368,
-      "y": 30,
+      "y": 32,
       "width": 156,
       "height": 54,
       "surface": "glass1",
@@ -112,7 +112,7 @@
         {
           "type": "text",
           "x": 378,
-          "y": 46,
+          "y": 48,
           "role": "label",
           "content": "Close Won",
           "tone": "muted"
@@ -120,14 +120,14 @@
         {
           "type": "text",
           "x": 378,
-          "y": 64,
+          "y": 66,
           "role": "title",
           "content": "30"
         },
         {
           "type": "progress",
           "x": 378,
-          "y": 74,
+          "y": 76,
           "width": 136,
           "value": 0.08,
           "tone": "accent"
@@ -137,7 +137,7 @@
     {
       "type": "subCard",
       "x": 36,
-      "y": 92,
+      "y": 94,
       "width": 238,
       "height": 114,
       "surface": "glass1",
@@ -145,14 +145,14 @@
         {
           "type": "text",
           "x": 48,
-          "y": 112,
+          "y": 114,
           "role": "subheading",
           "content": "Revenue Breakdown"
         },
         {
           "type": "text",
           "x": 66,
-          "y": 128,
+          "y": 130,
           "role": "micro",
           "content": "100K",
           "tone": "muted",
@@ -161,7 +161,7 @@
         {
           "type": "text",
           "x": 66,
-          "y": 140,
+          "y": 142,
           "role": "micro",
           "content": "80K",
           "tone": "muted",
@@ -170,7 +170,7 @@
         {
           "type": "text",
           "x": 66,
-          "y": 150,
+          "y": 152,
           "role": "micro",
           "content": "60K",
           "tone": "muted",
@@ -179,7 +179,7 @@
         {
           "type": "text",
           "x": 66,
-          "y": 162,
+          "y": 164,
           "role": "micro",
           "content": "40K",
           "tone": "muted",
@@ -188,7 +188,7 @@
         {
           "type": "text",
           "x": 66,
-          "y": 172,
+          "y": 174,
           "role": "micro",
           "content": "20K",
           "tone": "muted",
@@ -197,7 +197,7 @@
         {
           "type": "text",
           "x": 66,
-          "y": 184,
+          "y": 186,
           "role": "micro",
           "content": "0",
           "tone": "muted",
@@ -206,7 +206,7 @@
         {
           "type": "barChart",
           "x": 72,
-          "y": 126,
+          "y": 128,
           "width": 186,
           "height": 56,
           "gridLines": 6,
@@ -231,7 +231,7 @@
         {
           "type": "text",
           "x": 118,
-          "y": 196,
+          "y": 198,
           "role": "micro",
           "content": "Liferay",
           "tone": "muted",
@@ -240,7 +240,7 @@
         {
           "type": "text",
           "x": 212,
-          "y": 196,
+          "y": 198,
           "role": "micro",
           "content": "Partner",
           "tone": "muted",
@@ -251,7 +251,7 @@
     {
       "type": "subCard",
       "x": 286,
-      "y": 92,
+      "y": 94,
       "width": 238,
       "height": 114,
       "surface": "glass1",
@@ -259,14 +259,14 @@
         {
           "type": "text",
           "x": 298,
-          "y": 112,
+          "y": 114,
           "role": "subheading",
           "content": "Quarterly Revenue"
         },
         {
           "type": "text",
           "x": 316,
-          "y": 128,
+          "y": 130,
           "role": "micro",
           "content": "100K",
           "tone": "muted",
@@ -275,7 +275,7 @@
         {
           "type": "text",
           "x": 316,
-          "y": 140,
+          "y": 142,
           "role": "micro",
           "content": "80K",
           "tone": "muted",
@@ -284,7 +284,7 @@
         {
           "type": "text",
           "x": 316,
-          "y": 150,
+          "y": 152,
           "role": "micro",
           "content": "60K",
           "tone": "muted",
@@ -293,7 +293,7 @@
         {
           "type": "text",
           "x": 316,
-          "y": 162,
+          "y": 164,
           "role": "micro",
           "content": "40K",
           "tone": "muted",
@@ -302,7 +302,7 @@
         {
           "type": "text",
           "x": 316,
-          "y": 172,
+          "y": 174,
           "role": "micro",
           "content": "20K",
           "tone": "muted",
@@ -311,7 +311,7 @@
         {
           "type": "text",
           "x": 316,
-          "y": 184,
+          "y": 186,
           "role": "micro",
           "content": "0",
           "tone": "muted",
@@ -320,7 +320,7 @@
         {
           "type": "barChart",
           "x": 322,
-          "y": 126,
+          "y": 128,
           "width": 186,
           "height": 56,
           "gridLines": 6,
@@ -353,7 +353,7 @@
     {
       "type": "subCard",
       "x": 36,
-      "y": 214,
+      "y": 216,
       "width": 238,
       "height": 114,
       "surface": "glass1",
@@ -361,14 +361,14 @@
         {
           "type": "text",
           "x": 48,
-          "y": 234,
+          "y": 236,
           "role": "subheading",
           "content": "Annual Growth"
         },
         {
           "type": "text",
           "x": 66,
-          "y": 250,
+          "y": 252,
           "role": "micro",
           "content": "100%",
           "tone": "muted",
@@ -377,7 +377,7 @@
         {
           "type": "text",
           "x": 66,
-          "y": 264,
+          "y": 266,
           "role": "micro",
           "content": "75%",
           "tone": "muted",
@@ -386,7 +386,7 @@
         {
           "type": "text",
           "x": 66,
-          "y": 280,
+          "y": 282,
           "role": "micro",
           "content": "50%",
           "tone": "muted",
@@ -395,7 +395,7 @@
         {
           "type": "text",
           "x": 66,
-          "y": 294,
+          "y": 296,
           "role": "micro",
           "content": "25%",
           "tone": "muted",
@@ -404,7 +404,7 @@
         {
           "type": "text",
           "x": 66,
-          "y": 308,
+          "y": 310,
           "role": "micro",
           "content": "0",
           "tone": "muted",
@@ -413,7 +413,7 @@
         {
           "type": "lineChart",
           "x": 72,
-          "y": 248,
+          "y": 250,
           "width": 186,
           "height": 58,
           "gridLines": 8,
@@ -443,7 +443,7 @@
     {
       "type": "subCard",
       "x": 286,
-      "y": 214,
+      "y": 216,
       "width": 238,
       "height": 114,
       "surface": "highlighted",
@@ -451,14 +451,14 @@
         {
           "type": "text",
           "x": 298,
-          "y": 234,
+          "y": 236,
           "role": "subheading",
           "content": "Top opportunities"
         },
         {
           "type": "text",
           "x": 298,
-          "y": 250,
+          "y": 252,
           "role": "label",
           "content": "Name",
           "tone": "muted"
@@ -466,21 +466,21 @@
         {
           "type": "text",
           "x": 298,
-          "y": 272,
+          "y": 274,
           "role": "caption",
           "content": "Partner Service 1"
         },
         {
           "type": "text",
           "x": 298,
-          "y": 292,
+          "y": 294,
           "role": "caption",
           "content": "Co-Sell Service 2"
         },
         {
           "type": "text",
           "x": 298,
-          "y": 312,
+          "y": 314,
           "role": "caption",
           "content": "Partner Service 3"
         }

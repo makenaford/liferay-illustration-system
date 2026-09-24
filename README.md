@@ -388,7 +388,7 @@ glass elevations plus five specials:
 | Surface | What it is |
 |---|---|
 | `glass1` | Nested tile. No shadow — it is inset, not floating. |
-| `glass2` | The default card. The design system's shipped glass, exactly. |
+| `glass2` | The default card. The design system's glass colours, at illustration opacity — see below. |
 | `glass3` | Floating over the composition: an overlay, a callout. |
 | `highlighted` | The one card that matters more — **lit blue rather than brighter**: a blue cast shadow and a blue lit edge instead of a black shadow. |
 | `gradient` | **`Blue Gradient`, sampled from Figma.** Solid, not glass. |
@@ -399,8 +399,36 @@ glass elevations plus five specials:
 The three glass steps differ only in **how much light they catch** — fill
 opacity, hairline strength, shadow depth and lit edge all rise together,
 because that is what reads as "further forward" rather than as a different
-material. All of them are still `Glass Step 01/02` and `Glass Line 01/02`:
-`glass2` is the shipped value, and 1 and 3 step down and up from it.
+material. The colours are `Glass Step 01/02` and `Glass Line 01/02`, and 1 and
+3 step down and up from 2.
+
+### The opacities are not the design system's
+
+This is a deliberate divergence, and the reason is the backdrop.
+
+The shipped values — `glass2` at 5.5% fill in dark, 10% in light — are tuned
+for a `backdrop-filter` sitting over a live web page: photography, a hero
+video, a busy grid. There the blur has something to chew on, and 5.5% of white
+is plenty of material.
+
+An illustration's stage is a smooth gradient. Blurring a smooth gradient is
+very nearly a no-op, so at the shipped opacity the card had nothing to catch
+and read as a faint rectangle rather than as glass. The backdrop pane was
+being drawn correctly the whole time; there was simply nothing behind it worth
+blurring.
+
+The fills are now roughly **1.8×** the shipped values with the hairlines raised
+to match:
+
+| | dark fill | light fill | dark line | light line |
+|---|---|---|---|---|
+| `glass1` | 0.03 → **0.055** | 0.06 → **0.11** | 0.10 → **0.14** | 0.40 |
+| `glass2` | 0.055 → **0.10** | 0.10 → **0.18** | 0.16 → **0.22** | 0.60 |
+| `glass3` | 0.09 → **0.16** | 0.18 → **0.28** | 0.26 → **0.34** | 0.80 |
+
+Every original sits in a comment beside its replacement in `tokens.ts`, so
+going back to the shipped numbers is one edit rather than an archaeology
+problem.
 
 **`gradient` is sampled, not invented.** It comes from node `268:7322` in the
 Marketing UI Assets Repo — the "0 OPEN VULNERABILITIES" card. Reading the

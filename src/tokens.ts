@@ -343,21 +343,35 @@ export const dark: Tokens = {
    * The three glass steps differ only in how much light they catch: fill
    * opacity, hairline strength, shadow depth and lit edge all rise together,
    * because that is what reads as "further forward" rather than "different
-   * material". Everything is still `Glass Step 01/02` and `Glass Line 01/02`
-   * from the design system — 02 is the shipped value, and 01 and 03 step down
-   * and up from it.
+   * material". The colours are still `Glass Step 01/02` and `Glass Line 01/02`
+   * from the design system, and 01/03 still step down and up from 02.
+   *
+   * THE OPACITIES ARE NOT THE DESIGN SYSTEM'S, and that is deliberate.
+   *
+   * The shipped values (`glass2` at 5.5% fill in dark, 10% in light) are for a
+   * `backdrop-filter` sitting over a live web page — photography, a hero
+   * video, a busy grid. There the blur has something to chew on and 5.5% of
+   * white is plenty. An illustration's stage is a smooth gradient: blurring it
+   * is very nearly a no-op, so at the shipped opacity the card had nothing to
+   * catch and read as a faint rectangle rather than as glass.
+   *
+   * These are roughly 1.8x the shipped fills with the hairlines raised to
+   * match. The originals are kept beside each value so the divergence is one
+   * edit to undo, not an archaeology problem.
    */
   surfaces: {
     /** Nested tiles inside a card. No shadow: it is not floating, it is inset. */
     glass1: {
-      fill: { angle: 60, stops: [{ color: '#FFFFFF', opacity: 0.03 }, { color: STEP_02.color, opacity: 0.02 }] },
-      line: { angle: 225, stops: [{ color: '#FFFFFF', opacity: 0.1 }, { color: '#FFFFFF', opacity: 0.07 }] },
+      // DS: 0.03 / 0.02, line 0.1 / 0.07
+      fill: { angle: 60, stops: [{ color: '#FFFFFF', opacity: 0.055 }, { color: STEP_02.color, opacity: 0.03 }] },
+      line: { angle: 225, stops: [{ color: '#FFFFFF', opacity: 0.14 }, { color: '#FFFFFF', opacity: 0.09 }] },
       blur: GLASS_BLUR,
     },
     /** The default card — the design system's shipped glass, exactly. */
     glass2: {
-      fill: { angle: 60, stops: [{ color: '#FFFFFF', opacity: 0.055 }, { color: STEP_02.color, opacity: STEP_02.opacity }] },
-      line: { angle: 225, stops: [{ color: '#FFFFFF', opacity: 0.16 }, { color: '#FFFFFF', opacity: 0.12 }] },
+      // DS: 0.055 / STEP_02.opacity, line 0.16 / 0.12
+      fill: { angle: 60, stops: [{ color: '#FFFFFF', opacity: 0.1 }, { color: STEP_02.color, opacity: 0.045 }] },
+      line: { angle: 225, stops: [{ color: '#FFFFFF', opacity: 0.22 }, { color: '#FFFFFF', opacity: 0.15 }] },
       shadow: [
         { dy: 8, blur: 20, color: '#000000', opacity: 0.28 },
         { dy: 1, blur: 3, color: '#000000', opacity: 0.22 },
@@ -367,8 +381,9 @@ export const dark: Tokens = {
     },
     /** Floating over the composition — an overlay, a callout, a menu. */
     glass3: {
-      fill: { angle: 60, stops: [{ color: '#FFFFFF', opacity: 0.09 }, { color: STEP_02.color, opacity: 0.04 }] },
-      line: { angle: 225, stops: [{ color: '#FFFFFF', opacity: 0.26 }, { color: '#FFFFFF', opacity: 0.16 }] },
+      // DS: 0.09 / 0.04, line 0.26 / 0.16
+      fill: { angle: 60, stops: [{ color: '#FFFFFF', opacity: 0.16 }, { color: STEP_02.color, opacity: 0.06 }] },
+      line: { angle: 225, stops: [{ color: '#FFFFFF', opacity: 0.34 }, { color: '#FFFFFF', opacity: 0.2 }] },
       shadow: [
         { dy: 18, blur: 40, color: '#000000', opacity: 0.4 },
         { dy: 3, blur: 8, color: '#000000', opacity: 0.28 },
@@ -550,20 +565,34 @@ export const light: Tokens = {
    * The three glass steps differ only in how much light they catch: fill
    * opacity, hairline strength, shadow depth and lit edge all rise together,
    * because that is what reads as "further forward" rather than "different
-   * material". Everything is still `Glass Step 01/02` and `Glass Line 01/02`
-   * from the design system — 02 is the shipped value, and 01 and 03 step down
-   * and up from it.
+   * material". The colours are still `Glass Step 01/02` and `Glass Line 01/02`
+   * from the design system, and 01/03 still step down and up from 02.
+   *
+   * THE OPACITIES ARE NOT THE DESIGN SYSTEM'S, and that is deliberate.
+   *
+   * The shipped values (`glass2` at 5.5% fill in dark, 10% in light) are for a
+   * `backdrop-filter` sitting over a live web page — photography, a hero
+   * video, a busy grid. There the blur has something to chew on and 5.5% of
+   * white is plenty. An illustration's stage is a smooth gradient: blurring it
+   * is very nearly a no-op, so at the shipped opacity the card had nothing to
+   * catch and read as a faint rectangle rather than as glass.
+   *
+   * These are roughly 1.8x the shipped fills with the hairlines raised to
+   * match. The originals are kept beside each value so the divergence is one
+   * edit to undo, not an archaeology problem.
    */
   surfaces: {
     /** Nested tiles inside a card. No shadow: it is not floating, it is inset. */
     glass1: {
-      fill: { angle: 60, stops: [{ color: '#ADC9FF', opacity: 0.06 }, { color: STEP_02.color, opacity: 0.02 }] },
+      // DS: 0.06 / 0.02
+      fill: { angle: 60, stops: [{ color: '#ADC9FF', opacity: 0.11 }, { color: STEP_02.color, opacity: 0.03 }] },
       line: { angle: 225, stops: [{ color: '#6FA0FF', opacity: 0.4 }, { color: '#6FA0FF', opacity: 0.25 }] },
       blur: GLASS_BLUR,
     },
     /** The default card — the design system's shipped glass, exactly. */
     glass2: {
-      fill: { angle: 60, stops: [{ color: '#ADC9FF', opacity: 0.1 }, { color: STEP_02.color, opacity: STEP_02.opacity }] },
+      // DS: 0.1 / STEP_02.opacity
+      fill: { angle: 60, stops: [{ color: '#ADC9FF', opacity: 0.18 }, { color: STEP_02.color, opacity: 0.05 }] },
       line: { angle: 225, stops: [{ color: '#6FA0FF', opacity: 0.6 }, { color: '#6FA0FF', opacity: 0.4 }] },
       shadow: [
         { dy: 8, blur: 20, color: INK, opacity: 0.08 },
@@ -573,7 +602,8 @@ export const light: Tokens = {
     },
     /** Floating over the composition — an overlay, a callout, a menu. */
     glass3: {
-      fill: { angle: 60, stops: [{ color: '#ADC9FF', opacity: 0.18 }, { color: STEP_02.color, opacity: 0.04 }] },
+      // DS: 0.18 / 0.04
+      fill: { angle: 60, stops: [{ color: '#ADC9FF', opacity: 0.28 }, { color: STEP_02.color, opacity: 0.07 }] },
       line: { angle: 225, stops: [{ color: '#6FA0FF', opacity: 0.8 }, { color: '#6FA0FF', opacity: 0.5 }] },
       shadow: [
         { dy: 18, blur: 40, color: INK, opacity: 0.14 },

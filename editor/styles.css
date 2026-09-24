@@ -540,6 +540,25 @@ button.mini:hover { border-color: var(--accent); color: var(--ink); }
   * { transition: none !important; animation: none !important; }
 }
 
+/* ---- inline text ------------------------------------------------------ */
+
+/* Sits over the words it edits, in artboard units inside the zoomed stage.
+   Transparent, so the illustration shows through; the drawn text is hidden
+   while this stands in for it. */
+.inline-text {
+  position: absolute;
+  box-sizing: border-box;
+  background: transparent;
+  border: none;
+  outline: solid var(--accent);
+  border-radius: 2px;
+  line-height: normal;
+  caret-color: var(--accent);
+  z-index: 2;
+}
+.inline-text.multi { resize: none; overflow: hidden; line-height: 1.2; }
+.inline-text::selection { background: rgba(11, 95, 255, 0.45); }
+
 /* ---- file drop ---------------------------------------------------------- */
 
 .viewport.dropping { box-shadow: inset 0 0 0 2px var(--accent); }

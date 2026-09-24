@@ -466,7 +466,7 @@ export function App() {
             <span>{selected ? `selected ${selected}` : 'nothing selected'}</span>
             {flash && <span className="flash">{flash}</span>}
             <span className="hint">
-              drag move · ⇧click multi · ⌘G/⇧⌘G group · arrows nudge · ⌘C/⌘V/⌘D · [ ] z-order · g grid · a guides · r ratio · t theme
+              drag move · double-click text to edit · ⇧click multi · ⌘G/⇧⌘G group · arrows nudge · ⌘C/⌘V/⌘D · [ ] z-order · g grid · a guides · r ratio · t theme
             </span>
           </footer>
         </main>

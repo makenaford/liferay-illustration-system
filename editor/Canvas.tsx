@@ -18,6 +18,7 @@ import { isContainer as isContainerEl, resolveLayout } from '../src/autolayout.t
 import { parentOf } from './state.ts';
 import { useFileDrop } from './useFileDrop.ts';
 import { toggleSelect } from './grouping.ts';
+import { InlineText, textTargetAt, type TextTarget } from './InlineText.tsx';
 import { scaleOf, valueAt, withValue, type ChartScale } from './chartEdit.ts';
 import { linePoints } from '../src/primitives/lineChart.ts';
 import { barGeometry } from '../src/primitives/barChart.ts';
@@ -46,6 +47,8 @@ export function Canvas() {
 
   const docRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
+  /** Words being typed into on the canvas — see InlineText. */
+  const [editingText, setEditingText] = useState<TextTarget | null>(null);
   const [box, setBox] = useState<Box | null>(null);
   const [guides, setGuides] = useState<Guide[]>([]);
   const drag = useRef<{
@@ -563,6 +566,13 @@ export function Canvas() {
     <div
       className={`viewport${fileDrop.dropping ? ' dropping' : ''}`}
       {...fileDrop.handlers}
+      onDoubleClick={(e) => {
+        // Double-click words to type into them where they are.
+        const t = textTargetAt(e.target as globalThis.Element);
+        if (!t) return;
+        setUI({ selected: t.path });
+        setEditingText(t);
+      }}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
@@ -711,6 +721,10 @@ export function Canvas() {
             </g>
           )}
         </svg>
+
+        {editingText && (
+          <InlineText key={`${editingText.path}:${editingText.field}`} target={editingText} docRef={docRef} onDone={() => setEditingText(null)} />
+        )}
       </div>
 
       {fileDrop.dropping && (

@@ -29,6 +29,7 @@ import { DocumentPanel } from './DocumentPanel.tsx';
 import { FileField } from './FileField.tsx';
 import { BarSeriesEditor, LineSeriesEditor } from './ChartData.tsx';
 import { deleteSelection, groupSelection, ungroupSelected } from './grouping.ts';
+import { withText } from './InlineText.tsx';
 
 /**
  * INSPECTOR — generated entirely from `schema.ts`.
@@ -64,7 +65,7 @@ export function Inspector() {
     const st = getState();
     const current = elementAt(st.doc, selected);
     if (!current) return;
-    let next = { ...current, [key]: value } as Element;
+    let next = typeof value === 'string' ? withText(current, key, value) : ({ ...current, [key]: value } as Element);
 
     /*
      * Typing a width is a resize too. With the ratio locked, the other axis

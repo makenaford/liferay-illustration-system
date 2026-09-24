@@ -527,6 +527,22 @@ button.mini:hover { border-color: var(--accent); color: var(--ink); }
 }
 
 /*
+ * The safe area — the minimum clear space at the exported edge. Quiet on
+ * purpose: it is always on, so it must not compete with the artwork.
+ */
+.safe-area-margin {
+  fill: #ff4d6d;
+  fill-opacity: 0.06;
+  pointer-events: none;
+}
+.safe-area {
+  fill: none;
+  stroke: #ff4d6d;
+  stroke-opacity: 0.45;
+  pointer-events: none;
+}
+
+/*
  * Alignment guides. Red rather than the accent blue on purpose: the accent
  * is already the selection, the grid and every primary control, and a guide
  * in that colour disappears into the thing it is measuring.

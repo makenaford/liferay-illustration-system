@@ -1,4 +1,5 @@
-import type { Element } from '../src/document.ts';
+import type { Doc, Element } from '../src/document.ts';
+import { LAYOUT } from '../src/tokens.ts';
 
 export interface Box {
   x: number;
@@ -67,4 +68,21 @@ function measure(node: SVGGraphicsElement | null): Box | null {
   } catch {
     return null;
   }
+}
+
+/**
+ * The safe area: where the drawing may go, in ARTBOARD units.
+ *
+ * `LAYOUT.canvasInset` is measured in export pixels, after the artboard is
+ * fitted into the canvas — the same edge the audit checks. The editor works
+ * in artboard units, so the inset is converted back through that fit.
+ */
+export function safeArea(doc: Doc): Box {
+  const art = doc.artboard ?? doc.canvas;
+  const fit = Math.min(doc.canvas.width / art.width, doc.canvas.height / art.height);
+  const ox = (doc.canvas.width - art.width * fit) / 2;
+  const oy = (doc.canvas.height - art.height * fit) / 2;
+  const ix = Math.max(0, (LAYOUT.canvasInset - ox) / fit);
+  const iy = Math.max(0, (LAYOUT.canvasInset - oy) / fit);
+  return { x: ix, y: iy, width: art.width - ix * 2, height: art.height - iy * 2 };
 }

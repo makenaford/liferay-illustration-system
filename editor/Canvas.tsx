@@ -10,7 +10,7 @@ import {
   useEditor,
 } from './state.ts';
 import { isResizable, movedDeep, resizedTo } from './geometry.ts';
-import { boundsOf, type Box } from './bounds.ts';
+import { boundsOf, safeArea, type Box } from './bounds.ts';
 import { snap } from './grid.ts';
 import { contentBox } from './layout.ts';
 import { alignmentSnap, edgeSnap, type Guide, type Target } from './guides.ts';
@@ -85,6 +85,9 @@ export function Canvas() {
       if (b) out.push({ box: b, weight: 0.75 });
     }
     out.push({ box: { x: 0, y: 0, width: art.width, height: art.height }, weight: 0.75 });
+    // Top-level elements can also line up with the safe area's edge, which
+    // is the one they are most often being pushed toward.
+    if (!container) out.push({ box: safeArea(doc), weight: 0.75 });
     return out;
   };
 
@@ -365,6 +368,7 @@ export function Canvas() {
   }, []);
 
   const { width, height } = doc.artboard ?? doc.canvas;
+  const safe = safeArea(doc);
   const hs = 4 / zoom; // handles keep a constant on-screen size
 
   /*
@@ -432,6 +436,28 @@ export function Canvas() {
           {gridPath && (
             <path d={gridPath} className="grid-lines" strokeWidth={0.5 / zoom} />
           )}
+
+          {/*
+            * The safe area. The margin outside it is tinted rather than just
+            * outlined, so a card that strays into it is obvious without
+            * having to look for a line.
+            */}
+          <path
+            className="safe-area-margin"
+            fillRule="evenodd"
+            d={`M0 0H${width}V${height}H0Z M${safe.x} ${safe.y}V${safe.y + safe.height}H${
+              safe.x + safe.width
+            }V${safe.y}Z`}
+          />
+          <rect
+            x={safe.x}
+            y={safe.y}
+            width={safe.width}
+            height={safe.height}
+            className="safe-area"
+            strokeWidth={1 / zoom}
+            strokeDasharray={`${4 / zoom} ${4 / zoom}`}
+          />
 
           {guide && (
             <rect

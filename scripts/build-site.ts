@@ -1,15 +1,15 @@
 /**
  * Assemble the GitHub Pages site from the build outputs.
  *
- *   /                 the contact sheet — every illustration, both themes
- *   /builder/         the editor, standalone
+ *   /                 the builder
  *   /svg/*.svg        every illustration as a file
  *
- * The showcase is authored as an Artifact *fragment* — no doctype, head or
- * body, because the publish step supplies them. Pages supplies nothing, so it
- * is wrapped here rather than being authored twice.
+ * The builder is the site. The contact sheet used to be the landing page with
+ * the builder a click away, which had it backwards: the thing people came for
+ * was the editor. `npm run showcase` still produces the contact sheet for
+ * anyone who wants it; it is simply not what this URL serves.
  */
-import { copyFileSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { copyFileSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -20,23 +20,12 @@ const SITE = join(OUT, 'site');
 mkdirSync(join(SITE, 'builder'), { recursive: true });
 mkdirSync(join(SITE, 'svg'), { recursive: true });
 
-const fragment = readFileSync(join(OUT, 'artifact', 'showcase.html'), 'utf8');
-writeFileSync(
+copyFileSync(
+  join(OUT, 'standalone', 'illustration-builder.html'),
   join(SITE, 'index.html'),
-  `<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<style>:root{color-scheme:light dark}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
-</head>
-<body>
-${fragment}
-</body>
-</html>
-`,
 );
 
+// The old /builder/ URL keeps working — people have it in tabs and messages.
 copyFileSync(
   join(OUT, 'standalone', 'illustration-builder.html'),
   join(SITE, 'builder', 'index.html'),
@@ -49,4 +38,4 @@ for (const f of svgs) copyFileSync(join(OUT, f), join(SITE, 'svg', f));
 // underscore anywhere would be silently dropped.
 writeFileSync(join(SITE, '.nojekyll'), '');
 
-console.log(`site: index.html + builder/ + ${svgs.length} svg files -> ${SITE}`);
+console.log(`site: the builder at / (and /builder/) + ${svgs.length} svg files -> ${SITE}`);

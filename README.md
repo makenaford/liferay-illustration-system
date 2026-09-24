@@ -2,11 +2,11 @@
 
 **Live:** <https://makenaford.github.io/liferay-illustration-system/>
 
-| | |
-|---|---|
-| [Contact sheet](https://makenaford.github.io/liferay-illustration-system/) | every illustration, both themes, in page context |
-| [Builder](https://makenaford.github.io/liferay-illustration-system/builder/) | the editor — no install, no account |
-| [`/svg/`](https://makenaford.github.io/liferay-illustration-system/svg/deploy-daily.light.svg) | every illustration as a file |
+The builder is the site. Open it and you land on the library — every
+illustration, click to edit, save back.
+
+`/svg/` serves every illustration as a file, e.g.
+[`deploy-daily.light.svg`](https://makenaford.github.io/liferay-illustration-system/svg/deploy-daily.light.svg).
 
 Pushing to `main` rebuilds and redeploys. CI runs `typecheck` and `audit`
 first, so a deploy cannot publish a document the audit rejects.
@@ -1049,12 +1049,15 @@ primitives that must agree pixel-for-pixel forever.
 
 ---
 
-## Seeing them in place
+## The contact sheet, if you want it
 
 `npm run showcase` writes `out/artifact/showcase.html` — every document, both
-themes, inlined as real SVG rather than screenshots. Three of them sit in the
-kind of marketing section they were drawn for, three run as a feature row, and
-all ten appear at full size on a contact sheet with their element counts.
+themes, inlined as real SVG rather than screenshots, three of them sitting in
+the kind of marketing section they were drawn for.
+
+**It is not part of the deployed site.** The builder is what the URL serves;
+the contact sheet is one command away for anyone who wants a sheet to look
+at.
 
 The page's theme control switches the artwork along with the chrome, which is
 the system's whole claim made rather than asserted: one source document, two

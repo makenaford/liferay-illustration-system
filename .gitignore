@@ -2,3 +2,7 @@ node_modules/
 out/
 .DS_Store
 *.log
+
+# The original Figma exports. Kept locally for out/compare.html; never
+# pushed, because they are 44MB of internal source material.
+reference/

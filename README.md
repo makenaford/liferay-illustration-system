@@ -956,6 +956,31 @@ from the `viewBox`, because the inline copies have them stripped so CSS can
 size them, and a standalone SVG with no intrinsic size lands in other tools at
 whatever they feel like.
 
+## Running it outside Claude
+
+`npm run standalone` writes `out/standalone/illustration-builder.html` — one
+complete, self-contained document. No server, no build step, no account. Open
+it, or drop it on any static host.
+
+It is a separate build from the artifact bundle for three reasons, none of them
+cosmetic:
+
+- **It is a whole document.** The artifact publish step supplies the doctype,
+  head and body. Nothing supplies them to a file on disk.
+- **The script is classic, not a module.** Module scripts are subject to CORS
+  and a `file://` page has an opaque origin, so a `type="module"` bundle opened
+  by double-click fails silently in Chrome and Edge. This is the one reason the
+  artifact bundle cannot simply be renamed.
+- **Saving gets better, not worse.** Inside the viewer sandbox a download has
+  to go through the `downloads` capability and can be declined. Standalone,
+  `saveFile` finds no `window.claude` and takes the blob + `<a download>`
+  route, which just works — confirmed: with `window.claude` absent, Save SVG
+  reports `Saved deploy-daily.dark.svg`.
+
+The only external request is the Google Fonts stylesheet; with no network it
+falls back to the declared system stack and everything else still works,
+because React, the documents and the renderer are all inlined.
+
 # The editor
 
 A standalone web app for composing illustrations from the library.

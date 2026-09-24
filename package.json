@@ -18,6 +18,7 @@
     "preview": "vite build && vite preview",
     "showcase": "node --experimental-strip-types scripts/build-showcase.ts",
     "snap:sizes": "node --experimental-strip-types scripts/snap-sizes.ts",
+    "standalone": "vite build && node --experimental-strip-types scripts/bundle-standalone.ts",
     "surface-pass": "node --experimental-strip-types scripts/surface-pass.ts",
     "surfaces": "node --experimental-strip-types scripts/surfaces.ts",
     "surfaces:conform": "node --experimental-strip-types scripts/surface-conform.ts",

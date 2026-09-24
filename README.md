@@ -1,5 +1,16 @@
 # Illustration system
 
+**Live:** <https://makenaford.github.io/liferay-illustration-system/>
+
+| | |
+|---|---|
+| [Contact sheet](https://makenaford.github.io/liferay-illustration-system/) | every illustration, both themes, in page context |
+| [Builder](https://makenaford.github.io/liferay-illustration-system/builder/) | the editor — no install, no account |
+| [`/svg/`](https://makenaford.github.io/liferay-illustration-system/svg/deploy-daily.light.svg) | every illustration as a file |
+
+Pushing to `main` rebuilds and redeploys. CI runs `typecheck` and `audit`
+first, so a deploy cannot publish a document the audit rejects.
+
 All nine marketing illustrations rebuilt as **token-driven JSON documents**,
 each rendering to dark and light SVG from one source.
 

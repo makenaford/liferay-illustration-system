@@ -41,7 +41,7 @@
       "x": 60,
       "y": 36,
       "width": 142,
-      "height": 60,
+      "height": 62,
       "children": [
         {
           "type": "text",
@@ -71,7 +71,7 @@
           "type": "progress",
           "x": 68,
           "y": 71.18,
-          "width": 126,
+          "width": 118,
           "value": 0.085,
           "tone": "info"
         }
@@ -79,7 +79,7 @@
       "layout": {
         "direction": "vertical",
         "gap": 2,
-        "padding": 8,
+        "padding": 12,
         "align": "start"
       },
       "surface": "glass2"
@@ -97,7 +97,7 @@
       "x": 210,
       "y": 36,
       "width": 142,
-      "height": 60,
+      "height": 62,
       "children": [
         {
           "type": "text",
@@ -127,7 +127,7 @@
           "type": "progress",
           "x": 218,
           "y": 71.18,
-          "width": 126,
+          "width": 118,
           "value": 0.568,
           "tone": "accent"
         }
@@ -135,7 +135,7 @@
       "layout": {
         "direction": "vertical",
         "gap": 2,
-        "padding": 8,
+        "padding": 12,
         "align": "start"
       },
       "surface": "glass2"
@@ -152,7 +152,7 @@
       "x": 358,
       "y": 36,
       "width": 142,
-      "height": 60,
+      "height": 62,
       "children": [
         {
           "type": "text",
@@ -182,7 +182,7 @@
           "type": "progress",
           "x": 366,
           "y": 71.18,
-          "width": 126,
+          "width": 118,
           "value": 0.085,
           "tone": "info"
         }
@@ -190,7 +190,7 @@
       "layout": {
         "direction": "vertical",
         "gap": 2,
-        "padding": 8,
+        "padding": 12,
         "align": "start"
       },
       "surface": "glass2"
@@ -404,7 +404,7 @@
       "layout": {
         "direction": "vertical",
         "gap": 8,
-        "padding": 10,
+        "padding": 12,
         "align": "start"
       },
       "surface": "glass2"
@@ -414,7 +414,7 @@
       "x": 338,
       "y": 254,
       "width": 216,
-      "height": 104,
+      "height": 106,
       "children": [
         {
           "type": "text",
@@ -534,7 +534,7 @@
       ],
       "layout": {
         "direction": "vertical",
-        "gap": 8,
+        "gap": 6,
         "padding": 12,
         "align": "start"
       },

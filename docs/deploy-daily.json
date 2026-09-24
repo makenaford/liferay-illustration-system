@@ -136,7 +136,7 @@
           "type": "group",
           "x": 398,
           "y": 73.94800000000001,
-          "width": 48,
+          "width": 46,
           "height": 34,
           "layout": {
             "direction": "vertical",
@@ -168,7 +168,7 @@
       ],
       "layout": {
         "direction": "horizontal",
-        "gap": 6,
+        "gap": 4,
         "padding": [
           16,
           12
@@ -182,7 +182,7 @@
       "x": 78,
       "y": 234,
       "width": 212,
-      "height": 70,
+      "height": 78,
       "sheen": "linear",
       "children": [
         {

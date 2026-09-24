@@ -13,6 +13,7 @@ import { LAYOUT, SPACE, dark as tokens } from '../src/tokens.ts';
 import { textBox } from '../src/fontMetrics.generated.ts';
 import { typeStyle } from '../src/primitives/text.ts';
 import { resolveLayout } from '../src/autolayout.ts';
+import { badgeWidth } from '../src/primitives/badge.ts';
 
 const DOCS = join(import.meta.dirname, '..', 'docs');
 const SURFACES = Object.keys(tokens.surfaces);
@@ -276,6 +277,19 @@ function extent(el: Element): Box | null {
       const s = el.size ?? (el.type === 'icon' ? 20 : 48);
       return { x: el.x, y: el.y, width: s, height: s };
     }
+    // These carry a width but default their height in the primitive, so the
+    // defaults are repeated here rather than left unmeasured.
+    case 'progress':
+      return { x: el.x, y: el.y, width: el.width, height: el.height ?? 3 };
+    case 'skeleton':
+      return { x: el.x, y: el.y, width: el.width, height: el.height ?? 8 };
+    case 'badge':
+      return {
+        x: el.x,
+        y: el.y,
+        width: el.width ?? badgeWidth(el.label, el.dot, el.tone),
+        height: el.height ?? 13,
+      };
   }
   const b = el as unknown as Partial<Box>;
   if (typeof b.x === 'number' && typeof b.y === 'number' && typeof b.width === 'number' && typeof b.height === 'number') {
@@ -322,6 +336,40 @@ function canvasInset(doc: Doc) {
   });
 }
 
+/**
+ * Clear space inside a card. A label that runs to within a few pixels of its
+ * card's edge reads as cramped long before it overflows, and `overflow` only
+ * catches the second. Groups are exempt: they draw nothing, so there is no
+ * edge to crowd. Checked on the resolved tree, so auto-layout children are
+ * measured where they actually land.
+ */
+function cardPadding(doc: Doc, el: Element, path: string) {
+  const kids = (el as { children?: Element[] }).children ?? [];
+  if (el.type === 'card' || el.type === 'subCard') {
+    const min = LAYOUT.cardPadding;
+    kids.forEach((c, i) => {
+      const b = extent(c);
+      if (!b) return;
+      const sides = {
+        left: b.x - el.x,
+        top: b.y - el.y,
+        right: el.x + el.width - (b.x + b.width),
+        bottom: el.y + el.height - (b.y + b.height),
+      };
+      const tight = Object.entries(sides).filter(([, v]) => v < min - 0.01);
+      if (tight.length) {
+        add(
+          doc.name,
+          `${path}.${i}`,
+          'card-padding',
+          `${c.type} sits ${tight.map(([k, v]) => `${round(v)}px from the ${k}`).join(', ')} of its ${el.type} — minimum is ${min}`,
+        );
+      }
+    });
+  }
+  kids.forEach((c, i) => cardPadding(doc, c, `${path}.${i}`));
+}
+
 const files = readdirSync(DOCS).filter((f) => f.endsWith('.json')).sort();
 for (const f of files) {
   const raw = JSON.parse(readFileSync(join(DOCS, f), 'utf8')) as Doc;
@@ -330,6 +378,7 @@ for (const f of files) {
   alignment(resolved, resolved.elements, 'stage');
   textCollisions(resolved, resolved.elements, 'stage');
   canvasInset(resolved);
+  resolved.elements.forEach((el, i) => cardPadding(resolved, el, String(i)));
   resolved.elements.forEach((el, i) => alignmentWalk(resolved, el, String(i)));
 }
 

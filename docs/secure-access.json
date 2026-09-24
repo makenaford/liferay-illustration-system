@@ -27,7 +27,7 @@
       "x": 92,
       "y": 48,
       "width": 162,
-      "height": 280,
+      "height": 288,
       "sheen": "linear",
       "surface": "glass2"
     },
@@ -35,7 +35,7 @@
       "x": 274,
       "y": 46,
       "width": 180,
-      "height": 282,
+      "height": 290,
       "sheen": "linear",
       "surface": "glass2"
     }
@@ -178,7 +178,7 @@
           "type": "input",
           "x": 294,
           "y": 130,
-          "width": 140,
+          "width": 132,
           "height": 22,
           "radius": 6,
           "icon": "search",
@@ -188,7 +188,7 @@
           "type": "skeleton",
           "x": 294,
           "y": 158,
-          "width": 140,
+          "width": 132,
           "height": 8
         },
         {
@@ -202,7 +202,7 @@
           "type": "skeleton",
           "x": 294,
           "y": 184,
-          "width": 140,
+          "width": 132,
           "height": 8
         }
       ],
@@ -211,7 +211,7 @@
         "gap": 6,
         "padding": [
           12,
-          8
+          12
         ],
         "align": "start"
       },
@@ -222,7 +222,7 @@
       "x": 286,
       "y": 214,
       "width": 156,
-      "height": 104,
+      "height": 110,
       "radius": 10,
       "children": [
         {
@@ -237,7 +237,7 @@
           "x": 294,
           "y": 247.04,
           "width": 140,
-          "height": 62,
+          "height": 70,
           "layout": {
             "direction": "vertical",
             "gap": 2,
@@ -249,8 +249,8 @@
               "type": "subCard",
               "x": 294,
               "y": 247.04,
-              "width": 140,
-              "height": 48,
+              "width": 132,
+              "height": 56,
               "radius": 4,
               "children": [
                 {
@@ -274,8 +274,8 @@
                 "direction": "vertical",
                 "gap": 2,
                 "padding": [
-                  4,
-                  10
+                  12,
+                  12
                 ],
                 "align": "start"
               },
@@ -321,10 +321,10 @@
       ],
       "layout": {
         "direction": "vertical",
-        "gap": 12,
+        "gap": 8,
         "padding": [
-          16,
-          8
+          12,
+          12
         ],
         "align": "start"
       },

@@ -44,7 +44,7 @@
       "x": 154,
       "y": 128,
       "width": 216,
-      "height": 46,
+      "height": 56,
       "radius": 24,
       "children": [
         {
@@ -93,25 +93,25 @@
         "direction": "horizontal",
         "gap": 8,
         "padding": [
-          8,
-          6
+          12,
+          12
         ],
-        "align": "start"
+        "align": "center"
       },
       "surface": "glass2"
     },
     {
       "type": "subCard",
       "x": 174,
-      "y": 184,
+      "y": 194,
       "width": 216,
-      "height": 46,
+      "height": 56,
       "radius": 24,
       "children": [
         {
           "type": "group",
           "x": 192,
-          "y": 192,
+          "y": 202,
           "width": 96,
           "height": 32,
           "layout": {
@@ -130,7 +130,7 @@
             {
               "type": "text",
               "x": 192,
-              "y": 204,
+              "y": 214,
               "role": "micro",
               "content": "Maria M",
               "weight": "semibold",
@@ -139,7 +139,7 @@
             {
               "type": "text",
               "x": 192,
-              "y": 218.99,
+              "y": 228.99,
               "role": "bodySmall",
               "content": "Website and Email Ready!"
             }
@@ -148,19 +148,20 @@
         {
           "type": "avatar",
           "cx": 364.26,
-          "cy": 208,
+          "cy": 218,
           "r": 16,
           "initials": "MM"
         }
       ],
       "layout": {
         "direction": "horizontal",
-        "gap": 64,
+        "gap": 8,
         "padding": [
-          8,
+          12,
           16
         ],
-        "align": "start"
+        "align": "center",
+        "justify": "between"
       },
       "surface": "glass2"
     },
@@ -188,7 +189,7 @@
     {
       "type": "button",
       "x": 314,
-      "y": 240,
+      "y": 250,
       "width": 126,
       "height": 48,
       "radius": 6,
@@ -200,7 +201,7 @@
     {
       "type": "icon",
       "x": 428,
-      "y": 282,
+      "y": 292,
       "size": 24,
       "icon": "cursor",
       "tone": "primary"

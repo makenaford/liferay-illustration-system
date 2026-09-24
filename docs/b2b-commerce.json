@@ -90,7 +90,7 @@
               "type": "group",
               "x": 96,
               "y": 122.7248,
-              "width": 160,
+              "width": 148,
               "height": 6,
               "layout": {
                 "direction": "horizontal",
@@ -265,7 +265,7 @@
             "gap": 10,
             "padding": [
               12,
-              6
+              12
             ],
             "align": "start",
             "hugHeight": true
@@ -391,7 +391,7 @@
           "x": 296,
           "y": 237.34,
           "width": 174,
-          "height": 64,
+          "height": 60,
           "spacing": 4,
           "markers": [
             [

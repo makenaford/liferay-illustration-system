@@ -35,21 +35,21 @@
     {
       "type": "subCard",
       "x": 78,
-      "y": 58,
+      "y": 56,
       "width": 128,
-      "height": 60,
+      "height": 62,
       "children": [
         {
           "type": "text",
           "x": 86,
-          "y": 69.92,
+          "y": 67.92,
           "role": "label",
           "content": "Total Connections"
         },
         {
           "type": "text",
           "x": 86,
-          "y": 84.3,
+          "y": 82.3,
           "role": "heading",
           "content": "12,847",
           "weight": "bold"
@@ -57,7 +57,7 @@
         {
           "type": "text",
           "x": 86,
-          "y": 94.24,
+          "y": 92.24,
           "role": "micro",
           "content": "vs. 7,000 target",
           "weight": "semibold",
@@ -66,16 +66,16 @@
         {
           "type": "progress",
           "x": 86,
-          "y": 99.18,
-          "width": 114,
+          "y": 97.18,
+          "width": 104,
           "value": 0.094,
           "tone": "info"
         }
       ],
       "layout": {
         "direction": "vertical",
-        "gap": 4,
-        "padding": 8,
+        "gap": 2,
+        "padding": 12,
         "align": "start"
       },
       "surface": "glass2"
@@ -83,7 +83,7 @@
     {
       "type": "badge",
       "x": 178,
-      "y": 66,
+      "y": 64,
       "label": "+14.2%",
       "tone": "info",
       "dot": false
@@ -91,21 +91,21 @@
     {
       "type": "subCard",
       "x": 214,
-      "y": 58,
+      "y": 56,
       "width": 128,
-      "height": 60,
+      "height": 62,
       "children": [
         {
           "type": "text",
           "x": 222,
-          "y": 69.92,
+          "y": 67.92,
           "role": "label",
           "content": "Active Sessions"
         },
         {
           "type": "text",
           "x": 222,
-          "y": 84.3,
+          "y": 82.3,
           "role": "heading",
           "content": "3,456",
           "weight": "bold"
@@ -113,7 +113,7 @@
         {
           "type": "text",
           "x": 222,
-          "y": 94.24,
+          "y": 92.24,
           "role": "micro",
           "content": "Current, live traffic",
           "weight": "semibold",
@@ -122,16 +122,16 @@
         {
           "type": "progress",
           "x": 222,
-          "y": 99.18,
-          "width": 114,
+          "y": 97.18,
+          "width": 104,
           "value": 0.628,
           "tone": "accent"
         }
       ],
       "layout": {
         "direction": "vertical",
-        "gap": 4,
-        "padding": 8,
+        "gap": 2,
+        "padding": 12,
         "align": "start"
       },
       "surface": "glass2"
@@ -139,28 +139,28 @@
     {
       "type": "badge",
       "x": 314,
-      "y": 66,
+      "y": 64,
       "label": "Active",
       "tone": "success"
     },
     {
       "type": "subCard",
       "x": 352,
-      "y": 58,
+      "y": 56,
       "width": 128,
-      "height": 60,
+      "height": 62,
       "children": [
         {
           "type": "text",
           "x": 360,
-          "y": 69.92,
+          "y": 67.92,
           "role": "label",
           "content": "Total Views"
         },
         {
           "type": "text",
           "x": 360,
-          "y": 84.3,
+          "y": 82.3,
           "role": "heading",
           "content": "645,789",
           "weight": "bold"
@@ -168,7 +168,7 @@
         {
           "type": "text",
           "x": 360,
-          "y": 94.24,
+          "y": 92.24,
           "role": "micro",
           "content": "Last 30 days",
           "weight": "semibold",
@@ -177,16 +177,16 @@
         {
           "type": "progress",
           "x": 360,
-          "y": 99.18,
-          "width": 114,
+          "y": 97.18,
+          "width": 104,
           "value": 0.094,
           "tone": "info"
         }
       ],
       "layout": {
         "direction": "vertical",
-        "gap": 4,
-        "padding": 8,
+        "gap": 2,
+        "padding": 12,
         "align": "start"
       },
       "surface": "glass2"
@@ -194,7 +194,7 @@
     {
       "type": "badge",
       "x": 454,
-      "y": 66,
+      "y": 64,
       "label": "+6.7%",
       "tone": "info",
       "dot": false
@@ -217,7 +217,7 @@
           "type": "progress",
           "x": 90,
           "y": 159.61,
-          "width": 174,
+          "width": 172,
           "value": 0.682,
           "label": "Homepage",
           "tone": "accent"
@@ -226,7 +226,7 @@
           "type": "progress",
           "x": 90,
           "y": 178.89,
-          "width": 174,
+          "width": 172,
           "value": 0.497,
           "label": "Products",
           "tone": "accent"
@@ -235,7 +235,7 @@
           "type": "progress",
           "x": 90,
           "y": 198.16,
-          "width": 174,
+          "width": 172,
           "value": 0.061,
           "label": "Blog",
           "tone": "accent"
@@ -244,7 +244,7 @@
           "type": "progress",
           "x": 90,
           "y": 217.44,
-          "width": 174,
+          "width": 172,
           "value": 0.353,
           "label": "Docs",
           "tone": "accent"
@@ -377,7 +377,7 @@
           "x": 296,
           "y": 277.34,
           "width": 172,
-          "height": 64,
+          "height": 60,
           "spacing": 4,
           "markers": [
             [

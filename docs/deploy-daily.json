@@ -118,9 +118,9 @@
     },
     {
       "type": "card",
-      "x": 340,
+      "x": 356,
       "y": 56,
-      "width": 144,
+      "width": 128,
       "height": 72,
       "sheen": "linear",
       "children": [
@@ -178,7 +178,7 @@
       "type": "card",
       "x": 78,
       "y": 234,
-      "width": 182,
+      "width": 212,
       "height": 70,
       "sheen": "linear",
       "children": [
@@ -190,7 +190,7 @@
           "height": 20,
           "layout": {
             "direction": "horizontal",
-            "gap": 32,
+            "gap": 24,
             "padding": 0,
             "align": "start",
             "hugHeight": true,

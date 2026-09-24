@@ -649,6 +649,52 @@ The editor works in artboard units — elements, grid, selection and drag all
 share one coordinate system, and only the export scales. The Document panel
 names the artboard and offers **Export 1:1** to drop it.
 
+## The type scale is measured, not guessed
+
+The ladder is `typography.desktop.tokens.json` x **0.58**. It was 0.45,
+derived from a single hero title, and at that factor every illustration read
+too small.
+
+Node `792:13843` in the Marketing UI Assets Repo settled it. That frame is the
+Figma **source for `deploy-daily`** — the same 560x372 canvas, down to the
+"Deploy Cadece" typo — so its text nodes answer the question directly instead
+of by inference:
+
+| | Figma | was | ratio |
+|---|---|---|---|
+| "15x" | 24px | 19.4 (`display`) | 1.24 |
+| "Deploy Cadece" | 16px | 12.6 (`heading`) | 1.27 |
+| "Daily" | 14px | 10.8 (`subheading`) | 1.30 |
+
+Three independent anchors agreeing within 0.06 is a scale error, not three
+rounding accidents. 0.45 x 1.29 = 0.58 lands display on 24.9, heading on 16.2
+and subheading on 13.9 — every one within a rounding step.
+
+A 29% type increase across ten illustrations produced **one** overflow, which
+is the reflow work earning its keep: the auto-layout containers absorbed the
+rest.
+
+### Light glass is a frosted card, not a tinted pane
+
+The same reference carries the card recipe, and it is not what was here: white
+at **80%** into `#BFD5FF` at 21%, behind a blue hairline at **20%** — a
+near-solid pale card, where this system had a faint blue tint behind a strong
+blue edge. `glass2` now uses those values exactly, with 1 and 3 stepping down
+and up from them. Dark is untouched.
+
+The reference also specifies `backdrop-blur: 10px` against the 20 set here,
+and strikes through "every 3 weeks", which this port draws plain.
+
+### A rule for text running into things
+
+Text is the one element with no authored width, so every geometric rule in the
+audit was blind to it — and a title that grew into the card beside it went
+unreported. The audit now measures text with the renderer's own
+`typeStyle` + `textBox` and flags a run that comes within 6px of a sibling
+panel. Clearance, not strict overlap: a title stopping two pixels short of a
+card has already collided, because the card's shadow is there. It caught the
+one real instance on its first run.
+
 ## Recreating a mockup
 
 `docs/partner-dashboard.json` is a partner-performance dashboard rebuilt from a

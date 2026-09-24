@@ -11,12 +11,25 @@ import { text as textNode, type Ctx, type VNode } from '../vsvg.ts';
  * `weight` and `tone` as separate props.
  *
  * SIZES come from `tokens/figma/typography.desktop.tokens.json`, multiplied
- * by 0.45. An illustration depicts an interface at roughly that fraction of
- * page scale — the hero title measured 16.5px against the design system's
- * 37px `Heading F1`, which is where the factor comes from — so the ladder is
- * the site's ladder, not a parallel invention.
+ * by 0.58, so the ladder is the site's ladder rather than a parallel
+ * invention.
+ *
+ * The factor was 0.45, measured off a single hero title, and it made every
+ * illustration read too small. Node `792:13843` in the Marketing UI Assets
+ * Repo is the Figma source for `deploy-daily` — the same 560x372 canvas this
+ * system renders — so its text nodes are a direct answer rather than an
+ * inference:
+ *
+ *   "15x"            24px   was 19.4  (display)
+ *   "Deploy Cadece"  16px   was 12.6  (heading)
+ *   "Daily"          14px   was 10.8  (subheading)
+ *
+ * Three independent anchors agreeing on 1.24-1.30x is a scale error, not
+ * three rounding accidents. 0.45 x 1.29 = 0.58, which lands display on 24.9,
+ * heading on 16.2 and subheading on 13.9 — within a rounding step of all
+ * three.
  */
-const SCALE = 0.45;
+const SCALE = 0.58;
 
 /** Rounded to 0.1px: the metrics table is a ratio, so this stays exact. */
 const step = (dsSize: number) => Math.round(dsSize * SCALE * 10) / 10;

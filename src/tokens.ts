@@ -594,16 +594,24 @@ export const light: Tokens = {
   surfaces: {
     /** Nested tiles inside a card. No shadow: it is not floating, it is inset. */
     glass1: {
-      // DS: 0.06 / 0.02
-      fill: { angle: 60, stops: [{ color: '#ADC9FF', opacity: 0.11 }, { color: STEP_02.color, opacity: 0.03 }] },
-      line: { angle: 225, stops: [{ color: '#6FA0FF', opacity: 0.4 }, { color: '#6FA0FF', opacity: 0.25 }] },
+      /*
+       * Light glass is a FROSTED WHITE CARD, not a tinted pane.
+       *
+       * Taken from node `792:13843` in the Marketing UI Assets Repo — the
+       * Figma source for this very illustration. Its card fills white at 80%
+       * into `#BFD5FF` at 21% behind a blue hairline at 20%, which renders as
+       * a near-solid pale card. The tinted-glass reading here was a guess made
+       * before that reference existed.
+       */
+      fill: { angle: 60, stops: [{ color: '#FFFFFF', opacity: 0.55 }, { color: '#BFD5FF', opacity: 0.15 }] },
+      line: { angle: 225, stops: [{ color: '#0B5FFF', opacity: 0.14 }, { color: '#0B5FFF', opacity: 0.1 }] },
       blur: GLASS_BLUR,
     },
     /** The default card — the design system's shipped glass, exactly. */
     glass2: {
-      // DS: 0.1 / STEP_02.opacity
-      fill: { angle: 60, stops: [{ color: '#ADC9FF', opacity: 0.18 }, { color: STEP_02.color, opacity: 0.05 }] },
-      line: { angle: 225, stops: [{ color: '#6FA0FF', opacity: 0.6 }, { color: '#6FA0FF', opacity: 0.4 }] },
+      /** The reference card's own values: white 80% into `#BFD5FF` 21%. */
+      fill: { angle: 60, stops: [{ color: '#FFFFFF', opacity: 0.8 }, { color: '#BFD5FF', opacity: 0.21 }] },
+      line: { angle: 225, stops: [{ color: '#0B5FFF', opacity: 0.2 }, { color: '#0B5FFF', opacity: 0.14 }] },
       shadow: [
         { dy: 8, blur: 20, color: INK, opacity: 0.08 },
         { dy: 1, blur: 3, color: INK, opacity: 0.06 },
@@ -612,9 +620,8 @@ export const light: Tokens = {
     },
     /** Floating over the composition — an overlay, a callout, a menu. */
     glass3: {
-      // DS: 0.18 / 0.04
-      fill: { angle: 60, stops: [{ color: '#ADC9FF', opacity: 0.28 }, { color: STEP_02.color, opacity: 0.07 }] },
-      line: { angle: 225, stops: [{ color: '#6FA0FF', opacity: 0.8 }, { color: '#6FA0FF', opacity: 0.5 }] },
+      fill: { angle: 60, stops: [{ color: '#FFFFFF', opacity: 0.92 }, { color: '#BFD5FF', opacity: 0.28 }] },
+      line: { angle: 225, stops: [{ color: '#0B5FFF', opacity: 0.28 }, { color: '#0B5FFF', opacity: 0.18 }] },
       shadow: [
         { dy: 18, blur: 40, color: INK, opacity: 0.14 },
         { dy: 3, blur: 8, color: INK, opacity: 0.1 },

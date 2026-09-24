@@ -10,6 +10,8 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Doc, Element } from '../src/document.ts';
 import { LAYOUT, SPACE, dark as tokens } from '../src/tokens.ts';
+import { textBox } from '../src/fontMetrics.generated.ts';
+import { typeStyle } from '../src/primitives/text.ts';
 import { resolveLayout } from '../src/autolayout.ts';
 
 const DOCS = join(import.meta.dirname, '..', 'docs');
@@ -166,6 +168,60 @@ const round = (n: number) => Math.round(n * 100) / 100;
  */
 const deliberate = (d: number) => d >= 16 && (SPACE as readonly number[]).includes(d);
 
+/**
+ * The box a text element actually paints into.
+ *
+ * Text is the one element with no authored width, which is why a title that
+ * grew into its neighbour went unnoticed by every other rule here: there was
+ * nothing to compare. Measuring it with the same metrics the renderer uses
+ * closes that hole.
+ */
+function textRect(el: Element) {
+  if (el.type !== 'text') return null;
+  // `typeStyle` resolves the role's default weight and maps the name to the
+  // numeric weight the metrics table is keyed by — the same call the renderer
+  // makes, so the measurement cannot drift from what is drawn.
+  const style = typeStyle(el.role, el.weight);
+  const box = textBox(el.content, style.size, style.weight);
+  const x =
+    el.anchor === 'middle' ? el.x - box.width / 2 : el.anchor === 'end' ? el.x - box.width : el.x;
+  return { x, y: el.y - box.baseline, width: box.width, height: box.height };
+}
+
+/**
+ * Text running into a panel beside it. Clearance rather than strict overlap:
+ * a title that stops two pixels short of a card's edge has already collided
+ * as far as a reader is concerned, because the card's own shadow is there.
+ */
+const TEXT_CLEARANCE = 6;
+
+function textCollisions(doc: Doc, siblings: Element[], where: string) {
+  const PANEL = new Set(['card', 'subCard', 'group']);
+  const panels = siblings
+    .map((el, i) => ({ el, i, ...(el as unknown as Box) }))
+    .filter((p) => PANEL.has(p.el.type) && typeof p.width === 'number' && p.width > 40);
+
+  siblings.forEach((el, i) => {
+    const t = textRect(el);
+    if (!t) return;
+    for (const p of panels) {
+      const overlapX = Math.min(t.x + t.width, p.x + p.width) - Math.max(t.x, p.x);
+      const overlapY = Math.min(t.y + t.height, p.y + p.height) - Math.max(t.y, p.y);
+      if (overlapY <= 0) continue;
+      if (overlapX > -TEXT_CLEARANCE) {
+        add(
+          doc.name,
+          `${where}[${i}]`,
+          'text-collision',
+          `"${(el as { content: string }).content.slice(0, 28)}" comes within ` +
+            `${round(Math.max(-overlapX, 0))}px of the ${p.el.type} beside it`,
+        );
+        return;
+      }
+    }
+  });
+}
+
 function alignmentWalk(doc: Doc, el: Element, path: string) {
   const kids = (el as { children?: Element[] }).children;
   const p = el as unknown as Record<string, number>;
@@ -195,6 +251,7 @@ for (const f of files) {
   raw.elements.forEach((el, i) => walk(raw, el, String(i), null));
   const resolved = resolveLayout(raw);
   alignment(resolved, resolved.elements, 'stage');
+  textCollisions(resolved, resolved.elements, 'stage');
   resolved.elements.forEach((el, i) => alignmentWalk(resolved, el, String(i)));
 }
 

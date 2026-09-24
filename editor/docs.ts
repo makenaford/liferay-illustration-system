@@ -7,6 +7,7 @@ import driveConversions from '../docs/drive-conversions.json';
 import integrate from '../docs/integrate-all-systems.json';
 import launchCampaigns from '../docs/launch-campaigns.json';
 import partnerDashboard from '../docs/partner-dashboard.json';
+import partnerDashboardPage from '../docs/partner-dashboard-page.json';
 import secureAccess from '../docs/secure-access.json';
 import slashTechDebt from '../docs/slash-tech-debt.json';
 import turnAnalytics from '../docs/turn-analytics.json';
@@ -27,6 +28,7 @@ export const DOCS = [
   b2bCommerce,
   launchCampaigns,
   partnerDashboard,
+  partnerDashboardPage,
 ] as unknown as Doc[];
 
 /** A blank document, for starting something new. */

@@ -790,18 +790,37 @@ Taking stock against `Built Illustrations` in the Marketing UI Assets Repo:
 | **Light Exploration** | 5 light-mode studies of existing illustrations | Informs the style below |
 | stray `464x276` frames | empty placeholders | Nothing to port |
 
-### The Homepage set is a different genre
+### The Homepage area holds two different things
 
-Those six are not glass-card illustrations at a larger size. They are
-**annotated product screenshots**: full browser chrome, dense real interfaces,
-data tables, and in one case a photographic hero image. Rebuilding them as
-token-driven documents would mean modelling browser chrome, product
-navigation, tables and photography — a bigger project than the original nine,
-and the photographic ones cannot be vector-rebuilt at all.
+A first pass called this whole area "a different genre". That was too broad,
+and the correction matters:
 
-They are a legitimate asset class; they are just not *this* system's. Putting
-them here would mean either a second primitive library sharing nothing with
-the first, or claiming a fidelity the output would not have.
+**`Section 1` — eight frames at 1440x960 — is squarely in genre.** They are the
+same illustrations at page scale, each with one or two **spotlight callouts**
+overlaid: a glass card carrying a glass icon and a single figure, placed half
+over the composition's edge so it reads as annotation rather than as another
+panel. Glass cards, glass icons, glows — the language this system already
+speaks.
+
+**Some of the 800x577 frames are not.** Those are annotated product
+screenshots: browser chrome, dense real interfaces, and in one case a
+photographic hero. Rebuilding those would mean modelling browser chrome,
+product navigation and photography — and the photographic one cannot be
+vector-rebuilt at all.
+
+So the split is by frame, not by section.
+
+### Page variants come free
+
+`partner-dashboard-page` is the first: canvas 1440x960 over a 560x372
+artboard, so the composition underneath is the document this system already
+renders, scaled, with the callouts authored in artboard coordinates on top.
+A page variant is therefore not a re-author — it is the illustration plus its
+annotation, and editing the dashboard updates both.
+
+The callouts are `subCard` + `surface: highlighted` + `spotIcon` + a figure.
+No new primitive was needed, which is the useful result: the spotlight pattern
+was already expressible.
 
 ### One illustration was behind its source
 

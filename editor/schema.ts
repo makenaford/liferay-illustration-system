@@ -5,6 +5,7 @@ import { dark as darkTokens } from '../src/tokens.ts';
 
 export const SURFACES = Object.keys(darkTokens.surfaces);
 import type { Element } from '../src/document.ts';
+import { LAYOUT } from '../src/tokens.ts';
 
 /**
  * FIELD SCHEMA — the Inspector is generated from this, not hand-built.
@@ -387,13 +388,23 @@ export const SCHEMA: {
 /** Defaults used when adding from the palette. */
 export const DEFAULTS: Record<Element['type'], () => Element> = {
   text: () => ({ type: 'text', x: 40, y: 40, role: 'heading', content: 'New text' }),
-  card: () => ({ type: 'card', x: 40, y: 40, width: 180, height: 100, sheen: 'linear' }),
+  // Cards arrive as columns: whatever is added stacks at the card padding the
+  // audit requires, instead of every addition landing on the same spot.
+  card: () => ({
+    type: 'card', x: 40, y: 40, width: 180, height: 100, surface: 'glass2',
+    layout: { direction: 'vertical', gap: 8, padding: LAYOUT.cardPadding, align: 'start' },
+    children: [],
+  }),
   group: () => ({
     type: 'group', x: 40, y: 40, width: 160, height: 80,
     layout: { direction: 'vertical', gap: 8, padding: 0 },
     children: [],
   }),
-  subCard: () => ({ type: 'subCard', x: 40, y: 40, width: 160, height: 80, variant: 'sheen' }),
+  subCard: () => ({
+    type: 'subCard', x: 40, y: 40, width: 160, height: 80, surface: 'glass2', radius: 8,
+    layout: { direction: 'vertical', gap: 8, padding: LAYOUT.cardPadding, align: 'start' },
+    children: [],
+  }),
   pill: () => ({ type: 'pill', x: 40, y: 40, width: 80, height: 24, label: 'Pill', variant: 'accent' }),
   badge: () => ({ type: 'badge', x: 40, y: 40, width: 44, label: 'Badge', tone: 'success' }),
   button: () => ({

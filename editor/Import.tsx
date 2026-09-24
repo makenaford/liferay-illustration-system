@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { assetElement, pickFile, readAsset } from './pickFile.ts';
-import { appendTo, commit, elementAt, getState, isContainer, setUI } from './state.ts';
+import { elementAt, getState } from './state.ts';
+import { addAt, contentWidth, slotForSelection } from './insertion.ts';
 
 /**
  * Bring an SVG or a raster into the document.
@@ -23,22 +24,22 @@ export function ImportButton() {
     try {
       const file = await pickFile();
       if (!file) return;
-      const asset = await readAsset(file);
-
       const st = getState();
-      const sel = elementAt(st.doc, st.selected);
-      const into = isContainer(sel) ? st.selected : null;
-      const anchor = into ? (sel as { x: number; y: number }) : null;
-      const at = anchor
-        ? { x: anchor.x + 12, y: anchor.y + 12 }
+      // Into the card being worked in, sized to fit it — see `slotForSelection`.
+      const slot = slotForSelection(st.doc, st.selected);
+      const cw = contentWidth(st.doc, slot);
+      const asset = await readAsset(file, cw ? Math.min(160, cw) : 160);
+
+      const c = slot.parent ? (elementAt(st.doc, slot.parent) as { x: number; y: number }) : null;
+      const art = st.doc.artboard ?? st.doc.canvas;
+      const at = c
+        ? { x: c.x + 12, y: c.y + 12 }
         : {
-            x: Math.round(st.doc.canvas.width / 2 - asset.size.width / 2),
-            y: Math.round(st.doc.canvas.height / 2 - asset.size.height / 2),
+            x: Math.round(art.width / 2 - asset.size.width / 2),
+            y: Math.round(art.height / 2 - asset.size.height / 2),
           };
 
-      const { doc, path } = appendTo(st.doc, into, assetElement(asset, at));
-      commit(doc);
-      setUI({ selected: path });
+      addAt(st.doc, slot, assetElement(asset, at));
       setNote(asset.note);
     } catch (err) {
       setNote(`Could not read that file — ${(err as Error).message}`);

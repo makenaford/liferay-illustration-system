@@ -1,7 +1,9 @@
-import { appendTo, commit, elementAt, getState, setUI, useEditor } from './state.ts';
+import { elementAt, getState, useEditor } from './state.ts';
 import { DEFAULTS, PALETTE, SCHEMA } from './schema.ts';
 import type { Element } from '../src/document.ts';
 import { ImportButton } from './Import.tsx';
+import { CARD_PRESETS, placePreset } from './cardPresets.ts';
+import { addAt, contentWidth, slotForSelection, type Slot } from './insertion.ts';
 
 /**
  * LIBRARY PALETTE — the only way to create anything.
@@ -15,43 +17,46 @@ export function Palette() {
   const selected = useEditor((s) => s.selected);
   const doc = useEditor((s) => s.doc);
 
-  // Adding while a container is selected nests inside it.
-  const sel = elementAt(doc, selected);
-  const container =
-    sel && (sel.type === 'card' || sel.type === 'subCard') ? selected : null;
+  // Adding goes into the card being worked in — see `slotForSelection`.
+  const slot = slotForSelection(doc, selected);
+  const container = slot.parent ? elementAt(doc, slot.parent) : null;
 
-  const add = (type: Element['type']) => {
+  const add = (make: () => Element, preset = false) => {
     const st = getState();
-    const el = DEFAULTS[type]();
-
-    // Drop new elements near the middle of the canvas, or inside the
-    // selected container, rather than always at the origin.
-    const anchor = container ? elementAt(st.doc, container) : null;
-    const base = anchor
-      ? { x: (anchor as { x: number }).x + 12, y: (anchor as { y: number }).y + 24 }
-      : { x: Math.round(st.doc.canvas.width / 2 - 60), y: Math.round(st.doc.canvas.height / 2 - 20) };
-
-    const placed = place(el, base);
-    const { doc: next, path } = appendTo(st.doc, container, placed);
-    commit(next);
-    setUI({ selected: path });
+    const target: Slot = slotForSelection(st.doc, st.selected);
+    const at = anchorFor(st.doc, target);
+    let el = preset ? placePreset(make(), at) : place(make(), at);
+    el = fitWidth(el, contentWidth(st.doc, target));
+    addAt(st.doc, target, el);
   };
 
   return (
     <div className="palette">
       {container && (
         <div className="palette-note">
-          Adding into <strong>{SCHEMA[sel!.type].label}</strong>
+          Adding into <strong>{SCHEMA[container.type].label}</strong>
+          {slot.index !== undefined && ', after the selection'}
         </div>
       )}
       <ImportButton />
+
+      <div className="palette-group">
+        <div className="palette-group-title">Starter cards</div>
+        <div className="palette-items">
+          {CARD_PRESETS.map((p) => (
+            <button key={p.label} type="button" title={p.title} onClick={() => add(p.make, true)}>
+              {p.label}
+            </button>
+          ))}
+        </div>
+      </div>
 
       {PALETTE.map(({ group, types }) => (
         <div key={group} className="palette-group">
           <div className="palette-group-title">{group}</div>
           <div className="palette-items">
             {types.map((t) => (
-              <button key={t} type="button" onClick={() => add(t)}>
+              <button key={t} type="button" onClick={() => add(DEFAULTS[t])}>
                 {SCHEMA[t].label}
               </button>
             ))}
@@ -68,4 +73,22 @@ function place(el: Element, at: { x: number; y: number }): Element {
     return { ...el, from: [at.x, at.y], to: [at.x + 120, at.y + 80] };
   }
   return { ...el, x: at.x, y: at.y } as Element;
+}
+
+/**
+ * Where a new element starts. Inside an auto-layout container this is
+ * overwritten by the flow; inside a free one it is just inside the corner;
+ * at the top level it is the middle of the artboard.
+ */
+function anchorFor(doc: import('../src/document.ts').Doc, slot: Slot): { x: number; y: number } {
+  const c = slot.parent ? (elementAt(doc, slot.parent) as { x?: number; y?: number } | null) : null;
+  if (c && typeof c.x === 'number' && typeof c.y === 'number') return { x: c.x + 12, y: c.y + 12 };
+  const art = doc.artboard ?? doc.canvas;
+  return { x: Math.round(art.width / 2 - 60), y: Math.round(art.height / 2 - 20) };
+}
+
+/** Narrow anything wider than the container's content box to fit it. */
+function fitWidth(el: Element, max: number | null): Element {
+  const w = (el as { width?: number }).width;
+  return max !== null && typeof w === 'number' && w > max ? ({ ...el, width: max } as Element) : el;
 }

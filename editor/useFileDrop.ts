@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
-import type { Doc } from '../src/document.ts';
 import { assetElement, readAsset } from './pickFile.ts';
-import { appendTo, commit, elementAt, getState, isContainer, parentOf, setUI } from './state.ts';
+import { commit, getState, setUI } from './state.ts';
+import { contentWidth, insertAt, slotForDrop } from './insertion.ts';
+import { resolveLayout } from '../src/autolayout.ts';
 import { snap } from './grid.ts';
 
 /**
@@ -10,34 +11,16 @@ import { snap } from './grid.ts';
  * The same read, sanitise and embed path as the Import button (`readAsset`),
  * so a dropped SVG is inlined and id-namespaced and a dropped raster becomes
  * a data URI, with the same size warning. What drop adds is placement: the
- * artwork lands centred on the cursor, and a drop onto a freely-positioned
- * card or group goes INTO it, so it moves with that card afterwards.
- *
- * Auto-layout containers are skipped on purpose. Their children's positions
- * are computed, so a drop into one would jump to the end of its flow — away
- * from the cursor, and usually out through the bottom of a fixed-height card.
+ * artwork lands centred on the cursor, and a drop onto a card goes INTO it:
+ * a free card keeps it where it was dropped, and an auto-layout card slots it
+ * into its column or row at the position nearest the cursor, sized to fit
+ * the card's content box (see `slotForDrop`).
  */
 
 const ACCEPTED = /^image\/(svg\+xml|png|jpeg|webp|gif)$/;
 const accepted = (f: File) => ACCEPTED.test(f.type) || /\.svg$/i.test(f.name);
 const hasFiles = (e: DragEvent | React.DragEvent) =>
   Array.from(e.dataTransfer?.types ?? []).includes('Files');
-
-/**
- * The innermost freely-positioned container at a path, walking up from the
- * element hit. Stops at the first auto-layout container: anything inside one
- * is positioned by it, so the drop goes to that container's own parent level.
- */
-function containerAt(doc: Doc, path: string | null): string | null {
-  let found: string | null = null;
-  for (let p = path; p; p = parentOf(p)) {
-    const el = elementAt(doc, p);
-    if (!isContainer(el)) continue;
-    if ((el as { layout?: unknown }).layout) found = null;
-    else if (found === null) found = p;
-  }
-  return found;
-}
 
 export function useFileDrop(stageRef: React.RefObject<HTMLDivElement | null>, zoom: number, snapStep: number) {
   const [dropping, setDropping] = useState(false);
@@ -101,19 +84,22 @@ export function useFileDrop(stageRef: React.RefObject<HTMLDivElement | null>, zo
       ?.getAttribute('data-path') ?? null;
 
     let doc = getState().doc;
-    const into = containerAt(doc, hit);
+    const slot = slotForDrop(doc, resolveLayout(doc), hit, { x: px, y: py });
+    const cw = contentWidth(doc, slot);
     let last: string | null = null;
     const notes: string[] = [];
 
     try {
       for (const [i, file] of usable.entries()) {
-        const asset = await readAsset(file);
+        const asset = await readAsset(file, cw ? Math.min(160, cw) : 160);
         // Several files fan out a little, so they do not land exactly stacked.
         const at = {
           x: snap(px - asset.size.width / 2 + i * 12, snapStep),
           y: snap(py - asset.size.height / 2 + i * 12, snapStep),
         };
-        const next = appendTo(doc, into, assetElement(asset, at));
+        // In a flow, each next file goes after the previous one.
+        const where = slot.index === undefined ? slot : { ...slot, index: slot.index + i };
+        const next = insertAt(doc, where, assetElement(asset, at));
         doc = next.doc;
         last = next.path;
         notes.push(asset.note);

@@ -16,6 +16,7 @@ import { contentBox } from './layout.ts';
 import { alignmentSnap, edgeSnap, type Guide, type Target } from './guides.ts';
 import { isContainer as isContainerEl, resolveLayout } from '../src/autolayout.ts';
 import { parentOf } from './state.ts';
+import { useFileDrop } from './useFileDrop.ts';
 
 type DragMode = { kind: 'move' } | { kind: 'resize'; corner: 'se' | 'sw' | 'ne' | 'nw' } | { kind: 'pan' };
 
@@ -33,6 +34,7 @@ export function Canvas() {
   const lockAspect = useEditor((s) => s.lockAspect);
 
   const docRef = useRef<HTMLDivElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
   const [box, setBox] = useState<Box | null>(null);
   const [guides, setGuides] = useState<Guide[]>([]);
   const drag = useRef<{
@@ -369,6 +371,7 @@ export function Canvas() {
 
   const { width, height } = doc.artboard ?? doc.canvas;
   const safe = safeArea(doc);
+  const fileDrop = useFileDrop(stageRef, zoom, snapStep);
   const hs = 4 / zoom; // handles keep a constant on-screen size
 
   /*
@@ -402,7 +405,8 @@ export function Canvas() {
 
   return (
     <div
-      className="viewport"
+      className={`viewport${fileDrop.dropping ? ' dropping' : ''}`}
+      {...fileDrop.handlers}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
@@ -411,6 +415,7 @@ export function Canvas() {
     >
       <div
         className="stage"
+        ref={stageRef}
         style={{
           transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
           width,
@@ -537,6 +542,11 @@ export function Canvas() {
           )}
         </svg>
       </div>
+
+      {fileDrop.dropping && (
+        <div className="drop-hint">Drop SVGs or images to place them here</div>
+      )}
+      {fileDrop.note && <div className="drop-note">{fileDrop.note}</div>}
     </div>
   );
 }

@@ -367,7 +367,7 @@ export function buildDocument(
   const baseId = `${ns}-bd-base`;
 
   // Stage first, with no backdrop of its own.
-  const stage = Stage(ctx, { width, height, glow: doc.glow });
+  const stage = Stage(ctx, { width, height, glow: doc.glow, mesh: doc.background });
 
   // Panels blur the stage.
   ctx.backdropId = stageId;

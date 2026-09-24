@@ -49,6 +49,29 @@ function palette(scheme: 'light' | 'dark') {
 const L = palette('light');
 const D = palette('dark');
 
+/**
+ * The three design-system meshes, in one scheme's colours. See `MeshName`.
+ * `corners` keeps its low bloom at the 0.22 the light stage already shipped
+ * with rather than the card's 0.16, so choosing it in light changes nothing.
+ */
+function meshes(P: (key: PaletteKey) => string): Record<MeshName, MeshBloom[]> {
+  return {
+    corners: [
+      { x: 0, y: 0, rx: 0.7, ry: 1.3, color: P('brand-primary-primary'), opacity: 0.34, fade: 0.7 },
+      { x: 1, y: 0, rx: 0.6, ry: 1.2, color: P('brand-primary-lighten-1'), opacity: 0.26, fade: 0.68 },
+      { x: 0.88, y: 1.1, rx: 0.8, ry: 0.9, color: P('brand-primary-primary'), opacity: 0.22, fade: 0.74 },
+    ],
+    bubble: [
+      { x: 0.5, y: 0.34, rx: 0.6, ry: 0.6, color: P('brand-primary-primary'), opacity: 0.45, fade: 0.62 },
+      { x: 0.24, y: 0.12, rx: 0.44, ry: 0.44, color: P('accent-product-accent'), opacity: 0.28, fade: 0.66 },
+    ],
+    'corner-bubble': [
+      { x: 0.82, y: 0.08, rx: 0.58, ry: 0.62, color: P('brand-primary-primary'), opacity: 0.48, fade: 0.6 },
+      { x: 0.96, y: 0.4, rx: 0.4, ry: 0.4, color: P('accent-product-accent'), opacity: 0.26, fade: 0.68 },
+    ],
+  };
+}
+
 export interface ShadowLayer {
   dy: number;
   blur: number;
@@ -74,6 +97,28 @@ export interface MeshBloom {
   /** Where the bloom reaches transparent, as a fraction of its radius. */
   fade: number;
 }
+
+/**
+ * The mesh backgrounds a document can choose, all three transcribed from the
+ * design system at its own percentages:
+ *
+ *   corners        the `highlighted` card (`[data-tone='blue']`) — colour in
+ *                  the corners, a clean middle for copy
+ *   bubble         the hero's `Type=Full Bubble` — one bloom centred a little
+ *                  above the middle, answered by violet from the top left
+ *   corner-bubble  the hero's `Type=Corner Bubble` — the same light pushed
+ *                  into the top right
+ *
+ * The CSS is identical in both schemes; only the variables it reads change,
+ * which is what `meshes()` reproduces.
+ */
+export type MeshName = 'corners' | 'bubble' | 'corner-bubble';
+
+export const MESH_NAMES: { name: MeshName; label: string }[] = [
+  { name: 'corners', label: 'Corners' },
+  { name: 'bubble', label: 'Full bubble' },
+  { name: 'corner-bubble', label: 'Corner bubble' },
+];
 
 /** A gradient stop, as a colour plus optional alpha and position. */
 export interface Stop {
@@ -139,6 +184,8 @@ export interface Tokens {
      * stays clean, so copy can sit on it. Empty means "no mesh".
      */
     mesh: MeshBloom[];
+    /** The meshes a document can opt into with `Doc.background`. */
+    meshes: Record<MeshName, MeshBloom[]>;
     /** Ambient bloom, from `Components/Gradient Card`. */
     washColor: string;
     washOpacity: number;
@@ -462,6 +509,7 @@ export const dark: Tokens = {
     // Dark keeps the blurred-ellipse bloom the original artwork was drawn
     // with; the mesh is a light-canvas treatment.
     mesh: [],
+    meshes: meshes(D),
     washColor: D('components-gradient-card-blue'),
     washOpacity: 0.28,
     glowColor: D('components-gradient-card-blue'),
@@ -699,6 +747,7 @@ export const light: Tokens = {
       { x: 1, y: 0, rx: 0.6, ry: 1.2, color: L('brand-primary-lighten-1'), opacity: 0.26, fade: 0.68 },
       { x: 0.88, y: 1.1, rx: 0.8, ry: 0.9, color: L('brand-primary-primary'), opacity: 0.22, fade: 0.74 },
     ],
+    meshes: meshes(L),
     // The wash is folded into the mesh; the per-document glow stays, quieter,
     // so a composition can still put light where it needs it.
     washColor: L('components-gradient-card-blue'),

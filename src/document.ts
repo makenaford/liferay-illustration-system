@@ -19,7 +19,7 @@
  */
 
 import type { TypeRole, TypeWeight } from './primitives/text.ts';
-import type { SurfaceName } from './tokens.ts';
+import type { MeshName, SurfaceName } from './tokens.ts';
 
 export type Tone = 'accent' | 'success' | 'info' | 'neutral' | 'muted' | 'subtle';
 
@@ -434,6 +434,12 @@ export interface Doc {
    * Absent means the two are the same, which is the normal case.
    */
   artboard?: { width: number; height: number };
+  /**
+   * A mesh background from the design system, in place of the theme's own
+   * stage. Absent keeps the original: the blurred bloom in dark, the corner
+   * mesh in light.
+   */
+  background?: MeshName;
   /**
    * Ambient blooms. One to three, often anchored off-canvas. `blur` matters a
    * lot — see the note on `Glow` in primitives/stage.ts.

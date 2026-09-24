@@ -1,4 +1,5 @@
 import { h, type Ctx, type VNode } from '../vsvg.ts';
+import type { MeshName } from '../tokens.ts';
 
 export interface Glow {
   cx: number;
@@ -24,6 +25,8 @@ export interface StageProps {
    * anchored off-canvas so only a corner of the bloom shows.
    */
   glow?: Glow[];
+  /** A named mesh in place of the theme's default stage. See `MeshName`. */
+  mesh?: MeshName;
 }
 
 /**
@@ -36,11 +39,17 @@ export interface StageProps {
 export function Stage(ctx: Ctx, props: StageProps): VNode {
   const { width, height, glow } = props;
   const t = ctx.tokens.stage;
+  // A chosen mesh replaces the theme's default treatment wholesale — no wash
+  // and no per-document glows. Kept alongside it, the glows are the brightest
+  // thing on the canvas, and all three meshes read as the same blue haze.
+  const mesh = props.mesh ? t.meshes[props.mesh] : t.mesh;
+  const washOpacity = props.mesh ? 0 : t.washOpacity;
 
   const washId = ctx.uid('wash');
 
-  const glows: Glow[] =
-    glow && glow.length
+  const glows: Glow[] = props.mesh
+    ? []
+    : glow && glow.length
       ? glow
       : [{ cx: width / 2, cy: height * 0.73, rx: width * 0.3, ry: height * 0.44 }];
 
@@ -50,7 +59,7 @@ export function Stage(ctx: Ctx, props: StageProps): VNode {
    * userSpaceOnUse radial gradient whose unit circle is scaled to (rx, ry) —
    * which is how CSS sizes an elliptical radial gradient too.
    */
-  const meshLayers = t.mesh.map((b) => {
+  const meshLayers = mesh.map((b) => {
     const id = ctx.uid('mesh');
     ctx.defs.push(
       h(
@@ -131,12 +140,12 @@ export function Stage(ctx: Ctx, props: StageProps): VNode {
       height: height + bleed * 2,
       fill: t.bg,
     }),
-    t.washOpacity > 0
+    washOpacity > 0
       ? h('rect', {
           width,
           height,
           fill: `url(#${washId})`,
-          'fill-opacity': t.washOpacity,
+          'fill-opacity': washOpacity,
         })
       : null,
     ...meshLayers,

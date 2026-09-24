@@ -1,5 +1,6 @@
 import type { Doc, PanelSpec } from '../src/document.ts';
 import { commit, getState, useEditor } from './state.ts';
+import { MESH_NAMES } from '../src/tokens.ts';
 
 /**
  * DOCUMENT PANEL — canvas, hero panels and ambient glows.
@@ -90,6 +91,25 @@ export function DocumentPanel() {
           </div>
         </div>
       )}
+
+      <div className="section">
+        <div className="section-head">
+          <span>Background</span>
+        </div>
+        <div className="layout-actions two">
+          {[{ name: undefined, label: 'Original' }, ...MESH_NAMES].map((m) => (
+            <button
+              key={m.label}
+              type="button"
+              className={doc.background === m.name ? 'on' : ''}
+              aria-pressed={doc.background === m.name}
+              onClick={() => patch({ background: m.name })}
+            >
+              {m.label}
+            </button>
+          ))}
+        </div>
+      </div>
 
       <Section
         title="Hero panels"

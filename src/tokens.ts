@@ -296,15 +296,22 @@ export interface Tokens {
   };
 
   /**
-   * The brand gradient — `Brand/Primary/Lighten/1` into `Accent/Product
-   * Accent`. Blue into PURPLE, not the blue-into-cyan the illustrations were
-   * drawn with: it's what `GradientText` and the gradient Label both use, so
-   * it is the brand's gradient and these should match it.
+   * The brand gradient on buttons and action pills — the `Spotlight Cards`
+   * "Gradient Blue" fill in the Marketing UI Assets file (node 210:16284):
+   * cyan into `Brand/Primary` at 218°, the cyan held to 17.7% and the blue
+   * reached by 47.9%, so most of the pill is solid brand blue with the cyan
+   * lighting its top-right corner. A 1px white hairline edges it.
    *
-   * Kept separate from `accent.gradient`, which stays blue/aqua because it
-   * paints data (chart bars, connectors) rather than brand moments.
+   * The cyan, #1CDDFF, is the Figma value itself: it is not a step of the
+   * generated palette (`Accent/Aqua` is #00E0DC), so it is written here with
+   * its source rather than rounded to a neighbour.
+   *
+   * This replaced a blue-into-purple pair taken from `GradientText`; the
+   * illustrations' own component library is the closer authority for them.
+   * Kept separate from `accent.gradient`, which paints data (chart bars,
+   * connectors) rather than brand moments.
    */
-  brandGradient: { from: string; to: string };
+  brandGradient: Grad & { line: string };
 
   /**
    * Component recipes, transcribed from `componentTokens()` in the design
@@ -363,6 +370,9 @@ export interface Tokens {
  * as one named constant rather than as a literal in nine places.
  */
 const INK = '#101828';
+
+/** `Spotlight Cards` Gradient Blue's cyan — see `Tokens.brandGradient`. */
+const BRAND_CYAN = '#1CDDFF';
 
 const FONT_FAMILY =
   '"Source Sans 3", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
@@ -580,8 +590,12 @@ export const dark: Tokens = {
     gridLineOpacity: 1,
   },
   brandGradient: {
-    from: D('brand-primary-lighten-1'),
-    to: D('accent-product-accent'),
+    angle: 218,
+    stops: [
+      { color: BRAND_CYAN, offset: 0.177 },
+      { color: D('brand-primary-primary'), offset: 0.479 },
+    ],
+    line: '#FFFFFF',
   },
   component: {
     button: {
@@ -819,8 +833,12 @@ export const light: Tokens = {
     gridLineOpacity: 1,
   },
   brandGradient: {
-    from: L('brand-primary-lighten-1'),
-    to: L('accent-product-accent'),
+    angle: 218,
+    stops: [
+      { color: BRAND_CYAN, offset: 0.177 },
+      { color: L('brand-primary-primary'), offset: 0.479 },
+    ],
+    line: '#FFFFFF',
   },
   component: {
     button: {

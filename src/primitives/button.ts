@@ -1,3 +1,4 @@
+import { cssAngleLine } from './surface.ts';
 import { h, type Ctx, type VNode } from '../vsvg.ts';
 import { Text, TYPE_ROLES, type TypeRole } from './text.ts';
 import { ICONS } from '../icons.ts';
@@ -90,20 +91,26 @@ export function Button(ctx: Ctx, props: ButtonProps): VNode {
     strokeOpacity = tk.glass.lineFromOpacity;
     labelColor = tk.text.primary;
   } else {
-    // The brand gradient — blue into the product accent purple, the same pair
-    // `GradientText` and the gradient Label use.
+    // The brand gradient — `Spotlight Cards` Gradient Blue: cyan into brand
+    // blue at the CSS angle the design states, with a white hairline.
+    const g = tk.brandGradient;
     const gradId = ctx.uid('btngrad');
     ctx.defs.push(
       h(
         'linearGradient',
-        { id: gradId, x1: x, y1: y, x2: x + width, y2: y + height, gradientUnits: 'userSpaceOnUse' },
-        [
-          h('stop', { 'stop-color': tk.brandGradient.from }),
-          h('stop', { offset: 1, 'stop-color': tk.brandGradient.to }),
-        ],
+        { id: gradId, ...cssAngleLine(g.angle, x, y, width, height), gradientUnits: 'userSpaceOnUse' },
+        g.stops.map((st, i) =>
+          h('stop', {
+            offset: st.offset ?? i / Math.max(g.stops.length - 1, 1),
+            'stop-color': st.color,
+            ...(st.opacity !== undefined ? { 'stop-opacity': st.opacity } : {}),
+          }),
+        ),
       ),
     );
     fill = `url(#${gradId})`;
+    stroke = g.line;
+    strokeOpacity = 1;
   }
 
   let glowId: string | null = null;

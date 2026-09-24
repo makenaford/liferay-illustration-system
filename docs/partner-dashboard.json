@@ -63,7 +63,8 @@
           "x": 46,
           "y": 74,
           "width": 136,
-          "value": 0.12
+          "value": 0.12,
+          "tone": "accent"
         }
       ]
     },
@@ -95,7 +96,8 @@
           "x": 212,
           "y": 74,
           "width": 136,
-          "value": 0.55
+          "value": 0.55,
+          "tone": "accent"
         }
       ]
     },
@@ -127,7 +129,8 @@
           "x": 378,
           "y": 74,
           "width": 136,
-          "value": 0.08
+          "value": 0.08,
+          "tone": "accent"
         }
       ]
     },
@@ -413,7 +416,7 @@
           "y": 248,
           "width": 186,
           "height": 58,
-          "gridLines": 4,
+          "gridLines": 8,
           "markers": true,
           "domain": [
             0,

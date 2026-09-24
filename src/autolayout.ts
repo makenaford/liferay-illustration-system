@@ -1,5 +1,5 @@
 import type { Doc, Element, LayoutSpec } from './document.ts';
-import { TYPE_ROLES } from './primitives/text.ts';
+import { TYPE_ROLES, typeStyle } from './primitives/text.ts';
 import { badgeWidth } from './primitives/badge.ts';
 import { textBox, VERTICAL } from './fontMetrics.generated.ts';
 import { LAYOUT, SPACE } from './tokens.ts';
@@ -35,8 +35,16 @@ const pad = (spec: LayoutSpec) => {
 export function measureElement(el: Element): Size {
   switch (el.type) {
     case 'text': {
-      const role = TYPE_ROLES[el.role];
-      return textBox(el.content, role.size, role.weight);
+      /*
+       * `typeStyle`, not `TYPE_ROLES[role]` — the renderer resolves the
+       * element's weight OVERRIDE and this has to resolve the same one.
+       * Measuring bold text at regular weight under-measures it, so a
+       * container hugging that text came out a couple of pixels short and
+       * the text spilled out of its own box. Two pixels, invisible, and
+       * wrong everywhere a weight was overridden.
+       */
+      const style = typeStyle(el.role, el.weight);
+      return textBox(el.content, style.size, style.weight);
     }
     case 'stat': {
       const vr = TYPE_ROLES[el.valueRole ?? 'title'];
@@ -120,7 +128,7 @@ export function measureElement(el: Element): Size {
 export function baselineOf(el: Element): number | null {
   switch (el.type) {
     case 'text': {
-      const role = TYPE_ROLES[el.role];
+      const role = typeStyle(el.role, el.weight);
       return textBox(el.content, role.size, role.weight).baseline;
     }
     case 'stat': {

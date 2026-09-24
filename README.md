@@ -779,6 +779,78 @@ The mockup's own title reads **"Top oportunities"**. The document spells it
 correctly; that is the third typo the port has turned up, after "Deploy
 Cadece" and "HIPPA".
 
+## What is in the source file, and what is here
+
+Taking stock against `Built Illustrations` in the Marketing UI Assets Repo:
+
+| Section | Contents | Status |
+|---|---|---|
+| **Audience Outcome Cards** | ~20 frames at 560x372, several of them iterations of the same illustration | **Ported** — the nine, taken from the latest iteration of each |
+| **Homepage** | 6 distinct illustrations at **800x577** | **Not ported** — a different genre, see below |
+| **Light Exploration** | 5 light-mode studies of existing illustrations | Informs the style below |
+| stray `464x276` frames | empty placeholders | Nothing to port |
+
+### The Homepage set is a different genre
+
+Those six are not glass-card illustrations at a larger size. They are
+**annotated product screenshots**: full browser chrome, dense real interfaces,
+data tables, and in one case a photographic hero image. Rebuilding them as
+token-driven documents would mean modelling browser chrome, product
+navigation, tables and photography — a bigger project than the original nine,
+and the photographic ones cannot be vector-rebuilt at all.
+
+They are a legitimate asset class; they are just not *this* system's. Putting
+them here would mean either a second primitive library sharing nothing with
+the first, or claiming a fidelity the output would not have.
+
+### One illustration was behind its source
+
+`ai-visibility-dashboard` was ported from an older iteration. The current one
+(node `792:15537`) shows a share figure on each row of the AI Source Breakdown
+and dots at every reading on the line charts. Both are now in.
+
+## One convention per chart
+
+The nine were ported one at a time and the charts drifted, in ways nobody
+chose:
+
+| | Was | Now |
+|---|---|---|
+| `lineChart.gridLines` | 8 in one document, 4 in three others | **8** — the count the Figma export draws |
+| `lineChart.markers` | only the document written after the feature existed | **on** — the current iteration draws a dot at every reading |
+| `progress.tone` | implicit in 10 places, explicit in others | **explicit everywhere** — a document meaning `info` now looks deliberate rather than possibly forgotten |
+
+## The style set, as it now stands
+
+| | |
+|---|---|
+| Canvas | 560x372 |
+| Type | `typography.desktop.tokens.json` x 0.58, nine steps, measured against the Figma source |
+| Surfaces | eight, assigned by depth: `glass2` resting, `glass3` floating, `glass1` nested |
+| Light glass | frosted near-white — white 80% into `#BFD5FF` 21%, blue hairline 20% |
+| Dark glass | white 10% into Glass Step 02, white hairline 22% |
+| Backdrop blur | 20 CSS px (`stdDeviation` 10) |
+| Charts | 8 dashed rules, markers on, bar grids where there is a value axis |
+| Glass icons | rim softened to 0.45 |
+
+### Two directions the file has not settled
+
+The **Light Exploration** section shows the design team trying two things this
+system does not do:
+
+1. **A brighter, bluer light ground.** White into pale blue *and* lavender,
+   noticeably more saturated than the near-white stage here.
+2. **The whole composition as one glass slab** rather than per-card glass — a
+   single tinted panel with a strong blue border floating over that ground,
+   with solid, saturated callout chips on top.
+
+That is close to the "transmission" variant proposed and declined earlier, so
+it is recorded rather than applied. The same section also shows **two dark
+grounds** — near-black and a deep blue — where this system only has the first.
+
+Worth settling with whoever owns the file before more illustrations are built
+on either.
+
 ## The conformance audit
 
 `npm run audit` checks the nine documents against the system and reports

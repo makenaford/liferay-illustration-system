@@ -223,7 +223,8 @@
           "y": 139.61,
           "width": 192,
           "value": 0.615,
-          "label": "Homepage"
+          "label": "Homepage",
+          "tone": "accent"
         },
         {
           "type": "progress",
@@ -231,7 +232,8 @@
           "y": 158.89,
           "width": 192,
           "value": 0.448,
-          "label": "Products"
+          "label": "Products",
+          "tone": "accent"
         },
         {
           "type": "progress",
@@ -239,7 +241,8 @@
           "y": 178.16,
           "width": 192,
           "value": 0.055,
-          "label": "Blog"
+          "label": "Blog",
+          "tone": "accent"
         },
         {
           "type": "progress",
@@ -247,7 +250,8 @@
           "y": 197.44,
           "width": 192,
           "value": 0.318,
-          "label": "Docs"
+          "label": "Docs",
+          "tone": "accent"
         }
       ],
       "layout": {
@@ -278,7 +282,7 @@
           "y": 127.34,
           "width": 192,
           "height": 80,
-          "gridLines": 4,
+          "gridLines": 8,
           "domain": [
             0,
             1
@@ -296,7 +300,8 @@
                 0.91
               ]
             }
-          ]
+          ],
+          "markers": true
         }
       ],
       "layout": {
@@ -327,7 +332,7 @@
           "y": 257.34,
           "width": 192,
           "height": 56,
-          "gridLines": 4,
+          "gridLines": 8,
           "domain": [
             0,
             1
@@ -345,7 +350,8 @@
                 0.92
               ]
             }
-          ]
+          ],
+          "markers": true
         }
       ],
       "layout": {
@@ -408,7 +414,7 @@
       "x": 338,
       "y": 254,
       "width": 216,
-      "height": 100,
+      "height": 104,
       "children": [
         {
           "type": "text",
@@ -427,28 +433,103 @@
           "tone": "muted"
         },
         {
-          "type": "progress",
+          "type": "group",
           "x": 350,
           "y": 303.83,
-          "width": 176,
-          "value": 0.537,
-          "label": "AI Search (Google SGE, Bing AI)"
+          "width": 192,
+          "height": 14,
+          "layout": {
+            "direction": "horizontal",
+            "gap": 8,
+            "padding": 0,
+            "align": "baseline",
+            "justify": "between"
+          },
+          "children": [
+            {
+              "type": "progress",
+              "x": 350,
+              "y": 303.83,
+              "width": 140,
+              "value": 0.5,
+              "label": "AI Search (Google SGE, Bing AI)",
+              "tone": "accent"
+            },
+            {
+              "type": "text",
+              "x": 350,
+              "y": 303.83,
+              "role": "micro",
+              "content": "50%",
+              "tone": "muted"
+            }
+          ]
         },
         {
-          "type": "progress",
+          "type": "group",
           "x": 350,
           "y": 323.1,
-          "width": 176,
-          "value": 0.349,
-          "label": "AI Chatbots (ChatGPT, Claude, Gemini)"
+          "width": 192,
+          "height": 14,
+          "layout": {
+            "direction": "horizontal",
+            "gap": 8,
+            "padding": 0,
+            "align": "baseline",
+            "justify": "between"
+          },
+          "children": [
+            {
+              "type": "progress",
+              "x": 350,
+              "y": 323.1,
+              "width": 140,
+              "value": 0.3,
+              "label": "AI Chatbots (ChatGPT, Claude, Gemini)",
+              "tone": "accent"
+            },
+            {
+              "type": "text",
+              "x": 350,
+              "y": 323.1,
+              "role": "micro",
+              "content": "30%",
+              "tone": "muted"
+            }
+          ]
         },
         {
-          "type": "progress",
+          "type": "group",
           "x": 350,
           "y": 342.38,
-          "width": 176,
-          "value": 0.154,
-          "label": "AI Assistants & Other Sources"
+          "width": 192,
+          "height": 14,
+          "layout": {
+            "direction": "horizontal",
+            "gap": 8,
+            "padding": 0,
+            "align": "baseline",
+            "justify": "between"
+          },
+          "children": [
+            {
+              "type": "progress",
+              "x": 350,
+              "y": 342.38,
+              "width": 140,
+              "value": 0.15,
+              "label": "AI Assistants & Other Sources",
+              "tone": "accent"
+            },
+            {
+              "type": "text",
+              "x": 350,
+              "y": 342.38,
+              "role": "micro",
+              "content": "15%",
+              "tone": "muted"
+            }
+          ]
         }
       ],
       "layout": {

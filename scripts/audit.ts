@@ -226,7 +226,10 @@ function alignmentWalk(doc: Doc, el: Element, path: string) {
   const kids = (el as { children?: Element[] }).children;
   const p = el as unknown as Record<string, number>;
   for (const [i, c] of (kids ?? []).entries()) {
-    const b = c as unknown as Record<string, number>;
+    // Text carries no width, so measure it — otherwise a label that runs out
+    // of its own card is invisible to this rule, which is exactly how three
+    // share figures ended up printed below the overlay they belonged to.
+    const b = (textRect(c) ?? c) as unknown as Record<string, number>;
     if (typeof p.width !== 'number' || typeof b.width !== 'number') continue;
     const out = Math.max(
       p.x - b.x,

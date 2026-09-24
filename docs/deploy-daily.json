@@ -98,7 +98,8 @@
             0.035
           ]
         }
-      ]
+      ],
+      "markers": true
     },
     {
       "type": "text",
@@ -141,7 +142,9 @@
             "direction": "vertical",
             "gap": 10,
             "padding": 0,
-            "align": "start"
+            "align": "start",
+            "hugWidth": true,
+            "hugHeight": true
           },
           "children": [
             {

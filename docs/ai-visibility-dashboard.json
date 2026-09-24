@@ -48,32 +48,68 @@
           "x": 68,
           "y": 47.92,
           "role": "label",
-          "content": "Total Connections"
+          "content": "AI Visibility Score"
         },
         {
-          "type": "text",
-          "x": 68,
-          "y": 60.3,
-          "role": "heading",
-          "content": "12,847",
-          "weight": "bold"
+          "type": "group",
+          "x": 0,
+          "y": 0,
+          "width": 118,
+          "height": 16,
+          "layout": {
+            "direction": "horizontal",
+            "gap": 8,
+            "padding": 0,
+            "align": "end",
+            "justify": "between"
+          },
+          "children": [
+            {
+              "type": "text",
+              "x": 68,
+              "y": 60.3,
+              "role": "heading",
+              "content": "82",
+              "weight": "bold"
+            },
+            {
+              "type": "lineChart",
+              "x": 0,
+              "y": 0,
+              "width": 44,
+              "height": 12,
+              "gridLines": 0,
+              "domain": [
+                0,
+                1
+              ],
+              "series": [
+                {
+                  "role": "secondary",
+                  "data": [
+                    0.3,
+                    0.35,
+                    0.42,
+                    0.4,
+                    0.55,
+                    0.62,
+                    0.7,
+                    0.82
+                  ],
+                  "strokeWidth": 1.25
+                }
+              ]
+            }
+          ]
         },
         {
           "type": "text",
           "x": 68,
           "y": 68.24,
           "role": "micro",
-          "content": "vs. 7,000 target",
+          "content": "Up from 70 last quarter",
           "weight": "semibold",
           "tone": "muted"
-        },
-        {
-          "type": "progress",
-          "x": 68,
-          "y": 71.18,
-          "width": 118,
-          "value": 0.085,
-          "tone": "info"
         }
       ],
       "layout": {
@@ -86,9 +122,9 @@
     },
     {
       "type": "badge",
-      "x": 172,
+      "x": 174,
       "y": 44,
-      "label": "+14.2%",
+      "label": "+12 pts",
       "tone": "info",
       "dot": false
     },
@@ -104,32 +140,68 @@
           "x": 218,
           "y": 47.92,
           "role": "label",
-          "content": "Active Sessions"
+          "content": "AI Citations"
         },
         {
-          "type": "text",
-          "x": 218,
-          "y": 60.3,
-          "role": "heading",
-          "content": "3,456",
-          "weight": "bold"
+          "type": "group",
+          "x": 0,
+          "y": 0,
+          "width": 118,
+          "height": 16,
+          "layout": {
+            "direction": "horizontal",
+            "gap": 8,
+            "padding": 0,
+            "align": "end",
+            "justify": "between"
+          },
+          "children": [
+            {
+              "type": "text",
+              "x": 218,
+              "y": 60.3,
+              "role": "heading",
+              "content": "1,284",
+              "weight": "bold"
+            },
+            {
+              "type": "lineChart",
+              "x": 0,
+              "y": 0,
+              "width": 44,
+              "height": 12,
+              "gridLines": 0,
+              "domain": [
+                0,
+                1
+              ],
+              "series": [
+                {
+                  "role": "success",
+                  "data": [
+                    0.5,
+                    0.62,
+                    0.48,
+                    0.7,
+                    0.58,
+                    0.75,
+                    0.66,
+                    0.8
+                  ],
+                  "strokeWidth": 1.25
+                }
+              ]
+            }
+          ]
         },
         {
           "type": "text",
           "x": 218,
           "y": 68.24,
           "role": "micro",
-          "content": "Current, live traffic",
+          "content": "Across 4 AI engines",
           "weight": "semibold",
           "tone": "muted"
-        },
-        {
-          "type": "progress",
-          "x": 218,
-          "y": 71.18,
-          "width": 118,
-          "value": 0.568,
-          "tone": "accent"
         }
       ],
       "layout": {
@@ -142,9 +214,9 @@
     },
     {
       "type": "badge",
-      "x": 320,
+      "x": 326,
       "y": 44,
-      "label": "Active",
+      "label": "Live",
       "tone": "success"
     },
     {
@@ -159,32 +231,68 @@
           "x": 366,
           "y": 47.92,
           "role": "label",
-          "content": "Total Views"
+          "content": "Share of Voice"
         },
         {
-          "type": "text",
-          "x": 366,
-          "y": 60.3,
-          "role": "heading",
-          "content": "645,789",
-          "weight": "bold"
+          "type": "group",
+          "x": 0,
+          "y": 0,
+          "width": 118,
+          "height": 16,
+          "layout": {
+            "direction": "horizontal",
+            "gap": 8,
+            "padding": 0,
+            "align": "end",
+            "justify": "between"
+          },
+          "children": [
+            {
+              "type": "text",
+              "x": 366,
+              "y": 60.3,
+              "role": "heading",
+              "content": "34%",
+              "weight": "bold"
+            },
+            {
+              "type": "lineChart",
+              "x": 0,
+              "y": 0,
+              "width": 44,
+              "height": 12,
+              "gridLines": 0,
+              "domain": [
+                0,
+                1
+              ],
+              "series": [
+                {
+                  "role": "secondary",
+                  "data": [
+                    0.2,
+                    0.28,
+                    0.33,
+                    0.45,
+                    0.5,
+                    0.58,
+                    0.72,
+                    0.78
+                  ],
+                  "strokeWidth": 1.25
+                }
+              ]
+            }
+          ]
         },
         {
           "type": "text",
           "x": 366,
           "y": 68.24,
           "role": "micro",
-          "content": "Last 30 days",
+          "content": "vs. top 5 competitors",
           "weight": "semibold",
           "tone": "muted"
-        },
-        {
-          "type": "progress",
-          "x": 366,
-          "y": 71.18,
-          "width": 118,
-          "value": 0.085,
-          "tone": "info"
         }
       ],
       "layout": {
@@ -218,40 +326,136 @@
           "content": "Engagement / Category"
         },
         {
-          "type": "progress",
-          "x": 72,
-          "y": 139.61,
+          "type": "group",
+          "x": 0,
+          "y": 0,
           "width": 192,
-          "value": 0.615,
-          "label": "Homepage",
-          "tone": "accent"
+          "height": 14,
+          "layout": {
+            "direction": "horizontal",
+            "gap": 8,
+            "padding": 0,
+            "align": "baseline",
+            "justify": "between"
+          },
+          "children": [
+            {
+              "type": "progress",
+              "x": 72,
+              "y": 139.61,
+              "width": 162,
+              "value": 0.615,
+              "label": "Homepage",
+              "tone": "accent"
+            },
+            {
+              "type": "text",
+              "x": 0,
+              "y": 0,
+              "role": "micro",
+              "content": "62%",
+              "tone": "muted"
+            }
+          ]
         },
         {
-          "type": "progress",
-          "x": 72,
-          "y": 158.89,
+          "type": "group",
+          "x": 0,
+          "y": 0,
           "width": 192,
-          "value": 0.448,
-          "label": "Products",
-          "tone": "accent"
+          "height": 14,
+          "layout": {
+            "direction": "horizontal",
+            "gap": 8,
+            "padding": 0,
+            "align": "baseline",
+            "justify": "between"
+          },
+          "children": [
+            {
+              "type": "progress",
+              "x": 72,
+              "y": 158.89,
+              "width": 162,
+              "value": 0.448,
+              "label": "Products",
+              "tone": "accent"
+            },
+            {
+              "type": "text",
+              "x": 0,
+              "y": 0,
+              "role": "micro",
+              "content": "45%",
+              "tone": "muted"
+            }
+          ]
         },
         {
-          "type": "progress",
-          "x": 72,
-          "y": 178.16,
+          "type": "group",
+          "x": 0,
+          "y": 0,
           "width": 192,
-          "value": 0.055,
-          "label": "Blog",
-          "tone": "accent"
+          "height": 14,
+          "layout": {
+            "direction": "horizontal",
+            "gap": 8,
+            "padding": 0,
+            "align": "baseline",
+            "justify": "between"
+          },
+          "children": [
+            {
+              "type": "progress",
+              "x": 72,
+              "y": 178.16,
+              "width": 162,
+              "value": 0.055,
+              "label": "Blog",
+              "tone": "accent"
+            },
+            {
+              "type": "text",
+              "x": 0,
+              "y": 0,
+              "role": "micro",
+              "content": "6%",
+              "tone": "muted"
+            }
+          ]
         },
         {
-          "type": "progress",
-          "x": 72,
-          "y": 197.44,
+          "type": "group",
+          "x": 0,
+          "y": 0,
           "width": 192,
-          "value": 0.318,
-          "label": "Docs",
-          "tone": "accent"
+          "height": 14,
+          "layout": {
+            "direction": "horizontal",
+            "gap": 8,
+            "padding": 0,
+            "align": "baseline",
+            "justify": "between"
+          },
+          "children": [
+            {
+              "type": "progress",
+              "x": 72,
+              "y": 197.44,
+              "width": 162,
+              "value": 0.318,
+              "label": "Docs",
+              "tone": "accent"
+            },
+            {
+              "type": "text",
+              "x": 0,
+              "y": 0,
+              "role": "micro",
+              "content": "32%",
+              "tone": "muted"
+            }
+          ]
         }
       ],
       "layout": {
@@ -270,18 +474,43 @@
       "height": 124,
       "children": [
         {
-          "type": "text",
-          "x": 296,
-          "y": 121.7,
-          "role": "bodySmall",
-          "content": "Organic traffic growth"
+          "type": "group",
+          "x": 0,
+          "y": 0,
+          "width": 192,
+          "height": 10,
+          "layout": {
+            "direction": "horizontal",
+            "gap": 8,
+            "padding": 0,
+            "align": "baseline",
+            "justify": "between"
+          },
+          "children": [
+            {
+              "type": "text",
+              "x": 296,
+              "y": 121.7,
+              "role": "bodySmall",
+              "content": "Organic traffic growth"
+            },
+            {
+              "type": "text",
+              "x": 0,
+              "y": 0,
+              "role": "caption",
+              "content": "+38.4%",
+              "tone": "success",
+              "weight": "semibold"
+            }
+          ]
         },
         {
           "type": "lineChart",
           "x": 296,
           "y": 127.34,
           "width": 192,
-          "height": 80,
+          "height": 66,
           "gridLines": 8,
           "domain": [
             0,
@@ -302,6 +531,78 @@
             }
           ],
           "markers": true
+        },
+        {
+          "type": "group",
+          "x": 0,
+          "y": 0,
+          "width": 192,
+          "height": 6,
+          "layout": {
+            "direction": "horizontal",
+            "gap": 8,
+            "padding": 0,
+            "align": "baseline",
+            "justify": "between"
+          },
+          "children": [
+            {
+              "type": "text",
+              "x": 0,
+              "y": 0,
+              "role": "micro",
+              "content": "Jan",
+              "tone": "muted"
+            },
+            {
+              "type": "text",
+              "x": 0,
+              "y": 0,
+              "role": "micro",
+              "content": "Feb",
+              "tone": "muted"
+            },
+            {
+              "type": "text",
+              "x": 0,
+              "y": 0,
+              "role": "micro",
+              "content": "Mar",
+              "tone": "muted"
+            },
+            {
+              "type": "text",
+              "x": 0,
+              "y": 0,
+              "role": "micro",
+              "content": "Apr",
+              "tone": "muted"
+            },
+            {
+              "type": "text",
+              "x": 0,
+              "y": 0,
+              "role": "micro",
+              "content": "May",
+              "tone": "muted"
+            },
+            {
+              "type": "text",
+              "x": 0,
+              "y": 0,
+              "role": "micro",
+              "content": "Jun",
+              "tone": "muted"
+            },
+            {
+              "type": "text",
+              "x": 0,
+              "y": 0,
+              "role": "micro",
+              "content": "Jul",
+              "tone": "muted"
+            }
+          ]
         }
       ],
       "layout": {
@@ -320,11 +621,36 @@
       "height": 96,
       "children": [
         {
-          "type": "text",
-          "x": 72,
-          "y": 251.7,
-          "role": "bodySmall",
-          "content": "AI Visibility Score growth"
+          "type": "group",
+          "x": 0,
+          "y": 0,
+          "width": 192,
+          "height": 10,
+          "layout": {
+            "direction": "horizontal",
+            "gap": 8,
+            "padding": 0,
+            "align": "baseline",
+            "justify": "between"
+          },
+          "children": [
+            {
+              "type": "text",
+              "x": 72,
+              "y": 251.7,
+              "role": "bodySmall",
+              "content": "AI Visibility Score growth"
+            },
+            {
+              "type": "text",
+              "x": 0,
+              "y": 0,
+              "role": "caption",
+              "content": "82 / 100",
+              "tone": "success",
+              "weight": "semibold"
+            }
+          ]
         },
         {
           "type": "lineChart",
@@ -371,34 +697,106 @@
       "children": [
         {
           "type": "text",
-          "x": 296,
-          "y": 249.7,
+          "x": 0,
+          "y": 0,
           "role": "bodySmall",
-          "content": "AI Source Breakdown"
+          "content": "Citations by source"
         },
         {
-          "type": "icon",
-          "x": 296,
-          "y": 259.34,
-          "size": 10,
-          "icon": "search",
-          "tone": "subtle"
+          "type": "group",
+          "x": 0,
+          "y": 0,
+          "width": 192,
+          "height": 10,
+          "layout": {
+            "direction": "horizontal",
+            "gap": 6,
+            "padding": 0,
+            "align": "center",
+            "justify": "start"
+          },
+          "children": [
+            {
+              "type": "icon",
+              "x": 296,
+              "y": 259.34,
+              "size": 10,
+              "icon": "search",
+              "tone": "subtle"
+            },
+            {
+              "type": "text",
+              "x": 0,
+              "y": 0,
+              "role": "micro",
+              "content": "1.2K",
+              "tone": "muted"
+            }
+          ]
         },
         {
-          "type": "icon",
-          "x": 296,
-          "y": 277.34,
-          "size": 10,
-          "icon": "bolt",
-          "tone": "subtle"
+          "type": "group",
+          "x": 0,
+          "y": 0,
+          "width": 192,
+          "height": 10,
+          "layout": {
+            "direction": "horizontal",
+            "gap": 6,
+            "padding": 0,
+            "align": "center",
+            "justify": "start"
+          },
+          "children": [
+            {
+              "type": "icon",
+              "x": 296,
+              "y": 277.34,
+              "size": 10,
+              "icon": "bolt",
+              "tone": "subtle"
+            },
+            {
+              "type": "text",
+              "x": 0,
+              "y": 0,
+              "role": "micro",
+              "content": "860",
+              "tone": "muted"
+            }
+          ]
         },
         {
-          "type": "icon",
-          "x": 296,
-          "y": 295.34,
-          "size": 10,
-          "icon": "chat",
-          "tone": "subtle"
+          "type": "group",
+          "x": 0,
+          "y": 0,
+          "width": 192,
+          "height": 10,
+          "layout": {
+            "direction": "horizontal",
+            "gap": 6,
+            "padding": 0,
+            "align": "center",
+            "justify": "start"
+          },
+          "children": [
+            {
+              "type": "icon",
+              "x": 296,
+              "y": 295.34,
+              "size": 10,
+              "icon": "chat",
+              "tone": "subtle"
+            },
+            {
+              "type": "text",
+              "x": 0,
+              "y": 0,
+              "role": "micro",
+              "content": "410",
+              "tone": "muted"
+            }
+          ]
         }
       ],
       "layout": {

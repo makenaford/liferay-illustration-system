@@ -65,6 +65,14 @@
           "width": 132,
           "value": 0.12,
           "tone": "accent"
+        },
+        {
+          "type": "badge",
+          "x": 146,
+          "y": 44,
+          "label": "+18%",
+          "tone": "success",
+          "dot": false
         }
       ]
     },
@@ -98,6 +106,14 @@
           "width": 132,
           "value": 0.55,
           "tone": "accent"
+        },
+        {
+          "type": "badge",
+          "x": 316,
+          "y": 44,
+          "label": "+9%",
+          "tone": "success",
+          "dot": false
         }
       ]
     },
@@ -131,6 +147,14 @@
           "width": 132,
           "value": 0.08,
           "tone": "accent"
+        },
+        {
+          "type": "badge",
+          "x": 482,
+          "y": 44,
+          "label": "+4%",
+          "tone": "success",
+          "dot": false
         }
       ]
     },
@@ -161,7 +185,7 @@
         {
           "type": "text",
           "x": 66,
-          "y": 148,
+          "y": 146,
           "role": "micro",
           "content": "80K",
           "tone": "muted",
@@ -179,7 +203,7 @@
         {
           "type": "text",
           "x": 66,
-          "y": 168,
+          "y": 166,
           "role": "micro",
           "content": "40K",
           "tone": "muted",
@@ -197,7 +221,7 @@
         {
           "type": "text",
           "x": 66,
-          "y": 188,
+          "y": 186,
           "role": "micro",
           "content": "0",
           "tone": "muted",
@@ -208,8 +232,8 @@
           "x": 72,
           "y": 134,
           "width": 186,
-          "height": 52,
-          "gridLines": 6,
+          "height": 50,
+          "gridLines": 5,
           "barRatio": 0.92,
           "series": [
             {
@@ -226,12 +250,13 @@
               ],
               "tone": "soft"
             }
-          ]
+          ],
+          "max": 100
         },
         {
           "type": "text",
           "x": 118,
-          "y": 200,
+          "y": 198,
           "role": "micro",
           "content": "Liferay",
           "tone": "muted",
@@ -240,11 +265,29 @@
         {
           "type": "text",
           "x": 212,
-          "y": 200,
+          "y": 198,
           "role": "micro",
           "content": "Partner",
           "tone": "muted",
           "anchor": "middle"
+        },
+        {
+          "type": "text",
+          "x": 98,
+          "y": 166,
+          "role": "micro",
+          "content": "$32K",
+          "anchor": "middle",
+          "weight": "semibold"
+        },
+        {
+          "type": "text",
+          "x": 232,
+          "y": 138,
+          "role": "micro",
+          "content": "$88K",
+          "anchor": "middle",
+          "weight": "semibold"
         }
       ]
     },
@@ -275,7 +318,7 @@
         {
           "type": "text",
           "x": 316,
-          "y": 148,
+          "y": 146,
           "role": "micro",
           "content": "80K",
           "tone": "muted",
@@ -293,7 +336,7 @@
         {
           "type": "text",
           "x": 316,
-          "y": 168,
+          "y": 166,
           "role": "micro",
           "content": "40K",
           "tone": "muted",
@@ -311,7 +354,7 @@
         {
           "type": "text",
           "x": 316,
-          "y": 188,
+          "y": 186,
           "role": "micro",
           "content": "0",
           "tone": "muted",
@@ -322,8 +365,8 @@
           "x": 322,
           "y": 134,
           "width": 186,
-          "height": 52,
-          "gridLines": 6,
+          "height": 50,
+          "gridLines": 5,
           "barRatio": 0.74,
           "series": [
             {
@@ -346,7 +389,87 @@
               ],
               "tone": "soft"
             }
-          ]
+          ],
+          "max": 100
+        },
+        {
+          "type": "text",
+          "x": 340,
+          "y": 198,
+          "role": "micro",
+          "content": "Jan",
+          "anchor": "middle",
+          "tone": "muted"
+        },
+        {
+          "type": "text",
+          "x": 378,
+          "y": 198,
+          "role": "micro",
+          "content": "Feb",
+          "anchor": "middle",
+          "tone": "muted"
+        },
+        {
+          "type": "text",
+          "x": 416,
+          "y": 198,
+          "role": "micro",
+          "content": "Mar",
+          "anchor": "middle",
+          "tone": "muted"
+        },
+        {
+          "type": "text",
+          "x": 452,
+          "y": 198,
+          "role": "micro",
+          "content": "Apr",
+          "anchor": "middle",
+          "tone": "muted"
+        },
+        {
+          "type": "text",
+          "x": 490,
+          "y": 198,
+          "role": "micro",
+          "content": "May",
+          "anchor": "middle",
+          "tone": "muted"
+        },
+        {
+          "type": "line",
+          "x": 434,
+          "y": 118,
+          "width": 6,
+          "height": 0,
+          "tone": "accent",
+          "thickness": 6
+        },
+        {
+          "type": "text",
+          "x": 444,
+          "y": 122,
+          "role": "micro",
+          "content": "Liferay",
+          "tone": "muted"
+        },
+        {
+          "type": "line",
+          "x": 476,
+          "y": 118,
+          "width": 6,
+          "height": 0,
+          "tone": "brand-primary-lighten-3",
+          "thickness": 6
+        },
+        {
+          "type": "text",
+          "x": 486,
+          "y": 122,
+          "role": "micro",
+          "content": "Partner",
+          "tone": "muted"
         }
       ]
     },
@@ -377,7 +500,7 @@
         {
           "type": "text",
           "x": 66,
-          "y": 272,
+          "y": 270,
           "role": "micro",
           "content": "75%",
           "tone": "muted",
@@ -386,7 +509,7 @@
         {
           "type": "text",
           "x": 66,
-          "y": 288,
+          "y": 282,
           "role": "micro",
           "content": "50%",
           "tone": "muted",
@@ -395,7 +518,7 @@
         {
           "type": "text",
           "x": 66,
-          "y": 302,
+          "y": 294,
           "role": "micro",
           "content": "25%",
           "tone": "muted",
@@ -404,7 +527,7 @@
         {
           "type": "text",
           "x": 66,
-          "y": 316,
+          "y": 306,
           "role": "micro",
           "content": "0",
           "tone": "muted",
@@ -415,8 +538,8 @@
           "x": 72,
           "y": 256,
           "width": 186,
-          "height": 58,
-          "gridLines": 8,
+          "height": 48,
+          "gridLines": 4,
           "markers": true,
           "domain": [
             0,
@@ -437,6 +560,52 @@
               "strokeWidth": 1.2
             }
           ]
+        },
+        {
+          "type": "text",
+          "x": 262,
+          "y": 244,
+          "role": "caption",
+          "content": "+92%",
+          "anchor": "end",
+          "tone": "success",
+          "weight": "semibold"
+        },
+        {
+          "type": "text",
+          "x": 72,
+          "y": 318,
+          "role": "micro",
+          "content": "2019",
+          "anchor": "start",
+          "tone": "muted"
+        },
+        {
+          "type": "text",
+          "x": 134,
+          "y": 318,
+          "role": "micro",
+          "content": "2021",
+          "anchor": "middle",
+          "tone": "muted"
+        },
+        {
+          "type": "text",
+          "x": 196,
+          "y": 318,
+          "role": "micro",
+          "content": "2023",
+          "anchor": "middle",
+          "tone": "muted"
+        },
+        {
+          "type": "text",
+          "x": 258,
+          "y": 318,
+          "role": "micro",
+          "content": "2025",
+          "anchor": "end",
+          "tone": "muted"
         }
       ]
     },
@@ -483,6 +652,69 @@
           "y": 320,
           "role": "caption",
           "content": "Partner Service 3"
+        },
+        {
+          "type": "text",
+          "x": 512,
+          "y": 258,
+          "role": "label",
+          "content": "Value",
+          "anchor": "end",
+          "tone": "muted"
+        },
+        {
+          "type": "text",
+          "x": 512,
+          "y": 280,
+          "role": "caption",
+          "content": "$48K",
+          "anchor": "end",
+          "weight": "semibold"
+        },
+        {
+          "type": "text",
+          "x": 512,
+          "y": 300,
+          "role": "caption",
+          "content": "$36K",
+          "anchor": "end",
+          "weight": "semibold"
+        },
+        {
+          "type": "text",
+          "x": 512,
+          "y": 320,
+          "role": "caption",
+          "content": "$22K",
+          "anchor": "end",
+          "weight": "semibold"
+        },
+        {
+          "type": "line",
+          "x": 298,
+          "y": 266,
+          "width": 214,
+          "height": 0,
+          "tone": "neutral-02",
+          "thickness": 1
+        },
+        {
+          "type": "line",
+          "x": 298,
+          "y": 288,
+          "width": 214,
+          "height": 0,
+          "tone": "neutral-02",
+          "thickness": 1
+        },
+        {
+          "type": "line",
+          "x": 298,
+          "y": 308,
+          "width": 214,
+          "height": 0,
+          "tone": "neutral-02",
+          "thickness": 1
         }
       ]
     },

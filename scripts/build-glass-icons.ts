@@ -29,6 +29,7 @@
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { softenGlassRim } from '../src/importAsset.ts';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 
@@ -99,6 +100,11 @@ function normalise(svg: string, ns: string): Processed {
   // `shape-rendering="crispEdges"` is a Figma export artifact that makes
   // scaled-down artwork look chewed; the icons are always scaled here.
   s = s.replace(/\s*shape-rendering="crispEdges"/g, '');
+
+  // The glass edge, softened — see `softenGlassRim`. Without it every frosted
+  // shape arrives with an opaque white outline, because the backdrop blur that
+  // was meant to sit behind it cannot survive export.
+  s = softenGlassRim(s);
 
   return { viewBox, body: s.replace(/\n\s*\n/g, '\n').trim() };
 }

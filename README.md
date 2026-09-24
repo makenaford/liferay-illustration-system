@@ -343,6 +343,32 @@ These are structurally faithful ports, not pixel traces. Deliberate deltas:
   deliberate divergence someone should sign off rather than something to fix
   quietly in tokens.
 
+### The white outline, and why it was there
+
+A Figma glass shape is two effects: a pure-white inner shadow for the edge, and
+a `backdrop-filter` blur for the frosting. **Only the first survives export.**
+`backdrop-filter` needs a live DOM and does nothing in an `<img>`, an SVG file,
+or on a canvas — so the pane arrives as a 20-30% translucent fill with a fully
+opaque white rim, and the rim becomes the most visible thing in the icon: a
+hard outline around every shape.
+
+It was not introduced here. Rendering the raw design-system asset beside the
+same file after import gives pixel-identical results; the `foreignObject` the
+importer strips was already being ignored by the browser.
+
+Figma writes that rim as a colour matrix whose alpha multiplier is 1:
+
+```
+values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 1 0"
+                                               ^ alpha
+```
+
+`softenGlassRim` drops it to 0.45, which restores the intent — an edge that
+catches light — without pretending SVG can reproduce a blur it cannot express.
+It runs in both places a Figma glass asset can enter the system: the icon
+generator (79 rims across 19 icons x 2 themes) and `importSvg`, so an icon you
+drag in yourself gets the same treatment and says so in its import note.
+
 ## Glass icons come from the design system
 
 The five spot glyphs I had hand-drawn are deleted. `SpotIcon` now renders the

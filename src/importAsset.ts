@@ -5,6 +5,33 @@
  * so it is pure string work with no DOM.
  */
 
+/**
+ * Soften Figma's glass edge so it reads as a highlight rather than an outline.
+ *
+ * A Figma glass shape is two effects: a pure-white inner shadow for the edge,
+ * and a `backdrop-filter` blur for the frosting. Only the first survives
+ * export — `backdrop-filter` needs a live DOM and does nothing in an `<img>`,
+ * an SVG file, or on a canvas. So the pane arrives as a 20-30% translucent
+ * fill with a FULLY OPAQUE white rim, and the rim becomes the most visible
+ * thing in the icon: a hard outline around every shape.
+ *
+ * Figma writes that rim as a colour matrix whose alpha multiplier is 1:
+ *
+ *   values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 1 0"
+ *                                                  ^ alpha
+ *
+ * Dropping it to 0.45 restores the intent — an edge that catches light —
+ * without pretending we can reproduce a blur SVG cannot express.
+ */
+export const GLASS_RIM_ALPHA = 0.45;
+
+export function softenGlassRim(markup: string, alpha = GLASS_RIM_ALPHA): string {
+  return markup.replace(
+    /values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1 0"/g,
+    `values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 ${alpha} 0"`,
+  );
+}
+
 /** Bytes above which a raster is worth warning about. */
 export const RASTER_WARN_BYTES = 512 * 1024;
 
@@ -43,6 +70,12 @@ export function importSvg(source: string): ImportedSvg {
     s = s.replace(/\son\w+\s*=\s*(["'])[\s\S]*?\1/gi, '');
     notes.push('removed inline event handlers');
   }
+  const rims = (s.match(/values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1 0"/g) ?? []).length;
+  if (rims) {
+    s = softenGlassRim(s);
+    notes.push(`softened ${rims} glass edge${rims === 1 ? '' : 's'} — see softenGlassRim`);
+  }
+
   if (/<foreignObject/i.test(s)) {
     s = s.replace(/<foreignObject[\s\S]*?<\/foreignObject>/gi, '');
     s = s.replace(/<clipPath id="bgblur[^"]*"[\s\S]*?<\/clipPath>/g, '');

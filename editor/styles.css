@@ -885,6 +885,70 @@ button.mini.on { background: var(--accent); border-color: var(--accent); color: 
 }
 .lib-empty { padding: 40px 28px; color: var(--ink-faint); }
 
+/* Projects: All, Unfiled, then each folder. Folders take dropped cards. */
+.lib-folders {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 0 28px 14px;
+}
+.lib-folder,
+.lib-folder.project > button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 5px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  color: inherit;
+}
+.lib-folder span { color: var(--ink-faint); font-size: 11px; }
+.lib-folder.project { display: inline-flex; padding: 0; border: none; background: none; }
+.lib-folder.project > button:first-child { border-radius: 999px 0 0 999px; padding-right: 8px; }
+.lib-folder-x {
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-left: none;
+  border-radius: 0 999px 999px 0;
+  padding: 5px 9px 5px 6px;
+  color: var(--ink-faint);
+  cursor: pointer;
+}
+.lib-folder-x:hover { color: #ff9d95; }
+.lib-folder.on,
+.lib-folder.project.on > button { background: var(--accent); border-color: var(--accent); color: #fff; }
+.lib-folder.on span,
+.lib-folder.project.on span { color: rgba(255, 255, 255, 0.8); }
+.lib-folder.over,
+.lib-folder.project.over > button { border-color: var(--accent-soft); box-shadow: 0 0 0 2px rgba(112, 161, 255, 0.35); }
+.lib-folder.add { border-style: dashed; color: var(--ink-dim); }
+.lib-folder-input {
+  background: var(--panel-2);
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  padding: 5px 12px;
+  font: inherit;
+  font-size: 12px;
+  color: inherit;
+  width: 150px;
+}
+.lib-card[draggable] { cursor: grab; }
+.lib-card-folder {
+  margin-left: auto;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  font: inherit;
+  font-size: 11px;
+  color: var(--ink-dim);
+  padding: 1px 4px;
+  max-width: 110px;
+}
+
 .lib-grid {
   display: grid; gap: 18px; padding: 22px 28px 48px;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));

@@ -36,9 +36,36 @@ interface Backend {
   all(): Promise<Record<string, { doc: Doc; updatedAt: number }>>;
   put(id: string, doc: Doc): Promise<void>;
   remove(id: string): Promise<void>;
+  /** The folder index — see `Folders`. */
+  folders(): Promise<Folders>;
+  putFolders(f: Folders): Promise<void>;
 }
 
+/**
+ * FOLDERS — projects to file illustrations under.
+ *
+ * Kept apart from the illustrations themselves, as one small index: the
+ * folders, and which folder each illustration id is in. Filing a SHIPPED
+ * illustration therefore writes nothing to the illustration — putting it in
+ * a folder must not create a saved copy, because a saved copy shadows the
+ * shipped one and it would stop picking up updates from the repo.
+ *
+ * An illustration in no folder is Unfiled. Deleting a folder unfiles what
+ * was in it; it never deletes an illustration.
+ */
+export interface Folder {
+  id: string;
+  name: string;
+}
+export interface Folders {
+  folders: Folder[];
+  /** Illustration id → folder id. */
+  assign: Record<string, string>;
+}
+const EMPTY_FOLDERS: Folders = { folders: [], assign: {} };
+
 const KEY = 'illustration-library';
+const FOLDERS_KEY = 'illustration-folders';
 
 const localBackend: Backend = {
   kind: 'local',
@@ -67,8 +94,24 @@ const localBackend: Backend = {
       /* nothing useful to do; the next read simply still sees it */
     }
   },
+  async folders() {
+    try {
+      const f = JSON.parse(localStorage.getItem(FOLDERS_KEY) ?? 'null') as Folders | null;
+      return f && Array.isArray(f.folders) ? { folders: f.folders, assign: f.assign ?? {} } : EMPTY_FOLDERS;
+    } catch {
+      return EMPTY_FOLDERS;
+    }
+  },
+  async putFolders(f) {
+    try {
+      localStorage.setItem(FOLDERS_KEY, JSON.stringify(f));
+    } catch {
+      throw new Error('This browser is out of local storage.');
+    }
+  },
 };
 
+let memoryFolders: Folders = EMPTY_FOLDERS;
 const memoryBackend: Backend = {
   kind: 'none',
   async all() {
@@ -76,6 +119,12 @@ const memoryBackend: Backend = {
   },
   async put() {},
   async remove() {},
+  async folders() {
+    return memoryFolders;
+  },
+  async putFolders(f) {
+    memoryFolders = f;
+  },
 };
 
 /** Minimal shape of the `db` capability this module uses. */
@@ -106,6 +155,16 @@ function sharedBackend(db: DbLike): Backend {
     },
     async remove(id) {
       await col().doc(id).delete();
+    },
+    // One document in its own collection, so the illustrations collection
+    // holds nothing but illustrations.
+    async folders() {
+      const snap = await db.collection('library-meta').get();
+      const body = snap.docs.find((d) => d.id === 'folders')?.data() as Partial<Folders> | undefined;
+      return body && Array.isArray(body.folders) ? { folders: body.folders, assign: body.assign ?? {} } : EMPTY_FOLDERS;
+    },
+    async putFolders(f) {
+      await db.collection('library-meta').doc('folders').set(f as unknown as Record<string, unknown>);
     },
   };
 }
@@ -153,7 +212,54 @@ export async function save(doc: Doc): Promise<void> {
 
 /** Drop the saved copy. A shipped illustration reverts; a new one is gone. */
 export async function forget(id: string): Promise<void> {
-  await (await backend()).remove(id);
+  const b = await backend();
+  await b.remove(id);
+  // A deleted illustration leaves its folder; a reverted shipped one stays filed.
+  if (!SHIPPED.has(id)) {
+    const f = await b.folders();
+    if (f.assign[id]) {
+      const { [id]: _gone, ...assign } = f.assign;
+      await b.putFolders({ ...f, assign });
+    }
+  }
+}
+
+export async function folders(): Promise<Folders> {
+  return (await backend()).folders();
+}
+
+/** Create a folder; returns it. */
+export async function addFolder(name: string): Promise<Folder> {
+  const b = await backend();
+  const f = await b.folders();
+  const id = freshId(name, f.folders.map((x) => x.id));
+  const folder = { id, name: name.trim() || 'Untitled project' };
+  await b.putFolders({ ...f, folders: [...f.folders, folder] });
+  return folder;
+}
+
+export async function renameFolder(id: string, name: string): Promise<void> {
+  const b = await backend();
+  const f = await b.folders();
+  await b.putFolders({ ...f, folders: f.folders.map((x) => (x.id === id ? { ...x, name: name.trim() || x.name } : x)) });
+}
+
+/** Remove a folder. Its illustrations become Unfiled; none is deleted. */
+export async function removeFolder(id: string): Promise<void> {
+  const b = await backend();
+  const f = await b.folders();
+  const assign = Object.fromEntries(Object.entries(f.assign).filter(([, v]) => v !== id));
+  await b.putFolders({ folders: f.folders.filter((x) => x.id !== id), assign });
+}
+
+/** File an illustration in a folder, or unfile it with `null`. */
+export async function fileIn(docId: string, folderId: string | null): Promise<void> {
+  const b = await backend();
+  const f = await b.folders();
+  const assign = { ...f.assign };
+  if (folderId) assign[docId] = folderId;
+  else delete assign[docId];
+  await b.putFolders({ ...f, assign });
 }
 
 export const isShipped = (id: string) => SHIPPED.has(id);

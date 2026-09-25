@@ -576,6 +576,11 @@ export interface Doc {
    */
   background?: MeshName;
   /**
+   * The second colour of the `duo` background, beside the primary blue: a
+   * colour from the illustration set (see src/colors.ts). Defaults to Aqua.
+   */
+  backgroundAccent?: string;
+  /**
    * Ambient blooms. One to three, often anchored off-canvas. `blur` matters a
    * lot — see the note on `Glow` in primitives/stage.ts.
    */

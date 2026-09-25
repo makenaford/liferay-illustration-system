@@ -518,7 +518,10 @@ export function buildDocument(
   const baseId = `${ns}-bd-base`;
 
   // Stage first, with no backdrop of its own.
-  const stage = Stage(ctx, { width, height, glow: doc.glow, mesh: doc.background });
+  // A gradient cannot be one bloom's colour; the duo accent takes colours only.
+  const accentPaint = doc.background === 'duo' ? paintOf(ctx.tokens, doc.backgroundAccent ?? 'base-aqua') : null;
+  const accent = accentPaint && 'color' in accentPaint ? accentPaint.color : undefined;
+  const stage = Stage(ctx, { width, height, glow: doc.glow, mesh: doc.background, accent });
 
   // Panels blur the stage.
   ctx.backdropId = stageId;

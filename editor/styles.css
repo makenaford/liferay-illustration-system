@@ -1114,3 +1114,6 @@ button.mini.on { background: var(--accent); border-color: var(--accent); color: 
 }
 .iconpick-grid button:hover { background: #262b33; }
 .iconpick-grid button.on { background: #1d2c4d; border-color: var(--accent); }
+
+.bg-accent { margin-top: 8px; }
+.bg-note { margin: 8px 0 0; font-size: 11px; color: var(--ink-faint); line-height: 1.45; }

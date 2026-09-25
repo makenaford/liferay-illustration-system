@@ -27,6 +27,8 @@ export interface StageProps {
   glow?: Glow[];
   /** A named mesh in place of the theme's default stage. See `MeshName`. */
   mesh?: MeshName;
+  /** The `duo` mesh's accent, resolved to a colour. */
+  accent?: string;
 }
 
 /**
@@ -42,7 +44,12 @@ export function Stage(ctx: Ctx, props: StageProps): VNode {
   // A chosen mesh replaces the theme's default treatment wholesale — no wash
   // and no per-document glows. Kept alongside it, the glows are the brightest
   // thing on the canvas, and all three meshes read as the same blue haze.
-  const mesh = props.mesh ? t.meshes[props.mesh] : t.mesh;
+  const mesh =
+    props.mesh === 'duo' && props.accent
+      ? t.duo(props.accent)
+      : props.mesh
+        ? t.meshes[props.mesh]
+        : t.mesh;
   const washOpacity = props.mesh ? 0 : t.washOpacity;
 
   const washId = ctx.uid('wash');

@@ -81,6 +81,16 @@ function meshes(
   const treat = (blooms: MeshBloom[]) =>
     blooms.map((b) => ({ ...b, rx: b.rx * spread, ry: b.ry * spread, opacity: b.opacity * strength }));
   const all: Record<MeshName, MeshBloom[]> = {
+    /*
+     * Circles behind the illustration: a wide primary glow and a brighter,
+     * tighter one inside it, both centred. Radii run 1.5 to 1 on y, the
+     * canvas's own 560 x 372, so the blooms read as circles, not ovals.
+     */
+    centered: [
+      { x: 0.5, y: 0.52, rx: 0.62, ry: 0.93, color: P('brand-primary-primary'), opacity: 0.3, fade: 0.72 },
+      { x: 0.5, y: 0.52, rx: 0.3, ry: 0.45, color: P('brand-primary-lighten-1'), opacity: 0.34, fade: 0.66 },
+    ],
+    duo: duoBlooms(P('brand-primary-primary'), P('accent-aqua')),
     corners: [
       { x: 0, y: 0, rx: 0.7, ry: 1.3, color: P('brand-primary-primary'), opacity: 0.34, fade: 0.7 },
       { x: 1, y: 0, rx: 0.6, ry: 1.2, color: P('brand-primary-lighten-1'), opacity: 0.26, fade: 0.68 },
@@ -105,6 +115,30 @@ function meshes(
   return Object.fromEntries(
     Object.entries(all).map(([k, v]) => [k, treat(v)]),
   ) as Record<MeshName, MeshBloom[]>;
+}
+
+/**
+ * Two colours: the brand's primary blue from the top left, a chosen accent
+ * answering from the bottom right, and a fainter blue across the top so the
+ * two meet in the middle rather than at a seam.
+ */
+function duoBlooms(primary: string, accent: string): MeshBloom[] {
+  return [
+    { x: 0, y: 0, rx: 0.7, ry: 1.1, color: primary, opacity: 0.34, fade: 0.7 },
+    { x: 1, y: 1, rx: 0.7, ry: 1.1, color: accent, opacity: 0.32, fade: 0.7 },
+    { x: 0.7, y: -0.1, rx: 0.5, ry: 0.7, color: primary, opacity: 0.14, fade: 0.74 },
+  ];
+}
+
+/** The two-colour mesh with a given accent, as a scheme draws it. */
+function duo(P: (key: PaletteKey) => string, t: MeshTreatment) {
+  return (accent: string) =>
+    duoBlooms(P('brand-primary-primary'), accent).map((b) => ({
+      ...b,
+      rx: b.rx * t.spread,
+      ry: b.ry * t.spread,
+      opacity: b.opacity * t.strength,
+    }));
 }
 
 const LIGHT_MESHES = meshes(L, MESH_LIGHT);
@@ -151,13 +185,17 @@ export interface MeshBloom {
  * The CSS is identical in both schemes; only the variables it reads change,
  * which is what `meshes()` reproduces.
  */
-export type MeshName = 'corners' | 'bubble' | 'corner-bubble' | 'purple-aqua';
+export type MeshName = 'corners' | 'centered' | 'duo' | 'bubble' | 'corner-bubble' | 'purple-aqua';
 
+/**
+ * The backgrounds a designer chooses from. `bubble`, `corner-bubble` and
+ * `purple-aqua` are no longer offered, but documents that chose one still
+ * draw it.
+ */
 export const MESH_NAMES: { name: MeshName; label: string }[] = [
   { name: 'corners', label: 'Corners' },
-  { name: 'bubble', label: 'Full bubble' },
-  { name: 'corner-bubble', label: 'Corner bubble' },
-  { name: 'purple-aqua', label: 'Purple & aqua' },
+  { name: 'centered', label: 'Centered' },
+  { name: 'duo', label: 'Two colors' },
 ];
 
 /** A gradient stop, as a colour plus optional alpha and position. */
@@ -226,6 +264,8 @@ export interface Tokens {
     mesh: MeshBloom[];
     /** The meshes a document can opt into with `Doc.background`. */
     meshes: Record<MeshName, MeshBloom[]>;
+    /** `duo` with the document's own accent colour. See `Doc.backgroundAccent`. */
+    duo: (accent: string) => MeshBloom[];
     /** Ambient bloom, from `Components/Gradient Card`. */
     washColor: string;
     washOpacity: number;
@@ -608,6 +648,7 @@ export const dark: Tokens = {
     // with; the mesh is a light-canvas treatment.
     mesh: [],
     meshes: meshes(D),
+    duo: duo(D, MESH_AS_DRAWN),
     washColor: D('components-gradient-card-blue'),
     washOpacity: 0.28,
     glowColor: D('components-gradient-card-blue'),
@@ -875,6 +916,7 @@ export const light: Tokens = {
      */
     mesh: LIGHT_MESHES.corners,
     meshes: LIGHT_MESHES,
+    duo: duo(L, MESH_LIGHT),
     // The wash is folded into the mesh; the per-document glow stays, quieter,
     // so a composition can still put light where it needs it.
     washColor: L('components-gradient-card-blue'),

@@ -45,10 +45,13 @@ export function TokenPicker({
   value,
   onChange,
   allowNone = true,
+  colorsOnly = false,
 }: {
   value: string | undefined;
   onChange: (v: string | undefined) => void;
   allowNone?: boolean;
+  /** Leave out the gradients — for a setting that takes one colour. */
+  colorsOnly?: boolean;
 }) {
   const theme = useEditor((s) => s.theme);
   const [open, setOpen] = useState(false);
@@ -135,8 +138,8 @@ export function TokenPicker({
             {SEMANTIC.filter(match).length > 0 && <div className="tokenpick-group">semantic</div>}
             {SEMANTIC.filter(match).map(row)}
 
-            {GRADIENTS.some((g) => match(g.key)) && <div className="tokenpick-group">gradients</div>}
-            {GRADIENTS.filter((g) => match(g.key)).map((g) => row(g.key))}
+            {!colorsOnly && GRADIENTS.some((g) => match(g.key)) && <div className="tokenpick-group">gradients</div>}
+            {!colorsOnly && GRADIENTS.filter((g) => match(g.key)).map((g) => row(g.key))}
 
             {GROUPS.map(({ group, items }) => {
               const hits = items.filter((c) => match(c.key));

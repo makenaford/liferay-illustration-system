@@ -1,6 +1,7 @@
 import type { Doc, PanelSpec } from '../src/document.ts';
 import { commit, getState, useEditor } from './state.ts';
 import { MESH_NAMES } from '../src/tokens.ts';
+import { TokenPicker } from './TokenPicker.tsx';
 
 /**
  * DOCUMENT PANEL — canvas, hero panels and ambient glows.
@@ -96,8 +97,8 @@ export function DocumentPanel() {
         <div className="section-head">
           <span>Background</span>
         </div>
-        <div className="layout-actions two">
-          {[{ name: undefined, label: 'Original' }, ...MESH_NAMES].map((m) => (
+        <div className="layout-actions">
+          {MESH_NAMES.map((m) => (
             <button
               key={m.label}
               type="button"
@@ -109,6 +110,23 @@ export function DocumentPanel() {
             </button>
           ))}
         </div>
+        {doc.background === 'duo' && (
+          <label className="field wide bg-accent">
+            <span className="field-label">Accent color · beside the primary blue</span>
+            <TokenPicker
+              value={doc.backgroundAccent ?? 'base-aqua'}
+              allowNone={false}
+              colorsOnly
+              onChange={(v) => patch({ backgroundAccent: v })}
+            />
+          </label>
+        )}
+        {!MESH_NAMES.some((m) => m.name === doc.background) && (
+          <p className="bg-note">
+            This illustration uses {doc.background ? 'a background no longer offered' : 'the theme’s original background'}.
+            Choose one above to change it.
+          </p>
+        )}
       </div>
 
       <Section

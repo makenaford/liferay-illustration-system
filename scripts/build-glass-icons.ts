@@ -162,17 +162,31 @@ function serialise(n: XNode): string {
 const attr = (n: XNode, name: string) => n.open.match(new RegExp(`\\s${name}="([^"]*)"`))?.[1];
 
 /**
- * BACKGROUND BLUR, made portable. Figma exports a glass shape's backdrop
- * blur as a `<foreignObject>` whose HTML child carries
- * `backdrop-filter: blur(Npx)` clipped to the shape — browser-only, so it
- * was being stripped and the frosted white shapes lost their frost.
+ * BACKGROUND BLUR, made portable.
  *
- * What a backdrop blur shows is whatever was drawn before it, blurred, inside
- * the shape. So each `<foreignObject>` becomes exactly that: the siblings
- * painted before it, re-drawn by reference under a `feGaussianBlur` of the
- * same radius, clipped to the same shape. The blur covers the icon's own artwork, which
- * is what sits behind its glass; the page behind an icon is not reachable
- * from inside an SVG, and is not what the effect is doing here anyway.
+ * A glass shape's background blur means: inside the shape, whatever is
+ * behind it is seen blurred — and ONLY blurred. Figma exports it as a
+ * `<foreignObject>` carrying CSS `backdrop-filter`, which only a browser
+ * renders; for some glass (notably masked shapes) it exports nothing at all.
+ *
+ * Both become the same plain-SVG construction, for every glass shape — a
+ * group carrying Figma's glass effect (drop shadow and two inner shadows,
+ * which it names `_dii_`):
+ *
+ *   1. everything drawn before the glass is wrapped in a mask that cuts the
+ *      glass's outline OUT of it, so the sharp artwork is gone from under the
+ *      glass — without this, a blurred copy laid on top lets the sharp
+ *      original show through wherever the blur thins, at every edge, and the
+ *      glass reads as clear;
+ *   2. the same artwork is re-drawn by reference under an feGaussianBlur and
+ *      confined to the glass's outline — its mask when it is masked, the
+ *      foreignObject's clip when Figma exported one, otherwise its shapes;
+ *   3. then the glass itself.
+ *
+ * Glass after glass composes: a later shape's cut and blur take in the
+ * earlier ones. The page behind an icon is not reachable from inside an SVG,
+ * so what blurs is the icon's own artwork, which is what sits behind its
+ * glass.
  */
 function portableBackdropBlur(svg: string): string {
   const root = parse(svg);
@@ -180,121 +194,111 @@ function portableBackdropBlur(svg: string): string {
   const clipFixes: string[] = [];
   let n = 0;
 
-  const painted = (c: XNode) =>
-    !['#text', 'defs', 'clipPath', 'filter', 'foreignObject', 'mask'].includes(c.tag) && !c.open.includes('data-bd');
-
-  /** Re-draw `behind` by reference, blurred, under `wrapAttr` (a clip or mask). */
-  const blurred = (behind: XNode[], wrapAttr: string, radius: number, region: string): XNode => {
-    const id = `bdblur${n++}`;
-    defs.push(
-      `<filter id="${id}" ${region} color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="${radius}"/></filter>`,
-    );
-    const uses = behind
-      .map((b) => {
-        let bid = attr(b, 'id');
-        if (!bid) {
-          bid = `bdsrc${n}-${behind.indexOf(b)}`;
-          b.open = b.open.replace(/^<([\w:-]+)/, `<$1 id="${bid}"`);
-        }
-        return `<use href="#${bid}"/>`;
-      })
-      .join('');
-    return {
-      open: `<g ${wrapAttr} data-bd="">`,
-      tag: 'g',
-      selfClosing: false,
-      children: [{ open: '', tag: '#text', children: [], selfClosing: false, text: `<g filter="url(#${id})">${uses}</g>` }],
-    };
+  // Every node by id, for finding a foreignObject's clip path.
+  const byId = new Map<string, XNode>();
+  const index = (node: XNode) => {
+    const id = attr(node, 'id');
+    if (id) byId.set(id, node);
+    node.children.forEach(index);
   };
+  index(root);
 
-  /**
-   * A glass shape Figma did not export a blur for. Figma drops the
-   * foreignObject for some glass — notably masked shapes — so the shape is
-   * frosted in the design file and clear in the export. A glass shape is a
-   * group carrying the glass effect (drop shadow plus two inner shadows,
-   * which Figma names `_dii_`); without a blur in front of it, one is made
-   * from its own outline: its mask when it is masked, otherwise a clip built
-   * from references to its shapes, at the one glass blur (`FIGMA_BG_BLUR`).
-   */
-  const synthesise = (parent: XNode, glass: XNode, at: number): XNode[] => {
-    const behind = parent.children.slice(0, at).filter(painted);
-    if (!behind.length) return [];
-    const radius = GLASS_BACKDROP_BLUR;
-    const region = 'x="-50%" y="-50%" width="200%" height="200%"';
+  const isPainted = (c: XNode) => !['#text', 'defs', 'clipPath', 'filter', 'foreignObject', 'mask'].includes(c.tag);
+  const SHAPES = ['path', 'rect', 'circle', 'ellipse', 'polygon', 'polyline', 'line'];
+  const ensureId = (node: XNode, base: string) => {
+    let id = attr(node, 'id');
+    if (!id) {
+      id = base;
+      node.open = node.open.replace(/^<([\w:-]+)/, `<$1 id="${id}"`);
+    }
+    return id;
+  };
+  const text = (t: string): XNode => ({ open: '', tag: '#text', children: [], selfClosing: false, text: t });
+  const group = (openAttrs: string, children: XNode[]): XNode => ({ open: `<g ${openAttrs}>`, tag: 'g', selfClosing: false, children });
+
+  /** The glass outline as black shapes, for cutting it out of a mask. */
+  const blackCopies = (shapes: XNode[]) =>
+    shapes
+      .map((sh) =>
+        serialise(sh)
+          .replace(/\s(?:fill|fill-opacity|opacity|style|id)="[^"]*"/g, '')
+          .replace(/^<([\w:-]+)/, '<$1 fill="black"'),
+      )
+      .join('');
+
+  /** The glass's outline: its shape nodes, and how to confine a layer to it. */
+  const outlineOf = (glass: XNode, foClip?: string): { shapes: XNode[]; confine: string } | null => {
+    if (foClip) {
+      const cp = byId.get(foClip);
+      if (cp) return { shapes: cp.children.filter((c) => SHAPES.includes(c.tag)), confine: `clip-path="url(#${foClip})"` };
+    }
     const kids = glass.children.filter((c) => c.tag !== '#text');
     const mask = kids.find((c) => c.tag === 'mask');
-    if (mask && attr(mask, 'id')) return [blurred(behind, `mask="url(#${attr(mask, 'id')})"`, radius, region)];
-    const shapes = kids.filter((c) => ['path', 'rect', 'circle', 'ellipse', 'polygon'].includes(c.tag));
-    if (!shapes.length) return [];
+    if (mask && attr(mask, 'id')) {
+      return { shapes: mask.children.filter((c) => SHAPES.includes(c.tag)), confine: `mask="url(#${attr(mask, 'id')})"` };
+    }
+    const shapes = kids.filter((c) => SHAPES.includes(c.tag));
+    if (!shapes.length) return null;
     const clipId = `bdclip${n}`;
-    const refs = shapes
-      .map((sh, k) => {
-        let sid = attr(sh, 'id');
-        if (!sid) {
-          sid = `bdshape${n}-${k}`;
-          sh.open = sh.open.replace(/^<([\w:-]+)/, `<$1 id="${sid}"`);
-        }
-        return `<use href="#${sid}"/>`;
-      })
-      .join('');
+    const refs = shapes.map((sh, k) => `<use href="#${ensureId(sh, `bdshape${n}-${k}`)}"/>`).join('');
     defs.push(`<clipPath id="${clipId}">${refs}</clipPath>`);
-    return [blurred(behind, `clip-path="url(#${clipId})"`, radius, region)];
+    return { shapes, confine: `clip-path="url(#${clipId})"` };
   };
 
   const visit = (parent: XNode) => {
-    let covered = false;
-    parent.children = parent.children.flatMap((child, i) => {
-      if (child.tag !== 'foreignObject') {
-        visit(child);
-        const isGlass = child.tag === 'g' && /_dii/.test(attr(child, 'filter') ?? '');
-        const out = isGlass && !covered ? [...synthesise(parent, child, i), child] : [child];
-        if (child.tag !== '#text') covered = false;
-        return out;
+    const out: XNode[] = [];
+    let pendingClip: string | undefined;
+    for (const child of parent.children) {
+      if (child.tag === 'foreignObject') {
+        // Figma's exported blur: keep only its clip, for the glass that follows.
+        const style = child.children.find((c) => c.tag === 'div')?.open ?? '';
+        pendingClip = style.match(/clip-path:url\(#([^)]+)\)/)?.[1];
+        continue;
       }
-      covered = true;
-      const style = child.children.find((c) => c.tag === 'div')?.open ?? '';
-      // Whatever radius the export recorded, glass takes the one blur.
-      const blur = style.includes('blur(') ? GLASS_BACKDROP_BLUR : 0;
-      const clip = style.match(/clip-path:url\(#([^)]+)\)/)?.[1];
-      const behind = parent.children
-        .slice(0, i)
-        .filter((c) => !['#text', 'defs', 'clipPath', 'filter', 'foreignObject', 'mask'].includes(c.tag))
-        .filter((c) => !c.open.includes('data-bd'));
-      if (!blur || !clip || !behind.length) return [];
-
-      const id = `bdblur${n++}`;
-      const [x, y, w, h] = ['x', 'y', 'width', 'height'].map((k) => attr(child, k) ?? '0');
+      visit(child);
+      const isGlass = child.tag === 'g' && /_dii/.test(attr(child, 'filter') ?? '');
+      if (!isGlass) {
+        if (child.tag !== '#text') pendingClip = undefined;
+        out.push(child);
+        continue;
+      }
+      const behind = out.filter(isPainted);
+      const outline = behind.length ? outlineOf(child, pendingClip) : null;
+      if (pendingClip) clipFixes.push(pendingClip);
+      pendingClip = undefined;
+      if (!outline || !outline.shapes.length) {
+        out.push(child);
+        continue;
+      }
+      const k = n++;
+      // 1. The glass's outline cut out of what is behind it.
+      const inv = `bdcut${k}`;
       defs.push(
-        `<filter id="${id}" x="${x}" y="${y}" width="${w}" height="${h}" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="${blur}"/></filter>`,
+        `<mask id="${inv}" maskUnits="userSpaceOnUse" x="-200" y="-200" width="600" height="600">` +
+          `<rect x="-200" y="-200" width="600" height="600" fill="white"/>${blackCopies(outline.shapes)}</mask>`,
       );
-      clipFixes.push(clip);
-      // References, not copies: each shape behind the glass gets an id (if it
-      // has none) and is re-drawn with <use>, so the blur costs a few bytes.
-      const copies = behind
-        .map((b) => {
-          let bid = attr(b, 'id');
-          if (!bid) {
-            bid = `bdsrc${n}-${behind.indexOf(b)}`;
-            b.open = b.open.replace(/^<([\w:-]+)/, `<$1 id="${bid}"`);
-          }
-          return `<use href="#${bid}"/>`;
-        })
-        .join('');
-      return [
-        {
-          open: `<g clip-path="url(#${clip})" data-bd="">`,
-          tag: 'g',
-          selfClosing: false,
-          children: [{ open: '', tag: '#text', children: [], selfClosing: false, text: `<g filter="url(#${id})">${copies}</g>` }],
-        },
-      ];
-    });
+      // 2. What is behind it, blurred, inside the outline.
+      const blur = `bdblur${k}`;
+      defs.push(
+        `<filter id="${blur}" x="-50%" y="-50%" width="200%" height="200%" color-interpolation-filters="sRGB">` +
+          `<feGaussianBlur stdDeviation="${GLASS_BACKDROP_BLUR}"/></filter>`,
+      );
+      const refs = behind.map((b, j) => `<use href="#${ensureId(b, `bdsrc${k}-${j}`)}"/>`).join('');
+      const rest = out.splice(0, out.length);
+      out.push(
+        group(`mask="url(#${inv})"`, rest),
+        group(outline.confine, [text(`<g filter="url(#${blur})">${refs}</g>`)]),
+        child,
+      );
+    }
+    parent.children = out;
   };
   visit(root);
 
   let out = serialise(root);
-  // The clip was drawn in the foreignObject's own coordinates — Figma offsets
-  // it with a translate(-x -y). Used from the SVG's space, that offset goes.
+  // A foreignObject's clip was drawn in the foreignObject's own coordinates —
+  // Figma offsets it with a translate(-x -y). Used from the SVG's space, that
+  // offset goes.
   for (const clip of clipFixes) {
     out = out.replace(new RegExp(`(<clipPath id="${clip}")\\s+transform="[^"]*"`), '$1');
   }
@@ -303,7 +307,7 @@ function portableBackdropBlur(svg: string): string {
       ? out.replace('<defs>', `<defs>${defs.join('')}`)
       : out.replace(/(<svg[^>]*>)/, `$1<defs>${defs.join('')}</defs>`);
   }
-  return out.replace(/\sdata-bd=""/g, '');
+  return out;
 }
 
 /**

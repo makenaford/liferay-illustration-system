@@ -540,6 +540,14 @@ button.mini:hover { border-color: var(--accent); color: var(--ink); }
   * { transition: none !important; animation: none !important; }
 }
 
+/* ---- drag into / out of cards ------------------------------------------ */
+
+/* The lighter accent: brand blue over a dark blue card barely shows. */
+.drop-target { fill: rgba(112, 161, 255, 0.1); stroke: var(--accent-soft); pointer-events: none; }
+.drop-bar { stroke: var(--accent-soft); stroke-linecap: round; pointer-events: none; }
+/* A flow child being dragged: the layout keeps it in place until the drop. */
+.drag-ghost { fill: rgba(112, 161, 255, 0.12); stroke: var(--accent-soft); pointer-events: none; }
+
 /* ---- inline text ------------------------------------------------------ */
 
 /* Sits over the words it edits, in artboard units inside the zoomed stage.
@@ -653,10 +661,6 @@ button.mini:hover { border-color: var(--accent); color: var(--ink); }
 .layout-actions button.primary-mini:hover { background: var(--accent); color: #fff; }
 
 .layer-flag { color: var(--accent-soft); font-size: 11px; flex: none; }
-
-/* An auto-placed child is positioned by its container, so the move cursor
-   would be a lie. */
-.doc.auto-child [data-path] { cursor: default; }
 
 /* ---- token picker ------------------------------------------------------ */
 

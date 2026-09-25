@@ -252,7 +252,7 @@ function ChildLayout({ path }: { path: string }) {
         </label>
       </div>
       <p className="panel-note" style={{ padding: '6px 0 0', border: 0 }}>
-        Position is computed. Reorder with the arrows in Layers.
+        Position is computed. Drag it on the canvas to reorder it or take it out of the card, or use the arrows in Layers.
       </p>
     </div>
   );

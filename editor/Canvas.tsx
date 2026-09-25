@@ -19,6 +19,8 @@ import { parentOf } from './state.ts';
 import { useFileDrop } from './useFileDrop.ts';
 import { toggleSelect } from './grouping.ts';
 import { InlineText, textTargetAt, type TextTarget } from './InlineText.tsx';
+import { moveTo, planDrop, type DropPlan } from './reparent.ts';
+import type { Element as DocElement } from '../src/document.ts';
 import { scaleOf, valueAt, withValue, type ChartScale } from './chartEdit.ts';
 import { linePoints } from '../src/primitives/lineChart.ts';
 import { barGeometry } from '../src/primitives/barChart.ts';
@@ -64,7 +66,20 @@ export function Canvas() {
      * group, and only a release without moving goes in to this child.
      */
     dive?: string;
+    /**
+     * A child of an auto-layout container: its position is the flow's, so the
+     * drag moves a ghost and only the drop changes the document.
+     */
+    auto?: boolean;
+    /** The element as drawn when the drag began, and its box then. */
+    startEl?: DocElement;
+    startBox?: Box;
   } | null>(null);
+
+  /** Where the current drag would land, if that changes anything. */
+  const [dropPlan, setDropPlan] = useState<DropPlan | null>(null);
+  const planRef = useRef<DropPlan | null>(null);
+  const [ghost, setGhost] = useState<Box | null>(null);
 
   /*
    * Auto-layout containers compute their children's coordinates, so the
@@ -247,18 +262,22 @@ export function Canvas() {
     }
     setUI({ selected: path });
 
-    // An auto-placed child cannot be dragged — its position is computed.
-    // Reorder it in the layers panel instead.
-    if (path && !isAutoPlaced(path)) {
+    // A child of an auto-layout container is dragged as a ghost: dropping it
+    // reorders the flow, or takes it out of the card.
+    if (path) {
       const el = elementAt(resolved, path);
+      const origin = el ? boundsOf(el, hit ?? null) : null;
       drag.current = {
         mode: { kind: 'move' },
         startX: e.clientX,
         startY: e.clientY,
-        origin: el ? boundsOf(el, hit ?? null) : null,
+        origin,
         moved: false,
         targets: alignTargets(path),
         dive,
+        auto: isAutoPlaced(path),
+        startEl: el ?? undefined,
+        startBox: origin ? { ...origin } : undefined,
       };
     }
   };
@@ -342,10 +361,22 @@ export function Canvas() {
       }
       setGuides(hits);
       if (sx === 0 && sy === 0 && !d.moved) return;
-      commit(replaceAt(st.doc, st.selected, movedDeep(el, sx, sy)), d.moved);
+      if (!d.auto) commit(replaceAt(st.doc, st.selected, movedDeep(el, sx, sy)), d.moved);
       if (origin) {
         origin.x += sx;
         origin.y += sy;
+        if (d.auto) setGhost({ ...origin });
+        // Where it would land. ⌘ holds it where it is structurally.
+        const rect = stageRef.current?.getBoundingClientRect();
+        const plan =
+          e.metaKey || !rect
+            ? null
+            : planDrop(st.doc, resolveLayout(st.doc), st.selected, origin, {
+                x: (e.clientX - rect.left) / zoom,
+                y: (e.clientY - rect.top) / zoom,
+              });
+        planRef.current = plan?.changes ? plan : null;
+        setDropPlan(planRef.current);
       }
       d.startX += sx * zoom;
       d.startY += sy * zoom;
@@ -433,18 +464,40 @@ export function Canvas() {
     d.moved = true;
   };
 
-  const onPointerUp = () => {
-    const d = drag.current;
-    if (d?.dive && !d.moved) setUI({ selected: d.dive });
+  const endDrag = () => {
     drag.current = null;
+    planRef.current = null;
+    setDropPlan(null);
+    setGhost(null);
     setGuides([]);
   };
 
-  // Leaving the viewport ends a drag but is not a click, so it never dives.
-  const onPointerLeave = () => {
-    drag.current = null;
-    setGuides([]);
+  const onPointerUp = () => {
+    const d = drag.current;
+    if (d?.dive && !d.moved) setUI({ selected: d.dive });
+
+    // Dropped somewhere that changes where it belongs: move it there.
+    const plan = planRef.current;
+    const st = getState();
+    if (d && d.mode.kind === 'move' && d.moved && plan && st.selected) {
+      // A free element already sits where it was dragged. A flow child never
+      // moved, so it is placed from where it was drawn plus the drag — which
+      // matters when it leaves the flow and keeps that position.
+      const el =
+        d.auto && d.startEl && d.startBox && d.origin
+          ? movedDeep(d.startEl, d.origin.x - d.startBox.x, d.origin.y - d.startBox.y)
+          : elementAt(st.doc, st.selected);
+      if (el) {
+        const next = moveTo(st.doc, st.selected, el, plan.slot);
+        commit(next.doc, !d.auto);
+        setUI({ selected: next.path });
+      }
+    }
+    endDrag();
   };
+
+  // Leaving the viewport ends a drag but is not a click, so it never dives.
+  const onPointerLeave = () => endDrag();
 
   const onWheel = (e: React.WheelEvent) => {
     e.preventDefault();
@@ -485,6 +538,41 @@ export function Canvas() {
 
   const { width, height } = doc.artboard ?? doc.canvas;
   const safe = safeArea(doc);
+
+  /*
+   * The drop target while dragging: the container it would land in, and in a
+   * flow, a bar where it would be inserted. Nothing when the drop would leave
+   * it where it is, so the highlight only appears when it means something.
+   */
+  const { dropBox, dropBar } = (() => {
+    if (!dropPlan?.slot.parent) return { dropBox: null, dropBar: null };
+    const c = elementAt(resolved, dropPlan.slot.parent) as DocElement & {
+      x: number; y: number; width: number; height: number;
+      layout?: { direction: 'vertical' | 'horizontal'; gap?: number };
+      children?: DocElement[];
+    } | null;
+    if (!c) return { dropBox: null, dropBar: null };
+    const box = { x: c.x, y: c.y, width: c.width, height: c.height };
+    if (!c.layout) return { dropBox: box, dropBar: null };
+    const kids = (c.children ?? []).map((k, i) => {
+      const node = docRef.current?.querySelector<SVGGraphicsElement>(`[data-path="${dropPlan.slot.parent}.${i}"]`);
+      return boundsOf(k, node ?? null);
+    });
+    const i = dropPlan.slot.index ?? kids.length;
+    const gap = (c.layout.gap ?? 8) / 2;
+    const vertical = c.layout.direction === 'vertical';
+    const before = kids[i];
+    const after = kids[i - 1];
+    const at = before
+      ? (vertical ? before.y : before.x) - gap
+      : after
+        ? (vertical ? after.y + after.height : after.x + after.width) + gap
+        : vertical ? c.y + 12 : c.x + 12;
+    const bar = vertical
+      ? { x1: c.x + 6, x2: c.x + c.width - 6, y1: at, y2: at }
+      : { x1: at, x2: at, y1: c.y + 6, y2: c.y + c.height - 6 };
+    return { dropBox: box, dropBar: bar };
+  })();
 
   /*
    * Value handles for the selected chart: a dot on every line point, a bar
@@ -677,6 +765,31 @@ export function Canvas() {
               </g>
             );
           })}
+
+          {dropBox && (
+            <rect
+              x={dropBox.x}
+              y={dropBox.y}
+              width={dropBox.width}
+              height={dropBox.height}
+              className="drop-target"
+              strokeWidth={1.5 / zoom}
+              strokeDasharray={`${4 / zoom} ${3 / zoom}`}
+            />
+          )}
+          {dropBar && (
+            <line {...dropBar} className="drop-bar" strokeWidth={3 / zoom} />
+          )}
+          {ghost && (
+            <rect
+              x={ghost.x}
+              y={ghost.y}
+              width={ghost.width}
+              height={ghost.height}
+              className="drag-ghost"
+              strokeWidth={1 / zoom}
+            />
+          )}
 
           {chartHandles}
 

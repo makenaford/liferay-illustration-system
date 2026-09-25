@@ -1,5 +1,6 @@
 import type { Doc, Element } from '../src/document.ts';
 import { commit, elementAt, isContainer, parentOf, replaceAt, setUI } from './state.ts';
+import { boundsOf } from './bounds.ts';
 
 /**
  * WHERE NEW THINGS GO — the rule shared by the Library and file drops.
@@ -53,14 +54,16 @@ export function slotForDrop(doc: Doc, resolved: Doc, hit: string | null, point: 
   if (!container.layout) return { parent };
 
   // Before the first child whose centre is past the cursor on the flow axis.
+  // Measured the way the selection box is, so an icon (which has a `size`,
+  // not a width and height) or a line of text still has a real centre.
   const vertical = container.layout.direction === 'vertical';
   const kids = container.children ?? [];
-  const index = kids.findIndex((k) => {
-    const b = k as Element & { x?: number; y?: number; width?: number; height?: number };
-    const start = vertical ? b.y : b.x;
-    const size = vertical ? b.height : b.width;
-    if (typeof start !== 'number') return false;
-    return (vertical ? point.y : point.x) < start + (size ?? 0) / 2;
+  const index = kids.findIndex((k, i) => {
+    const node = document.querySelector<SVGGraphicsElement>(`.doc [data-path="${parent}.${i}"]`);
+    const b = boundsOf(k, node);
+    if (!b) return false;
+    const mid = vertical ? b.y + b.height / 2 : b.x + b.width / 2;
+    return (vertical ? point.y : point.x) < mid;
   });
   return { parent, index: index < 0 ? undefined : index };
 }

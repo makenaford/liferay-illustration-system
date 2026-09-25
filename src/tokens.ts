@@ -339,6 +339,23 @@ export interface Tokens {
       ringFrom: string;
       ringTo: string;
     };
+    /**
+     * The `Input` component in the Marketing UI Assets file (node 472:16567):
+     * white at 20% with a white 80% hairline, radius 6, an `inset 0 4px 4px`
+     * black 25% shadow, and the icon and placeholder in Liferay Black. That is
+     * the dark treatment as drawn; light keeps the recipe but takes the light
+     * glass hairline, since a white edge on a pale card disappears.
+     */
+    input: {
+      fill: string;
+      fillOpacity: number;
+      line: string;
+      lineOpacity: number;
+      /** Opacity of the black inset shadow. */
+      shadowOpacity: number;
+      /** Icon and placeholder. */
+      ink: string;
+    };
     chip: {
       /** `Button Outline/line-stp-01` into `Accent/Primary Blue Accent`. */
       ringFrom: string;
@@ -373,6 +390,12 @@ const INK = '#101828';
 
 /** `Spotlight Cards` Gradient Blue's cyan — see `Tokens.brandGradient`. */
 const BRAND_CYAN = '#1CDDFF';
+
+/**
+ * `Primary / Liferay Black` from the Marketing UI Assets file — the input's
+ * ink. Not a step of the generated palette, so written with its source.
+ */
+const LIFERAY_BLACK = '#09101D';
 
 const FONT_FAMILY =
   '"Source Sans 3", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
@@ -604,6 +627,14 @@ export const dark: Tokens = {
       glassFrom: 'rgba(255, 255, 255, 0.1)',
       glassTo: 'rgba(255, 255, 255, 0)',
       ambientGlow: 'rgba(0, 0, 0, 0.08)',
+    },
+    input: {
+      fill: '#FFFFFF',
+      fillOpacity: 0.2,
+      line: '#FFFFFF',
+      lineOpacity: 0.8,
+      shadowOpacity: 0.25,
+      ink: LIFERAY_BLACK,
     },
     label: {
       tonalBg: D('neutral-02'),
@@ -848,6 +879,14 @@ export const light: Tokens = {
       glassFrom: 'rgba(187, 210, 255, 0.15)',
       glassTo: 'rgba(187, 210, 255, 0)',
       ambientGlow: 'rgba(173, 201, 255, 0.2)',
+    },
+    input: {
+      fill: '#FFFFFF',
+      fillOpacity: 0.2,
+      line: L('accent-primary-blue-accent'),
+      lineOpacity: 0.8,
+      shadowOpacity: 0.25,
+      ink: LIFERAY_BLACK,
     },
     label: {
       // `Brand/Primary/Lighten/5` under `Brand/Primary/Darken/5`.

@@ -8,6 +8,8 @@ export interface IconTileProps {
   icon?: { path: string; box: number };
   /** `subtle` matches the #8C96A9 placeholders left in the exports. */
   tone?: 'subtle' | 'accent' | 'primary' | 'onAccent' | 'soft';
+  /** A resolved colour, for a component whose ink is its own token. Wins over `tone`. */
+  color?: string;
   strokeIcon?: boolean;
 }
 
@@ -22,8 +24,8 @@ export interface IconTileProps {
 export function IconTile(ctx: Ctx, props: IconTileProps): VNode {
   const { x, y, size = 20, icon, tone = 'subtle', strokeIcon = true } = props;
   const tk = ctx.tokens;
-  const color =
-    tone === 'accent'
+  const color = props.color ??
+    (tone === 'accent'
       ? tk.accent.base
       : tone === 'soft'
         ? tk.accent.soft
@@ -31,7 +33,7 @@ export function IconTile(ctx: Ctx, props: IconTileProps): VNode {
           ? tk.text.primary
           : tone === 'onAccent'
             ? tk.text.onAccent
-            : tk.text.subtle;
+            : tk.text.subtle);
 
   if (!icon) {
     // Explicit placeholder — visible in the editor, flagged before export.

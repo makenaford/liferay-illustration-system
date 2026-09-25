@@ -107,6 +107,16 @@ interface Processed {
   body: string;
 }
 
+/**
+ * Every glass shape's background blur: Figma's 6. Figma's value is twice the
+ * blur radius — its own export writes a background blur of 6 as CSS
+ * `blur(3px)` — so 6 is a 3px Gaussian here, the `stdDeviation` CSS and SVG
+ * share. The exports carry 4 on most icons and odd values on a few; the
+ * glass is meant to be one material, so they are all set to this.
+ */
+const FIGMA_BG_BLUR = 6;
+const GLASS_BACKDROP_BLUR = FIGMA_BG_BLUR / 2;
+
 /* ---- a minimal SVG tree, for the two fixes that need structure ---------- */
 
 interface XNode {
@@ -204,14 +214,12 @@ function portableBackdropBlur(svg: string): string {
    * group carrying the glass effect (drop shadow plus two inner shadows,
    * which Figma names `_dii_`); without a blur in front of it, one is made
    * from its own outline: its mask when it is masked, otherwise a clip built
-   * from references to its shapes. Radius: Figma's recorded bg-blur radius
-   * halved (CSS blur is a radius, Figma's a diameter), or the 3px the
-   * exported blurs use.
+   * from references to its shapes, at the one glass blur (`FIGMA_BG_BLUR`).
    */
   const synthesise = (parent: XNode, glass: XNode, at: number): XNode[] => {
     const behind = parent.children.slice(0, at).filter(painted);
     if (!behind.length) return [];
-    const radius = Number(attr(glass, 'data-figma-bg-blur-radius') ?? 6) / 2;
+    const radius = GLASS_BACKDROP_BLUR;
     const region = 'x="-50%" y="-50%" width="200%" height="200%"';
     const kids = glass.children.filter((c) => c.tag !== '#text');
     const mask = kids.find((c) => c.tag === 'mask');
@@ -245,7 +253,8 @@ function portableBackdropBlur(svg: string): string {
       }
       covered = true;
       const style = child.children.find((c) => c.tag === 'div')?.open ?? '';
-      const blur = Number(style.match(/blur\(([\d.]+)px\)/)?.[1] ?? 0);
+      // Whatever radius the export recorded, glass takes the one blur.
+      const blur = style.includes('blur(') ? GLASS_BACKDROP_BLUR : 0;
       const clip = style.match(/clip-path:url\(#([^)]+)\)/)?.[1];
       const behind = parent.children
         .slice(0, i)

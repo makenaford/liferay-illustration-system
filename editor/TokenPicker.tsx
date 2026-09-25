@@ -42,6 +42,8 @@ function resolve(tone: string, theme: 'light' | 'dark'): string | undefined {
     success: tk.status.success,
     info: tk.status.info,
   };
+  // `soft` is what icons called `accentSoft` before they took palette colours.
+  if (tone === 'soft') return tk.accent.soft;
   if (semantic[tone]) return semantic[tone];
   const table = theme === 'light' ? paletteLight : paletteDark;
   return (table as Record<string, string>)[tone];

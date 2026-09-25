@@ -7,8 +7,9 @@ export interface AvatarProps {
   /** Initials shown in place of a photo. */
   initials?: string;
   /**
-   * External image slot. The originals embed avatar photos as base64, which is
-   * where a good chunk of the 45MB went; real builds should reference a URL.
+   * The photo, as a URL or a data URI. The originals embedded full-size photos
+   * as base64, which is where a good chunk of the 45MB went, so the editor
+   * only ever embeds an upload once it is cropped and redrawn small.
    */
   href?: string;
 }
@@ -16,9 +17,8 @@ export interface AvatarProps {
 /**
  * AVATAR — a circle with initials or an external image.
  *
- * Photos are the one asset type that legitimately stays raster, but they must
- * be *referenced*, not embedded. Three of the nine references inline them as
- * base64 instead.
+ * Photos are the one asset type that legitimately stays raster. An uploaded
+ * one is embedded, but only after the editor has shrunk it to a 256px square.
  */
 export function Avatar(ctx: Ctx, props: AvatarProps): VNode {
   const { cx, cy, initials, href } = props;

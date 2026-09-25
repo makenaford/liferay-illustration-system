@@ -153,6 +153,14 @@ export function DocumentPanel() {
               <option value="radial">radial sheen</option>
               <option value="linear">linear sheen</option>
             </select>
+            <label className="check" title="Cut everything centred inside this panel to its shape">
+              <input
+                type="checkbox"
+                checked={!!p.clip}
+                onChange={(e) => setPanel(i, 'clip', e.target.checked || undefined)}
+              />
+              <span>Clip content</span>
+            </label>
           </div>
         ))}
       </Section>

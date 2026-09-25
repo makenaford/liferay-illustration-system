@@ -12,6 +12,7 @@ import {
   Button,
   Toggle,
   InputField,
+  ChatBubble,
   WindowChrome,
   ProgressRow,
   SkeletonBar,
@@ -21,6 +22,7 @@ import {
   Avatar,
   Connector,
   Arrow,
+  Cursor,
   MapDots,
 } from './primitives/index.ts';
 import { ICONS } from './icons.ts';
@@ -28,7 +30,7 @@ import { paletteDark, paletteLight } from './palette.generated.ts';
 import { GLASS_ICONS } from './glassIcons.generated.ts';
 import { FONT_FACES } from './font.generated.ts';
 import type { Doc, Element } from './document.ts';
-import { resolveLayout } from './autolayout.ts';
+import { boundingBox, resolveLayout } from './autolayout.ts';
 import { reattach } from './attach.ts';
 
 /**
@@ -55,6 +57,8 @@ export function resolveTone(ctx: Ctx, tone: string | undefined): string | undefi
     case 'accent':
       return tk.accent.base;
     case 'accentSoft':
+    // `soft` is what icons called it before they took palette colours.
+    case 'soft':
       return tk.accent.soft;
     case 'product':
       return tk.accent.product;
@@ -77,6 +81,23 @@ export function resolveTone(ctx: Ctx, tone: string | undefined): string | undefi
 
 const toneColor = resolveTone;
 
+/** Callouts, which a clipping hero panel leaves whole. See `PanelSpec.clip`. */
+const FLOATING = new Set<Element['type']>([
+  'cursor', 'button', 'pill', 'badge', 'icon', 'spotIcon', 'connector', 'arrow',
+]);
+
+/** `nodes`, cut to a rounded rectangle. */
+function clipTo(
+  ctx: Ctx,
+  box: { x: number; y: number; width: number; height: number; radius?: number },
+  nodes: (VNode | null)[],
+): VNode {
+  const id = ctx.uid('clip');
+  const { x, y, width, height } = box;
+  ctx.defs.push(h('clipPath', { id }, [h('rect', { x, y, width, height, rx: box.radius ?? 0 })]));
+  return h('g', { 'clip-path': `url(#${id})`, 'data-el': 'clip' }, nodes);
+}
+
 /** Dispatch one document element to its primitive. */
 function renderElement(ctx: Ctx, el: Element, path?: string): VNode | null {
   const node = renderElementInner(ctx, el, path);
@@ -91,6 +112,11 @@ function renderElementInner(ctx: Ctx, el: Element, path?: string): VNode | null 
     (children ?? []).map((c, i) =>
       renderElement(ctx, c, path === undefined ? undefined : `${path}.${i}`),
     );
+  // A container's children, cut to its own shape when it clips content.
+  const contents = (
+    c: { x: number; y: number; width: number; height: number; clip?: boolean; children?: Element[] },
+    radius: number,
+  ) => (c.clip ? [clipTo(ctx, { ...c, radius }, kid(c.children))] : kid(c.children));
 
   switch (el.type) {
     case 'text':
@@ -104,12 +130,12 @@ function renderElementInner(ctx: Ctx, el: Element, path?: string): VNode | null 
         height: el.height,
         radius: el.radius,
         surface: el.surface,
-        children: kid(el.children),
+        children: contents(el, el.radius ?? ctx.tokens.radius.panel),
       });
 
     case 'group':
       // Positioning only — a group draws nothing itself.
-      return h('g', { 'data-el': 'group' }, kid(el.children));
+      return h('g', { 'data-el': 'group' }, contents(el, 0));
 
     case 'subCard':
       return SubCard(ctx, {
@@ -120,7 +146,7 @@ function renderElementInner(ctx: Ctx, el: Element, path?: string): VNode | null 
         radius: el.radius,
         variant: el.variant,
         surface: el.surface,
-        children: kid(el.children),
+        children: contents(el, el.radius ?? 4),
       });
 
     case 'pill':
@@ -137,6 +163,9 @@ function renderElementInner(ctx: Ctx, el: Element, path?: string): VNode | null 
 
     case 'input':
       return InputField(ctx, el);
+
+    case 'chat':
+      return ChatBubble(ctx, el);
 
     case 'chrome':
       return WindowChrome(ctx, el);
@@ -161,7 +190,7 @@ function renderElementInner(ctx: Ctx, el: Element, path?: string): VNode | null 
         x: el.x,
         y: el.y,
         size: el.size,
-        tone: el.tone,
+        color: resolveTone(ctx, el.tone),
         icon: el.icon ? ICONS[el.icon] : undefined,
       });
 
@@ -176,6 +205,9 @@ function renderElementInner(ctx: Ctx, el: Element, path?: string): VNode | null 
 
     case 'arrow':
       return Arrow(ctx, el);
+
+    case 'cursor':
+      return Cursor(ctx, el);
 
     case 'line': {
       const x2 = el.x + el.width;
@@ -420,12 +452,65 @@ export function buildDocument(
 
   // Content blurs the stage *and* the panels.
   ctx.backdropId = baseId;
+
+  /*
+   * A cursor floats over the content, so its glass blurs the content too:
+   * each top-level cursor gets a copy of everything drawn before it, and
+   * blurs that. The copy is unannotated, so the editor still hits the real
+   * elements. An earlier cursor inside the copy blurs its own copy, never the
+   * one being built, which would be a reference to itself.
+   */
+  /**
+   * The clipping panel an element sits in, by its centre; the last one wins.
+   * Callouts float over the window's edge rather than being part of what is
+   * on the screen, so they are never clipped.
+   */
+  const clipping = (doc.panels ?? []).filter((p) => p.clip);
+  const panelOf = (el: Element) => {
+    if (!clipping.length || FLOATING.has(el.type)) return undefined;
+    const b = boundingBox(el);
+    if (!b) return undefined;
+    const cx = b.x + b.width / 2;
+    const cy = b.y + b.height / 2;
+    return [...clipping].reverse().find(
+      (p) => cx >= p.x && cx <= p.x + p.width && cy >= p.y && cy <= p.y + p.height,
+    );
+  };
+  const draw = (el: Element, path?: string) => {
+    const node = renderElement(ctx, el, path);
+    const p = panelOf(el);
+    return p && node
+      ? clipTo(ctx, { ...p, radius: p.radius ?? ctx.tokens.radius.panel }, [node])
+      : node;
+  };
+
+  const under = new Map<number, string>();
+  const beneath = (i: number) => {
+    const id = `${ns}-bd-under${i}`;
+    ctx.defs.push(
+      h('g', { id }, [
+        h('use', { href: `#${baseId}`, 'xlink:href': `#${baseId}` }),
+        ...doc.elements.slice(0, i).map((el, j) => {
+          ctx.backdropId = under.get(j) ?? baseId;
+          const node = draw(el);
+          ctx.backdropId = baseId;
+          return node;
+        }),
+      ]),
+    );
+    under.set(i, id);
+    return id;
+  };
+
   const content = h(
     'g',
     { 'data-el': 'content' },
-    doc.elements.map((el, i) =>
-      renderElement(ctx, el, options.annotate ? String(i) : undefined),
-    ),
+    doc.elements.map((el, i) => {
+      if (el.type === 'cursor') ctx.backdropId = beneath(i);
+      const node = draw(el, options.annotate ? String(i) : undefined);
+      ctx.backdropId = baseId;
+      return node;
+    }),
   );
 
   const backdrops = [

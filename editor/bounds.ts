@@ -1,5 +1,6 @@
 import type { Doc, Element } from '../src/document.ts';
 import { LAYOUT } from '../src/tokens.ts';
+import { CURSOR_ASPECT } from '../src/primitives/cursor.ts';
 
 export interface Box {
   x: number;
@@ -34,6 +35,10 @@ export function boundsOf(el: Element, node: SVGGraphicsElement | null): Box | nu
         width: Math.abs(x1 - x0) + reach * 2,
         height: Math.abs(y1 - y0) + reach * 2,
       };
+    }
+    case 'cursor': {
+      const w = el.size ?? 85.5953;
+      return { x: el.x, y: el.y, width: w, height: w * CURSOR_ASPECT };
     }
     case 'icon':
     case 'spotIcon': {

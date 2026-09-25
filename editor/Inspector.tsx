@@ -27,6 +27,7 @@ import { TokenPicker } from './TokenPicker.tsx';
 import { AlignGrid, GapPicker, PaddingPicker } from './LayoutControls.tsx';
 import { DocumentPanel } from './DocumentPanel.tsx';
 import { FileField } from './FileField.tsx';
+import { AvatarPhotoField } from './AvatarPhotoField.tsx';
 import { BarSeriesEditor, LineSeriesEditor } from './ChartData.tsx';
 import { deleteSelection, groupSelection, ungroupSelected } from './grouping.ts';
 import { withText } from './InlineText.tsx';
@@ -567,6 +568,7 @@ function FieldRow({
     field.kind === 'series' ||
     field.kind === 'bars' ||
     field.kind === 'file' ||
+    field.kind === 'photo' ||
     field.kind === 'iconList';
 
   return (
@@ -593,6 +595,14 @@ function Control({
   switch (field.kind) {
     case 'file':
       return <FileField el={el} onPatch={onPatch} />;
+
+    case 'photo':
+      return (
+        <AvatarPhotoField
+          value={value === undefined ? undefined : String(value)}
+          onChange={(v) => onChange(v)}
+        />
+      );
 
     case 'number':
       return (

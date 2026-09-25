@@ -1,6 +1,8 @@
 import type { Doc, Element, LayoutSpec } from './document.ts';
 import { TYPE_ROLES, typeStyle } from './primitives/text.ts';
 import { badgeWidth } from './primitives/badge.ts';
+import { CHAT_HEIGHT } from './primitives/chatBubble.ts';
+import { CURSOR_ASPECT } from './primitives/cursor.ts';
 import { textBox, VERTICAL } from './fontMetrics.generated.ts';
 import { LAYOUT, SPACE } from './tokens.ts';
 
@@ -102,6 +104,12 @@ export function measureElement(el: Element): Size {
       return { width: el.width, height: el.height ?? 8 };
     case 'input':
       return { width: el.width, height: el.height ?? 28 };
+    case 'cursor': {
+      const w = el.size ?? 85.5953;
+      return { width: w, height: w * CURSOR_ASPECT };
+    }
+    case 'chat':
+      return { width: el.width, height: el.height ?? CHAT_HEIGHT };
     case 'image':
     case 'svg':
       return { width: el.width, height: el.height };

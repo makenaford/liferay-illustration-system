@@ -31,6 +31,13 @@ export interface PanelSpec {
   sheen?: 'radial' | 'linear';
   surface?: SurfaceName;
   radius?: number;
+  /**
+   * Clip content: every top-level element whose centre sits inside the panel
+   * is cut to the panel's shape, so a dashboard can run off the window's edge
+   * the way a real screen would. Callouts — buttons, pills, badges, icons,
+   * connectors, arrows and cursors — are left whole: they float over it.
+   */
+  clip?: boolean;
 }
 
 export interface TextEl extends LayoutChild {
@@ -106,6 +113,8 @@ export interface CardEl extends LayoutChild {
   radius?: number;
   /** Turns this card into a reflowing container. */
   layout?: LayoutSpec;
+  /** Clip content: children are cut to this container's shape. */
+  clip?: boolean;
   children?: Element[];
 }
 
@@ -124,6 +133,8 @@ export interface GroupEl extends LayoutChild {
   width: number;
   height: number;
   layout?: LayoutSpec;
+  /** Clip content: children are cut to this container's shape. */
+  clip?: boolean;
   children?: Element[];
 }
 
@@ -139,6 +150,8 @@ export interface SubCardEl extends LayoutChild {
   surface?: SurfaceName;
   /** Turns this card into a reflowing container. */
   layout?: LayoutSpec;
+  /** Clip content: children are cut to this container's shape. */
+  clip?: boolean;
   children?: Element[];
 }
 
@@ -200,6 +213,29 @@ export interface InputEl extends LayoutChild {
   icon?: string;
   radius?: number;
   role?: TypeRole;
+}
+
+export interface CursorEl extends LayoutChild {
+  type: 'cursor';
+  x: number;
+  y: number;
+  /** Width of the artwork's box, shadow included. Defaults to 86. */
+  size?: number;
+}
+
+export interface ChatEl extends LayoutChild {
+  type: 'chat';
+  x: number;
+  y: number;
+  width: number;
+  height?: number;
+  /** `receiver`: glass, avatar leading. `sender`: blue, avatar trailing. */
+  variant?: 'receiver' | 'sender';
+  name: string;
+  message: string;
+  initials?: string;
+  /** The avatar's photo — see `AvatarEl.href`. */
+  avatarHref?: string;
 }
 
 export interface ChromeEl extends LayoutChild {
@@ -285,7 +321,8 @@ export interface IconEl extends LayoutChild {
   size?: number;
   /** Key into `ICONS`. Omitted renders a visible placeholder. */
   icon?: string;
-  tone?: 'subtle' | 'accent' | 'primary' | 'onAccent' | 'soft';
+  /** A semantic tone or any palette key — see `TextEl.tone`. */
+  tone?: string;
 }
 
 export interface IconGridEl extends LayoutChild {
@@ -306,7 +343,10 @@ export interface AvatarEl extends LayoutChild {
   cy: number;
   r?: number;
   initials?: string;
-  /** External URL. Never a data URI — see the note in Avatar. */
+  /**
+   * The photo: an image URL, or an uploaded photo embedded as a small square
+   * JPEG data URI (the editor crops and downsizes it — see AvatarPhotoField).
+   */
   href?: string;
 }
 
@@ -438,6 +478,8 @@ export type Element =
   | ButtonEl
   | ToggleEl
   | InputEl
+  | ChatEl
+  | CursorEl
   | ChromeEl
   | LineChartEl
   | BarChartEl

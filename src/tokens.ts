@@ -50,12 +50,32 @@ const L = palette('light');
 const D = palette('dark');
 
 /**
- * The three design-system meshes, in one scheme's colours. See `MeshName`.
- * `corners` keeps its low bloom at the 0.22 the light stage already shipped
- * with rather than the card's 0.16, so choosing it in light changes nothing.
+ * How a scheme draws its meshes. Light spreads every bloom wider and paints
+ * it fainter, so the tint reaches further across the paper without any one
+ * corner reading as a colour. Dark draws them as transcribed.
  */
-function meshes(P: (key: PaletteKey) => string): Record<MeshName, MeshBloom[]> {
-  return {
+interface MeshTreatment {
+  /** Multiplies each bloom's radii. */
+  spread: number;
+  /** Multiplies each bloom's opacity. */
+  strength: number;
+}
+
+const MESH_AS_DRAWN: MeshTreatment = { spread: 1, strength: 1 };
+const MESH_LIGHT: MeshTreatment = { spread: 1.4, strength: 0.6 };
+
+/**
+ * The design-system meshes, in one scheme's colours. See `MeshName`.
+ * `corners` keeps its low bloom at the 0.22 the light stage already shipped
+ * with rather than the card's 0.16, so it doubles as the light default.
+ */
+function meshes(
+  P: (key: PaletteKey) => string,
+  { spread, strength }: MeshTreatment = MESH_AS_DRAWN,
+): Record<MeshName, MeshBloom[]> {
+  const treat = (blooms: MeshBloom[]) =>
+    blooms.map((b) => ({ ...b, rx: b.rx * spread, ry: b.ry * spread, opacity: b.opacity * strength }));
+  const all: Record<MeshName, MeshBloom[]> = {
     corners: [
       { x: 0, y: 0, rx: 0.7, ry: 1.3, color: P('brand-primary-primary'), opacity: 0.34, fade: 0.7 },
       { x: 1, y: 0, rx: 0.6, ry: 1.2, color: P('brand-primary-lighten-1'), opacity: 0.26, fade: 0.68 },
@@ -69,8 +89,20 @@ function meshes(P: (key: PaletteKey) => string): Record<MeshName, MeshBloom[]> {
       { x: 0.82, y: 0.08, rx: 0.58, ry: 0.62, color: P('brand-primary-primary'), opacity: 0.48, fade: 0.6 },
       { x: 0.96, y: 0.4, rx: 0.4, ry: 0.4, color: P('accent-product-accent'), opacity: 0.26, fade: 0.68 },
     ],
+    // Purple from the top left, aqua answering from the bottom right, and a
+    // fainter purple across the top so the two meet in the middle, not a seam.
+    'purple-aqua': [
+      { x: 0, y: 0, rx: 0.7, ry: 1.1, color: P('accent-purple'), opacity: 0.3, fade: 0.7 },
+      { x: 1, y: 1, rx: 0.7, ry: 1.1, color: P('accent-aqua'), opacity: 0.3, fade: 0.7 },
+      { x: 0.7, y: -0.1, rx: 0.5, ry: 0.7, color: P('accent-purple'), opacity: 0.14, fade: 0.74 },
+    ],
   };
+  return Object.fromEntries(
+    Object.entries(all).map(([k, v]) => [k, treat(v)]),
+  ) as Record<MeshName, MeshBloom[]>;
 }
+
+const LIGHT_MESHES = meshes(L, MESH_LIGHT);
 
 export interface ShadowLayer {
   dy: number;
@@ -108,16 +140,19 @@ export interface MeshBloom {
  *                  above the middle, answered by violet from the top left
  *   corner-bubble  the hero's `Type=Corner Bubble` — the same light pushed
  *                  into the top right
+ *   purple-aqua    not from the design system: `Accent/Purple` and
+ *                  `Accent/Aqua` from opposite corners
  *
  * The CSS is identical in both schemes; only the variables it reads change,
  * which is what `meshes()` reproduces.
  */
-export type MeshName = 'corners' | 'bubble' | 'corner-bubble';
+export type MeshName = 'corners' | 'bubble' | 'corner-bubble' | 'purple-aqua';
 
 export const MESH_NAMES: { name: MeshName; label: string }[] = [
   { name: 'corners', label: 'Corners' },
   { name: 'bubble', label: 'Full bubble' },
   { name: 'corner-bubble', label: 'Corner bubble' },
+  { name: 'purple-aqua', label: 'Purple & aqua' },
 ];
 
 /** A gradient stop, as a colour plus optional alpha and position. */
@@ -344,9 +379,27 @@ export interface Tokens {
      * and an `inset 0 4px 4px` black 25% shadow, with regular-weight text.
      *
      * Light is the `Input` component in the Marketing UI Assets file (node
-     * 472:16567): white at 20%, a Brand/Primary hairline, ink in Liferay
-     * Black. Dark is black at 6% under a white hairline, with light ink.
+     * 472:16567): white at 20%, a Brand/Primary hairline, ink in
+     * `surfaces-text-secondary` (#363E4C). Dark is black at 6% under a white hairline, with light ink.
      */
+    /**
+     * The chat bubble — the `Chat Bubble` component in the Marketing UI
+     * Assets file (node 268:5169). Dark is the file: the receiver white at 20%
+     * under a white 20% hairline, the sender `Blue Light` (#70A2FF) at 20%
+     * under the same at 20%, white ink. The file has no light version.
+     */
+    chat: {
+      receiverFill: string;
+      receiverFillOpacity: number;
+      receiverLine: string;
+      receiverLineOpacity: number;
+      senderFill: string;
+      senderFillOpacity: number;
+      senderLine: string;
+      senderLineOpacity: number;
+      /** Name and message. */
+      ink: string;
+    };
     input: {
       fill: string;
       fillOpacity: number;
@@ -397,12 +450,6 @@ const INK = '#101828';
 
 /** `Spotlight Cards` Gradient Blue's cyan — see `Tokens.brandGradient`. */
 const BRAND_CYAN = '#1CDDFF';
-
-/**
- * `Primary / Liferay Black` from the Marketing UI Assets file — the input's
- * ink. Not a step of the generated palette, so written with its source.
- */
-const LIFERAY_BLACK = '#09101D';
 
 const FONT_FAMILY =
   '"Source Sans 3", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
@@ -638,6 +685,17 @@ export const dark: Tokens = {
     // Dark: black at 6% under a white hairline at 20%, the same inset
     // shadow. On a fill that dark the ink has to be light, so the icon and
     // placeholder take the muted text colour a placeholder normally has.
+    chat: {
+      receiverFill: '#FFFFFF',
+      receiverFillOpacity: 0.2,
+      receiverLine: '#FFFFFF',
+      receiverLineOpacity: 0.2,
+      senderFill: D('accent-primary-blue-accent'),
+      senderFillOpacity: 0.2,
+      senderLine: D('accent-primary-blue-accent'),
+      senderLineOpacity: 0.2,
+      ink: '#FFFFFF',
+    },
     input: {
       fill: '#000000',
       fillOpacity: 0.06,
@@ -797,21 +855,18 @@ export const light: Tokens = {
      * `Brand/Primary` from the leading corner, `Lighten 1` answering from the
      * trailing top, and a wider, fainter `Brand/Primary` rising from the
      * bottom edge where they meet — the design system's own three-bloom mesh,
-     * at the same percentages. None reaches full strength and none has an
-     * edge, so what changes across the canvas is the tint, not the colour.
+     * at the same percentages, spread and softened by `MESH_LIGHT`. None
+     * reaches full strength and none has an edge, so what changes across the
+     * canvas is the tint, not the colour.
      */
-    mesh: [
-      { x: 0, y: 0, rx: 0.7, ry: 1.3, color: L('brand-primary-primary'), opacity: 0.34, fade: 0.7 },
-      { x: 1, y: 0, rx: 0.6, ry: 1.2, color: L('brand-primary-lighten-1'), opacity: 0.26, fade: 0.68 },
-      { x: 0.88, y: 1.1, rx: 0.8, ry: 0.9, color: L('brand-primary-primary'), opacity: 0.22, fade: 0.74 },
-    ],
-    meshes: meshes(L),
+    mesh: LIGHT_MESHES.corners,
+    meshes: LIGHT_MESHES,
     // The wash is folded into the mesh; the per-document glow stays, quieter,
     // so a composition can still put light where it needs it.
     washColor: L('components-gradient-card-blue'),
     washOpacity: 0,
     glowColor: L('components-gradient-card-blue'),
-    glowOpacity: 0.45,
+    glowOpacity: 0.3,
     glowBlur: 100,
   },
   glass: {
@@ -894,13 +949,27 @@ export const light: Tokens = {
     // Light: white at 20% under a Brand/Primary hairline at 20%. The light
     // spec's 6.815 / 4.543 are this recipe drawn at 1.136×, so radius and
     // shadow are kept at 6 / 4 like dark.
+    // Light is derived, as the file has none: white at 20% vanishes on a light
+    // stage, so the receiver is white at 70% under a faint Brand/Primary
+    // hairline, and the sender a Brand/Primary tint, with dark ink.
+    chat: {
+      receiverFill: '#FFFFFF',
+      receiverFillOpacity: 0.7,
+      receiverLine: L('brand-primary-primary'),
+      receiverLineOpacity: 0.15,
+      senderFill: L('brand-primary-primary'),
+      senderFillOpacity: 0.12,
+      senderLine: L('brand-primary-primary'),
+      senderLineOpacity: 0.25,
+      ink: L('surfaces-text-primary'),
+    },
     input: {
       fill: '#FFFFFF',
       fillOpacity: 0.2,
       line: L('brand-primary-primary'),
       lineOpacity: 0.2,
       shadowOpacity: 0.25,
-      ink: LIFERAY_BLACK,
+      ink: L('surfaces-text-secondary'),
     },
     label: {
       // `Brand/Primary/Lighten/5` under `Brand/Primary/Darken/5`.

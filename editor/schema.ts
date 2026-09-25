@@ -78,7 +78,9 @@ export type Field<K extends string = string> =
    * plus viewBox, or data URI plus natural size), so the Inspector handles
    * this kind through `onPatch` rather than the single-key `onChange`.
    */
-  | { key: K; label: string; kind: 'file' };
+  | { key: K; label: string; kind: 'file' }
+  /** An avatar's photo: an upload, embedded small, or an image URL. */
+  | { key: K; label: string; kind: 'photo' };
 
 export const ROLES = Object.keys(TYPE_ROLES);
 export const WEIGHTS = ['regular', 'semibold', 'bold'] as const;
@@ -142,6 +144,7 @@ export const SCHEMA: {
       ...WH,
       { key: 'surface', label: 'Surface', kind: 'select', options: ['', ...SURFACES] },
       { key: 'radius', label: 'Radius', kind: 'number', min: 0, default: 8 },
+      { key: 'clip', label: 'Clip content', kind: 'boolean' },
     ],
   },
   group: {
@@ -151,6 +154,7 @@ export const SCHEMA: {
       { key: 'y', label: 'Y', kind: 'number' },
       { key: 'width', label: 'W', kind: 'number', min: 1 },
       { key: 'height', label: 'H', kind: 'number', min: 1 },
+      { key: 'clip', label: 'Clip content', kind: 'boolean' },
     ],
   },
   subCard: {
@@ -160,6 +164,7 @@ export const SCHEMA: {
       ...WH,
       { key: 'surface', label: 'Surface', kind: 'select', options: ['', ...SURFACES] },
       { key: 'radius', label: 'Radius', kind: 'number', min: 0, default: 4 },
+      { key: 'clip', label: 'Clip content', kind: 'boolean' },
     ],
   },
   pill: {
@@ -234,6 +239,24 @@ export const SCHEMA: {
       { key: 'role', label: 'Type style', kind: 'select', options: ROLES },
     ],
   },
+  chat: {
+    label: 'Chat bubble',
+    fields: [
+      { key: 'name', label: 'Name', kind: 'text' },
+      { key: 'message', label: 'Message', kind: 'text' },
+      {
+        key: 'variant',
+        label: 'Style',
+        kind: 'select',
+        options: ['receiver', 'sender'],
+        labels: { receiver: 'Receiver — avatar left', sender: 'Sender — avatar right' },
+      },
+      ...XY,
+      { key: 'width', label: 'W', kind: 'number', min: 1 },
+      { key: 'initials', label: 'Initials', kind: 'text' },
+      { key: 'avatarHref', label: 'Photo', kind: 'photo' },
+    ],
+  },
   chrome: {
     label: 'Window chrome',
     fields: [
@@ -304,7 +327,7 @@ export const SCHEMA: {
       { key: 'icon', label: 'Icon', kind: 'select', options: ICON_KEYS },
       ...XY,
       { key: 'size', label: 'Size', kind: 'number', min: 1, default: 20 },
-      { key: 'tone', label: 'Tone', kind: 'select', options: ICON_TONES },
+      { key: 'tone', label: 'Colour', kind: 'token' },
     ],
   },
   iconGrid: {
@@ -326,7 +349,7 @@ export const SCHEMA: {
       { key: 'cx', label: 'X', kind: 'number' },
       { key: 'cy', label: 'Y', kind: 'number' },
       { key: 'r', label: 'Radius', kind: 'number', min: 1 },
-      { key: 'href', label: 'Image URL', kind: 'text' },
+      { key: 'href', label: 'Photo', kind: 'photo' },
     ],
   },
   connector: {
@@ -340,6 +363,10 @@ export const SCHEMA: {
       { key: 'rings', label: 'End rings', kind: 'boolean', default: true },
       { key: 'fade', label: 'Fade', kind: 'boolean', default: true },
     ],
+  },
+  cursor: {
+    label: 'Cursor',
+    fields: [...XY, { key: 'size', label: 'Size', kind: 'number', min: 1, default: 86 }],
   },
   arrow: {
     label: 'Arrow',
@@ -431,6 +458,10 @@ export const DEFAULTS: Record<Element['type'], () => Element> = {
   }),
   toggle: () => ({ type: 'toggle', x: 40, y: 40, width: 42, height: 13, on: true }),
   input: () => ({ type: 'input', x: 40, y: 40, width: 138, height: 28, placeholder: 'Placeholder' }),
+  chat: () => ({
+    type: 'chat', x: 40, y: 40, width: 216, variant: 'receiver',
+    name: 'Uge O.', message: 'Ready for launch?', initials: 'UO',
+  }),
   chrome: () => ({ type: 'chrome', x: 40, y: 40, radius: 4, gap: 12 }),
   lineChart: () => ({
     type: 'lineChart',
@@ -444,13 +475,14 @@ export const DEFAULTS: Record<Element['type'], () => Element> = {
   progress: () => ({ type: 'progress', x: 40, y: 40, width: 160, value: 0.6, label: 'Label' }),
   skeleton: () => ({ type: 'skeleton', x: 40, y: 40, width: 120, height: 8 }),
   stat: () => ({ type: 'stat', x: 40, y: 40, value: '12,847', label: 'Metric', valueRole: 'heading' }),
-  icon: () => ({ type: 'icon', x: 40, y: 40, size: 20, icon: 'check', tone: 'soft' }),
+  icon: () => ({ type: 'icon', x: 40, y: 40, size: 20, icon: 'check', tone: 'accentSoft' }),
   iconGrid: () => ({
     type: 'iconGrid', x: 40, y: 40, columns: 4, size: 22, gapX: 34, gapY: 34,
     icons: ['browser', 'phone', 'mail', 'star'],
   }),
   avatar: () => ({ type: 'avatar', cx: 60, cy: 60, r: 16, initials: 'AB' }),
   connector: () => ({ type: 'connector', from: [40, 40], to: [160, 120], route: 'hv', radius: 12 }),
+  cursor: () => ({ type: 'cursor', x: 40, y: 40, size: 86 }),
   arrow: () => ({ type: 'arrow', x: 40, y: 40, width: 30, thickness: 9, direction: 'right' }),
   line: () => ({ type: 'line', x: 40, y: 40, width: 120, height: 0, tone: 'neutral-02', thickness: 1 }),
   map: () => ({ type: 'map', x: 40, y: 40, width: 168, height: 64, spacing: 4 }),
@@ -467,8 +499,8 @@ export const DEFAULTS: Record<Element['type'], () => Element> = {
 export const PALETTE: { group: string; types: Element['type'][] }[] = [
   { group: 'Surfaces', types: ['card', 'subCard', 'group'] },
   { group: 'Type', types: ['text', 'stat'] },
-  { group: 'Controls', types: ['button', 'pill', 'badge', 'toggle', 'input', 'chrome'] },
+  { group: 'Controls', types: ['button', 'pill', 'badge', 'toggle', 'input', 'chat', 'chrome'] },
   { group: 'Data', types: ['lineChart', 'barChart', 'progress', 'map', 'skeleton'] },
-  { group: 'Graphics', types: ['spotIcon', 'icon', 'iconGrid', 'avatar', 'line', 'connector', 'arrow'] },
+  { group: 'Graphics', types: ['spotIcon', 'icon', 'iconGrid', 'avatar', 'line', 'connector', 'arrow', 'cursor'] },
   { group: 'Imported', types: ['image', 'svg'] },
 ];

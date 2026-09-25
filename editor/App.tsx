@@ -169,7 +169,9 @@ export function App() {
         e.preventDefault();
         deleteSelection();
       }
-      if (e.key === 'Escape') setUI({ selected: null });
+      if (e.key === 'Escape') setUI({ selected: null, tool: 'select' });
+      // C arms the connector tool; again (or Escape) puts it down.
+      if (e.key === 'c' && !mod) setUI({ tool: getState().tool === 'connector' ? 'select' : 'connector' });
       // Bare `t` toggles the theme — ⌘D is now duplicate, so `d` moved off it.
       if (e.key === 't') setUI({ theme: getState().theme === 'dark' ? 'light' : 'dark' });
       if (e.key === 'o') setUI({ showOutlines: !getState().showOutlines });
@@ -491,7 +493,7 @@ export function App() {
             <span>{selected ? `selected ${selected}` : 'nothing selected'}</span>
             {flash && <span className="flash">{flash}</span>}
             <span className="hint">
-              drag move (into and out of cards, ⌘ to skip) · double-click text to edit · ⇧click multi · ⌘G/⇧⌘G group · arrows nudge · ⌘C/⌘V/⌘D · [ ] z-order · g grid · a guides · r ratio · t theme
+              drag move (into and out of cards, ⌘ to skip) · double-click text to edit · ⇧click multi · ⌘G/⇧⌘G group · c connector · arrows nudge · ⌘C/⌘V/⌘D · [ ] z-order · g grid · a guides · r ratio · t theme
             </span>
           </footer>
         </main>

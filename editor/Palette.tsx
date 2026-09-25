@@ -1,4 +1,4 @@
-import { elementAt, getState, useEditor } from './state.ts';
+import { elementAt, getState, setUI, useEditor } from './state.ts';
 import { DEFAULTS, PALETTE, SCHEMA } from './schema.ts';
 import type { Element } from '../src/document.ts';
 import { ImportButton } from './Import.tsx';
@@ -16,6 +16,7 @@ import { addAt, contentWidth, slotForSelection, type Slot } from './insertion.ts
 export function Palette() {
   const selected = useEditor((s) => s.selected);
   const doc = useEditor((s) => s.doc);
+  const tool = useEditor((s) => s.tool);
 
   // Adding goes into the card being worked in — see `slotForSelection`.
   const slot = slotForSelection(doc, selected);
@@ -56,9 +57,23 @@ export function Palette() {
           <div className="palette-group-title">{group}</div>
           <div className="palette-items">
             {types.map((t) => (
-              <button key={t} type="button" onClick={() => add(DEFAULTS[t])}>
-                {SCHEMA[t].label}
-              </button>
+              t === 'connector' ? (
+                // A connector is drawn, not dropped: this arms the tool, and
+                // the next drag on the canvas makes one between two items.
+                <button
+                  key={t}
+                  type="button"
+                  className={tool === 'connector' ? 'on' : ''}
+                  title="Drag from one item to another on the canvas (C)"
+                  onClick={() => setUI({ tool: tool === 'connector' ? 'select' : 'connector' })}
+                >
+                  {SCHEMA[t].label}
+                </button>
+              ) : (
+                <button key={t} type="button" onClick={() => add(DEFAULTS[t])}>
+                  {SCHEMA[t].label}
+                </button>
+              )
             ))}
           </div>
         </div>

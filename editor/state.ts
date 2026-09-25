@@ -37,6 +37,11 @@ export interface EditorState {
   dirty: boolean;
   /** Card padding used by the layout actions and the padding guide. */
   padding: number;
+  /**
+   * What a drag on the canvas does. `connector` draws a connector from the
+   * press to the release, snapping both ends to items — see connect.ts.
+   */
+  tool: 'select' | 'connector';
 }
 
 interface Store {
@@ -79,6 +84,7 @@ export function initStore(doc: Doc) {
       view: 'library',
       dirty: false,
       padding: prefs?.padding ?? LAYOUT.cardPadding,
+      tool: 'select',
     },
     past: [],
     future: [],

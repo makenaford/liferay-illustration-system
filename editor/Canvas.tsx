@@ -20,6 +20,8 @@ import { useFileDrop } from './useFileDrop.ts';
 import { toggleSelect } from './grouping.ts';
 import { InlineText, textTargetAt, type TextTarget } from './InlineText.tsx';
 import { moveTo, planDrop, type DropPlan } from './reparent.ts';
+import { anchors, connectTargets, facing, routeFor, snapEnd, targetAt, type Snapped, type Target as ConnTarget } from './connect.ts';
+import { addAt } from './insertion.ts';
 import type { Element as DocElement } from '../src/document.ts';
 import { scaleOf, valueAt, withValue, type ChartScale } from './chartEdit.ts';
 import { linePoints } from '../src/primitives/lineChart.ts';
@@ -31,13 +33,38 @@ type DragMode =
   | { kind: 'resize'; corner: 'se' | 'sw' | 'ne' | 'nw' }
   | { kind: 'pan' }
   /** Dragging one chart value; the plot box and scale are fixed at the start. */
-  | { kind: 'chart'; series: number; index: number; scale: ChartScale; top: number; height: number };
+  | { kind: 'chart'; series: number; index: number; scale: ChartScale; top: number; height: number }
+  /** Dragging one end of the selected connector. */
+  | { kind: 'conn-end'; end: 'from' | 'to'; targets: ConnTarget[] }
+  /** Drawing a new connector with the connector tool. */
+  | { kind: 'conn-draw'; start: Snapped; targets: ConnTarget[] };
+
+/** The preview's path: the connector's own route, without the rounding. */
+function elbow(a: [number, number], b: [number, number], route: 'hv' | 'vh' | 'straight'): string {
+  if (route === 'straight') return `M${a[0]} ${a[1]}L${b[0]} ${b[1]}`;
+  return route === 'hv'
+    ? `M${a[0]} ${a[1]}H${b[0]}V${b[1]}`
+    : `M${a[0]} ${a[1]}V${b[1]}H${b[0]}`;
+}
+
+/** How close, in screen pixels, an end must come to an anchor to snap to it. */
+const SNAP = 10;
+
+const roundPt = ([x, y]: [number, number]): [number, number] => [Math.round(x * 100) / 100, Math.round(y * 100) / 100];
+
+/** The item whose anchor a point sits exactly on — where a connector end is attached. */
+function targetOnAnchor(point: [number, number], targets: ConnTarget[]): ConnTarget | undefined {
+  return targets.find((t) =>
+    Object.values(anchors(t.box)).some(([ax, ay]) => Math.hypot(ax - point[0], ay - point[1]) < 0.75),
+  );
+}
 
 export function Canvas() {
   const doc = useEditor((s) => s.doc);
   const theme = useEditor((s) => s.theme);
   const selected = useEditor((s) => s.selected);
   const also = useEditor((s) => s.also);
+  const tool = useEditor((s) => s.tool);
   const zoom = useEditor((s) => s.zoom);
   const pan = useEditor((s) => s.pan);
   const outlines = useEditor((s) => s.showOutlines);
@@ -75,6 +102,13 @@ export function Canvas() {
     startEl?: DocElement;
     startBox?: Box;
   } | null>(null);
+
+  /**
+   * Connector drawing: the line so far, the item the cursor is over (whose
+   * anchors are shown), and the end it has snapped to.
+   */
+  const [connPreview, setConnPreview] = useState<{ from: [number, number]; to: [number, number]; route: 'hv' | 'vh' | 'straight' } | null>(null);
+  const [connHover, setConnHover] = useState<{ box: Box; snapped?: [number, number] } | null>(null);
 
   /** Where the current drag would land, if that changes anything. */
   const [dropPlan, setDropPlan] = useState<DropPlan | null>(null);
@@ -155,6 +189,12 @@ export function Canvas() {
     return sel === outer ? { path: outer, dive: deepest } : { path: outer };
   };
 
+  /** A pointer event's position in artboard units. */
+  const toArt = (e: { clientX: number; clientY: number }): [number, number] | null => {
+    const rect = stageRef.current?.getBoundingClientRect();
+    return rect ? [(e.clientX - rect.left) / zoom, (e.clientY - rect.top) / zoom] : null;
+  };
+
   /** True when this element's position is computed by a parent container. */
   const isAutoPlaced = (path: string | null) => {
     if (!path) return false;
@@ -216,6 +256,41 @@ export function Canvas() {
     if (e.button !== 0) return;
 
     const target = e.target as HTMLElement;
+    const at = toArt(e);
+
+    // The connector tool: this press starts a line, snapped to what it is on.
+    if (tool === 'connector' && at) {
+      const targets = connectTargets(resolved, docRef.current, null);
+      const start = snapEnd(at, at, targets, SNAP / zoom);
+      drag.current = {
+        mode: { kind: 'conn-draw', start, targets },
+        startX: e.clientX,
+        startY: e.clientY,
+        origin: null,
+        moved: false,
+        targets: [],
+      };
+      return;
+    }
+
+    // An end handle of the selected connector.
+    const end = target.closest<SVGElement>('[data-conn-end]');
+    if (end && selected) {
+      drag.current = {
+        mode: {
+          kind: 'conn-end',
+          end: end.dataset.connEnd as 'from' | 'to',
+          targets: connectTargets(resolved, docRef.current, selected),
+        },
+        startX: e.clientX,
+        startY: e.clientY,
+        origin: null,
+        moved: false,
+        targets: [],
+      };
+      (e.target as Element).setPointerCapture?.(e.pointerId);
+      return;
+    }
 
     // A chart value handle: drag it up or down to change that one value.
     const point = target.closest<SVGElement>('[data-chart]');
@@ -284,7 +359,56 @@ export function Canvas() {
 
   const onPointerMove = (e: React.PointerEvent) => {
     const d = drag.current;
-    if (!d) return;
+    const at = toArt(e);
+
+    // With the connector tool armed, show the anchors of what is under the cursor.
+    if (!d) {
+      if (tool === 'connector' && at) {
+        const t = targetAt(at, connectTargets(resolved, docRef.current, null));
+        setConnHover(t ? { box: t.box } : null);
+      }
+      return;
+    }
+
+    if ((d.mode.kind === 'conn-draw' || d.mode.kind === 'conn-end') && at) {
+      const st = getState();
+      if (d.mode.kind === 'conn-draw') {
+        const { start, targets } = d.mode;
+        // Never onto the item it starts from.
+        const others = start.target ? targets.filter((t) => t.path !== start.target!.path) : targets;
+        const endSnap = snapEnd(at, start.point, others, SNAP / zoom);
+        // A start that was dropped on an item, not aimed at an anchor, turns to
+        // face wherever the end is now.
+        const s0 = start.target && !start.exact ? facing(start.target, endSnap.point) : start;
+        d.mode.start = s0;
+        setConnPreview({ from: s0.point, to: endSnap.point, route: routeFor(s0.side, endSnap.side, 'hv') });
+        setConnHover(endSnap.target ? { box: endSnap.target.box, snapped: endSnap.side ? endSnap.point : undefined } : null);
+        d.moved = true;
+        return;
+      }
+      const el = st.selected ? elementAt(st.doc, st.selected) : null;
+      if (!el || el.type !== 'connector') return;
+      const { end, targets } = d.mode;
+      const otherKey = end === 'from' ? 'to' : 'from';
+      const otherEnd = el[otherKey];
+      let snapped = snapEnd(at, otherEnd, targets, SNAP / zoom);
+      // The other end, if it sits on an item, turns to face this one — so a
+      // line never leaves the far side of a card and doubles back across it.
+      const otherOn = targetOnAnchor(otherEnd, targets);
+      const other = otherOn ? facing(otherOn, snapped.point) : { point: otherEnd, side: undefined };
+      if (snapped.target && !snapped.exact) snapped = facing(snapped.target, other.point);
+      const [fromSide, toSide] = end === 'from' ? [snapped.side, other.side] : [other.side, snapped.side];
+      const next = {
+        ...el,
+        [end]: roundPt(snapped.point),
+        [otherKey]: roundPt(other.point),
+        route: routeFor(fromSide, toSide, el.route),
+      };
+      commit(replaceAt(st.doc, st.selected!, next), d.moved);
+      setConnHover(snapped.target ? { box: snapped.target.box, snapped: snapped.side ? snapped.point : undefined } : null);
+      d.moved = true;
+      return;
+    }
     const dx = (e.clientX - d.startX) / zoom;
     const dy = (e.clientY - d.startY) / zoom;
 
@@ -380,7 +504,7 @@ export function Canvas() {
       }
       d.startX += sx * zoom;
       d.startY += sy * zoom;
-    } else if (d.origin && isResizable(el)) {
+    } else if (d.mode.kind === 'resize' && d.origin && isResizable(el)) {
       const c = d.mode.corner;
       const hits: Guide[] = [];
       const movingX = c === 'se' || c === 'ne' ? 'right' : 'left';
@@ -466,6 +590,8 @@ export function Canvas() {
 
   const endDrag = () => {
     drag.current = null;
+    setConnPreview(null);
+    setConnHover(null);
     planRef.current = null;
     setDropPlan(null);
     setGhost(null);
@@ -475,6 +601,23 @@ export function Canvas() {
   const onPointerUp = () => {
     const d = drag.current;
     if (d?.dive && !d.moved) setUI({ selected: d.dive });
+
+    // A drawn connector: create it, select it, and put the tool down.
+    if (d?.mode.kind === 'conn-draw' && connPreview) {
+      const { from, to, route } = connPreview;
+      if (Math.hypot(to[0] - from[0], to[1] - from[1]) > 4) {
+        addAt(getState().doc, { parent: null }, {
+          type: 'connector',
+          from: roundPt(from),
+          to: roundPt(to),
+          route,
+          radius: 10,
+        } as DocElement);
+        setUI({ tool: 'select' });
+      }
+    }
+    setConnPreview(null);
+    if (d?.mode.kind === 'conn-end' || d?.mode.kind === 'conn-draw') setConnHover(null);
 
     // Dropped somewhere that changes where it belongs: move it there.
     const plan = planRef.current;
@@ -574,6 +717,28 @@ export function Canvas() {
     return { dropBox: box, dropBar: bar };
   })();
 
+  const sourceEl = selected ? elementAt(doc, selected) : null;
+  const canResize = !!sourceEl && isResizable(sourceEl);
+
+  /** End handles for the selected connector: drag either onto an item. */
+  const connEnds = (() => {
+    const el = selected && !also.length ? elementAt(doc, selected) : null;
+    if (el?.type !== 'connector') return null;
+    return (['from', 'to'] as const).map((end) => (
+      <circle
+        key={end}
+        data-conn-end={end}
+        cx={el[end][0]}
+        cy={el[end][1]}
+        r={4.5 / zoom}
+        className="conn-end"
+        strokeWidth={1.5 / zoom}
+      >
+        <title>Drag onto an item to connect it</title>
+      </circle>
+    ));
+  })();
+
   /*
    * Value handles for the selected chart: a dot on every line point, a bar
    * on every bar top. Positions come from the primitives' own geometry, so
@@ -652,7 +817,7 @@ export function Canvas() {
 
   return (
     <div
-      className={`viewport${fileDrop.dropping ? ' dropping' : ''}`}
+      className={`viewport${fileDrop.dropping ? ' dropping' : ''}${tool === 'connector' ? ' drawing' : ''}`}
       {...fileDrop.handlers}
       onDoubleClick={(e) => {
         // Double-click words to type into them where they are.
@@ -791,6 +956,19 @@ export function Canvas() {
             />
           )}
 
+          {/* Connector drawing: the item's four anchors, the one it snapped to, the line so far. */}
+          {connHover &&
+            Object.values(anchors(connHover.box)).map(([ax, ay], i) => (
+              <circle key={i} cx={ax} cy={ay} r={3 / zoom} className="conn-anchor" strokeWidth={1 / zoom} />
+            ))}
+          {connHover?.snapped && (
+            <circle cx={connHover.snapped[0]} cy={connHover.snapped[1]} r={5 / zoom} className="conn-anchor on" strokeWidth={1.5 / zoom} />
+          )}
+          {connPreview && (
+            <path d={elbow(connPreview.from, connPreview.to, connPreview.route)} className="conn-preview" strokeWidth={1.5 / zoom} strokeDasharray={`${4 / zoom} ${3 / zoom}`} />
+          )}
+          {connEnds}
+
           {chartHandles}
 
           {alsoBoxes.map((b, i) => (
@@ -815,7 +993,9 @@ export function Canvas() {
                 className="sel-rect"
                 strokeWidth={1 / zoom}
               />
-              {(['nw', 'ne', 'sw', 'se'] as const).map((c) => {
+              {/* Resize handles only where resizing does something — a connector
+                  has its own end handles, which these would sit on top of. */}
+              {canResize && (['nw', 'ne', 'sw', 'se'] as const).map((c) => {
                 const cx = box.x + (c === 'ne' || c === 'se' ? box.width : 0);
                 const cy = box.y + (c === 'sw' || c === 'se' ? box.height : 0);
                 return (

@@ -6,7 +6,8 @@
  * "General - Mail"): a GRADIENT icon behind, up and to the right, and a
  * FROSTED GLASS icon in front, down and to the left — a translucent blue fill
  * with a drop shadow and two inner glows, over a background blur of the one
- * behind. Each theme has its own fill, gradient and effects, as there.
+ * behind. Each theme has its own fill and effects, as there; light mode's
+ * gradient is dark mode's, flipped.
  *
  * Sizes follow the house proportions: in an 80px frame, the glass icon is
  * 68px and the one behind it 48px.
@@ -32,17 +33,21 @@ export const FRAME = 80;
 const FRONT = { size: 68, x: 0, y: FRAME - 68 };
 const BACK = { size: 48, x: FRAME - 48, y: 0 };
 
+/** The back icon's gradient, as the dark icons draw it. Light runs it in reverse. */
+const DARK_STOPS = [
+  ['#1514A4', 0],
+  ['#0B5FFF', 0.485577],
+  ['#47FFFC', 1],
+] as const;
+/** Across the back icon's box, as fractions of it: top right to bottom left. */
+const DARK_LINE = { x1: 0.85, y1: 0, x2: 0.4, y2: 1 } as const;
+
 const THEME = {
   dark: {
     fill: '#70A1FF',
     fillOpacity: 0.3,
-    stops: [
-      ['#1514A4', 0],
-      ['#0B5FFF', 0.485577],
-      ['#47FFFC', 1],
-    ],
-    /** Across the back icon's box, as fractions of it: top right to bottom left. */
-    line: { x1: 0.85, y1: 0, x2: 0.4, y2: 1 },
+    stops: DARK_STOPS,
+    line: DARK_LINE,
     /** Figma's background blur, which it writes as CSS blur(radius / 2). */
     bgBlur: 6,
     effects: `<feOffset dy="4"/><feGaussianBlur stdDeviation="2"/><feComposite in2="hardAlpha" operator="out"/>
@@ -61,13 +66,9 @@ const THEME = {
   light: {
     fill: '#99BCFF',
     fillOpacity: 0.21,
-    stops: [
-      ['#1514A4', 0],
-      ['#0B5FFF', 0.442308],
-      ['#0FFFFC', 1],
-    ],
-    /** Bottom left to top right. */
-    line: { x1: 0.2, y1: 0.95, x2: 0.7, y2: 0 },
+    /** The dark gradient, flipped: the same stops, run the other way. */
+    stops: DARK_STOPS,
+    line: { x1: DARK_LINE.x2, y1: DARK_LINE.y2, x2: DARK_LINE.x1, y2: DARK_LINE.y1 },
     bgBlur: 4,
     effects: `<feOffset dx="1.3"/><feGaussianBlur stdDeviation="0.65"/><feComposite in2="hardAlpha" operator="out"/>
 <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0.344262 0 0 0 0 1 0 0 0 0.6 0"/>

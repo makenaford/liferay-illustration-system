@@ -310,7 +310,7 @@ should confirm it is wanted rather than discover it.
 | `sheen` | `glass` | Translucent sheen, hairline, frosted backdrop |
 | `flat` | `static` | Opaque `Card BG/Grey`, third-strength edge |
 | `accent` | `highlighted` | `Card BG/Blue` — the one card that matters more |
-| `sunken` | *no analogue* | A recessed well for inputs and log rows |
+| `sunken` | *no analogue* | A recessed well for log rows |
 
 **One rule I have deliberately not followed.** The site says a non-interactive
 card uses `static`, never `glass` — glass exists to carry the interaction. In
@@ -437,7 +437,7 @@ glass elevations plus five specials:
 | `gradient` | **`Blue Gradient`, sampled from Figma.** Solid, not glass. |
 | `solid` | Opaque brand blue, for a callout that is an action. |
 | `outline` | Structure without weight — hairline only, no fill. |
-| `sunken` | Cut *into* its parent: inputs, log rows, wells. |
+| `sunken` | Cut *into* its parent: log rows, wells. |
 
 The three glass steps differ only in **how much light they catch** — fill
 opacity, hairline strength, shadow depth and lit edge all rise together,
@@ -529,9 +529,10 @@ price table (`outline` — the original drew it as a stroke with no fill) and
 the AI Source Breakdown overlay (`highlighted` — it is the card that
 illustration is named for).
 
-`solid` and `sunken` are not used at card level. `sunken` is what `InputField`
-draws through, and the solid callouts in these illustrations are buttons
-rather than cards. Both stay in the set because they are part of the ladder,
+`solid` and `sunken` are not used at card level. The solid callouts in these
+illustrations are buttons rather than cards, and `InputField` — which used to
+draw through `sunken` — now follows the Marketing UI Assets `Input` component
+through its own `component.input` tokens. Both stay in the set because they are part of the ladder,
 not because every illustration happens to need them.
 
 This also collapsed a duplication: `GlassPanel` and `SubCard` each carried

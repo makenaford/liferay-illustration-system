@@ -43,6 +43,11 @@ export interface EditorState {
   /** Unsaved edits since the document was opened or last saved. */
   dirty: boolean;
   /**
+   * The icon picked out inside a selected icon grid, by position — set by
+   * clicking that icon on the canvas, shown as the highlighted row.
+   */
+  slot: number | null;
+  /**
    * The library version this editing session started from — its save
    * timestamp, or 0 for one never saved. A newer version in the library means
    * someone else saved over it since.
@@ -98,6 +103,7 @@ export function initStore(doc: Doc, base = 0) {
       lockAspect: prefs?.lockAspect ?? false,
       view: 'library',
       dirty: false,
+      slot: null,
       base,
       padding: prefs?.padding ?? LAYOUT.cardPadding,
       tool: 'select',

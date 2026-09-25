@@ -355,7 +355,10 @@ export interface IconGridEl extends LayoutChild {
   size?: number;
   gapX?: number;
   gapY?: number;
-  tone?: 'subtle' | 'accent' | 'primary' | 'soft';
+  /** A semantic tone or any palette key — see `TextEl.tone`. */
+  tone?: string;
+  /** Each icon's own style, by position; a gap takes `iconStyle`. */
+  styles?: (IconStyle | null)[];
 }
 
 export interface AvatarEl extends LayoutChild {

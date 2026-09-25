@@ -71,6 +71,8 @@ export type Field<K extends string = string> =
   | { key: K; label: string; kind: 'bars' }
   | { key: K; label: string; kind: 'point' }
   | { key: K; label: string; kind: 'iconList' }
+  /** An icon grid's icons, each with its own picker and style. Patches icons and styles. */
+  | { key: K; label: string; kind: 'iconSlots' }
   /** A comma-separated list of words, such as a chart's axis labels. */
   | { key: K; label: string; kind: 'list' }
   /** A colour, chosen from the design-system palette with swatches. */
@@ -123,8 +125,6 @@ const WH: Field<'width' | 'height'>[] = [
   { key: 'width', label: 'W', kind: 'number', min: 1 },
   { key: 'height', label: 'H', kind: 'number', min: 1 },
 ];
-
-const ICON_TONES = ['subtle', 'soft', 'accent', 'primary', 'body'] as const;
 
 /** The property names an element of type `T` actually carries. */
 type KeysOf<T extends Element['type']> = Extract<keyof Extract<Element, { type: T }>, string>;
@@ -349,13 +349,12 @@ export const SCHEMA: {
     label: 'Icon grid',
     fields: [
       ...XY,
-      { key: 'icons', label: 'Icons', kind: 'iconList' },
-      { key: 'iconStyle', label: 'Icon style', kind: 'select', options: ICON_STYLES, labels: ICON_STYLE_LABELS },
+      { key: 'icons', label: 'Icons', kind: 'iconSlots' },
       { key: 'columns', label: 'Columns', kind: 'number', min: 1 },
       { key: 'size', label: 'Size', kind: 'number', min: 1 },
       { key: 'gapX', label: 'Gap X', kind: 'number' },
       { key: 'gapY', label: 'Gap Y', kind: 'number' },
-      { key: 'tone', label: 'Tone', kind: 'select', options: ICON_TONES },
+      { key: 'tone', label: 'Colour', kind: 'token' },
     ],
   },
   avatar: {

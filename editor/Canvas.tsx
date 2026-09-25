@@ -347,7 +347,9 @@ export function Canvas() {
       toggleSelect(path);
       return;
     }
-    setUI({ selected: path });
+    // An icon inside an icon grid picks out its row in the Inspector.
+    const slotEl = target.closest<SVGElement>('[data-slot]');
+    setUI({ selected: path, slot: slotEl ? Number(slotEl.dataset.slot) : null });
 
     // A child of an auto-layout container is dragged as a ghost: dropping it
     // reorders the flow, or takes it out of the card.

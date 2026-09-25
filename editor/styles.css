@@ -1117,3 +1117,31 @@ button.mini.on { background: var(--accent); border-color: var(--accent); color: 
 
 .bg-accent { margin-top: 8px; }
 .bg-note { margin: 8px 0 0; font-size: 11px; color: var(--ink-faint); line-height: 1.45; }
+
+/* An icon grid's icons: a row each. */
+.slots { display: flex; flex-direction: column; gap: 4px; }
+.slots-head { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--ink-faint); }
+.slots-head span { margin-right: auto; }
+.slot {
+  display: grid; grid-template-columns: 16px minmax(0, 1fr) 18px; align-items: center; gap: 4px 5px;
+  grid-template-areas: 'n pick x' '. style .';
+  padding: 4px 3px; border-radius: 5px; border: 1px solid transparent;
+}
+.slot-n { grid-area: n; }
+.slot-pick { grid-area: pick; }
+.slot-style { grid-area: style; }
+.slot-x { grid-area: x; }
+.slot.on { border-color: var(--accent); background: #1d2c4d; }
+.slot-n { font-size: 10px; color: var(--ink-faint); text-align: center; font-variant-numeric: tabular-nums; }
+.slot-pick { min-width: 0; }
+.slot-style { display: flex; justify-self: start; }
+.slot-style button {
+  background: #15181d; border: 1px solid var(--line); padding: 3px 5px; font-size: 10px;
+  color: var(--ink-dim); cursor: pointer;
+}
+.slot-style button:first-child { border-radius: 4px 0 0 4px; }
+.slot-style button + button { border-left: 0; border-radius: 0 4px 4px 0; }
+.slot-style button.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.slot-x { background: none; border: 0; color: var(--ink-faint); cursor: pointer; font-size: 14px; padding: 0; }
+.slot-x:hover { color: #ff9d95; }
+.slots-add { align-self: flex-start; }

@@ -202,7 +202,12 @@ function renderElementInner(ctx: Ctx, el: Element, path?: string): VNode | null 
       });
 
     case 'iconGrid':
-      return IconGrid(ctx, el);
+      return IconGrid(ctx, {
+        ...el,
+        tone: undefined,
+        color: resolveTone(ctx, el.tone ?? 'soft'),
+        hitAreas: path !== undefined,
+      });
 
     case 'avatar':
       return Avatar(ctx, el);

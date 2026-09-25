@@ -30,6 +30,7 @@ import { FileField } from './FileField.tsx';
 import { AvatarPhotoField } from './AvatarPhotoField.tsx';
 import { GraphicField } from './GraphicField.tsx';
 import { IconPicker } from './IconPicker.tsx';
+import { IconSlots } from './IconSlots.tsx';
 import { BarSeriesEditor, LineSeriesEditor } from './ChartData.tsx';
 import { deleteSelection, groupSelection, ungroupSelected } from './grouping.ts';
 import { withText } from './InlineText.tsx';
@@ -616,14 +617,18 @@ function FieldRow({
     field.kind === 'photo' ||
     field.kind === 'graphic' ||
     field.kind === 'icon' ||
+    field.kind === 'iconSlots' ||
     field.kind === 'iconList' ||
     field.kind === 'list';
 
+  // A field holding several buttons is not a <label>: a click on its blank
+  // space would press the first of them.
+  const Wrap = field.kind === 'iconSlots' || field.kind === 'photo' ? 'div' : 'label';
   return (
-    <label className={`field${wide ? ' wide' : ''}`}>
+    <Wrap className={`field${wide ? ' wide' : ''}`}>
       <span className="field-label">{field.label}</span>
       <Control field={field} el={el} value={value} onChange={onChange} onPatch={onPatch} />
-    </label>
+    </Wrap>
   );
 }
 
@@ -788,6 +793,9 @@ function Control({
           onChange={(v) => onChange(v)}
         />
       );
+
+    case 'iconSlots':
+      return <IconSlots el={el} onPatch={onPatch} />;
 
     case 'iconList':
       return (

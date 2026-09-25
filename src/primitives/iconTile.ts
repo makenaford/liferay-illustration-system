@@ -5,7 +5,7 @@ export interface IconTileProps {
   y: number;
   size?: number;
   /** Icon from `ICONS`, scaled from its own authoring box to `size`. */
-  icon?: { path: string; box: number };
+  icon?: { path: string; box: number; stroke?: boolean };
   /** `subtle` matches the #8C96A9 placeholders left in the exports. */
   tone?: 'subtle' | 'accent' | 'primary' | 'onAccent' | 'soft';
   /** A resolved colour, for a component whose ink is its own token. Wins over `tone`. */
@@ -22,7 +22,9 @@ export interface IconTileProps {
  * MingCute) and it becomes a picker in the editor.
  */
 export function IconTile(ctx: Ctx, props: IconTileProps): VNode {
-  const { x, y, size = 20, icon, tone = 'subtle', strokeIcon = true } = props;
+  const { x, y, size = 20, icon, tone = 'subtle' } = props;
+  // The artwork says whether it is outlined or filled; a caller may override.
+  const strokeIcon = props.strokeIcon ?? icon?.stroke ?? true;
   const tk = ctx.tokens;
   const color = props.color ??
     (tone === 'accent'

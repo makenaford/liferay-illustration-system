@@ -29,6 +29,7 @@ import { DocumentPanel } from './DocumentPanel.tsx';
 import { FileField } from './FileField.tsx';
 import { AvatarPhotoField } from './AvatarPhotoField.tsx';
 import { GraphicField } from './GraphicField.tsx';
+import { IconPicker } from './IconPicker.tsx';
 import { BarSeriesEditor, LineSeriesEditor } from './ChartData.tsx';
 import { deleteSelection, groupSelection, ungroupSelected } from './grouping.ts';
 import { withText } from './InlineText.tsx';
@@ -614,6 +615,7 @@ function FieldRow({
     field.kind === 'file' ||
     field.kind === 'photo' ||
     field.kind === 'graphic' ||
+    field.kind === 'icon' ||
     field.kind === 'iconList' ||
     field.kind === 'list';
 
@@ -644,6 +646,15 @@ function Control({
 
     case 'graphic':
       return <GraphicField el={el} onPatch={onPatch} />;
+
+    case 'icon':
+      return (
+        <IconPicker
+          value={value === undefined || value === '' ? undefined : String(value)}
+          style={(el as { iconStyle?: 'line' | 'fill' }).iconStyle ?? 'line'}
+          onChange={(v) => onChange(v)}
+        />
+      );
 
     case 'photo':
       return (

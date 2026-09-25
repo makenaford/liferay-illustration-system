@@ -48,7 +48,7 @@ function listRow(width: number, label: string): Element {
     height: 16,
     layout: { direction: 'horizontal', gap: 8, padding: 0, align: 'center', hugHeight: true },
     children: [
-      { type: 'icon', x: 0, y: 0, size: 14, icon: 'check', tone: 'accentSoft' },
+      { type: 'icon', x: 0, y: 0, size: 14, icon: 'mc:check_circle', tone: 'accentSoft' },
       t('caption', label),
     ],
   } as Element;

@@ -1,6 +1,5 @@
 import { TYPE_ROLES } from '../src/primitives/text.ts';
 import { STATUS_TONES } from '../src/primitives/badge.ts';
-import { ICONS } from '../src/icons.ts';
 import { GLASS_ICONS } from '../src/glassIcons.generated.ts';
 import { dark as darkTokens } from '../src/tokens.ts';
 
@@ -84,12 +83,16 @@ export type Field<K extends string = string> =
   | { key: K; label: string; kind: 'file' }
   /** An avatar's photo: an upload, embedded small, or an image URL. */
   | { key: K; label: string; kind: 'photo' }
+  /** An icon from MingCute, searchable, drawn in the element's style. */
+  | { key: K; label: string; kind: 'icon' }
   /** A graphic: built in, or from the Marketing Assets library. Patches several props. */
   | { key: K; label: string; kind: 'graphic' };
 
 export const ROLES = Object.keys(TYPE_ROLES);
 export const WEIGHTS = ['regular', 'semibold', 'bold'] as const;
-export const ICON_KEYS = ['', ...Object.keys(ICONS)];
+/** Outline or filled — the two styles every MingCute icon comes in. */
+export const ICON_STYLES = ['line', 'fill'] as const;
+export const ICON_STYLE_LABELS: Record<string, string> = { line: 'Outline', fill: 'Filled' };
 /**
  * The design system's glass icons. A key whose light variant is really the
  * dark artwork is labelled, so a designer picking artwork for a light
@@ -222,7 +225,8 @@ export const SCHEMA: {
         options: ['solid', 'outline', 'glass', 'gradient', 'muted'],
       },
       { key: 'align', label: 'Align', kind: 'select', options: ['center', 'left'] },
-      { key: 'icon', label: 'Icon', kind: 'select', options: ICON_KEYS },
+      { key: 'icon', label: 'Icon', kind: 'icon' },
+      { key: 'iconStyle', label: 'Icon style', kind: 'select', options: ICON_STYLES, labels: ICON_STYLE_LABELS },
       { key: 'role', label: 'Type style', kind: 'select', options: ROLES },
       { key: 'radius', label: 'Radius', kind: 'number', min: 0, default: 4 },
       { key: 'padding', label: 'Padding', kind: 'number', min: 0, default: 12 },
@@ -239,7 +243,8 @@ export const SCHEMA: {
       ...XY,
       { key: 'width', label: 'W', kind: 'number', min: 1 },
       { key: 'height', label: 'H', kind: 'number', min: 1 },
-      { key: 'icon', label: 'Icon', kind: 'select', options: ICON_KEYS },
+      { key: 'icon', label: 'Icon', kind: 'icon' },
+      { key: 'iconStyle', label: 'Icon style', kind: 'select', options: ICON_STYLES, labels: ICON_STYLE_LABELS },
       { key: 'radius', label: 'Radius', kind: 'number', min: 0, default: 6 },
       { key: 'role', label: 'Type style', kind: 'select', options: ROLES },
     ],
@@ -333,7 +338,8 @@ export const SCHEMA: {
   icon: {
     label: 'Icon',
     fields: [
-      { key: 'icon', label: 'Icon', kind: 'select', options: ICON_KEYS },
+      { key: 'icon', label: 'Icon', kind: 'icon' },
+      { key: 'iconStyle', label: 'Icon style', kind: 'select', options: ICON_STYLES, labels: ICON_STYLE_LABELS },
       ...XY,
       { key: 'size', label: 'Size', kind: 'number', min: 1, default: 20 },
       { key: 'tone', label: 'Colour', kind: 'token' },
@@ -344,6 +350,7 @@ export const SCHEMA: {
     fields: [
       ...XY,
       { key: 'icons', label: 'Icons', kind: 'iconList' },
+      { key: 'iconStyle', label: 'Icon style', kind: 'select', options: ICON_STYLES, labels: ICON_STYLE_LABELS },
       { key: 'columns', label: 'Columns', kind: 'number', min: 1 },
       { key: 'size', label: 'Size', kind: 'number', min: 1 },
       { key: 'gapX', label: 'Gap X', kind: 'number' },
@@ -495,10 +502,10 @@ export const DEFAULTS: Record<Element['type'], () => Element> = {
   progress: () => ({ type: 'progress', x: 40, y: 40, width: 160, value: 0.6, label: 'Label' }),
   skeleton: () => ({ type: 'skeleton', x: 40, y: 40, width: 120, height: 8 }),
   stat: () => ({ type: 'stat', x: 40, y: 40, value: '12,847', label: 'Metric', valueRole: 'heading' }),
-  icon: () => ({ type: 'icon', x: 40, y: 40, size: 20, icon: 'check', tone: 'accentSoft' }),
+  icon: () => ({ type: 'icon', x: 40, y: 40, size: 20, icon: 'mc:check_circle', tone: 'accentSoft' }),
   iconGrid: () => ({
     type: 'iconGrid', x: 40, y: 40, columns: 4, size: 22, gapX: 34, gapY: 34,
-    icons: ['browser', 'phone', 'mail', 'star'],
+    icons: ['mc:web', 'mc:cellphone', 'mc:mail', 'mc:star'],
   }),
   avatar: () => ({ type: 'avatar', cx: 60, cy: 60, r: 16, initials: 'AB' }),
   connector: () => ({ type: 'connector', from: [40, 40], to: [160, 120], route: 'hv', radius: 12 }),

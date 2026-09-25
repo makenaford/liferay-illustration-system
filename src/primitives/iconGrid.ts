@@ -1,5 +1,5 @@
 import { h, type Ctx, type VNode } from '../vsvg.ts';
-import { ICONS } from '../icons.ts';
+import { iconArt, type IconStyle } from '../icons.ts';
 import { IconTile } from './iconTile.ts';
 
 export interface IconGridProps {
@@ -12,6 +12,7 @@ export interface IconGridProps {
   gapX?: number;
   gapY?: number;
   tone?: 'subtle' | 'accent' | 'primary' | 'soft';
+  iconStyle?: IconStyle;
 }
 
 /**
@@ -32,7 +33,7 @@ export function IconGrid(ctx: Ctx, props: IconGridProps): VNode {
         x: x + (i % columns) * gapX,
         y: y + Math.floor(i / columns) * gapY,
         size,
-        icon: key ? ICONS[key] : undefined,
+        icon: iconArt(key, props.iconStyle),
         tone: props.tone ?? 'soft',
       }),
     ),

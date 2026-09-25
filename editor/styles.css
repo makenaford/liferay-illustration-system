@@ -1077,3 +1077,40 @@ button.mini.on { background: var(--accent); border-color: var(--accent); color: 
 }
 .palette-graphics button:hover { border-color: var(--accent); color: #fff; }
 .palette-graphics img { width: 100%; height: 52px; object-fit: contain; }
+
+/* Icon picker — MingCute, searchable. Shares the colour picker's look. */
+.iconpick { position: relative; }
+.iconpick-trigger {
+  display: flex; align-items: center; gap: 7px; width: 100%;
+  background: #15181d; border: 1px solid var(--line); border-radius: 5px;
+  padding: 4px 7px; cursor: pointer; text-align: left; color: var(--ink);
+}
+.iconpick-trigger:hover { border-color: #3a4150; }
+.iconpick-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-transform: capitalize; }
+.iconpick-none {
+  display: inline-block; width: 18px; height: 18px; flex: none; border-radius: 3px;
+  background: linear-gradient(to bottom right, transparent 45%, #b4443c 45% 55%, transparent 55%);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+}
+.iconpick-pop {
+  position: absolute; z-index: 40; top: calc(100% + 4px); left: 0; right: 0;
+  background: var(--panel-2); border: 1px solid var(--line); border-radius: var(--radius);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.iconpick-bar { display: flex; border-bottom: 1px solid var(--line); }
+.iconpick-bar .tokenpick-search { border-bottom: 0; flex: 1; min-width: 0; }
+.iconpick-bar select {
+  flex: none; max-width: 42%; background: #15181d; border: 0; border-left: 1px solid var(--line);
+  padding: 0 6px; font-size: 11px; color: var(--ink-dim);
+}
+.iconpick-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(34px, 1fr)); gap: 2px;
+  padding: 6px; max-height: 280px; overflow-y: auto;
+}
+.iconpick-grid button {
+  aspect-ratio: 1; display: grid; place-items: center;
+  background: none; border: 1px solid transparent; border-radius: 4px; cursor: pointer; color: var(--ink);
+}
+.iconpick-grid button:hover { background: #262b33; }
+.iconpick-grid button.on { background: #1d2c4d; border-color: var(--accent); }

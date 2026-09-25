@@ -18,6 +18,7 @@
     "font": "node --experimental-strip-types scripts/build-font.ts",
     "graphics": "node --experimental-strip-types scripts/build-graphics.ts",
     "icons": "node --experimental-strip-types scripts/build-glass-icons.ts",
+    "mingcute": "node --experimental-strip-types scripts/build-mingcute.ts",
     "nest": "node --experimental-strip-types scripts/nest.ts",
     "normalize": "node --experimental-strip-types scripts/normalize.ts",
     "preview": "vite build && vite preview",
@@ -37,6 +38,7 @@
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
     "@vitejs/plugin-react": "^6.1.1",
+    "mingcute_icon": "^2.9.72",
     "typescript": "^7.0.2",
     "vite": "^8.2.2"
   },

@@ -1,11 +1,17 @@
+import { MINGCUTE } from './mingcute.generated.ts';
+
 /**
- * Icon set, each path authored in its own square box (`box`) so `IconTile` can
- * scale it to any size. Stroke-based, 1px at authoring scale.
+ * ICONS — MingCute, plus the original hand-drawn set.
  *
- * In the real build this file becomes a thin adapter over Clay icons or
- * MingCute rather than a hand-kept list — but the port needed a fixed set to
- * prove the slot mechanism, and hand-authoring 24 glyphs was faster than
- * wiring an icon package into a zero-dependency spike.
+ * The icon picker offers MingCute (https://www.mingcute.com, Apache 2.0):
+ * 1,600+ icons, each in an outline (`line`) and a filled (`fill`) style,
+ * generated into mingcute.generated.ts by `npm run mingcute`. A document
+ * names one as `mc:<name>` and picks the style with `iconStyle`.
+ *
+ * `ICONS` below is the hand-drawn set the port started with — stroke-based,
+ * each in its own square `box`. It is no longer offered, but documents made
+ * with it keep drawing exactly as they did: `iconArt` resolves its keys
+ * first.
  */
 
 export interface Icon {
@@ -84,3 +90,29 @@ export const ICONS: Record<string, Icon> = {
  * interface (a clock in a card, a search glyph in an input), which is a
  * different job from a hero spot illustration.
  */
+
+export type IconStyle = 'line' | 'fill';
+
+/** What `IconTile` draws: a path in its box, stroked or filled. */
+export interface IconArt extends Icon {
+  /** The hand-drawn set is stroked; MingCute is filled, in both styles. */
+  stroke: boolean;
+}
+
+export const MINGCUTE_PREFIX = 'mc:';
+
+/**
+ * An icon key, in a style, as artwork — or undefined for no icon.
+ *
+ *   mc:rocket   MingCute's rocket
+ *   check       the hand-drawn check (a key the original set has)
+ *   rocket      MingCute's rocket (a bare name the original set lacks)
+ */
+export function iconArt(key: string | null | undefined, style: IconStyle = 'line'): IconArt | undefined {
+  if (!key) return undefined;
+  if (!key.startsWith(MINGCUTE_PREFIX) && ICONS[key]) return { ...ICONS[key], stroke: true };
+  const m = MINGCUTE[key.startsWith(MINGCUTE_PREFIX) ? key.slice(MINGCUTE_PREFIX.length) : key];
+  if (!m) return undefined;
+  const path = (style === 'fill' ? m.fill : m.line) ?? m.line ?? m.fill;
+  return path ? { path, box: 24, stroke: false } : undefined;
+}

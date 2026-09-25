@@ -1,6 +1,6 @@
 import { h, type Ctx, type VNode } from '../vsvg.ts';
 import { Text, TYPE_ROLES, type TypeRole } from './text.ts';
-import { ICONS } from '../icons.ts';
+import { iconArt, type IconStyle } from '../icons.ts';
 import { IconTile } from './iconTile.ts';
 
 export interface InputFieldProps {
@@ -10,6 +10,7 @@ export interface InputFieldProps {
   height?: number;
   placeholder: string;
   icon?: string;
+  iconStyle?: IconStyle;
   radius?: number;
   role?: TypeRole;
 }
@@ -33,7 +34,8 @@ export function InputField(ctx: Ctx, props: InputFieldProps): VNode {
   const role: TypeRole = props.role ?? 'micro';
   const size = TYPE_ROLES[role].size;
 
-  const hasIcon = Boolean(icon && ICONS[icon]);
+  const art = iconArt(icon, props.iconStyle);
+  const hasIcon = Boolean(art);
   const pad = 6;
   const iconSize = Math.min(16, height - pad * 2);
   const textX = hasIcon ? x + pad + iconSize + 4 : x + pad + 2;
@@ -85,7 +87,7 @@ export function InputField(ctx: Ctx, props: InputFieldProps): VNode {
           x: x + pad,
           y: y + (height - iconSize) / 2,
           size: iconSize,
-          icon: ICONS[icon!],
+          icon: art,
           color: c.ink,
         })
       : null,

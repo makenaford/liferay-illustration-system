@@ -20,6 +20,7 @@
 
 import type { TypeRole, TypeWeight } from './primitives/text.ts';
 import type { MeshName, SurfaceName } from './tokens.ts';
+import type { IconStyle } from './icons.ts';
 
 export type Tone = 'accent' | 'success' | 'info' | 'neutral' | 'muted' | 'subtle';
 
@@ -194,6 +195,8 @@ export interface ButtonEl extends LayoutChild {
   variant?: 'solid' | 'outline' | 'glass' | 'gradient' | 'muted';
   radius?: number;
   icon?: string;
+  /** Outline or filled, for a MingCute icon. Defaults to outline. */
+  iconStyle?: IconStyle;
   role?: TypeRole;
   lines?: string[];
   align?: 'center' | 'left';
@@ -217,6 +220,8 @@ export interface InputEl extends LayoutChild {
   height?: number;
   placeholder: string;
   icon?: string;
+  /** Outline or filled, for a MingCute icon. Defaults to outline. */
+  iconStyle?: IconStyle;
   radius?: number;
   role?: TypeRole;
 }
@@ -331,8 +336,10 @@ export interface IconEl extends LayoutChild {
   x: number;
   y: number;
   size?: number;
-  /** Key into `ICONS`. Omitted renders a visible placeholder. */
+  /** An icon key — see `iconArt`. Omitted renders a visible placeholder. */
   icon?: string;
+  /** Outline or filled, for a MingCute icon. Defaults to outline. */
+  iconStyle?: IconStyle;
   /** A semantic tone or any palette key — see `TextEl.tone`. */
   tone?: string;
 }
@@ -342,6 +349,8 @@ export interface IconGridEl extends LayoutChild {
   x: number;
   y: number;
   icons: (string | null)[];
+  /** Outline or filled, for MingCute icons. Defaults to outline. */
+  iconStyle?: IconStyle;
   columns: number;
   size?: number;
   gapX?: number;

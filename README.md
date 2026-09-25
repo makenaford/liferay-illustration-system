@@ -35,6 +35,13 @@ SDS_PATH=~/work/liferay-sites-design-system npm run tokens
 Neither is needed to build — the generated files are committed — but they are
 how you pick up a change to the design file.
 
+**Icons are MingCute.** The icon picker searches MingCute
+(https://www.mingcute.com, Apache License 2.0) — every icon in an outline and a
+filled style, generated into `src/mingcute.generated.ts` by `npm run mingcute`
+from the `mingcute_icon` package. Documents name one as `mc:<name>` with an
+`iconStyle` of `line` or `fill`. The original hand-drawn set in `src/icons.ts`
+is no longer offered, but documents that use its keys draw exactly as before.
+
 **The colours a designer picks from are the illustration set.** Text, lines
 and icons take a colour from `tokens/illustration/{Light,Dark}.tokens.json` —
 the illustration system's own Figma variables — or one of two gradients

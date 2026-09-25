@@ -25,7 +25,7 @@ import {
   Cursor,
   MapDots,
 } from './primitives/index.ts';
-import { ICONS } from './icons.ts';
+import { iconArt } from './icons.ts';
 import { GLASS_ICONS } from './glassIcons.generated.ts';
 import { GRAPHICS } from './graphics.generated.ts';
 import { BACKDROP_SLOT } from './figmaGlass.ts';
@@ -198,7 +198,7 @@ function renderElementInner(ctx: Ctx, el: Element, path?: string): VNode | null 
         y: el.y,
         size: el.size,
         color: resolveTone(ctx, el.tone),
-        icon: el.icon ? ICONS[el.icon] : undefined,
+        icon: iconArt(el.icon, el.iconStyle),
       });
 
     case 'iconGrid':

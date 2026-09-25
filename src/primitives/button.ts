@@ -1,7 +1,7 @@
 import { cssAngleLine } from './surface.ts';
 import { h, type Ctx, type VNode } from '../vsvg.ts';
 import { Text, TYPE_ROLES, type TypeRole } from './text.ts';
-import { ICONS } from '../icons.ts';
+import { iconArt, type IconStyle } from '../icons.ts';
 import { IconTile } from './iconTile.ts';
 
 export interface ButtonProps {
@@ -20,6 +20,7 @@ export interface ButtonProps {
   /** Fully rounded when omitted on tall buttons; otherwise a 4px radius. */
   radius?: number;
   icon?: string;
+  iconStyle?: IconStyle;
   role?: TypeRole;
   /** Wrap the label onto two lines. */
   lines?: string[];
@@ -134,7 +135,8 @@ export function Button(ctx: Ctx, props: ButtonProps): VNode {
   }
 
   const iconSize = Math.min(height * 0.5, 16);
-  const hasIcon = Boolean(icon && ICONS[icon]);
+  const art = iconArt(icon, props.iconStyle);
+  const hasIcon = Boolean(art);
   const iconPad = hasIcon ? iconSize + 7 : 0;
 
   const lines = props.lines ?? [label];
@@ -183,7 +185,7 @@ export function Button(ctx: Ctx, props: ButtonProps): VNode {
           x: iconX,
           y: y + (height - iconSize) / 2,
           size: iconSize,
-          icon: ICONS[icon!],
+          icon: art,
           // On a filled button the icon reads on the fill; on an outline
           // button it takes Brand/Primary, the colour of the outline's glow.
           tone:

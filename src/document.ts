@@ -132,6 +132,12 @@ export interface GroupEl extends LayoutChild {
   y: number;
   width: number;
   height: number;
+  /**
+   * Without a layout: fit the box to the children on this axis, as a Figma
+   * group does. With one, `layout.hugWidth` / `hugHeight` do this instead.
+   */
+  hugWidth?: boolean;
+  hugHeight?: boolean;
   layout?: LayoutSpec;
   /** Clip content: children are cut to this container's shape. */
   clip?: boolean;

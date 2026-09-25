@@ -1,4 +1,5 @@
-import type { Doc, Element } from '../src/document.ts';
+import type { Doc, Element, LayoutSpec } from '../src/document.ts';
+import { LAYOUT } from '../src/tokens.ts';
 import { resolveLayout } from '../src/autolayout.ts';
 import { boundsOf, type Box } from './bounds.ts';
 import { commit, elementAt, getState, parentOf, replaceAt, setUI } from './state.ts';
@@ -59,19 +60,37 @@ function measured(resolved: Doc, path: string): Box | null {
   return boundsOf(el, node);
 }
 
-/** Wrap the selection in a group. Returns a message for the status line. */
-export function groupSelection(): string {
+/**
+ * Wrap the selection in a group. Returns a message for the status line.
+ *
+ * Inside an auto-layout card, the group gets a layout of its own, which is
+ * how a card arranges things both ways: a column card holding a row of two
+ * items, or the reverse. With no `direction`, it runs across the parent's
+ * flow — grouping in a column makes a row — since that is the only reason to
+ * group there; the same direction would change nothing. The group hugs what
+ * it holds and keeps the parent's gap, and takes the place of the first
+ * selected item so the flow's order holds.
+ *
+ * Outside auto-layout a group only positions, unless a direction is asked
+ * for, in which case it arranges its children the same way.
+ */
+export function groupSelection(direction?: LayoutSpec['direction']): string {
   const st = getState();
   const paths = selection();
   if (!paths.length) return 'Select something to group';
 
   const parent = parentOf(paths[0]);
   const parentEl = parent ? elementAt(st.doc, parent) : null;
-  if (parentEl && (parentEl as { layout?: unknown }).layout) {
-    // Inside auto-layout the flow owns position, and a group would reflow as
-    // one item — almost never what grouping a few of its children means.
-    return 'Can’t group inside an auto-layout container';
-  }
+  const flow = (parentEl as { layout?: LayoutSpec } | null)?.layout;
+  const dir = direction ?? (flow ? (flow.direction === 'vertical' ? 'horizontal' : 'vertical') : undefined);
+  const layout: LayoutSpec | undefined = dir && {
+    direction: dir,
+    gap: flow?.gap ?? LAYOUT.gap,
+    padding: 0,
+    align: dir === 'horizontal' ? 'center' : 'start',
+    hugWidth: true,
+    hugHeight: true,
+  };
 
   const resolved = resolveLayout(st.doc);
   const boxes = paths.map((p) => measured(resolved, p)).filter((b): b is Box => !!b);
@@ -86,7 +105,8 @@ export function groupSelection(): string {
   // frontmost of them — so nothing jumps in front of or behind anything else.
   const indices = paths.map(lastIndex).sort((a, b) => a - b);
   const top = indices[indices.length - 1];
-  const at = top - (indices.length - 1);
+  // In a flow, order is position: the group sits where its first item was.
+  const at = flow ? indices[0] : top - (indices.length - 1);
 
   let group: Element | null = null;
   const next = withSiblings(st.doc, parent, (list) => {
@@ -96,6 +116,8 @@ export function groupSelection(): string {
       y: r2(y),
       width: r2(right - x),
       height: r2(bottom - y),
+      // A plain group fits its content, the way a Figma group does.
+      ...(layout ? { layout } : { hugWidth: true, hugHeight: true }),
       children: indices.map((i) => list[i]),
     } as Element;
     const rest = list.filter((_, i) => !indices.includes(i));
@@ -106,7 +128,10 @@ export function groupSelection(): string {
 
   commit(next);
   setUI({ selected: pathOf(parent, at) });
-  return `Grouped ${paths.length} element${paths.length === 1 ? '' : 's'}`;
+  const n = `${paths.length} element${paths.length === 1 ? '' : 's'}`;
+  return layout
+    ? `${layout.direction === 'horizontal' ? 'Put' : 'Stacked'} ${n} ${layout.direction === 'horizontal' ? 'side by side' : 'in a column'}`
+    : `Grouped ${n}`;
 }
 
 /** Put a group's children back in its place. */

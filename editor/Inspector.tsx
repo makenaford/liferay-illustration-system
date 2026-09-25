@@ -151,7 +151,7 @@ export function Inspector() {
             onClick={() => groupSelection()}
             title={
               autoPlaced
-                ? 'Can’t group inside an auto-layout container'
+                ? 'Shift-click another item in this card, then group them into a row or column'
                 : 'Wrap in a group (⌘G) — shift-click to add more first'
             }
           >
@@ -189,28 +189,48 @@ function MultiSelection({ count, path }: { count: number; path: string }) {
   const doc = useEditor((s) => s.doc);
   const parent = parentOfPath(path);
   const parentEl = parent ? elementAt(doc, parent) : null;
-  const inFlow = !!(parentEl && (parentEl as { layout?: unknown }).layout);
+  const flow = (parentEl as { layout?: LayoutSpec } | null)?.layout;
+  const inFlow = !!flow;
   return (
     <div className="inspector">
       <div className="inspector-head">
         <span className="badge-type">{count} selected</span>
       </div>
       <div className="row-actions">
-        <button
-          type="button"
-          disabled={inFlow}
-          onClick={() => groupSelection()}
-          title={inFlow ? 'Can’t group inside an auto-layout container' : 'Group (⌘G)'}
-        >
-          Group
-        </button>
+        {!inFlow && (
+          <button type="button" onClick={() => groupSelection()} title="Group (⌘G)">
+            Group
+          </button>
+        )}
         <button type="button" className="danger" onClick={() => deleteSelection()} title="Delete (⌫)">
           Delete
         </button>
       </div>
+      <div className="section">
+        <div className="section-head">
+          <span>Arrange</span>
+        </div>
+        <div className="layout-actions two">
+          <button
+            type="button"
+            onClick={() => groupSelection('horizontal')}
+            title={`Put these side by side in a row${flow?.direction === 'vertical' ? ' (⌘G)' : ''}`}
+          >
+            → Side by side
+          </button>
+          <button
+            type="button"
+            onClick={() => groupSelection('vertical')}
+            title={`Stack these in a column${flow?.direction === 'horizontal' ? ' (⌘G)' : ''}`}
+          >
+            ↓ Stacked
+          </button>
+        </div>
+      </div>
       <p className="panel-note">
         Shift-click on the canvas or in Layers to add or remove items.
-        {inFlow && ' These sit in an auto-layout container, which positions them itself — group them outside it.'}
+        {inFlow &&
+          ' Arranging them wraps them in a group that lays itself out, inside this card’s own flow — the way to mix rows and columns in one card.'}
       </p>
     </div>
   );
@@ -456,11 +476,34 @@ function CardLayout({ path }: { path: string }) {
     );
   }
 
+  const group = card?.type === 'group' ? card : null;
+
   return (
     <div className="section">
       <div className="section-head">
         <span>Layout · {kids} child{kids === 1 ? '' : 'ren'}</span>
       </div>
+
+      {group && (
+        <div className="layout-actions two" style={{ marginBottom: 8 }}>
+          <button
+            type="button"
+            className={group.hugWidth ? 'on' : ''}
+            onClick={() => apply((c) => ({ ...c, hugWidth: !(c as { hugWidth?: boolean }).hugWidth || undefined }) as Element)}
+            title="Fit the group's width to its content"
+          >
+            Hug W
+          </button>
+          <button
+            type="button"
+            className={group.hugHeight ? 'on' : ''}
+            onClick={() => apply((c) => ({ ...c, hugHeight: !(c as { hugHeight?: boolean }).hugHeight || undefined }) as Element)}
+            title="Fit the group's height to its content"
+          >
+            Hug H
+          </button>
+        </div>
+      )}
 
       <label className="field wide">
         <span className="field-label">Padding (spacing scale)</span>

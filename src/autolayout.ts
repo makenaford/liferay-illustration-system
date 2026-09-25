@@ -120,7 +120,10 @@ export function measureElement(el: Element): Size {
     case 'card':
     case 'subCard':
     case 'group': {
-      if (!el.layout) return { width: el.width, height: el.height };
+      if (!el.layout) {
+        const fit = el.type === 'group' ? hugged(el) : null;
+        return fit ? { width: fit.width, height: fit.height } : { width: el.width, height: el.height };
+      }
       return containerSize(el);
     }
     default: {
@@ -237,7 +240,39 @@ function placeAt(el: Element, x: number, y: number, size: Size): Element {
       el.anchor === 'middle' ? x + size.width / 2 : el.anchor === 'end' ? x + size.width : x;
     return { ...el, x: round(anchorX), y: round(y + b.baseline + rise) };
   }
+  if (isContainer(el) && !el.layout && el.children?.length) {
+    // A free container's children are absolute, so they move with it —
+    // otherwise the flow moves the box and leaves what is in it behind.
+    const from = el.type === 'group' ? hugged(el) ?? el : el;
+    const dx = x - from.x;
+    const dy = y - from.y;
+    return {
+      ...el,
+      x: round(x),
+      y: round(y),
+      children: el.children.map((c) => shifted(c, dx, dy)),
+    } as Element;
+  }
   return { ...el, x: round(x), y: round(y) } as Element;
+}
+
+/** An element moved by (dx, dy), with everything inside it. */
+function shifted(el: Element, dx: number, dy: number): Element {
+  if (!dx && !dy) return el;
+  let next: Element;
+  if (el.type === 'avatar') next = { ...el, cx: round(el.cx + dx), cy: round(el.cy + dy) };
+  else if (el.type === 'connector') {
+    next = {
+      ...el,
+      from: [round(el.from[0] + dx), round(el.from[1] + dy)],
+      to: [round(el.to[0] + dx), round(el.to[1] + dy)],
+    };
+  } else {
+    const e = el as Element & { x: number; y: number };
+    next = { ...e, x: round(e.x + dx), y: round(e.y + dy) } as Element;
+  }
+  const kids = (next as { children?: Element[] }).children;
+  return kids ? ({ ...next, children: kids.map((c) => shifted(c, dx, dy)) } as Element) : next;
 }
 
 
@@ -389,12 +424,38 @@ function layoutContainer(el: Container): Element {
   } as Element;
 }
 
+/**
+ * A free group's box fitted to its children, on the axes it hugs — or null
+ * when it hugs neither, or holds nothing measurable. A group with no layout
+ * leaves its children where they are, so hugging moves the box's edge onto
+ * theirs rather than moving them.
+ */
+function hugged(el: Extract<Element, { type: 'group' }>) {
+  if (el.layout || (!el.hugWidth && !el.hugHeight)) return null;
+  const boxes = (el.children ?? [])
+    .map(boundingBox)
+    .filter((b): b is NonNullable<typeof b> => b !== null);
+  if (!boxes.length) return null;
+  const x = Math.min(...boxes.map((b) => b.x));
+  const y = Math.min(...boxes.map((b) => b.y));
+  const right = Math.max(...boxes.map((b) => b.x + b.width));
+  const bottom = Math.max(...boxes.map((b) => b.y + b.height));
+  return {
+    x: el.hugWidth ? round(x) : el.x,
+    y: el.hugHeight ? round(y) : el.y,
+    width: el.hugWidth ? round(right - x) : el.width,
+    height: el.hugHeight ? round(bottom - y) : el.height,
+  };
+}
+
 /** Resolve one element, recursing into containers. */
 function resolveElement(el: Element): Element {
   if (isContainer(el) && el.layout) return layoutContainer(el);
   const kids = (el as { children?: Element[] }).children;
   if (kids?.length) {
-    return { ...el, children: kids.map(resolveElement) } as Element;
+    const next = { ...el, children: kids.map(resolveElement) } as Element;
+    const fit = next.type === 'group' ? hugged(next) : null;
+    return fit ? ({ ...next, ...fit } as Element) : next;
   }
   return el;
 }
@@ -511,6 +572,7 @@ function hasLayout(els: Element[]): boolean {
   return els.some(
     (e) =>
       (isContainer(e) && !!e.layout) ||
+      (e.type === 'group' && !!(e.hugWidth || e.hugHeight)) ||
       hasLayout(((e as { children?: Element[] }).children ?? []) as Element[]),
   );
 }

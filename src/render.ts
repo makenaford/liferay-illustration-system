@@ -339,6 +339,10 @@ function renderSpotIcon(
     'g',
     {
       transform: `translate(${el.x} ${el.y}) scale(${scale}) translate(${-vx} ${-vy})`,
+      // The source <svg> carries `fill="none"`, which the generator drops with
+      // the wrapper; without it here, an unfilled shape paints black wherever
+      // the icon is not inside an SVG that happens to set it too.
+      fill: 'none',
       'data-el': 'spot-icon',
       'data-icon': el.name,
     },

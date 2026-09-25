@@ -1,0 +1,395 @@
+{
+  "_about": "Measured in a browser (getBBox) with each icon's frame clip removed: the square, centred viewBox that holds the icon's whole artwork. Only icons whose artwork the frame cut are listed. See scripts/build-glass-icons.ts.",
+  "Business - Costly": {
+    "dark": [
+      -8,
+      -4,
+      76,
+      76
+    ],
+    "light": [
+      -8,
+      -4,
+      76,
+      76
+    ]
+  },
+  "Content - Search": {
+    "dark": [
+      -8,
+      -2,
+      72.5,
+      72.5
+    ],
+    "light": [
+      -8,
+      -2,
+      72.5,
+      72.5
+    ]
+  },
+  "Customer - Customer Loyalty": {
+    "dark": [
+      -8,
+      -6.5,
+      76,
+      76
+    ],
+    "light": [
+      -8,
+      -6.5,
+      76,
+      76
+    ]
+  },
+  "Customer - Customer Portals": {
+    "dark": [
+      -8,
+      -5,
+      78,
+      78
+    ],
+    "light": [
+      -8,
+      -5,
+      78,
+      78
+    ]
+  },
+  "Customer - Customer Satisfaction": {
+    "dark": [
+      -6.5,
+      -6,
+      75,
+      75
+    ],
+    "light": [
+      -6.5,
+      -6,
+      75,
+      75
+    ]
+  },
+  "Customer - Relationship Management": {
+    "dark": [
+      -1,
+      -2.5,
+      69,
+      69
+    ],
+    "light": [
+      -1,
+      -2.5,
+      69,
+      69
+    ]
+  },
+  "Customer Support - Testimonies": {
+    "dark": [
+      -8,
+      -6,
+      76,
+      76
+    ],
+    "light": [
+      -8,
+      -6,
+      76,
+      76
+    ]
+  },
+  "Customer Support - World examples": {
+    "dark": [
+      -8,
+      -6,
+      76,
+      76
+    ],
+    "light": [
+      -8,
+      -6,
+      76,
+      76
+    ]
+  },
+  "Customer Support - World examples 2": {
+    "dark": [
+      -5.5,
+      -5,
+      74,
+      74
+    ],
+    "light": [
+      -5.5,
+      -5,
+      74,
+      74
+    ]
+  },
+  "Education - Courses": {
+    "dark": [
+      -6,
+      -7.5,
+      79,
+      79
+    ],
+    "light": [
+      -8,
+      -6,
+      76,
+      76
+    ]
+  },
+  "General - Map": {
+    "dark": [
+      -4.5,
+      -8.5,
+      73.5,
+      73.5
+    ],
+    "light": [
+      -4.5,
+      -8.5,
+      73.5,
+      73.5
+    ]
+  },
+  "General - Order Management": {
+    "dark": [
+      -6,
+      -4.5,
+      74,
+      74
+    ],
+    "light": [
+      -6,
+      -4.5,
+      74,
+      74
+    ]
+  },
+  "General - PaaS": {
+    "dark": [
+      -4.5,
+      -4.5,
+      73,
+      73
+    ],
+    "light": [
+      -4.5,
+      -4.5,
+      73,
+      73
+    ]
+  },
+  "General - Performance": {
+    "dark": [
+      -6.5,
+      -6,
+      75,
+      75
+    ],
+    "light": [
+      -6.5,
+      -6,
+      75,
+      75
+    ]
+  },
+  "General - Pricing": {
+    "dark": [
+      -6,
+      -4.5,
+      74,
+      74
+    ],
+    "light": [
+      -6,
+      -4.5,
+      74,
+      74
+    ]
+  },
+  "General - Shipping": {
+    "dark": [
+      -8.5,
+      -4,
+      79,
+      79
+    ],
+    "light": [
+      -8.5,
+      -4,
+      79,
+      79
+    ]
+  },
+  "Industries - Energy and supply 2": {
+    "dark": [
+      -2,
+      -2,
+      69,
+      69
+    ],
+    "light": [
+      -2,
+      -2,
+      69,
+      69
+    ]
+  },
+  "Industries - Integration": {
+    "dark": [
+      -5,
+      -5,
+      74,
+      74
+    ],
+    "light": [
+      -5,
+      -5,
+      74,
+      74
+    ]
+  },
+  "Industries - Retail": {
+    "dark": [
+      -6,
+      -1.5,
+      71,
+      71
+    ],
+    "light": [
+      -6,
+      -1.5,
+      71.5,
+      71.5
+    ]
+  },
+  "Product Modules - Content Marketing Platform 2": {
+    "dark": [
+      -6.5,
+      -6.5,
+      77,
+      77
+    ],
+    "light": [
+      -6.5,
+      -6.5,
+      77,
+      77
+    ]
+  },
+  "Product Modules - SaaS": {
+    "dark": [
+      -3,
+      -3,
+      70,
+      70
+    ],
+    "light": [
+      -3,
+      -3,
+      70,
+      70
+    ]
+  },
+  "Product Modules - SaaS 2": {
+    "dark": [
+      0,
+      -1,
+      66.5,
+      66.5
+    ],
+    "light": [
+      0,
+      -1,
+      66.5,
+      66.5
+    ]
+  },
+  "Safety & Compliance - roadmap": {
+    "dark": [
+      -4.5,
+      -4.5,
+      73,
+      73
+    ],
+    "light": [
+      -4.5,
+      -4.5,
+      73,
+      73
+    ]
+  },
+  "User - Add user": {
+    "dark": [
+      -8,
+      -2.5,
+      73.5,
+      73.5
+    ],
+    "light": [
+      -8,
+      -2.5,
+      73.5,
+      73.5
+    ]
+  },
+  "User - User Acquisition Cost": {
+    "dark": [
+      -8,
+      -2.5,
+      73.5,
+      73.5
+    ],
+    "light": [
+      -8,
+      -2.5,
+      73.5,
+      73.5
+    ]
+  },
+  "User - User Security": {
+    "dark": [
+      -8,
+      -2.5,
+      73.5,
+      73.5
+    ],
+    "light": [
+      -8,
+      -2.5,
+      73,
+      73
+    ]
+  },
+  "User - User Security 5": {
+    "dark": [
+      -8,
+      -2.5,
+      73,
+      73
+    ],
+    "light": [
+      -8,
+      -2.5,
+      73,
+      73
+    ]
+  },
+  "User - User Validation": {
+    "dark": [
+      -8,
+      -2,
+      72.5,
+      72.5
+    ],
+    "light": [
+      -8,
+      -2,
+      72.5,
+      72.5
+    ]
+  }
+}

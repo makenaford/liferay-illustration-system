@@ -16,11 +16,18 @@ import { slug, svgSrc } from './uploads.ts';
  * that can be seen rather than trusted.
  */
 
+/** The back: an icon of its own, or one of the set's plain shapes. */
 const BACKS: { key: GlassBack; label: string }[] = [
+  { key: 'glyph', label: 'Icon' },
   { key: 'square', label: 'Rounded square' },
   { key: 'circle', label: 'Circle' },
-  { key: 'glyph', label: 'Icon shape' },
 ];
+
+/** One MingCute icon's path in a style, falling back to whichever it has. */
+function pathOf(key: string, style: IconStyle): string {
+  const m = MINGCUTE[key.replace(MINGCUTE_PREFIX, '')];
+  return m ? ((style === 'fill' ? m.fill : m.line) ?? m.line ?? m.fill ?? '') : '';
+}
 
 /** `mc:shopping_cart_1` -> "Shopping cart 1". */
 const nameOf = (key: string) => {
@@ -47,20 +54,23 @@ export function GlassIconBuilder({
   onToast: (s: string) => void;
   onClose: (savedTo?: string) => void;
 }) {
+  // Two icons: the frosted glass one in front, the gradient one behind it.
   const [icon, setIcon] = useState('mc:rocket');
   const [style, setStyle] = useState<IconStyle>('fill');
-  const [back, setBack] = useState<GlassBack>('square');
+  const [back, setBack] = useState<GlassBack>('glyph');
+  const [backIcon, setBackIcon] = useState('mc:planet');
+  const [backStyle, setBackStyle] = useState<IconStyle>('fill');
   const [name, setName] = useState('');
   const [category, setCategory] = useState('');
   const glass = sets.find((s) => s.id === 'glass-icons');
   const [setId, setSetId] = useState(glass?.id ?? sets[0]?.id ?? '__new');
   const [busy, setBusy] = useState(false);
 
-  const m = MINGCUTE[icon.replace(MINGCUTE_PREFIX, '')];
-  const front = m ? ((style === 'fill' ? m.fill : m.line) ?? m.line ?? m.fill ?? '') : '';
-  const spec = { front, back, backGlyph: m?.fill ?? front };
-  const dark = useMemo(() => (front ? makeGlassIcon(spec, 'dark') : ''), [front, back]); // eslint-disable-line react-hooks/exhaustive-deps
-  const light = useMemo(() => (front ? makeGlassIcon(spec, 'light') : ''), [front, back]); // eslint-disable-line react-hooks/exhaustive-deps
+  const front = pathOf(icon, style);
+  const backGlyph = pathOf(backIcon, backStyle) || front;
+  const spec = { front, back, backGlyph };
+  const dark = useMemo(() => (front ? makeGlassIcon(spec, 'dark') : ''), [front, back, backGlyph]); // eslint-disable-line react-hooks/exhaustive-deps
+  const light = useMemo(() => (front ? makeGlassIcon(spec, 'light') : ''), [front, back, backGlyph]); // eslint-disable-line react-hooks/exhaustive-deps
   const darkImg = useMemo(() => (dark ? svgSrc(preview(dark, 'gbd')) : ''), [dark]);
   const lightImg = useMemo(() => (light ? svgSrc(preview(light, 'gbl')) : ''), [light]);
 
@@ -134,30 +144,27 @@ export function GlassIconBuilder({
             void save();
           }}
         >
-          <div className="am-field">
-            <span>Icon</span>
+          <fieldset className="am-gib-layer">
+            <legend>Front · frosted glass</legend>
             <IconPicker value={icon} style={style} onChange={(v) => v && setIcon(v)} />
-          </div>
-          <div className="am-field">
-            <span>Glyph</span>
-            <div className="am-seg" role="group" aria-label="Glyph style">
-              {(['fill', 'line'] as const).map((s) => (
-                <button key={s} type="button" className={style === s ? 'am-on' : ''} onClick={() => setStyle(s)}>
-                  {s === 'fill' ? 'Filled' : 'Outline'}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="am-field">
-            <span>Back shape</span>
-            <div className="am-seg" role="group" aria-label="Back shape">
+            <StyleSwitch label="Front icon style" value={style} onChange={setStyle} />
+          </fieldset>
+          <fieldset className="am-gib-layer">
+            <legend>Back · gradient</legend>
+            <div className="am-seg" role="group" aria-label="Back">
               {BACKS.map((b) => (
                 <button key={b.key} type="button" className={back === b.key ? 'am-on' : ''} onClick={() => setBack(b.key)}>
                   {b.label}
                 </button>
               ))}
             </div>
-          </div>
+            {back === 'glyph' && (
+              <>
+                <IconPicker value={backIcon} style={backStyle} onChange={(v) => v && setBackIcon(v)} />
+                <StyleSwitch label="Back icon style" value={backStyle} onChange={setBackStyle} />
+              </>
+            )}
+          </fieldset>
           <label className="am-field" htmlFor="gib-name">
             <span>Name</span>
             <input id="gib-name" value={name} placeholder={nameOf(icon)} onChange={(e) => setName(e.target.value)} />
@@ -230,6 +237,26 @@ export function GlassIconBuilder({
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+function StyleSwitch({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: IconStyle;
+  onChange: (s: IconStyle) => void;
+}) {
+  return (
+    <div className="am-seg" role="group" aria-label={label}>
+      {(['fill', 'line'] as const).map((st) => (
+        <button key={st} type="button" className={value === st ? 'am-on' : ''} onClick={() => onChange(st)}>
+          {st === 'fill' ? 'Filled' : 'Outline'}
+        </button>
+      ))}
     </div>
   );
 }

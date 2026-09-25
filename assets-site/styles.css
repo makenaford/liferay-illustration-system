@@ -341,3 +341,12 @@ h1 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -0.4px; line-
   border-top: 1px dashed currentColor; border-top-color: color-mix(in srgb, currentColor 25%, transparent);
 }
 .am-gib-new { outline: 1px dashed #70a1ff; outline-offset: 4px; border-radius: 6px; }
+
+.am-gib-layer {
+  display: flex; flex-direction: column; gap: 8px; margin: 0;
+  border: 1px solid var(--am-line); border-radius: var(--am-radius); padding: 10px 12px 12px;
+}
+.am-gib-layer legend {
+  padding: 0 4px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--am-ink-faint);
+}
+.am-gib-layer .am-seg { align-self: flex-start; }

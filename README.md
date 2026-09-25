@@ -35,6 +35,15 @@ SDS_PATH=~/work/liferay-sites-design-system npm run tokens
 Neither is needed to build — the generated files are committed — but they are
 how you pick up a change to the design file.
 
+**The colours a designer picks from are the illustration set.** Text, lines
+and icons take a colour from `tokens/illustration/{Light,Dark}.tokens.json` —
+the illustration system's own Figma variables — or one of two gradients
+(`gradient-primary`, `gradient-brand`), through the Colour picker. The
+statuses follow the set too: success is Green, warning Yellow, alert Orange,
+danger Red. Surfaces and components still build from the Sites palette above.
+To pick up a change, export the variables from Figma over those two files and
+run `npm run colors`.
+
 **Every exported SVG embeds Source Sans 3** — only the weights it uses, about
 20 KB each — so it renders in the face its layout was measured in even as an
 `<img>` or a downloaded file, where it cannot load a web font. The faces come

@@ -1,65 +1,45 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { paletteDark, paletteLight } from '../src/palette.generated.ts';
+import { useEffect, useRef, useState } from 'react';
 import { themes } from '../src/tokens.ts';
+import { COLORS, GRADIENTS, SEMANTIC, gradientCss, paintOf } from '../src/colors.ts';
 import { useEditor } from './state.ts';
 
 /**
  * TOKEN PICKER — a colour control that shows the colour.
  *
- * A dropdown of names like `brand-primary-darken-3` is unusable: you cannot
+ * A dropdown of names like `base-primary-light` is unusable: you cannot
  * pick a colour you cannot see. Every entry carries a swatch resolved in the
- * CURRENT theme, so what you see is what the illustration will show, and the
- * semantic tones sit above the raw palette because those are what a document
- * should normally say.
+ * CURRENT theme, so what you see is what the illustration will show.
  *
- * There is still no hex input anywhere. This widens the choice to the whole
- * design-system palette; it does not open the door to off-system colour.
+ * Three kinds of entry, in the order a designer reaches for them: semantic
+ * tones (what a document should normally say), gradients, and the
+ * illustration colour set by its Figma group. There is still no hex input
+ * anywhere — the choice is the design system's, never an off-system colour.
  */
 
-/** Semantic tones, in the order a designer reaches for them. */
-const SEMANTIC = [
-  'primary',
-  'muted',
-  'subtle',
-  'onAccent',
-  'accent',
-  'accentSoft',
-  'product',
-  'success',
-  'info',
-] as const;
-
-function resolve(tone: string, theme: 'light' | 'dark'): string | undefined {
-  const tk = themes[theme];
-  const semantic: Record<string, string> = {
-    primary: tk.text.primary,
-    muted: tk.text.muted,
-    subtle: tk.text.subtle,
-    onAccent: tk.text.onAccent,
-    accent: tk.accent.base,
-    accentSoft: tk.accent.soft,
-    product: tk.accent.product,
-    success: tk.status.success,
-    info: tk.status.info,
-  };
-  // `soft` is what icons called `accentSoft` before they took palette colours.
-  if (tone === 'soft') return tk.accent.soft;
-  if (semantic[tone]) return semantic[tone];
-  const table = theme === 'light' ? paletteLight : paletteDark;
-  return (table as Record<string, string>)[tone];
+/** A swatch's CSS background for a tone in a theme, or undefined for none. */
+function swatchOf(tone: string, theme: 'light' | 'dark'): string | undefined {
+  const p = paintOf(themes[theme], tone);
+  if (!p) return undefined;
+  return 'color' in p ? p.color : gradientCss(p.gradient);
 }
 
-/** Group the raw palette by its first path segment: brand, neutral, accent… */
-function groupPalette(theme: 'light' | 'dark') {
-  const table = theme === 'light' ? paletteLight : paletteDark;
-  const groups = new Map<string, string[]>();
-  for (const key of Object.keys(table)) {
-    const head = key.split('-')[0];
-    if (!groups.has(head)) groups.set(head, []);
-    groups.get(head)!.push(key);
-  }
-  return [...groups.entries()].sort(([a], [b]) => a.localeCompare(b));
+/** A readable value for the row's right-hand column. */
+function valueOf(tone: string, theme: 'light' | 'dark'): string {
+  const p = paintOf(themes[theme], tone);
+  if (!p) return '';
+  return 'color' in p ? p.color : `${p.gradient.stops.length} stops`;
 }
+
+const GROUP_ORDER = ['Base Colors', 'Text', 'Other'];
+const GROUPS = GROUP_ORDER.map((g) => ({
+  group: g,
+  items: COLORS.filter((c) => c.group === g),
+})).filter((g) => g.items.length);
+const LABEL: Record<string, string> = {
+  ...Object.fromEntries(COLORS.map((c) => [c.key, c.label])),
+  ...Object.fromEntries(GRADIENTS.map((g) => [g.key, g.label])),
+};
+const OFFERED = new Set<string>([...SEMANTIC, ...GRADIENTS.map((g) => g.key), ...COLORS.map((c) => c.key)]);
 
 export function TokenPicker({
   value,
@@ -89,11 +69,21 @@ export function TokenPicker({
     };
   }, [open]);
 
-  const groups = useMemo(() => groupPalette(theme), [theme]);
   const needle = q.trim().toLowerCase();
-  const match = (k: string) => !needle || k.toLowerCase().includes(needle);
+  const match = (k: string) =>
+    !needle || k.toLowerCase().includes(needle) || (LABEL[k] ?? '').toLowerCase().includes(needle);
+  const pick = (k: string | undefined) => {
+    onChange(k);
+    setOpen(false);
+  };
+  const row = (k: string) => (
+    <Row key={k} name={k} label={LABEL[k]} theme={theme} active={value === k} onPick={() => pick(k)} />
+  );
 
-  const current = value ? resolve(value, theme) : undefined;
+  const current = value ? swatchOf(value, theme) : undefined;
+  // A colour from before the illustration set: still drawn, still shown, but
+  // no longer on offer — pick a set colour to replace it.
+  const legacy = value && !OFFERED.has(value) && current ? value : null;
 
   return (
     <div className="tokenpick" ref={ref}>
@@ -107,7 +97,7 @@ export function TokenPicker({
         title={value ?? 'default'}
       >
         <Swatch color={current} />
-        <span className="tokenpick-name">{value ?? 'default'}</span>
+        <span className="tokenpick-name">{value ? LABEL[value] ?? value : 'default'}</span>
         <span className="tokenpick-caret">▾</span>
       </button>
 
@@ -135,28 +125,26 @@ export function TokenPicker({
               </button>
             )}
 
-            {SEMANTIC.filter(match).length > 0 && (
-              <div className="tokenpick-group">semantic</div>
+            {legacy && !needle && (
+              <>
+                <div className="tokenpick-group">in use · older palette</div>
+                {row(legacy)}
+              </>
             )}
-            {SEMANTIC.filter(match).map((k) => (
-              <Row key={k} name={k} theme={theme} active={value === k} onPick={() => {
-                onChange(k);
-                setOpen(false);
-              }} />
-            ))}
 
-            {groups.map(([head, keys]) => {
-              const hits = keys.filter(match);
+            {SEMANTIC.filter(match).length > 0 && <div className="tokenpick-group">semantic</div>}
+            {SEMANTIC.filter(match).map(row)}
+
+            {GRADIENTS.some((g) => match(g.key)) && <div className="tokenpick-group">gradients</div>}
+            {GRADIENTS.filter((g) => match(g.key)).map((g) => row(g.key))}
+
+            {GROUPS.map(({ group, items }) => {
+              const hits = items.filter((c) => match(c.key));
               if (!hits.length) return null;
               return (
-                <div key={head}>
-                  <div className="tokenpick-group">{head}</div>
-                  {hits.map((k) => (
-                    <Row key={k} name={k} theme={theme} active={value === k} onPick={() => {
-                      onChange(k);
-                      setOpen(false);
-                    }} />
-                  ))}
+                <div key={group}>
+                  <div className="tokenpick-group">{group.toLowerCase()}</div>
+                  {hits.map((c) => row(c.key))}
                 </div>
               );
             })}
@@ -170,21 +158,22 @@ export function TokenPicker({
 
 function Row({
   name,
+  label,
   theme,
   active,
   onPick,
 }: {
   name: string;
+  label?: string;
   theme: 'light' | 'dark';
   active: boolean;
   onPick: () => void;
 }) {
-  const color = resolve(name, theme);
   return (
-    <button type="button" className={`tokenpick-row${active ? ' on' : ''}`} onClick={onPick}>
-      <Swatch color={color} />
-      <span className="tokenpick-rowname">{name}</span>
-      <code className="tokenpick-hex">{color}</code>
+    <button type="button" className={`tokenpick-row${active ? ' on' : ''}`} onClick={onPick} title={name}>
+      <Swatch color={swatchOf(name, theme)} />
+      <span className="tokenpick-rowname">{label ?? name}</span>
+      <code className="tokenpick-hex">{valueOf(name, theme)}</code>
     </button>
   );
 }

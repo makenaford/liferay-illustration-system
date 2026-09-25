@@ -1,4 +1,5 @@
 import { TYPE_ROLES } from '../src/primitives/text.ts';
+import { STATUS_TONES } from '../src/primitives/badge.ts';
 import { ICONS } from '../src/icons.ts';
 import { GLASS_ICONS } from '../src/glassIcons.generated.ts';
 import { dark as darkTokens } from '../src/tokens.ts';
@@ -189,7 +190,7 @@ export const SCHEMA: {
         key: 'tone',
         label: 'Tone',
         kind: 'select',
-        options: ['neutral', 'success', 'info', 'accent'],
+        options: ['neutral', 'accent', 'success', 'warning', 'alert', 'danger', 'info'],
       },
       {
         key: 'variant',
@@ -202,7 +203,7 @@ export const SCHEMA: {
         label: 'Status dot',
         kind: 'boolean',
         default: (el) =>
-          el.type === 'badge' && (el.tone === 'success' || el.tone === 'info'),
+          el.type === 'badge' && STATUS_TONES.has(el.tone ?? ''),
       },
     ],
   },
@@ -303,7 +304,7 @@ export const SCHEMA: {
       { key: 'width', label: 'W', kind: 'number', min: 1 },
       { key: 'value', label: 'Value 0-1', kind: 'number', step: 0.01, min: 0 },
       { key: 'height', label: 'Track H', kind: 'number', min: 1 },
-      { key: 'tone', label: 'Tone', kind: 'select', options: ['accent', 'info', 'success'] },
+      { key: 'tone', label: 'Tone', kind: 'select', options: ['accent', 'success', 'warning', 'alert', 'danger', 'info'] },
       { key: 'labelGap', label: 'Label gap', kind: 'number' },
     ],
   },

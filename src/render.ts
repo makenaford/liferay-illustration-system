@@ -26,12 +26,13 @@ import {
   MapDots,
 } from './primitives/index.ts';
 import { ICONS } from './icons.ts';
-import { paletteDark, paletteLight } from './palette.generated.ts';
 import { GLASS_ICONS } from './glassIcons.generated.ts';
 import { FONT_FACES } from './font.generated.ts';
 import type { Doc, Element } from './document.ts';
 import { boundingBox, resolveLayout } from './autolayout.ts';
 import { reattach } from './attach.ts';
+import { paintOf } from './colors.ts';
+import { cssAngleLine } from './primitives/surface.ts';
 
 /**
  * Resolve a document `tone` to a colour.
@@ -48,35 +49,39 @@ import { reattach } from './attach.ts';
  * An unknown name resolves to `undefined`, which leaves the primitive's own
  * default — a typo degrades to the normal colour rather than to nothing.
  */
-export function resolveTone(ctx: Ctx, tone: string | undefined): string | undefined {
-  if (!tone) return undefined;
-  const tk = ctx.tokens;
-  switch (tone) {
-    case 'primary':
-      return tk.text.primary;
-    case 'accent':
-      return tk.accent.base;
-    case 'accentSoft':
-    // `soft` is what icons called it before they took palette colours.
-    case 'soft':
-      return tk.accent.soft;
-    case 'product':
-      return tk.accent.product;
-    case 'success':
-      return tk.status.success;
-    case 'info':
-      return tk.status.info;
-    case 'muted':
-      return tk.text.muted;
-    case 'subtle':
-      return tk.text.subtle;
-    case 'onAccent':
-      return tk.text.onAccent;
-    default:
-      break;
-  }
-  const table = tk.name === 'light' ? paletteLight : paletteDark;
-  return (table as Record<string, string>)[tone];
+export function resolveTone(
+  ctx: Ctx,
+  tone: string | undefined,
+  /**
+   * The box a gradient spans, in user space. Needed where the painted shape
+   * can have no area — a flat rule — since a gradient sized to the shape's
+   * own bounding box then draws nothing. Omit it and the gradient spans
+   * whatever it paints.
+   */
+  box?: { x: number; y: number; width: number; height: number },
+): string | undefined {
+  const paint = paintOf(ctx.tokens, tone);
+  if (!paint) return undefined;
+  if ('color' in paint) return paint.color;
+  const { angle, stops } = paint.gradient;
+  const id = ctx.uid('tonegrad');
+  const line = box
+    ? cssAngleLine(angle, box.x, box.y, Math.max(box.width, 1), Math.max(box.height, 1))
+    : cssAngleLine(angle, 0, 0, 1, 1);
+  ctx.defs.push(
+    h(
+      'linearGradient',
+      { id, ...line, gradientUnits: box ? 'userSpaceOnUse' : 'objectBoundingBox' },
+      stops.map((st, k) =>
+        h('stop', {
+          offset: st.offset ?? (stops.length > 1 ? k / (stops.length - 1) : 0),
+          'stop-color': st.color,
+          'stop-opacity': st.opacity,
+        }),
+      ),
+    ),
+  );
+  return `url(#${id})`;
 }
 
 const toneColor = resolveTone;
@@ -218,7 +223,12 @@ function renderElementInner(ctx: Ctx, el: Element, path?: string): VNode | null 
           y1: el.y,
           x2,
           y2,
-          stroke: toneColor(ctx, el.tone ?? 'neutral-02'),
+          stroke: toneColor(ctx, el.tone ?? 'neutral-02', {
+            x: Math.min(el.x, x2),
+            y: Math.min(el.y, y2),
+            width: Math.abs(el.width),
+            height: Math.abs(el.height),
+          }),
           'stroke-width': el.thickness ?? 1,
           'stroke-linecap': el.rounded ? 'round' : 'butt',
         }),

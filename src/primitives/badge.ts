@@ -2,6 +2,12 @@ import { h, type Ctx, type VNode } from '../vsvg.ts';
 import { Text, typeStyle } from './text.ts';
 import { measureText } from '../fontMetrics.generated.ts';
 
+/** A badge's tone: a status, or brand `accent`, or `neutral`. */
+export type BadgeTone = 'neutral' | 'accent' | 'success' | 'warning' | 'alert' | 'danger' | 'info';
+
+/** The tones that mean a status, and so carry a dot by default. */
+export const STATUS_TONES = new Set<string>(['success', 'warning', 'alert', 'danger', 'info']);
+
 /** Inset either side of the label. */
 const BADGE_PAD = 6;
 /** Dot diameter plus its gap to the text. */
@@ -14,7 +20,7 @@ export function badgeWidth(
   tone: string | undefined,
 ): number {
   const st = typeStyle('micro', 'semibold');
-  const hasDot = dot ?? (tone === 'success' || tone === 'info');
+  const hasDot = dot ?? STATUS_TONES.has(tone ?? '');
   return (
     Math.ceil(measureText(label, st.size, st.weight)) +
     BADGE_PAD * 2 +
@@ -36,8 +42,8 @@ export interface BadgeProps {
   width?: number;
   height?: number;
   label: string;
-  /** Semantic tone. `success` and `info` carry the status dot by default. */
-  tone?: 'success' | 'info' | 'accent' | 'neutral';
+  /** Semantic tone. The statuses carry the status dot by default. */
+  tone?: BadgeTone;
   dot?: boolean;
   /**
    * How it's drawn, following the design system's own three treatments:
@@ -71,14 +77,9 @@ export function Badge(ctx: Ctx, props: BadgeProps): VNode {
   const C = tk.component.chip;
 
   const toned = tone !== 'neutral';
-  const toneColor =
-    tone === 'success'
-      ? tk.status.success
-      : tone === 'info'
-        ? tk.status.info
-        : tk.accent.base;
+  const toneColor = tone === 'neutral' || tone === 'accent' ? tk.accent.base : tk.status[tone];
 
-  const dot = props.dot ?? (tone === 'success' || tone === 'info');
+  const dot = props.dot ?? STATUS_TONES.has(tone);
   const dotR = 1.5;
   const textX = dot ? x + 4 + dotR * 2 + 3 : x + width / 2;
 

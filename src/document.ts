@@ -179,7 +179,7 @@ export interface BadgeEl extends LayoutChild {
   width?: number;
   height?: number;
   label: string;
-  tone?: 'success' | 'info' | 'accent' | 'neutral';
+  tone?: 'success' | 'warning' | 'alert' | 'danger' | 'info' | 'accent' | 'neutral';
   dot?: boolean;
   variant?: 'tonal' | 'ring' | 'gradient' | 'glass';
 }
@@ -303,7 +303,7 @@ export interface ProgressEl extends LayoutChild {
   height?: number;
   label?: string;
   labelGap?: number;
-  tone?: 'accent' | 'info' | 'success';
+  tone?: 'accent' | 'info' | 'success' | 'warning' | 'alert' | 'danger';
 }
 
 export interface SkeletonEl extends LayoutChild {

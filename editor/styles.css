@@ -697,8 +697,11 @@ button.mini:hover { border-color: var(--accent); color: var(--ink); }
   position: absolute;
   z-index: 40;
   top: calc(100% + 4px);
+  /* As wide as the field: a fixed width overhung the inspector's left edge,
+     which clips it. */
+  left: 0;
   right: 0;
-  width: 280px;
+  min-width: 0;
   background: var(--panel-2);
   border: 1px solid var(--line);
   border-radius: var(--radius);

@@ -11,7 +11,7 @@ export interface ProgressRowProps {
   label?: string;
   /** Baseline offset of the label above the track. */
   labelGap?: number;
-  tone?: 'accent' | 'info' | 'success';
+  tone?: 'accent' | 'info' | 'success' | 'warning' | 'alert' | 'danger';
 }
 
 /**
@@ -26,12 +26,7 @@ export function ProgressRow(ctx: Ctx, props: ProgressRowProps): VNode {
   const tk = ctx.tokens;
   const light = tk.name === 'light';
 
-  const fill =
-    props.tone === 'info'
-      ? tk.status.info
-      : props.tone === 'success'
-        ? tk.status.success
-        : tk.accent.base;
+  const fill = !props.tone || props.tone === 'accent' ? tk.accent.base : tk.status[props.tone];
 
   const trackId = ctx.uid('track');
   ctx.defs.push(

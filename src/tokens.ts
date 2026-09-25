@@ -1,4 +1,9 @@
 import { paletteDark, paletteLight, type PaletteKey } from './palette.generated.ts';
+import { colorsDark, colorsLight } from './colors.generated.ts';
+
+/** A colour from the illustration set (`colors.generated.ts`), in one scheme. */
+const setL = (key: string) => colorsLight[key];
+const setD = (key: string) => colorsDark[key];
 
 /**
  * TOKENS — the SEMANTIC layer.
@@ -278,15 +283,21 @@ export interface Tokens {
     product: string;
   };
 
+  /**
+   * The semantic statuses. Success, warning, alert and danger follow the
+   * illustration colour set's Green, Yellow, Orange and Red — the same value
+   * in both schemes, as the set defines them. Info is the older `Accent/Aqua`.
+   */
   status: {
-    /** `Status/Success/Success- Icon`. */
     success: string;
-    /** `Accent/Aqua`. */
+    warning: string;
+    alert: string;
+    danger: string;
     info: string;
     /**
-     * Text drawn ON a filled status chip. Dark mode's success green is light
-     * enough that white text on it fails contrast, so this flips while
-     * `text.onAccent` (which sits on the much darker brand blue) does not.
+     * Text drawn ON a filled status chip. Every status colour is light
+     * enough that white text on it fails contrast, so this is dark in both
+     * schemes, while `text.onAccent` (on the much darker brand blue) is not.
      */
     onStatus: string;
   };
@@ -640,7 +651,10 @@ export const dark: Tokens = {
     product: D('accent-product-accent'),
   },
   status: {
-    success: D('status-success-success-icon'),
+    success: setD('base-green'),
+    warning: setD('base-yellow'),
+    alert: setD('base-orange'),
+    danger: setD('base-red'),
     info: D('accent-aqua'),
     onStatus: D('neutral-00'),
   },
@@ -907,9 +921,13 @@ export const light: Tokens = {
     product: L('accent-product-accent'),
   },
   status: {
-    success: L('status-success-success-icon'),
+    success: setL('base-green'),
+    warning: setL('base-yellow'),
+    alert: setL('base-orange'),
+    danger: setL('base-red'),
     info: L('accent-aqua'),
-    onStatus: L('action-neutral-inverted'),
+    // The set's own text colour — dark on every status fill.
+    onStatus: setL('text'),
   },
   neutral: {
     ink: INK,

@@ -312,6 +312,8 @@ export interface ConnectorEl extends LayoutChild {
   radius?: number;
   nodes?: boolean;
   fade?: boolean;
+  /** A glass disc behind each end node. Defaults on wherever nodes are drawn. */
+  rings?: boolean;
 }
 
 /**

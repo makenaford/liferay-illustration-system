@@ -357,6 +357,12 @@ export interface Tokens {
       /** Icon and placeholder. */
       ink: string;
     };
+    /**
+     * The glass disc behind each end of a connector — the Marketing UI
+     * Assets connector (node 255:4661): a 23.75px circle under the end dot,
+     * so the line reads as plugged in rather than stopping in mid-air.
+     */
+    connector: { haloFill: string; haloFillOpacity: number; haloLine: string; haloLineOpacity: number };
     chip: {
       /** `Button Outline/line-stp-01` into `Accent/Primary Blue Accent`. */
       ringFrom: string;
@@ -646,6 +652,7 @@ export const dark: Tokens = {
       ringFrom: D('brand-primary-primary'),
       ringTo: D('accent-product-accent'),
     },
+    connector: { haloFill: '#FFFFFF', haloFillOpacity: 0.08, haloLine: '#FFFFFF', haloLineOpacity: 0.12 },
     chip: {
       ringFrom: 'rgba(255, 255, 255, 0.7)',
       ringTo: D('accent-primary-blue-accent'),
@@ -902,6 +909,9 @@ export const light: Tokens = {
       ringFrom: L('brand-primary-primary'),
       ringTo: L('accent-product-accent'),
     },
+    // White reads on a dark card and vanishes on a pale one, so light fills
+    // the disc more and edges it in the brand blue.
+    connector: { haloFill: '#FFFFFF', haloFillOpacity: 0.7, haloLine: L('brand-primary-primary'), haloLineOpacity: 0.18 },
     chip: {
       ringFrom: L('accent-primary-blue-accent'),
       ringTo: L('accent-primary-blue-accent'),

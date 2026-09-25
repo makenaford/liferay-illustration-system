@@ -15,7 +15,12 @@ export interface ConnectorProps {
   nodes?: boolean;
   /** Fade the line in from the `from` end. */
   fade?: boolean;
+  /** A glass disc behind each end node — see `component.connector`. */
+  rings?: boolean;
 }
+
+/** The end disc's radius: the source's 23.75px circle. */
+const RING = 11.875;
 
 /**
  * CONNECTOR — the elbow lines wiring the integration hub to its satellites.
@@ -27,6 +32,7 @@ export interface ConnectorProps {
  */
 export function Connector(ctx: Ctx, props: ConnectorProps): VNode {
   const { from, to, route = 'hv', nodes = true, fade = true } = props;
+  const rings = nodes && props.rings !== false;
   const r = props.radius ?? 10;
   const tk = ctx.tokens;
   const [x0, y0] = from;
@@ -72,7 +78,22 @@ export function Connector(ctx: Ctx, props: ConnectorProps): VNode {
     stroke = `url(#${gid})`;
   }
 
+  const c = tk.component.connector;
+  const ring = (cx: number, cy: number) =>
+    h('circle', {
+      cx,
+      cy,
+      r: RING,
+      fill: c.haloFill,
+      'fill-opacity': c.haloFillOpacity,
+      stroke: c.haloLine,
+      'stroke-opacity': c.haloLineOpacity,
+      'stroke-width': 1,
+    });
+
+  // Discs under the line, dots over it, so the line runs into each disc.
   return h('g', { 'data-el': 'connector' }, [
+    ...(rings ? [ring(x0, y0), ring(x1, y1)] : []),
     h('path', {
       d,
       stroke,
@@ -82,8 +103,9 @@ export function Connector(ctx: Ctx, props: ConnectorProps): VNode {
     }),
     ...(nodes
       ? [
-          h('circle', { cx: x0, cy: y0, r: 2.25, fill: tk.accent.soft }),
-          h('circle', { cx: x1, cy: y1, r: 2.25, fill: tk.accent.base }),
+          // Sized to the disc as in the source: a third of its diameter.
+          h('circle', { cx: x0, cy: y0, r: rings ? 3 : 2.25, fill: tk.accent.soft }),
+          h('circle', { cx: x1, cy: y1, r: rings ? 3 : 2.25, fill: tk.accent.base }),
         ]
       : []),
   ]);

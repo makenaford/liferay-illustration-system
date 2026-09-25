@@ -26,11 +26,13 @@ export function boundsOf(el: Element, node: SVGGraphicsElement | null): Box | nu
     case 'connector': {
       const [x0, y0] = el.from;
       const [x1, y1] = el.to;
+      // The end rings (on by default wherever nodes are) reach 12 past each end.
+      const reach = el.nodes !== false && el.rings !== false ? 12 : 3;
       return {
-        x: Math.min(x0, x1) - 3,
-        y: Math.min(y0, y1) - 3,
-        width: Math.abs(x1 - x0) + 6,
-        height: Math.abs(y1 - y0) + 6,
+        x: Math.min(x0, x1) - reach,
+        y: Math.min(y0, y1) - reach,
+        width: Math.abs(x1 - x0) + reach * 2,
+        height: Math.abs(y1 - y0) + reach * 2,
       };
     }
     case 'icon':

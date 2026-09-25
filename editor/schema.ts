@@ -337,6 +337,7 @@ export const SCHEMA: {
       { key: 'route', label: 'Route', kind: 'select', options: ['hv', 'vh', 'straight'] },
       { key: 'radius', label: 'Corner', kind: 'number', min: 0, default: 10 },
       { key: 'nodes', label: 'End nodes', kind: 'boolean', default: true },
+      { key: 'rings', label: 'End rings', kind: 'boolean', default: true },
       { key: 'fade', label: 'Fade', kind: 'boolean', default: true },
     ],
   },

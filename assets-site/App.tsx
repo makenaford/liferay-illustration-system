@@ -1261,9 +1261,10 @@ function Tools({ writable, onNew, onGlass }: { writable: boolean; onNew: () => v
         <div className="am-tool-body">
           <h2>Glass Icon Builder</h2>
           <p>
-            Turn any of MingCute’s 1,600 icons into a glass icon in the set’s own style — a gradient shape behind
-            frosted glass — in dark and light, on the same 64px grid as the rest, so every icon comes out evenly
-            sized. Add it to the library by category, and the builder offers it as a Glass icon.
+            Make a glass icon in the set’s own style from two of MingCute’s 1,600 icons — one as frosted glass in
+            front, one as a gradient behind it — in dark and light, always in the same proportions (68px and 48px in
+            an 80px frame), so every icon comes out evenly sized. Add it to the library by category, and the builder
+            offers it as a Glass icon.
           </p>
           <div className="am-tool-actions">
             <button type="button" className="am-primary" onClick={onGlass}>

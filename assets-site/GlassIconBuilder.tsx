@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { MINGCUTE } from '../src/mingcute.generated.ts';
-import { makeGlassIcon, type GlassBack } from '../src/glassIconMaker.ts';
+import { FRAME, makeGlassIcon } from '../src/glassIconMaker.ts';
 import { normaliseFigmaSvg } from '../src/figmaGlass.ts';
 import { MINGCUTE_PREFIX, type IconStyle } from '../src/icons.ts';
 import { IconPicker } from '../editor/IconPicker.tsx';
@@ -15,13 +15,6 @@ import { slug, svgSrc } from './uploads.ts';
  * same front square; the preview sets it beside icons already in the set, so
  * that can be seen rather than trusted.
  */
-
-/** The back: an icon of its own, or one of the set's plain shapes. */
-const BACKS: { key: GlassBack; label: string }[] = [
-  { key: 'glyph', label: 'Icon' },
-  { key: 'square', label: 'Rounded square' },
-  { key: 'circle', label: 'Circle' },
-];
 
 /** One MingCute icon's path in a style, falling back to whichever it has. */
 function pathOf(key: string, style: IconStyle): string {
@@ -57,7 +50,6 @@ export function GlassIconBuilder({
   // Two icons: the frosted glass one in front, the gradient one behind it.
   const [icon, setIcon] = useState('mc:rocket');
   const [style, setStyle] = useState<IconStyle>('fill');
-  const [back, setBack] = useState<GlassBack>('glyph');
   const [backIcon, setBackIcon] = useState('mc:planet');
   const [backStyle, setBackStyle] = useState<IconStyle>('fill');
   const [name, setName] = useState('');
@@ -67,10 +59,9 @@ export function GlassIconBuilder({
   const [busy, setBusy] = useState(false);
 
   const front = pathOf(icon, style);
-  const backGlyph = pathOf(backIcon, backStyle) || front;
-  const spec = { front, back, backGlyph };
-  const dark = useMemo(() => (front ? makeGlassIcon(spec, 'dark') : ''), [front, back, backGlyph]); // eslint-disable-line react-hooks/exhaustive-deps
-  const light = useMemo(() => (front ? makeGlassIcon(spec, 'light') : ''), [front, back, backGlyph]); // eslint-disable-line react-hooks/exhaustive-deps
+  const back = pathOf(backIcon, backStyle) || front;
+  const dark = useMemo(() => (front ? makeGlassIcon({ front, back }, 'dark') : ''), [front, back]);
+  const light = useMemo(() => (front ? makeGlassIcon({ front, back }, 'light') : ''), [front, back]);
   const darkImg = useMemo(() => (dark ? svgSrc(preview(dark, 'gbd')) : ''), [dark]);
   const lightImg = useMemo(() => (light ? svgSrc(preview(light, 'gbl')) : ''), [light]);
 
@@ -132,7 +123,7 @@ export function GlassIconBuilder({
         </button>
         <div>
           <h2>Glass Icon Builder</h2>
-          <p className="am-meta">A MingCute icon, in the glass icons’ own style — dark and light, on their 64px grid.</p>
+          <p className="am-meta">Two MingCute icons, made into one glass icon in the set’s own style — dark and light.</p>
         </div>
       </div>
 
@@ -145,26 +136,18 @@ export function GlassIconBuilder({
           }}
         >
           <fieldset className="am-gib-layer">
-            <legend>Front · frosted glass</legend>
+            <legend>Front · frosted glass · 68px</legend>
             <IconPicker value={icon} style={style} onChange={(v) => v && setIcon(v)} />
             <StyleSwitch label="Front icon style" value={style} onChange={setStyle} />
           </fieldset>
           <fieldset className="am-gib-layer">
-            <legend>Back · gradient</legend>
-            <div className="am-seg" role="group" aria-label="Back">
-              {BACKS.map((b) => (
-                <button key={b.key} type="button" className={back === b.key ? 'am-on' : ''} onClick={() => setBack(b.key)}>
-                  {b.label}
-                </button>
-              ))}
-            </div>
-            {back === 'glyph' && (
-              <>
-                <IconPicker value={backIcon} style={backStyle} onChange={(v) => v && setBackIcon(v)} />
-                <StyleSwitch label="Back icon style" value={backStyle} onChange={setBackStyle} />
-              </>
-            )}
+            <legend>Back · gradient · 48px</legend>
+            <IconPicker value={backIcon} style={backStyle} onChange={(v) => v && setBackIcon(v)} />
+            <StyleSwitch label="Back icon style" value={backStyle} onChange={setBackStyle} />
           </fieldset>
+          <p className="am-hint">
+            In the {FRAME}px frame the glass icon is 68px and the one behind it 48px — the set’s own proportions.
+          </p>
           <label className="am-field" htmlFor="gib-name">
             <span>Name</span>
             <input id="gib-name" value={name} placeholder={nameOf(icon)} onChange={(e) => setName(e.target.value)} />

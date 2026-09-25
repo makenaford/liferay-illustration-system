@@ -1,12 +1,15 @@
 /**
- * GLASS ICON MAKER — a MingCute glyph, made into a glass icon in the house
- * style, dark and light, on the set's own 64px grid.
+ * GLASS ICON MAKER — two MingCute icons, made into one glass icon in the
+ * house style, dark and light.
  *
  * The recipe is read off the existing glass icons (assets/glass-icons/, e.g.
- * "General - Mail"): a GRADIENT BACK shape set up and to the right, and the
- * glyph in front, down and to the left, as FROSTED GLASS — a translucent blue
- * fill with a drop shadow and two inner glows, over a background blur of the
- * back shape. Each theme has its own fill, gradient and effects, as there.
+ * "General - Mail"): a GRADIENT icon behind, up and to the right, and a
+ * FROSTED GLASS icon in front, down and to the left — a translucent blue fill
+ * with a drop shadow and two inner glows, over a background blur of the one
+ * behind. Each theme has its own fill, gradient and effects, as there.
+ *
+ * Sizes follow the house proportions: in an 80px frame, the glass icon is
+ * 68px and the one behind it 48px.
  *
  * The output is the same Figma-export shape the set ships as — a
  * `foreignObject` blur and a `_dii_` filter group — so it goes through the
@@ -15,26 +18,19 @@
  * front square.
  */
 
-export type GlassBack = 'square' | 'circle' | 'glyph';
 export type GlassTheme = 'dark' | 'light';
 
 export interface GlassIconSpec {
-  /** The glyph in front, on MingCute's 24px grid. */
+  /** The frosted glass icon in front, on MingCute's 24px grid. */
   front: string;
-  /** The back shape: a rounded square, a circle, or the glyph itself (filled). */
-  back: GlassBack;
-  /** The filled glyph, for `back: 'glyph'`. Defaults to `front`. */
-  backGlyph?: string;
+  /** The gradient icon behind it, on the same grid. */
+  back: string;
 }
 
-/**
- * The glyph's 24px grid, mapped into the 64px icon. MingCute keeps about 2px
- * of its grid clear, so at 2.35 a glyph's own ink spans about 47px — the front
- * glass of the set's own icons (Mail's is 54 wide including its bleed).
- */
-const SCALE = 2.35;
-const FRONT_AT = [0, 7] as const;
-const BACK_AT = [7.6, 0] as const;
+/** The frame, and each icon's box within it — MingCute's 24px grid scaled up. */
+export const FRAME = 80;
+const FRONT = { size: 68, x: 0, y: FRAME - 68 };
+const BACK = { size: 48, x: FRAME - 48, y: 0 };
 
 const THEME = {
   dark: {
@@ -45,7 +41,8 @@ const THEME = {
       ['#0B5FFF', 0.485577],
       ['#47FFFC', 1],
     ],
-    line: { x1: 55.06, y1: 5.3, x2: 34.9, y2: 50 },
+    /** Across the back icon's box, as fractions of it: top right to bottom left. */
+    line: { x1: 0.85, y1: 0, x2: 0.4, y2: 1 },
     /** Figma's background blur, which it writes as CSS blur(radius / 2). */
     bgBlur: 6,
     effects: `<feOffset dy="4"/><feGaussianBlur stdDeviation="2"/><feComposite in2="hardAlpha" operator="out"/>
@@ -69,7 +66,8 @@ const THEME = {
       ['#0B5FFF', 0.442308],
       ['#0FFFFC', 1],
     ],
-    line: { x1: 17.74, y1: 45.63, x2: 42.81, y2: 2.15 },
+    /** Bottom left to top right. */
+    line: { x1: 0.2, y1: 0.95, x2: 0.7, y2: 0 },
     bgBlur: 4,
     effects: `<feOffset dx="1.3"/><feGaussianBlur stdDeviation="0.65"/><feComposite in2="hardAlpha" operator="out"/>
 <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0.344262 0 0 0 0 1 0 0 0 0.6 0"/>
@@ -86,32 +84,26 @@ const THEME = {
   },
 } as const;
 
-/** Back shapes, in the 64px icon's own coordinates — the up-and-right square. */
-const BACKS: Record<Exclude<GlassBack, 'glyph'>, string> = {
-  square: 'M22 2H52A10 10 0 0 1 62 12V42A10 10 0 0 1 52 52H22A10 10 0 0 1 12 42V12A10 10 0 0 1 22 2Z',
-  circle: 'M37 2A25 25 0 1 1 37 52A25 25 0 1 1 37 2Z',
-};
-
-const place = ([x, y]: readonly [number, number]) => `translate(${x} ${y}) scale(${SCALE})`;
+const place = (box: { size: number; x: number; y: number }) =>
+  `translate(${box.x} ${box.y}) scale(${box.size / 24})`;
 
 /** One theme of the icon, as a Figma-style glass SVG. */
 export function makeGlassIcon(spec: GlassIconSpec, theme: GlassTheme): string {
   const t = THEME[theme];
-  const back =
-    spec.back === 'glyph'
-      ? `<path transform="${place(BACK_AT)}" d="${spec.backGlyph ?? spec.front}" fill="url(#gi_grad)"/>`
-      : `<path d="${BACKS[spec.back]}" fill="url(#gi_grad)"/>`;
-  const front = `<path transform="${place(FRONT_AT)}" d="${spec.front}"`;
+  const back = `<path transform="${place(BACK)}" d="${spec.back}" fill="url(#gi_grad)"/>`;
+  const front = `<path transform="${place(FRONT)}" d="${spec.front}"`;
   // The effect region Figma gives a glass shape: its box, and room for the shadow.
-  const fx = -6;
-  const fy = 3;
-  const fw = 72;
-  const fh = 68;
+  const fx = FRONT.x - 6;
+  const fy = FRONT.y - 6;
+  const fw = FRONT.size + 14;
+  const fh = FRONT.size + 14;
+  const gx = (f: number) => BACK.x + BACK.size * f;
+  const gy = (f: number) => BACK.y + BACK.size * f;
   const stops = t.stops
     .map(([c, o]) => `<stop${o ? ` offset="${o}"` : ''} stop-color="${c}"/>`)
     .join('');
   return (
-    `<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">` +
+    `<svg width="${FRAME}" height="${FRAME}" viewBox="0 0 ${FRAME} ${FRAME}" fill="none" xmlns="http://www.w3.org/2000/svg">` +
     back +
     `<foreignObject x="${fx}" y="${fy}" width="${fw}" height="${fh}"><div xmlns="http://www.w3.org/1999/xhtml" ` +
     `style="backdrop-filter:blur(${t.bgBlur / 2}px);clip-path:url(#gi_bgclip);height:100%;width:100%"></div></foreignObject>` +
@@ -124,7 +116,7 @@ export function makeGlassIcon(spec: GlassIconSpec, theme: GlassTheme): string {
     t.effects.replace(/\n/g, '') +
     `</filter>` +
     `<clipPath id="gi_bgclip" transform="translate(${-fx} ${-fy})">${front}/></clipPath>` +
-    `<linearGradient id="gi_grad" x1="${t.line.x1}" y1="${t.line.y1}" x2="${t.line.x2}" y2="${t.line.y2}" gradientUnits="userSpaceOnUse">${stops}</linearGradient>` +
+    `<linearGradient id="gi_grad" x1="${gx(t.line.x1)}" y1="${gy(t.line.y1)}" x2="${gx(t.line.x2)}" y2="${gy(t.line.y2)}" gradientUnits="userSpaceOnUse">${stops}</linearGradient>` +
     `</defs></svg>`
   );
 }

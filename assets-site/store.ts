@@ -41,6 +41,8 @@ export interface IllustrationRow {
 export interface IconRow {
   id: string;
   name: string;
+  /** Its group within the set — Business, Commerce… See `iconCategory`. */
+  category?: string;
   /** The icon's SVG, or its dark variant when it has two. */
   svg: string;
   /** The light variant, when the icon has one. */
@@ -61,6 +63,19 @@ export interface GraphicRow {
   light: GraphicArt;
   uploadedAt: number;
   uploadedBy?: string;
+}
+
+/**
+ * An icon's category and its name within it. Icons added before categories
+ * carry both in the name, as the glass icon files do ("Business - Costly"),
+ * so that is read as category and name.
+ */
+export function iconParts(icon: Pick<IconRow, 'name' | 'category'>): { category: string; name: string } {
+  if (icon.category) return { category: icon.category, name: icon.name };
+  const i = icon.name.indexOf(' - ');
+  return i > 0
+    ? { category: icon.name.slice(0, i), name: icon.name.slice(i + 3) }
+    : { category: 'Uncategorized', name: icon.name };
 }
 
 export interface IconSetRow {

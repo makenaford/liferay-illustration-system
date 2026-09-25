@@ -85,6 +85,8 @@ export type Field<K extends string = string> =
   | { key: K; label: string; kind: 'file' }
   /** An avatar's photo: an upload, embedded small, or an image URL. */
   | { key: K; label: string; kind: 'photo' }
+  /** A glass icon: the shipped set, or the Marketing Assets library's. Patches several props. */
+  | { key: K; label: string; kind: 'glassIcon' }
   /** An icon from MingCute, searchable, drawn in the element's style. */
   | { key: K; label: string; kind: 'icon' }
   /** A graphic: built in, or from the Marketing Assets library. Patches several props. */
@@ -446,7 +448,7 @@ export const SCHEMA: {
   spotIcon: {
     label: 'Glass icon',
     fields: [
-      { key: 'name', label: 'Artwork', kind: 'select', options: SPOT_KEYS, labels: SPOT_LABELS, groups: SPOT_GROUPS },
+      { key: 'name', label: 'Artwork', kind: 'glassIcon' },
       ...XY,
       { key: 'size', label: 'Size', kind: 'number', min: 1, default: 48 },
     ],

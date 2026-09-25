@@ -473,6 +473,12 @@ export interface SpotIconEl extends LayoutChild {
   x: number;
   y: number;
   size?: number;
+  /**
+   * A glass icon from the Marketing Assets library — added there or made with
+   * its Glass Icon Builder — carried in the document so it draws anywhere.
+   * Wins over `name`.
+   */
+  art?: { id: string; label: string; category: string; dark: GraphicArt; light: GraphicArt };
 }
 
 /**

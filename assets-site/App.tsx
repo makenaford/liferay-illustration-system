@@ -11,10 +11,9 @@ import { GRAPHICS } from '../src/graphics.generated.ts';
 import { normaliseFigmaSvg } from '../src/figmaGlass.ts';
 import {
   canWrite,
-  graphicKey,
+  iconParts,
   MAX_DOC_BYTES,
   names as namesOf,
-  setKey,
   store,
   viewerId,
   type Folders,
@@ -26,6 +25,7 @@ import {
   type Store,
 } from './store.ts';
 import { parseFiles, slug, svgSrc, type ParsedIcon } from './uploads.ts';
+import { GlassIconBuilder } from './GlassIconBuilder.tsx';
 
 type Theme = 'dark' | 'light';
 type Tab = 'illustrations' | 'icons' | 'graphics' | 'tools';
@@ -75,6 +75,8 @@ export function App() {
   };
   /** Whether the builder is open, in place of the library. */
   const [building, setBuilding] = useState(false);
+  /** Whether the Glass Icon Builder is open, in place of the library. */
+  const [glassing, setGlassing] = useState(false);
   const builderView = useEditor((s) => s.view);
   const [art, setArt] = useState<Theme>('dark');
   const [query, setQuery] = useState('');
@@ -137,7 +139,6 @@ export function App() {
   const sets = useMemo(
     () =>
       [...lib.sets]
-        .filter((s) => inPlace(setKey(s.id)))
         .map((s) => ({
           ...s,
           icons: [...s.icons]
@@ -194,7 +195,7 @@ export function App() {
   const graphics = useMemo(
     () =>
       allGraphics
-        .filter((g) => inPlace(graphicKey(g.id)) && (!needle || g.name.toLowerCase().includes(needle)))
+        .filter((g) => !needle || g.name.toLowerCase().includes(needle))
         .sort((a, b) => Number(b.builtIn) - Number(a.builtIn) || a.name.localeCompare(b.name)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [allGraphics, lib.folders, current, needle],
@@ -234,7 +235,12 @@ export function App() {
     }
   };
 
-  const addIcons = async (icons: ParsedIcon[], set: { id: string; name: string; isNew: boolean }) => {
+  const addIcons = async (
+    icons: ParsedIcon[],
+    set: { id: string; name: string; isNew: boolean },
+    /** One category for all of them; otherwise each takes its file name's. */
+    category?: string,
+  ) => {
     if (!st) return;
     setBusy(true);
     try {
@@ -242,21 +248,31 @@ export function App() {
       const now = Date.now();
       if (set.isNew) {
         await st.putSet({ id: set.id, name: set.name, createdAt: now, createdBy: by });
-        if (here) await file(setKey(set.id), here);
       }
       const existing = lib.sets.find((s) => s.id === set.id)?.icons ?? [];
+      // "Business - Costly" in a file name is category and name.
+      const place = (icon: ParsedIcon) => {
+        const parts = iconParts({ name: icon.name });
+        const fromFile = parts.category !== 'Uncategorized';
+        return { category: category || (fromFile ? parts.category : undefined), name: fromFile ? parts.name : icon.name };
+      };
+      const idOf = (icon: ParsedIcon) => {
+        const pl = place(icon);
+        return slug(`${pl.category ?? ''} ${pl.name}`);
+      };
       for (const icon of icons) {
-        const id = slug(icon.name);
+        const pl = place(icon);
         await st.putIcon(set.id, {
-          id,
-          name: icon.name,
+          id: idOf(icon),
+          name: pl.name,
+          ...(pl.category ? { category: pl.category } : {}),
           svg: icon.svg,
           ...(icon.svgLight ? { svgLight: icon.svgLight } : {}),
           uploadedAt: now,
           uploadedBy: by,
         });
       }
-      const replaced = icons.filter((i) => existing.some((e) => e.id === slug(i.name))).length;
+      const replaced = icons.filter((i) => existing.some((e) => e.id === idOf(i))).length;
       setToast(
         `Added ${icons.length - replaced} icon${icons.length - replaced === 1 ? '' : 's'} to ${set.name}` +
           (replaced ? `, replaced ${replaced}.` : '.'),
@@ -292,7 +308,6 @@ export function App() {
           continue;
         }
         await st.putGraphic(row);
-        if (here) await fileIn(graphicKey(id), here);
         added++;
       }
       setToast(
@@ -313,6 +328,24 @@ export function App() {
 
   // The builder, in place of the library, until its "‹ Library" button.
   if (building && builderView === 'editor') return <BuilderApp />;
+  if (glassing) {
+    return (
+      <div className="am-root">
+        <div className="am-page">
+          <GlassIconBuilder
+            sets={lib.sets}
+            writable={writable}
+            store={st}
+            onToast={setToast}
+            onClose={(saved) => {
+              setGlassing(false);
+              if (saved) setTab('icons');
+            }}
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="am-root">
@@ -397,18 +430,13 @@ export function App() {
         </button>
       </nav>
 
-      {tab !== 'tools' && (
+      {/* Folders are for illustrations; icons are organised by category. */}
+      {tab === 'illustrations' && (
         <FolderBar
           folders={lib.folders}
           current={current}
           counts={(v) =>
-            [
-              ...lib.illustrations.map((i) => i.id),
-              ...lib.sets.map((x) => setKey(x.id)),
-              ...allGraphics.map((g) => graphicKey(g.id)),
-            ].filter((k) =>
-              v === 'unfiled' ? !folderOf(k) : folderOf(k) === v,
-            ).length
+            lib.illustrations.filter((i) => (v === 'unfiled' ? !folderOf(i.id) : folderOf(i.id) === v)).length
           }
           writable={writable}
           onPick={setPlace}
@@ -460,7 +488,7 @@ export function App() {
             />
           )
         ) : tab === 'tools' ? (
-          <Tools writable={writable} onNew={() => void create()} />
+          <Tools writable={writable} onNew={() => void create()} onGlass={() => setGlassing(true)} />
         ) : tab === 'graphics' ? (
           graphics.length ? (
             <GraphicsGrid
@@ -468,9 +496,6 @@ export function App() {
               theme={art}
               writable={writable}
               store={st}
-              folders={lib.folders}
-              folderOf={(id) => folderOf(graphicKey(id))}
-              onFile={(id, f) => void file(graphicKey(id), f)}
               onToast={setToast}
             />
           ) : (
@@ -492,9 +517,6 @@ export function App() {
                 writable={writable}
                 store={st}
                 onToast={setToast}
-                folders={lib.folders}
-                folder={folderOf(setKey(s.id))}
-                onFile={(f) => void file(setKey(s.id), f)}
               />
             ))}
           </div>
@@ -542,7 +564,7 @@ export function App() {
           busy={busy}
           preferGraphics={tab === 'graphics'}
           onCancel={() => setPendingIcons(null)}
-          onAdd={(set) => void addIcons(pendingIcons, set)}
+          onAdd={(set, category) => void addIcons(pendingIcons, set, category)}
           onAddGraphics={() => void addGraphics(pendingIcons)}
         />
       )}
@@ -560,6 +582,18 @@ function Empty({ ready, searching, title, body }: { ready: boolean; searching: b
       <p>{body}</p>
     </div>
   );
+}
+
+/** A set's icons in category order, each category's icons by name. */
+function byCategory(icons: IconRow[]): [string, IconRow[]][] {
+  const groups = new Map<string, IconRow[]>();
+  for (const icon of icons) {
+    const c = iconParts(icon).category;
+    groups.set(c, [...(groups.get(c) ?? []), icon]);
+  }
+  return [...groups.entries()]
+    .sort(([a], [b]) => (a === 'Uncategorized' ? 1 : b === 'Uncategorized' ? -1 : a.localeCompare(b)))
+    .map(([c, list]) => [c, list.sort((x, y) => iconParts(x).name.localeCompare(iconParts(y).name))]);
 }
 
 /** Drag payload for filing a card or set into a folder. */
@@ -779,9 +813,6 @@ function IconSet({
   writable,
   store: st,
   onToast,
-  folders,
-  folder,
-  onFile,
 }: {
   set: IconSetRow;
   theme: Theme;
@@ -789,9 +820,6 @@ function IconSet({
   writable: boolean;
   store: Store | null;
   onToast: (s: string) => void;
-  folders: Folders;
-  folder: string | null;
-  onFile: (folderId: string | null) => void;
 }) {
   const [picked, setPicked] = useState<IconRow | null>(null);
   const [confirming, setConfirming] = useState(false);
@@ -800,12 +828,6 @@ function IconSet({
   return (
     <section
       className="am-set"
-      draggable={writable}
-      onDragStart={(e) => {
-        if ((e.target as HTMLElement).closest('.am-icons')) return;
-        e.dataTransfer.setData(DRAG, setKey(set.id));
-        e.dataTransfer.effectAllowed = 'move';
-      }}
     >
       <div className="am-set-head">
         <h2>{set.name}</h2>
@@ -813,9 +835,6 @@ function IconSet({
           {set.icons.length} icon{set.icons.length === 1 ? '' : 's'}
           {by ? ` · started by ${by}` : ''}
         </span>
-        {writable && folders.folders.length > 0 && (
-          <FolderSelect id={`folder-set-${set.id}`} folders={folders} value={folder} onChange={onFile} />
-        )}
         {writable && (
           <button
             type="button"
@@ -838,25 +857,34 @@ function IconSet({
           </button>
         )}
       </div>
-      <ul className={`am-icons ${theme}`}>
-        {set.icons.map((icon) => (
-          <li key={icon.id}>
-            <button
-              type="button"
-              className={picked?.id === icon.id ? 'am-on' : ''}
-              onClick={() => setPicked(picked?.id === icon.id ? null : icon)}
-              title={icon.name}
-            >
-              <img src={svgSrc(variant(icon))} alt="" loading="lazy" />
-              <span>{icon.name}</span>
-            </button>
-          </li>
-        ))}
-      </ul>
+      {byCategory(set.icons).map(([category, icons]) => (
+        <div key={category} className="am-category">
+          <h3>
+            {category} <span className="am-count">{icons.length}</span>
+          </h3>
+          <ul className={`am-icons ${theme}`}>
+            {icons.map((icon) => (
+              <li key={icon.id}>
+                <button
+                  type="button"
+                  className={picked?.id === icon.id ? 'am-on' : ''}
+                  onClick={() => setPicked(picked?.id === icon.id ? null : icon)}
+                  title={`${category} · ${iconParts(icon).name}`}
+                >
+                  <img src={svgSrc(variant(icon))} alt="" loading="lazy" />
+                  <span>{iconParts(icon).name}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
       {picked && (
         <div className="am-icon-bar" role="region" aria-label={picked.name}>
-          <b>{picked.name}</b>
-          <span className="am-meta">{picked.svgLight ? 'Dark and light variants' : 'One variant'}</span>
+          <b>{iconParts(picked).name}</b>
+          <span className="am-meta">
+            {iconParts(picked).category} · {picked.svgLight ? 'dark and light variants' : 'one variant'}
+          </span>
           <button type="button" onClick={() => void offer(`${slug(picked.name)}${picked.svgLight ? '-dark' : ''}.svg`, picked.svg, 'image/svg+xml', onToast)}>
             {picked.svgLight ? 'Dark SVG' : 'SVG'}
           </button>
@@ -909,12 +937,19 @@ function AddIcons({
   /** Start on Graphics — the SVGs were dropped while looking at graphics. */
   preferGraphics: boolean;
   onCancel: () => void;
-  onAdd: (set: { id: string; name: string; isNew: boolean }) => void;
+  onAdd: (set: { id: string; name: string; isNew: boolean }, category?: string) => void;
   onAddGraphics: () => void;
 }) {
   const [choice, setChoice] = useState<string>(preferGraphics ? '__graphics' : sets[0]?.id ?? '__new');
   const [name, setName] = useState('');
+  const [category, setCategory] = useState('');
   const toGraphics = choice === '__graphics';
+  const fileCategories = [...new Set(icons.map((i) => iconParts({ name: i.name }).category))].filter(
+    (c) => c !== 'Uncategorized',
+  );
+  const setCategories = [
+    ...new Set((sets.find((s) => s.id === choice)?.icons ?? []).map((i) => iconParts(i).category)),
+  ].sort();
   const isNew = choice === '__new';
   const newId = slug(name);
   const clash = isNew && sets.some((s) => s.id === newId);
@@ -936,7 +971,7 @@ function AddIcons({
             return;
           }
           const set = isNew ? { id: newId, name: name.trim(), isNew: true } : { id: choice, name: sets.find((s) => s.id === choice)!.name, isNew: false };
-          onAdd(set);
+          onAdd(set, category.trim() || undefined);
         }}
       >
         <div className="am-sheet-head">
@@ -986,6 +1021,27 @@ function AddIcons({
                 onChange={(e) => setName(e.target.value)}
               />
               {clash && <em className="am-err">A set with that name exists — choose it above instead.</em>}
+            </label>
+          )}
+          {!toGraphics && (
+            <label className="am-field" htmlFor="icon-category">
+              <span>Category</span>
+              <input
+                id="icon-category"
+                list="icon-categories"
+                value={category}
+                placeholder={
+                  fileCategories.length
+                    ? `From the file names — ${fileCategories.slice(0, 3).join(', ')}${fileCategories.length > 3 ? '…' : ''}`
+                    : 'e.g. Business'
+                }
+                onChange={(e) => setCategory(e.target.value)}
+              />
+              <datalist id="icon-categories">
+                {setCategories.map((c) => (
+                  <option key={c} value={c} />
+                ))}
+              </datalist>
             </label>
           )}
           <div className="am-actions">
@@ -1197,9 +1253,25 @@ function FolderBar({
 }
 
 /** TOOLS — what the team makes assets with. */
-function Tools({ writable, onNew }: { writable: boolean; onNew: () => void }) {
+function Tools({ writable, onNew, onGlass }: { writable: boolean; onNew: () => void; onGlass: () => void }) {
   return (
     <div className="am-tools-grid">
+      <article className="am-tool">
+        <div className="am-tool-mark am-tool-mark-glass" aria-hidden />
+        <div className="am-tool-body">
+          <h2>Glass Icon Builder</h2>
+          <p>
+            Turn any of MingCute’s 1,600 icons into a glass icon in the set’s own style — a gradient shape behind
+            frosted glass — in dark and light, on the same 64px grid as the rest, so every icon comes out evenly
+            sized. Add it to the library by category, and the builder offers it as a Glass icon.
+          </p>
+          <div className="am-tool-actions">
+            <button type="button" className="am-primary" onClick={onGlass}>
+              Open Glass Icon Builder
+            </button>
+          </div>
+        </div>
+      </article>
       <article className="am-tool">
         <div className="am-tool-mark" aria-hidden />
         <div className="am-tool-body">
@@ -1250,18 +1322,12 @@ function GraphicsGrid({
   theme,
   writable,
   store: st,
-  folders,
-  folderOf,
-  onFile,
   onToast,
 }: {
   items: GraphicItem[];
   theme: Theme;
   writable: boolean;
   store: Store | null;
-  folders: Folders;
-  folderOf: (id: string) => string | null;
-  onFile: (id: string, folderId: string | null) => void;
   onToast: (s: string) => void;
 }) {
   const [picked, setPicked] = useState<string | null>(null);
@@ -1284,11 +1350,6 @@ function GraphicsGrid({
               type="button"
               className={picked === g.id ? 'am-on' : ''}
               onClick={() => setPicked(picked === g.id ? null : g.id)}
-              draggable={writable}
-              onDragStart={(e) => {
-                e.dataTransfer.setData(DRAG, graphicKey(g.id));
-                e.dataTransfer.effectAllowed = 'move';
-              }}
             >
               <img src={svgSrc(graphicSvg(g, theme))} alt="" loading="lazy" />
               <span className="am-graphic-name">{g.name}</span>
@@ -1316,9 +1377,6 @@ function GraphicsGrid({
           >
             Copy SVG
           </button>
-          {writable && folders.folders.length > 0 && (
-            <FolderSelect id={`folder-graphic-${sel.id}`} folders={folders} value={folderOf(sel.id)} onChange={(f) => onFile(sel.id, f)} />
-          )}
           {writable && !sel.builtIn && (
             <button
               type="button"

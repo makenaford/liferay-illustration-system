@@ -363,7 +363,7 @@ function renderSpotIcon(
   el: Extract<Element, { type: 'spotIcon' }>,
 ): VNode {
   const size = el.size ?? 48;
-  const icon = GLASS_ICONS[el.name];
+  const icon = el.art ?? GLASS_ICONS[el.name];
 
   if (!icon) {
     return h('g', { 'data-el': 'spot-icon-missing' }, [

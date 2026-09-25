@@ -31,6 +31,7 @@ import { AvatarPhotoField } from './AvatarPhotoField.tsx';
 import { GraphicField } from './GraphicField.tsx';
 import { IconPicker } from './IconPicker.tsx';
 import { IconSlots } from './IconSlots.tsx';
+import { GlassIconField } from './GlassIconField.tsx';
 import { BarSeriesEditor, LineSeriesEditor } from './ChartData.tsx';
 import { deleteSelection, groupSelection, ungroupSelected } from './grouping.ts';
 import { withText } from './InlineText.tsx';
@@ -618,6 +619,7 @@ function FieldRow({
     field.kind === 'graphic' ||
     field.kind === 'icon' ||
     field.kind === 'iconSlots' ||
+    field.kind === 'glassIcon' ||
     field.kind === 'iconList' ||
     field.kind === 'list';
 
@@ -793,6 +795,9 @@ function Control({
           onChange={(v) => onChange(v)}
         />
       );
+
+    case 'glassIcon':
+      return <GlassIconField el={el} onPatch={onPatch} />;
 
     case 'iconSlots':
       return <IconSlots el={el} onPatch={onPatch} />;

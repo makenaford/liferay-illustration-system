@@ -18,7 +18,17 @@ export interface GlassOptions {
    * for the icon set, whose output must not move.
    */
   anyBlurredGroup?: boolean;
+  /**
+   * Leave a `BACKDROP_SLOT` inside each glass shape, under its blurred
+   * artwork, where the renderer puts a blurred copy of the ILLUSTRATION
+   * behind the graphic — the part a self-contained SVG cannot reach. Off for
+   * the icon set, whose output must not move.
+   */
+  backdropSlot?: boolean;
 }
+
+/** Where a graphic's glass takes the page behind it. See `GlassOptions.backdropSlot`. */
+export const BACKDROP_SLOT = '<g data-backdrop=""/>';
 
 export interface Processed {
   viewBox: [number, number, number, number];
@@ -220,7 +230,9 @@ export function portableBackdropBlur(svg: string, opts: GlassOptions = {}): stri
       const rest = out.splice(0, out.length);
       out.push(
         group(`mask="url(#${inv})"`, rest),
-        group(outline.confine, [text(`<g filter="url(#${blur})">${refs}</g>`)]),
+        group(outline.confine, [
+          text(`${opts.backdropSlot ? BACKDROP_SLOT : ''}<g filter="url(#${blur})">${refs}</g>`),
+        ]),
         child,
       );
     }

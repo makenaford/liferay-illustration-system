@@ -444,6 +444,11 @@ export interface GraphicEl extends LayoutChild {
   name?: string;
   /** A library graphic, embedded. Wins over `name`. */
   art?: { id: string; label: string; dark: GraphicArt; light: GraphicArt };
+  /**
+   * How strongly the glass frosts what is behind it — Figma's background
+   * blur, in canvas px. Defaults to 12. 0 shows it clear.
+   */
+  blur?: number;
 }
 
 export interface SpotIconEl extends LayoutChild {

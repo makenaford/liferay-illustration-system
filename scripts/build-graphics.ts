@@ -36,7 +36,7 @@ for (const base of bases) {
   const lightFile = join(DIR, `${base} - Light.svg`);
   const hasDark = existsSync(darkFile);
   const hasLight = existsSync(lightFile);
-  const opts = { anyBlurredGroup: true };
+  const opts = { anyBlurredGroup: true, backdropSlot: true };
   const dark = normaliseFigmaSvg(readFileSync(hasDark ? darkFile : lightFile, 'utf8'), `g-${key}-d-`, undefined, opts);
   const light = normaliseFigmaSvg(readFileSync(hasLight ? lightFile : darkFile, 'utf8'), `g-${key}-l-`, undefined, opts);
   entries.push(

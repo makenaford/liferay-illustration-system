@@ -28,6 +28,7 @@ import {
 import { ICONS } from './icons.ts';
 import { GLASS_ICONS } from './glassIcons.generated.ts';
 import { GRAPHICS } from './graphics.generated.ts';
+import { BACKDROP_SLOT } from './figmaGlass.ts';
 import { FONT_FACES } from './font.generated.ts';
 import type { Doc, Element } from './document.ts';
 import { boundingBox, resolveLayout } from './autolayout.ts';
@@ -416,7 +417,44 @@ function renderGraphic(ctx: Ctx, el: Extract<Element, { type: 'graphic' }>): VNo
   const s = Math.min(el.width / vw, el.height / vh);
   const ox = el.x + (el.width - vw * s) / 2;
   const oy = el.y + (el.height - vh * s) / 2;
-  const body = art.body.replaceAll('__NS__', `${ctx.uid('gr')}-`);
+  let body = art.body.replaceAll('__NS__', `${ctx.uid('gr')}-`);
+
+  /*
+   * The glass frosts the illustration behind it, not just its own artwork:
+   * each glass shape's slot gets the backdrop — everything drawn before this
+   * graphic, see `buildDocument` — blurred. The copy is placed back in canvas
+   * space (the inverse of the graphic's own transform), so it lines up with
+   * what it covers and the blur is in canvas px. It is opaque, so nothing
+   * sharp shows through the glass.
+   */
+  const blur = el.blur ?? 12;
+  if (body.includes(BACKDROP_SLOT)) {
+    let pane = '';
+    if (ctx.backdropId && blur > 0) {
+      const fid = ctx.uid('grblur');
+      const pad = blur * 3;
+      ctx.defs.push(
+        h(
+          'filter',
+          {
+            id: fid,
+            x: -pad,
+            y: -pad,
+            width: ctx.canvas.width + pad * 2,
+            height: ctx.canvas.height + pad * 2,
+            filterUnits: 'userSpaceOnUse',
+            'color-interpolation-filters': 'sRGB',
+          },
+          [h('feGaussianBlur', { stdDeviation: blur / 2 })],
+        ),
+      );
+      const inverse = `translate(${vx} ${vy}) scale(${1 / s}) translate(${-ox} ${-oy})`;
+      pane =
+        `<g transform="${inverse}"><use href="#${ctx.backdropId}" xlink:href="#${ctx.backdropId}" ` +
+        `filter="url(#${fid})"/></g>`;
+    }
+    body = body.split(BACKDROP_SLOT).join(pane);
+  }
   return rawNode(
     'g',
     {
@@ -499,10 +537,10 @@ export function buildDocument(
   ctx.backdropId = baseId;
 
   /*
-   * A cursor floats over the content, so its glass blurs the content too:
-   * each top-level cursor gets a copy of everything drawn before it, and
+   * Cursors and graphics float over the content, so their glass blurs it too:
+   * each top-level one gets a copy of everything drawn before it, and
    * blurs that. The copy is unannotated, so the editor still hits the real
-   * elements. An earlier cursor inside the copy blurs its own copy, never the
+   * elements. An earlier one inside the copy blurs its own copy, never the
    * one being built, which would be a reference to itself.
    */
   /**
@@ -551,7 +589,8 @@ export function buildDocument(
     'g',
     { 'data-el': 'content' },
     doc.elements.map((el, i) => {
-      if (el.type === 'cursor') ctx.backdropId = beneath(i);
+      // Cursors and graphics are glass over the content: they blur it.
+      if (el.type === 'cursor' || el.type === 'graphic') ctx.backdropId = beneath(i);
       const node = draw(el, options.annotate ? String(i) : undefined);
       ctx.backdropId = baseId;
       return node;

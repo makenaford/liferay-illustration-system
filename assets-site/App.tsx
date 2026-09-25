@@ -283,7 +283,7 @@ export function App() {
       for (const item of items) {
         let id = slug(item.name);
         if (taken.has(id)) id = `${id}-2`;
-        const opts = { anyBlurredGroup: true };
+        const opts = { anyBlurredGroup: true, backdropSlot: true };
         const dark = normaliseFigmaSvg(item.svg, `g-${id}-d-`, undefined, opts);
         const light = normaliseFigmaSvg(item.svgLight ?? item.svg, `g-${id}-l-`, undefined, opts);
         const row: GraphicRow = { id, name: item.name, dark, light, uploadedAt: now, uploadedBy: by };

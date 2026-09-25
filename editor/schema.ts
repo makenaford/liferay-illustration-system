@@ -434,6 +434,7 @@ export const SCHEMA: {
       { key: 'name', label: 'Graphic', kind: 'graphic' },
       ...XY,
       ...WH,
+      { key: 'blur', label: 'Glass blur', kind: 'number', min: 0, default: 12 },
     ],
   },
   spotIcon: {

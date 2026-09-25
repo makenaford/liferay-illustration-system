@@ -62,6 +62,8 @@ export type Field<K extends string = string> =
       options: readonly string[];
       /** Display text per option, where the raw value needs annotating. */
       labels?: Record<string, string>;
+      /** An option's group; consecutive options in one group share an <optgroup>. */
+      groups?: Record<string, string>;
     }
   | { key: K; label: string; kind: 'numbers'; label2?: string }
   | { key: K; label: string; kind: 'series' }
@@ -86,12 +88,21 @@ export const ICON_KEYS = ['', ...Object.keys(ICONS)];
  * dark artwork is labelled, so a designer picking artwork for a light
  * illustration can see the gap rather than discover it after export.
  */
-export const SPOT_KEYS = Object.keys(GLASS_ICONS).sort();
+/** Glass icons, in the set's own order: by category, then by name. */
+export const SPOT_KEYS = Object.keys(GLASS_ICONS).sort(
+  (a, b) =>
+    GLASS_ICONS[a].category.localeCompare(GLASS_ICONS[b].category) ||
+    GLASS_ICONS[a].label.localeCompare(GLASS_ICONS[b].label),
+);
 export const SPOT_LABELS: Record<string, string> = Object.fromEntries(
   Object.entries(GLASS_ICONS).map(([k, v]) => [
     k,
-    v.lightIsFallback ? `${k} — no light variant` : k,
+    v.lightIsFallback ? `${v.label} — no light variant` : v.label,
   ]),
+);
+/** Each icon's category, which the picker shows as option groups. */
+export const SPOT_GROUPS: Record<string, string> = Object.fromEntries(
+  Object.entries(GLASS_ICONS).map(([k, v]) => [k, v.category]),
 );
 
 const XY: Field<'x' | 'y'>[] = [
@@ -383,7 +394,7 @@ export const SCHEMA: {
   spotIcon: {
     label: 'Glass icon',
     fields: [
-      { key: 'name', label: 'Artwork', kind: 'select', options: SPOT_KEYS, labels: SPOT_LABELS },
+      { key: 'name', label: 'Artwork', kind: 'select', options: SPOT_KEYS, labels: SPOT_LABELS, groups: SPOT_GROUPS },
       ...XY,
       { key: 'size', label: 'Size', kind: 'number', min: 1, default: 48 },
     ],

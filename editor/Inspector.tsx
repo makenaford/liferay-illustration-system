@@ -633,19 +633,42 @@ function Control({
       );
     }
 
-    case 'select':
+    case 'select': {
+      const option = (o: string) => (
+        <option key={o} value={o}>
+          {o === '' ? '—' : (field.labels?.[o] ?? o)}
+        </option>
+      );
+      // Grouped options (the glass icons, by category) run in consecutive
+      // blocks, one <optgroup> each.
+      const groups = field.groups;
+      const blocks: { group: string; options: string[] }[] = [];
+      if (groups) {
+        for (const o of field.options) {
+          const g = groups[o] ?? '';
+          if (blocks.at(-1)?.group === g) blocks.at(-1)!.options.push(o);
+          else blocks.push({ group: g, options: [o] });
+        }
+      }
       return (
         <select
           value={value === undefined ? '' : String(value)}
           onChange={(e) => onChange(e.target.value || undefined)}
         >
-          {field.options.map((o) => (
-            <option key={o} value={o}>
-              {o === '' ? '—' : (field.labels?.[o] ?? o)}
-            </option>
-          ))}
+          {groups
+            ? blocks.map((b) =>
+                b.group ? (
+                  <optgroup key={b.group} label={b.group}>
+                    {b.options.map(option)}
+                  </optgroup>
+                ) : (
+                  b.options.map(option)
+                ),
+              )
+            : field.options.map(option)}
         </select>
       );
+    }
 
     case 'numbers':
       return (

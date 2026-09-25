@@ -1,8 +1,8 @@
 /**
- * Import the design system's glass icons into a generated TS module.
+ * Import the glass icon set into a generated TS module.
  *
- * The icons live in `liferay-sites-design-system/assets/glass-icons/` (dark)
- * and `assets/glass-icons-light/` (light) as 64px Figma-exported SVGs. Four
+ * The icons live in `assets/glass-icons/`, named `<Category> - <Name> -
+ * <Light|Dark>.svg` — 64px Figma exports, every icon in both themes. Four
  * things have to be fixed before they can be inlined into an illustration:
  *
  *   1. IDS. Figma names them `paint0_linear_65_14547` — unique within a file,
@@ -20,52 +20,84 @@
  *   3. VIEWBOX. Every icon carries its own bleed (`-2 -8 74 74`, `-9 -2 76 76`
  *      …), so the viewBox is recorded and the renderer maps it onto whatever
  *      size the document asks for.
- *   4. LIGHT COVERAGE. Only 34 of the 165 icons have a light variant. Missing
- *      ones fall back to the dark art and are reported, rather than silently
- *      shipping dark artwork into a light illustration.
+ *   4. SIZE. The whole set is bundled into the builder, so numbers are
+ *      rounded to what a 64px icon can show (see `trim`) and whitespace is
+ *      collapsed. A missing light file falls back to the dark art and is
+ *      reported, rather than silently shipping dark artwork into a light
+ *      illustration.
+ *
+ * Keys are the icon's name, slugged (`global-services`), or category and
+ * name where two categories share a name. The icons illustrations already
+ * used keep their original short keys (`LEGACY`), so no document changes.
  *
  *   node --experimental-strip-types scripts/build-glass-icons.ts
  */
-import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { softenGlassRim } from '../src/importAsset.ts';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
+const DIR = join(ROOT, 'assets', 'glass-icons');
+
+/** The keys documents already reference, by the file they now come from. */
+const LEGACY: Record<string, string> = {
+  'General - Composable': 'composable',
+  'Platform - Premium Security': 'security',
+  'Security - Security & Compliance': 'compliance',
+  'Business - Dashboard': 'dashboard',
+  'Performance - Analytics': 'analytics',
+  'General - Personalization': 'personalization',
+  'Data - Database': 'database',
+  'Commerce - PIM': 'pim',
+  'Product Modules - DXP': 'dxp',
+  'Product Modules - Commerce': 'commerce',
+  'Industries - Integration': 'integration',
+  'General - Mail': 'mail',
+  'General - Performance': 'performance',
+  'Content - Search': 'search',
+  'General - ai': 'ai',
+  'Data - DAM': 'dam',
+  'Content - Sites': 'sites',
+  'Product Modules - Content Marketing Platform': 'campaigns',
+  'Business - Costly': 'costly',
+};
+
+const slug = (s: string) => s.toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+/** Every icon in the folder: `{ base: "Category - Name", category, name }`. */
+const files = readdirSync(DIR).filter((f) => f.endsWith('.svg'));
+const bases = [...new Set(files.map((f) => f.replace(/ - (Light|Dark)\.svg$/, '')))].sort();
+const parsed = bases.map((base) => {
+  const i = base.indexOf(' - ');
+  return { base, category: base.slice(0, i), name: base.slice(i + 3) };
+});
+const nameCount = new Map<string, number>();
+for (const p of parsed) nameCount.set(slug(p.name), (nameCount.get(slug(p.name)) ?? 0) + 1);
+const legacyKeys = new Set(Object.values(LEGACY));
+
+const MANIFEST = parsed.map((p) => {
+  let key = LEGACY[p.base];
+  if (!key) {
+    key = slug(p.name);
+    // Shared names, and names that would take a legacy key, carry their category.
+    if ((nameCount.get(key) ?? 0) > 1 || legacyKeys.has(key)) key = slug(`${p.category} ${p.name}`);
+  }
+  return { key, ...p };
+});
 
 /**
- * Where the design system lives. Override with `SDS_PATH` — the default is
- * the sibling checkout, which is where it sits on a normal setup.
+ * Round a number to what a 64px icon can show: two decimals above 10, three
+ * above 1, four significant figures below — small values are gradient
+ * matrix terms, where two decimals would flatten them to zero.
  */
-const DS_ROOT = process.env.SDS_PATH ?? join(ROOT, '..', 'liferay-sites-design-system');
-const DS = join(DS_ROOT, 'assets');
-
-/**
- * The working set. Keyed by what the illustration means, not by the file path,
- * so a document says `dxp` rather than `Product/DXP`.
- */
-const MANIFEST: { key: string; path: string }[] = [
-  { key: 'composable', path: 'General/Composable' },
-  { key: 'security', path: 'Platform/Premium Security' },
-  { key: 'compliance', path: 'Security/Security & Compliance' },
-  { key: 'dashboard', path: 'Business/Dashboard' },
-  { key: 'analytics', path: 'Performance/Analytics' },
-  { key: 'personalization', path: 'General/Personalization' },
-  { key: 'database', path: 'Data/Database' },
-  { key: 'pim', path: 'Commerce/PIM' },
-  { key: 'dxp', path: 'Product/DXP' },
-  { key: 'commerce', path: 'Product Modules/Commerce' },
-  { key: 'integration', path: 'Industries/Integration' },
-  { key: 'mail', path: 'General/Mail' },
-  { key: 'performance', path: 'General/Performance' },
-  { key: 'search', path: 'Content/Search' },
-  { key: 'ai', path: 'General/ai' },
-  { key: 'dam', path: 'Data/DAM' },
-  { key: 'sites', path: 'Content/Sites' },
-  { key: 'campaigns', path: 'Product Modules/Content Marketing Platform' },
-  // Dark only — no light variant exists yet.
-  { key: 'costly', path: 'Business/Costly' },
-];
+function trim(n: string): string {
+  const v = Number(n);
+  if (!Number.isFinite(v)) return n;
+  const a = Math.abs(v);
+  const r = a >= 10 ? v.toFixed(2) : a >= 1 ? v.toFixed(3) : v.toPrecision(4);
+  return String(Number(r));
+}
 
 interface Processed {
   viewBox: [number, number, number, number];
@@ -106,31 +138,34 @@ function normalise(svg: string, ns: string): Processed {
   // was meant to sit behind it cannot survive export.
   s = softenGlassRim(s);
 
-  return { viewBox, body: s.replace(/\n\s*\n/g, '\n').trim() };
+  // Size: long decimals rounded, whitespace between tags dropped.
+  s = s.replace(/-?\d*\.\d{4,}(?:e-?\d+)?/g, trim);
+  s = s.replace(/>\s+</g, '><');
+
+  return { viewBox, body: s.trim() };
 }
 
 const entries: string[] = [];
 const missingLight: string[] = [];
 let bytes = 0;
 
-for (const { key, path } of MANIFEST) {
-  const darkFile = join(DS, 'glass-icons', `${path}.svg`);
-  const lightFile = join(DS, 'glass-icons-light', `${path}.svg`);
-  if (!existsSync(darkFile)) throw new Error(`Missing icon: ${path}`);
-
-  const dark = normalise(readFileSync(darkFile, 'utf8'), `${key}-d-`);
+for (const { key, base, category, name } of MANIFEST) {
+  const darkFile = join(DIR, `${base} - Dark.svg`);
+  const lightFile = join(DIR, `${base} - Light.svg`);
+  const hasDark = existsSync(darkFile);
   const hasLight = existsSync(lightFile);
-  if (!hasLight) missingLight.push(path);
-  const light = normalise(
-    readFileSync(hasLight ? lightFile : darkFile, 'utf8'),
-    `${key}-l-`,
-  );
+  if (!hasDark && !hasLight) continue;
+  if (!hasLight) missingLight.push(base);
 
+  const dark = normalise(readFileSync(hasDark ? darkFile : lightFile, 'utf8'), `${key}-d-`);
+  const light = normalise(readFileSync(hasLight ? lightFile : darkFile, 'utf8'), `${key}-l-`);
   bytes += dark.body.length + light.body.length;
 
   entries.push(
     `  ${JSON.stringify(key)}: {\n` +
-      `    source: ${JSON.stringify(path)},\n` +
+      `    source: ${JSON.stringify(base)},\n` +
+      `    category: ${JSON.stringify(category)},\n` +
+      `    label: ${JSON.stringify(name)},\n` +
       `    lightIsFallback: ${!hasLight},\n` +
       `    dark: { viewBox: ${JSON.stringify(dark.viewBox)}, body: ${JSON.stringify(dark.body)} },\n` +
       `    light: { viewBox: ${JSON.stringify(light.viewBox)}, body: ${JSON.stringify(light.body)} },\n` +
@@ -141,8 +176,7 @@ for (const { key, path } of MANIFEST) {
 const out = `/**
  * GENERATED — do not edit. Run \`npm run icons\` to regenerate.
  *
- * The design system's glass icons, imported from
- * liferay-sites-design-system/assets/glass-icons{,-light}/ and normalised for
+ * The glass icon set, imported from assets/glass-icons/ and normalised for
  * inlining. See scripts/build-glass-icons.ts for what "normalised" means.
  *
  * Every id in \`body\` is prefixed with the literal token \`__NS__\`, which the
@@ -162,8 +196,12 @@ export interface GlassIconArt {
 }
 
 export interface GlassIcon {
-  /** Path in the design system, for traceability. */
+  /** Source file name, without the theme suffix, for traceability. */
   source: string;
+  /** The set's own grouping — Business, Commerce, Security … */
+  category: string;
+  /** The icon's name as the set gives it. */
+  label: string;
   /** True when \`light\` is really the dark artwork. */
   lightIsFallback: boolean;
   dark: GlassIconArt;

@@ -23,9 +23,10 @@ open out/compare.html
 
 Requires Node 22+ (the scripts use native TypeScript type-stripping).
 
-**The generators read the design system.** `npm run tokens` and
-`npm run icons` pull from `liferay-sites-design-system`, expected as a sibling
-checkout. Point `SDS_PATH` elsewhere if yours lives somewhere else:
+**The token generator reads the design system.** `npm run tokens` pulls
+from `liferay-sites-design-system`, expected as a sibling checkout. Point
+`SDS_PATH` elsewhere if yours lives somewhere else. `npm run icons` reads the
+glass icons committed in `assets/glass-icons/` — no checkout needed:
 
 ```bash
 SDS_PATH=~/work/liferay-sites-design-system npm run tokens
@@ -78,7 +79,7 @@ src/vsvg.ts                Virtual-SVG layer + id namespacing
 src/document.ts            Document schema — what the editor saves
 src/render.ts              Element dispatcher + renderDocument(doc, theme)
 src/icons.ts               29 stroke icons (UI furniture inside the artwork)
-src/glassIcons.generated.ts 19 design-system glass icons, both themes
+src/glassIcons.generated.ts 165 glass icons, both themes, from assets/glass-icons/
 src/palette.generated.ts   95 colour tokens per scheme, from the Figma export
 src/fontMetrics.generated.ts Source Sans 3 advance widths, measured
 src/autolayout.ts          the reflow engine + measurement
@@ -377,9 +378,16 @@ drag in yourself gets the same treatment and says so in its import note.
 
 ## Glass icons come from the design system
 
-The five spot glyphs I had hand-drawn are deleted. `SpotIcon` now renders the
-design system's real glass icons, imported by `npm run icons` from
-`assets/glass-icons/` (dark) and `assets/glass-icons-light/` (light).
+The five spot glyphs I had hand-drawn are deleted. `SpotIcon` renders the
+real glass icon set, imported by `npm run icons` from `assets/glass-icons/`:
+165 icons, each as `<Category> - <Name> - Light.svg` and `- Dark.svg`. The
+editor's picker groups them by category.
+
+Keys are the icon's name, slugged (`global-services`), or category and name
+where two categories share a name (`platform-dashboard2`). The 19 icons the
+illustrations were first built with keep their original short keys
+(`dashboard`, `composable` …), so no document had to change when the full set
+arrived.
 
 These are **genuinely separate artwork per theme, not a recolour** — the dark
 version is lit from inside, the light one from outside — which is the only
@@ -396,8 +404,6 @@ library needed.
 | Launch Campaigns | `campaigns` | `Product Modules/Content Marketing Platform` |
 | Integrate All Systems | `dxp`, `database`, `pim`, `personalization`, `commerce`, `security` | hub + five nodes |
 
-`out/glass-icon-sheet.html` is a contact sheet of all 19 in both themes.
-
 **Four things the importer has to fix** (`scripts/build-glass-icons.ts`):
 
 1. **Ids.** Figma names them `paint0_linear_65_14547`. Every id is rewritten
@@ -412,16 +418,13 @@ library needed.
    behind a 30%-opacity rect, and the icons now rasterise.
 3. **viewBox.** Every icon has its own bleed (`-2 -8 74 74`, `-9 -2 76 76` …),
    so each one's box is recorded and mapped onto the requested size.
-4. **Light coverage.** Only **34 of the 165** icons have a light variant.
-   Missing ones fall back to the dark artwork, flagged per-entry as
-   `lightIsFallback` and labelled in the editor's picker as "no light variant"
-   — so the gap is visible when picking, not discovered after export.
-
-`Business/Costly` is the one icon in the working set with no light variant, and
-you can see it in the comparison: on the light "BEFORE" panel the piggy bank is
-dark artwork, visibly less crisp than `composable` beside it. **Getting the
-remaining 131 light variants drawn is the blocker on every illustration
-shipping a light version with real spot artwork.**
+4. **Size.** The whole set is bundled into the builder, so long decimals are
+   rounded to what a 64px icon can show (four significant figures for small
+   gradient-matrix terms, so they do not flatten to zero) and whitespace
+   between tags is dropped: 2.8 MB of exports becomes 1.5 MB of markup. A
+   missing light file would fall back to the dark art, flagged per-entry as
+   `lightIsFallback` and labelled in the picker — but every icon in the set
+   has both themes.
 
 ## The surface set
 

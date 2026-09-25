@@ -71,6 +71,8 @@ export type Field<K extends string = string> =
   | { key: K; label: string; kind: 'bars' }
   | { key: K; label: string; kind: 'point' }
   | { key: K; label: string; kind: 'iconList' }
+  /** A comma-separated list of words, such as a chart's axis labels. */
+  | { key: K; label: string; kind: 'list' }
   /** A colour, chosen from the design-system palette with swatches. */
   | { key: K; label: string; kind: 'token' }
   /**
@@ -273,6 +275,8 @@ export const SCHEMA: {
       ...XY,
       ...WH,
       { key: 'series', label: 'Series', kind: 'series' },
+      { key: 'labels', label: 'Axis labels', kind: 'list' },
+      { key: 'labelGap', label: 'Label gap', kind: 'number', min: 0, default: 4 },
       { key: 'gridLines', label: 'Grid lines', kind: 'number', min: 0 },
       { key: 'referenceLine', label: 'Reference', kind: 'number', step: 0.05 },
     ],

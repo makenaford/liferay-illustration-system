@@ -1,4 +1,5 @@
 import type { Element } from '../src/document.ts';
+import { axisBand } from '../src/primitives/lineChart.ts';
 
 /**
  * Position and size abstraction.
@@ -35,10 +36,13 @@ export function isResizable(el: Element): boolean {
 export function resizedTo(el: Element, width: number, height: number): Element {
   // A line's box is its run and rise, and 0 is the common case — a flat rule.
   const min = el.type === 'line' ? 0 : 4;
+  // A line chart's box includes its labels; its `height` is the plot alone,
+  // so the labels keep their size and gap and ride along under the plot.
+  const band = el.type === 'lineChart' ? axisBand(el) : 0;
   return {
     ...el,
     width: round(Math.max(width, min)),
-    height: round(Math.max(height, min)),
+    height: round(Math.max(height - band, min)),
   } as Element;
 }
 

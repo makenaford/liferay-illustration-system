@@ -263,6 +263,9 @@ export interface LineChartEl extends LayoutChild {
   referenceLine?: number;
   /** A dot at every data point. */
   markers?: boolean;
+  /** Axis labels under the plot — see `LineChartProps.labels`. */
+  labels?: string[];
+  labelGap?: number;
 }
 
 export interface BarChartEl extends LayoutChild {

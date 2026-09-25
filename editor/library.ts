@@ -1,5 +1,6 @@
 import type { Doc } from '../src/document.ts';
 import { DOCS } from './docs.ts';
+import { migrateDoc } from '../src/migrate.ts';
 
 /**
  * THE LIBRARY — where illustrations live between sessions.
@@ -192,7 +193,10 @@ const SHIPPED = new Map(DOCS.map((d) => [d.id, d]));
 
 /** Every illustration, shipped ones overlaid by anything saved. */
 export async function list(): Promise<Entry[]> {
-  const saved = await (await backend()).all();
+  // Saved copies may predate the current document shape.
+  const saved = Object.fromEntries(
+    Object.entries(await (await backend()).all()).map(([id, hit]) => [id, { ...hit, doc: migrateDoc(hit.doc) }]),
+  );
   const entries: Entry[] = DOCS.map((d) => {
     const hit = saved[d.id];
     return hit

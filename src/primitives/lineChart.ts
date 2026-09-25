@@ -1,4 +1,6 @@
 import { h, type Ctx, type VNode } from '../vsvg.ts';
+import { Text, TYPE_ROLES } from './text.ts';
+import { textBox } from '../fontMetrics.generated.ts';
 
 export interface Series {
   /** Values in any unit; scaled to the plot box. */
@@ -30,6 +32,50 @@ export interface LineChartProps {
    * Used in the reference illustration to mark the "15x" threshold.
    */
   referenceLine?: number;
+  /**
+   * Axis labels under the plot — months, usually. Part of the chart rather
+   * than a row beside it, so resizing the chart always carries them: first
+   * label on the left edge, last on the right, the rest spaced evenly
+   * between, whatever the width.
+   */
+  labels?: string[];
+  /** Space between the plot's bottom and the labels. Defaults to 4. */
+  labelGap?: number;
+}
+
+/** The labels' type: `micro`, regular, in the muted text colour. */
+const AXIS_SIZE = TYPE_ROLES.micro.size;
+
+/** Height the labels add below the plot: 0 without labels. */
+export function axisBand(props: Pick<LineChartProps, 'labels' | 'labelGap'>): number {
+  if (!props.labels?.length) return 0;
+  return (props.labelGap ?? 4) + textBox('', AXIS_SIZE, 400).height;
+}
+
+/**
+ * The labels, laid out the way the dashboards' label rows were: CSS
+ * `justify-content: space-between` across the plot's width.
+ */
+function axisLabels(ctx: Ctx, props: LineChartProps): VNode[] {
+  const labels = (props.labels ?? []).map((l) => l.trim());
+  if (!labels.length) return [];
+  const { x, y, width, height } = props;
+  const widths = labels.map((l) => textBox(l, AXIS_SIZE, 400).width);
+  const gap = labels.length > 1 ? (width - widths.reduce((a, b) => a + b, 0)) / (labels.length - 1) : 0;
+  const baseline = y + height + (props.labelGap ?? 4) + textBox('', AXIS_SIZE, 400).baseline;
+  let at = x;
+  return labels.map((content, i) => {
+    const node = Text(ctx, {
+      x: at,
+      y: baseline,
+      role: 'micro',
+      weight: 'regular',
+      content,
+      color: ctx.tokens.text.muted,
+    });
+    at += widths[i] + gap;
+    return node;
+  });
 }
 
 /**
@@ -182,5 +228,6 @@ export function LineChart(ctx: Ctx, props: LineChartProps): VNode {
     refLine,
     ...lines,
     ...dots,
+    ...axisLabels(ctx, props),
   ]);
 }

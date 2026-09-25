@@ -584,79 +584,17 @@
               ]
             }
           ],
-          "markers": true
-        },
-        {
-          "type": "group",
-          "x": 0,
-          "y": 0,
-          "width": 192,
-          "height": 6,
-          "layout": {
-            "direction": "horizontal",
-            "gap": 8,
-            "padding": 0,
-            "align": "baseline",
-            "justify": "between"
-          },
-          "children": [
-            {
-              "type": "text",
-              "x": 0,
-              "y": 0,
-              "role": "micro",
-              "content": "Jan",
-              "tone": "muted"
-            },
-            {
-              "type": "text",
-              "x": 0,
-              "y": 0,
-              "role": "micro",
-              "content": "Feb",
-              "tone": "muted"
-            },
-            {
-              "type": "text",
-              "x": 0,
-              "y": 0,
-              "role": "micro",
-              "content": "Mar",
-              "tone": "muted"
-            },
-            {
-              "type": "text",
-              "x": 0,
-              "y": 0,
-              "role": "micro",
-              "content": "Apr",
-              "tone": "muted"
-            },
-            {
-              "type": "text",
-              "x": 0,
-              "y": 0,
-              "role": "micro",
-              "content": "May",
-              "tone": "muted"
-            },
-            {
-              "type": "text",
-              "x": 0,
-              "y": 0,
-              "role": "micro",
-              "content": "Jun",
-              "tone": "muted"
-            },
-            {
-              "type": "text",
-              "x": 0,
-              "y": 0,
-              "role": "micro",
-              "content": "Jul",
-              "tone": "muted"
-            }
-          ]
+          "markers": true,
+          "labels": [
+            "Jan",
+            "Feb",
+            "Mar",
+            "Apr",
+            "May",
+            "Jun",
+            "Jul"
+          ],
+          "labelGap": 4
         }
       ],
       "layout": {

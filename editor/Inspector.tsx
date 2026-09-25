@@ -569,7 +569,8 @@ function FieldRow({
     field.kind === 'bars' ||
     field.kind === 'file' ||
     field.kind === 'photo' ||
-    field.kind === 'iconList';
+    field.kind === 'iconList' ||
+    field.kind === 'list';
 
   return (
     <label className={`field${wide ? ' wide' : ''}`}>
@@ -737,6 +738,21 @@ function Control({
           onChange={(e) =>
             onChange(e.target.value.split(',').map((s) => s.trim() || null))
           }
+        />
+      );
+
+    case 'list':
+      return (
+        <input
+          type="text"
+          placeholder="Jan, Feb, Mar"
+          value={Array.isArray(value) ? (value as string[]).join(', ') : ''}
+          onChange={(e) => {
+            // Only the space after each comma goes: a trailing one is still
+            // being typed ("New York"), and the chart trims when it draws.
+            const items = e.target.value.split(',').map((s) => s.replace(/^\s+/, ''));
+            onChange(items.some(Boolean) ? items : undefined);
+          }}
         />
       );
 

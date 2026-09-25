@@ -184,7 +184,14 @@ export function Button(ctx: Ctx, props: ButtonProps): VNode {
           y: y + (height - iconSize) / 2,
           size: iconSize,
           icon: ICONS[icon!],
-          tone: variant === 'solid' || variant === 'gradient' ? 'onAccent' : 'primary',
+          // On a filled button the icon reads on the fill; on an outline
+          // button it takes Brand/Primary, the colour of the outline's glow.
+          tone:
+            variant === 'solid' || variant === 'gradient'
+              ? 'onAccent'
+              : variant === 'outline'
+                ? 'accent'
+                : 'primary',
         })
       : null,
     ...lines.map((line, i) =>

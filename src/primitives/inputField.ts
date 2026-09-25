@@ -15,10 +15,10 @@ export interface InputFieldProps {
 }
 
 /**
- * INPUT FIELD — the `Input` component from the Marketing UI Assets file
- * (node 472:16567): a translucent white field with a bright hairline, an
- * inset shadow from the top so it reads as pressed in, and a leading icon
- * and placeholder in Liferay Black. Colours come from `component.input`.
+ * INPUT FIELD — a translucent field with a bright hairline, an inset shadow
+ * from the top so it reads as pressed in, and a leading icon and a
+ * regular-weight placeholder. Colours come from `component.input`, which
+ * holds the per-theme values and where each came from.
  *
  * Layout follows the component too: 6px in from the left, the icon, 4px,
  * then the text. The icon is 16px at the component's 32px height and scales
@@ -93,6 +93,8 @@ export function InputField(ctx: Ctx, props: InputFieldProps): VNode {
       x: textX,
       y: y + height / 2 + size * 0.355,
       role,
+      // Regular whatever the role's own weight: a placeholder is not a label.
+      weight: 'regular',
       content: placeholder,
       color: c.ink,
     }),

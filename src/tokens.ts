@@ -340,11 +340,13 @@ export interface Tokens {
       ringTo: string;
     };
     /**
-     * The `Input` component in the Marketing UI Assets file (node 472:16567):
-     * white at 20% with a white 80% hairline, radius 6, an `inset 0 4px 4px`
-     * black 25% shadow, and the icon and placeholder in Liferay Black. That is
-     * the dark treatment as drawn; light keeps the recipe but takes the light
-     * glass hairline, since a white edge on a pale card disappears.
+     * The input field. Both themes share radius 6, a 1px 80% hairline and an
+     * `inset 0 4px 4px` black 25% shadow, with regular-weight text.
+     *
+     * Light is the `Input` component in the Marketing UI Assets file (node
+     * 472:16567): white at 20% under the white `Cards/Glass Card Stroke`,
+     * ink in Liferay Black. Dark is black at 6% under the same hairline,
+     * with light ink.
      */
     input: {
       fill: string;
@@ -628,13 +630,16 @@ export const dark: Tokens = {
       glassTo: 'rgba(255, 255, 255, 0)',
       ambientGlow: 'rgba(0, 0, 0, 0.08)',
     },
+    // Dark, as specified: black at 6% under a white 80% hairline, the same
+    // inset shadow. On a fill that dark the ink has to be light, so the icon
+    // and placeholder take the muted text colour a placeholder normally has.
     input: {
-      fill: '#FFFFFF',
-      fillOpacity: 0.2,
+      fill: '#000000',
+      fillOpacity: 0.06,
       line: '#FFFFFF',
       lineOpacity: 0.8,
       shadowOpacity: 0.25,
-      ink: LIFERAY_BLACK,
+      ink: D('surfaces-text-secondary'),
     },
     label: {
       tonalBg: D('neutral-02'),
@@ -880,10 +885,13 @@ export const light: Tokens = {
       glassTo: 'rgba(187, 210, 255, 0)',
       ambientGlow: 'rgba(173, 201, 255, 0.2)',
     },
+    // Light, as specified: white at 20% under `Cards/Glass Card Stroke`,
+    // white at 80%. The spec's 6.815 / 1.136 / 4.543 are this same recipe
+    // drawn at 1.136×, so they are kept at 6 / 1 / 4 like dark.
     input: {
       fill: '#FFFFFF',
       fillOpacity: 0.2,
-      line: L('accent-primary-blue-accent'),
+      line: '#FFFFFF',
       lineOpacity: 0.8,
       shadowOpacity: 0.25,
       ink: LIFERAY_BLACK,

@@ -9,6 +9,7 @@ import {
   freshId,
   isShipped,
   list,
+  mergeFolders,
   removeFolder,
   renameFolder,
   save,
@@ -17,6 +18,24 @@ import {
 } from './library.ts';
 import { initStore, setUI, useEditor } from './state.ts';
 import type { Doc } from '../src/document.ts';
+import { migrateDoc } from '../src/migrate.ts';
+import { pickFile } from './pickFile.ts';
+import { saveFile } from './save.ts';
+
+/**
+ * A library file: every illustration with changes, and the folders. It is
+ * how work moves between libraries — out of one browser's local library and
+ * into the shared one, say. A single illustration's `.json` imports too.
+ */
+interface LibraryFile {
+  kind: 'illustration-library';
+  exportedAt: string;
+  docs: Doc[];
+  folders?: Folders;
+}
+
+const isDoc = (d: unknown): d is Doc =>
+  !!d && typeof (d as Doc).id === 'string' && Array.isArray((d as Doc).elements);
 
 /**
  * THE LIBRARY — the page you land on.
@@ -103,6 +122,56 @@ export function Library() {
     setBusy(null);
   };
 
+  const [note, setNote] = useState<string | null>(null);
+
+  const exportAll = async () => {
+    const changed = (entries ?? []).filter((e) => e.origin !== 'shipped');
+    if (!changed.length) {
+      setNote('Nothing to export — no illustration here has changes yet.');
+      return;
+    }
+    const body: LibraryFile = {
+      kind: 'illustration-library',
+      exportedAt: new Date().toISOString(),
+      docs: changed.map((e) => e.doc),
+      folders,
+    };
+    const out = await saveFile('illustration-library.json', JSON.stringify(body, null, 2), 'application/json');
+    setNote(
+      out.status === 'saved'
+        ? `Exported ${changed.length} illustration${changed.length === 1 ? '' : 's'} to illustration-library.json.`
+        : out.status === 'error'
+          ? `Export failed — ${out.message}`
+          : 'Export cancelled.',
+    );
+  };
+
+  const importFile = async () => {
+    const picked = await pickFile('.json,application/json');
+    if (!picked) return;
+    try {
+      const data = JSON.parse(await picked.text()) as unknown;
+      const file = data as Partial<LibraryFile>;
+      const docs = isDoc(data) ? [data] : Array.isArray(file.docs) ? file.docs.filter(isDoc) : [];
+      if (!docs.length) {
+        setNote(`${picked.name} has no illustrations in it.`);
+        return;
+      }
+      setBusy('import');
+      // Same id replaces: importing is how a library is brought up to date.
+      for (const d of docs) await save(migrateDoc(d));
+      if (file.folders && Array.isArray(file.folders.folders)) {
+        await mergeFolders(file.folders, docs.map((d) => d.id));
+      }
+      await reload();
+      setNote(`Imported ${docs.length} illustration${docs.length === 1 ? '' : 's'} from ${picked.name}.`);
+    } catch (err) {
+      setNote(`Could not import ${picked.name} — ${(err as Error).message}`);
+    } finally {
+      setBusy(null);
+    }
+  };
+
   const revert = async (e: Entry) => {
     setBusy(e.id);
     await forget(e.id);
@@ -135,11 +204,34 @@ export function Library() {
               </button>
             ))}
           </div>
+          <button
+            type="button"
+            disabled={busy === 'import'}
+            onClick={() => void importFile()}
+            title="Add illustrations from a library file or an illustration's .json"
+          >
+            {busy === 'import' ? 'Importing…' : 'Import'}
+          </button>
+          <button
+            type="button"
+            onClick={() => void exportAll()}
+            title="Save every illustration with changes, and the folders, as one file"
+          >
+            Export
+          </button>
           <button type="button" className="primary" onClick={() => void create()}>
             New illustration
           </button>
         </div>
       </header>
+      {note && (
+        <p className="lib-note" role="status">
+          {note}
+          <button type="button" className="mini" onClick={() => setNote(null)} aria-label="Dismiss">
+            ×
+          </button>
+        </p>
+      )}
 
       <FolderBar
         folders={folders}

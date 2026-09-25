@@ -1,7 +1,7 @@
 import type { Doc, Element } from '../src/document.ts';
 import { LAYOUT } from '../src/tokens.ts';
 import { CURSOR_ASPECT } from '../src/primitives/cursor.ts';
-import { axisBand } from '../src/primitives/lineChart.ts';
+import { axisBand } from '../src/primitives/axisLabels.ts';
 
 export interface Box {
   x: number;
@@ -38,6 +38,7 @@ export function boundsOf(el: Element, node: SVGGraphicsElement | null): Box | nu
       };
     }
     case 'lineChart':
+    case 'barChart':
       // The box takes in the labels, so they are selected and resized with it.
       return { x: el.x, y: el.y, width: el.width, height: el.height + axisBand(el) };
     case 'cursor': {

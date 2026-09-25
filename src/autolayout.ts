@@ -3,7 +3,7 @@ import { TYPE_ROLES, typeStyle } from './primitives/text.ts';
 import { badgeWidth } from './primitives/badge.ts';
 import { CHAT_HEIGHT } from './primitives/chatBubble.ts';
 import { CURSOR_ASPECT } from './primitives/cursor.ts';
-import { axisBand } from './primitives/lineChart.ts';
+import { axisBand } from './primitives/axisLabels.ts';
 import { textBox, VERTICAL } from './fontMetrics.generated.ts';
 import { LAYOUT, SPACE } from './tokens.ts';
 
@@ -110,6 +110,7 @@ export function measureElement(el: Element): Size {
       return { width: w, height: w * CURSOR_ASPECT };
     }
     case 'lineChart':
+    case 'barChart':
       // The labels hang below the plot, inside the chart's box.
       return { width: el.width, height: el.height + axisBand(el) };
     case 'chat':
@@ -408,7 +409,7 @@ function layoutContainer(el: Container): Element {
     }
     if (typeof next.height === 'number' && s.height !== sizes[i].height) {
       // A line chart's `height` is its plot; its labels sit below that.
-      const band = next.type === 'lineChart' ? axisBand(next) : 0;
+      const band = next.type === 'lineChart' || next.type === 'barChart' ? axisBand(next) : 0;
       next = { ...next, height: round(s.height - band) };
     }
 

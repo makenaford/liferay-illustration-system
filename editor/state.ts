@@ -24,6 +24,12 @@ export interface EditorState {
   also: string[];
   zoom: number;
   pan: { x: number; y: number };
+  /**
+   * Bumped to ask the canvas to zoom the artboard to fit the viewport — on
+   * opening a document, and on Reset. The canvas owns the measuring, since
+   * only it knows how big the viewport is.
+   */
+  fitRequest: number;
   showOutlines: boolean;
   /** Snap step in canvas px. 0 disables snapping. */
   snapStep: number;
@@ -75,8 +81,10 @@ export function initStore(doc: Doc) {
       theme: prefs?.theme ?? 'dark',
       selected: null,
       also: [],
-      zoom: prefs?.zoom ?? 1.4,
+      // Every document opens fitted to the viewport; see `fitRequest`.
+      zoom: prefs?.zoom ?? 1,
       pan: { x: 0, y: 0 },
+      fitRequest: (prefs?.fitRequest ?? 0) + 1,
       showOutlines: prefs?.showOutlines ?? false,
       snapStep: prefs?.snapStep ?? LAYOUT.grid,
       showGrid: prefs?.showGrid ?? false,
@@ -104,6 +112,11 @@ export function useEditor<T>(select: (s: EditorState) => T): T {
 }
 
 export const getState = () => store.state;
+
+/** Zoom the artboard to fit the viewport, centred. */
+export function fitToView() {
+  setUI({ fitRequest: store.state.fitRequest + 1 });
+}
 
 /** Patch state without touching history (selection, zoom, theme). */
 export function setUI(patch: Partial<EditorState>) {

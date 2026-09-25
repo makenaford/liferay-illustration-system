@@ -266,6 +266,23 @@ export async function fileIn(docId: string, folderId: string | null): Promise<vo
   await b.putFolders({ ...f, assign });
 }
 
+/**
+ * Bring in another library's folders: folders this one lacks are added, and
+ * the given illustrations are filed where that library had them.
+ */
+export async function mergeFolders(incoming: Folders, docIds: string[]): Promise<void> {
+  const b = await backend();
+  const f = await b.folders();
+  const known = new Set(f.folders.map((x) => x.id));
+  const folders = [...f.folders, ...incoming.folders.filter((x) => !known.has(x.id))];
+  const assign = { ...f.assign };
+  for (const id of docIds) {
+    const to = incoming.assign?.[id];
+    if (to && folders.some((x) => x.id === to)) assign[id] = to;
+  }
+  await b.putFolders({ folders, assign });
+}
+
 export const isShipped = (id: string) => SHIPPED.has(id);
 
 /** A fresh id that collides with nothing currently in the library. */

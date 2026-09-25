@@ -1,4 +1,5 @@
 import { h, type Ctx, type VNode } from '../vsvg.ts';
+import { axisLabels, type AxisLabelProps } from './axisLabels.ts';
 
 export interface BarSeries {
   /**
@@ -11,7 +12,8 @@ export interface BarSeries {
   tone?: 'accent' | 'soft';
 }
 
-export interface BarChartProps {
+/** Labels centred under their categories' bars. */
+export interface BarChartProps extends AxisLabelProps {
   x: number;
   y: number;
   width: number;
@@ -131,5 +133,5 @@ export function BarChart(ctx: Ctx, props: BarChartProps): VNode {
     h('rect', { x: r.x, y: r.y, width: r.width, height: r.height, fill: fillFor(r.series) }),
   );
 
-  return h('g', { 'data-el': 'bar-chart' }, [...grid, ...bars]);
+  return h('g', { 'data-el': 'bar-chart' }, [...grid, ...bars, ...axisLabels(ctx, props, 'slots')]);
 }

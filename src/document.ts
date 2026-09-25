@@ -289,6 +289,9 @@ export interface BarChartEl extends LayoutChild {
   gridLines?: number;
   /** The value the full height stands for; omit to scale to the tallest bar. */
   max?: number;
+  /** Category labels, centred under each bar — see `axisLabels`. */
+  labels?: string[];
+  labelGap?: number;
 }
 
 export interface ProgressEl extends LayoutChild {

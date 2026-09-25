@@ -19,6 +19,7 @@ import {
   canUndo,
   commit,
   elementAt,
+  fitToView,
   replaceAt,
   getState,
   initStore,
@@ -383,8 +384,8 @@ export function App() {
           <button type="button" onClick={() => setUI({ zoom: Math.min(6, zoom + 0.2) })}>
             ＋
           </button>
-          <button type="button" onClick={() => setUI({ zoom: 1.4, pan: { x: 0, y: 0 } })}>
-            Reset
+          <button type="button" onClick={fitToView} title="Fit the whole illustration in view">
+            Fit
           </button>
         </span>
 

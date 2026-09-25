@@ -897,6 +897,18 @@ button.mini.on { background: var(--accent); border-color: var(--accent); color: 
   background: var(--accent); border: 1px solid var(--accent); color: #fff;
   border-radius: var(--radius); padding: 7px 14px; font-weight: 600; cursor: pointer;
 }
+.lib-actions > button:not(.primary) {
+  background: var(--panel-2); border: 1px solid var(--line); color: var(--ink);
+  border-radius: var(--radius); padding: 7px 12px; cursor: pointer;
+}
+.lib-actions > button:not(.primary):hover { border-color: var(--accent); }
+.lib-note {
+  display: flex; align-items: center; gap: 10px;
+  margin: 12px 28px 0; padding: 8px 12px;
+  background: var(--panel-2); border: 1px solid var(--line); border-radius: var(--radius);
+  font-size: 12.5px; color: var(--ink-dim);
+}
+.lib-note .mini { margin-left: auto; }
 .lib-empty { padding: 40px 28px; color: var(--ink-faint); }
 
 /* Projects: All, Unfiled, then each folder. Folders take dropped cards. */

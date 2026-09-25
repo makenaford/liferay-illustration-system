@@ -83,8 +83,11 @@ export function Canvas() {
   const smartGuides = useEditor((s) => s.smartGuides);
   const lockAspect = useEditor((s) => s.lockAspect);
 
+  const fitRequest = useEditor((s) => s.fitRequest);
+
   const docRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
+  const viewportRef = useRef<HTMLDivElement>(null);
   /** Words being typed into on the canvas — see InlineText. */
   const [editingText, setEditingText] = useState<TextTarget | null>(null);
   const [box, setBox] = useState<Box | null>(null);
@@ -589,7 +592,9 @@ export function Canvas() {
        * width — drives, and the other is derived. Deriving both from the
        * pointer would fight the constraint.
        */
-      const locked = (lockAspect ? 1 : 0) ^ (e.metaKey || e.ctrlKey ? 1 : 0);
+      // An avatar is a circle, so it always keeps its proportions.
+      const locked =
+        el.type === 'avatar' ? 1 : (lockAspect ? 1 : 0) ^ (e.metaKey || e.ctrlKey ? 1 : 0);
       if (locked && d.origin.width > 0 && d.origin.height > 0) {
         const aspect = d.origin.width / d.origin.height;
         if (Math.abs(w - d.origin.width) / d.origin.width >=
@@ -606,7 +611,12 @@ export function Canvas() {
       }
 
       let next = resizedTo(el, w, h);
-      next = { ...next, x: Math.min(anchorX, edgeX), y: Math.min(anchorY, edgeY) } as typeof next;
+      const boxX = Math.min(anchorX, edgeX);
+      const boxY = Math.min(anchorY, edgeY);
+      next =
+        next.type === 'avatar'
+          ? { ...next, cx: Math.round((boxX + w / 2) * 100) / 100, cy: Math.round((boxY + h / 2) * 100) / 100 }
+          : ({ ...next, x: boxX, y: boxY } as typeof next);
       commit(replaceAt(st.doc, st.selected, next), d.moved);
       setGuides(hits);
     }
@@ -715,6 +725,22 @@ export function Canvas() {
   }, []);
 
   const { width, height } = doc.artboard ?? doc.canvas;
+
+  /*
+   * Fit the artboard to the viewport, with room around it for the selection
+   * handles, on opening a document and on Fit. Rounded down to 5% so the
+   * readout is a clean number; never past 300%, where a small artboard in a
+   * big window would open uselessly large.
+   */
+  useLayoutEffect(() => {
+    const r = viewportRef.current?.getBoundingClientRect();
+    if (!r || r.width < 80 || r.height < 80 || !width || !height) return;
+    const room = 40;
+    const fit = Math.min((r.width - room * 2) / width, (r.height - room * 2) / height);
+    setUI({ zoom: Math.min(3, Math.max(0.25, Math.floor(fit * 20) / 20)), pan: { x: 0, y: 0 } });
+    // Only a request refits; resizing the artboard keeps the zoom you chose.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fitRequest]);
   const safe = safeArea(doc);
 
   /*
@@ -853,6 +879,7 @@ export function Canvas() {
   return (
     <div
       className={`viewport${fileDrop.dropping ? ' dropping' : ''}${tool === 'connector' ? ' drawing' : ''}`}
+      ref={viewportRef}
       {...fileDrop.handlers}
       onDoubleClick={(e) => {
         // Double-click words to type into them where they are.

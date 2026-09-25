@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from 'react';
 import type { Doc, Element } from '../src/document.ts';
 import { LAYOUT, type ThemeName } from '../src/tokens.ts';
+import { reattach } from '../src/attach.ts';
 
 /**
  * Store — a ~90-line `useSyncExternalStore` shim instead of a state library.
@@ -118,6 +119,9 @@ export function setUI(patch: Partial<EditorState>) {
  * which is what makes a drag one undo step instead of sixty.
  */
 export function commit(next: Doc, coalesce = false) {
+  // Attached connector ends follow their elements after every edit, so the
+  // stored coordinates are always where the line is drawn. See attach.ts.
+  next = reattach(next);
   if (!coalesce) {
     store.past = [...store.past.slice(-99), store.state.doc];
     store.future = [];

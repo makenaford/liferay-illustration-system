@@ -29,6 +29,7 @@ import { GLASS_ICONS } from './glassIcons.generated.ts';
 import { FONT_FACES } from './font.generated.ts';
 import type { Doc, Element } from './document.ts';
 import { resolveLayout } from './autolayout.ts';
+import { reattach } from './attach.ts';
 
 /**
  * Resolve a document `tone` to a colour.
@@ -386,6 +387,9 @@ export function buildDocument(
   // Auto-layout containers compute their children's positions, so the
   // document is resolved before anything is drawn from it.
   doc = resolveLayout(doc);
+  // A document edited outside the builder still draws attached connectors on
+  // their elements.
+  doc = reattach(doc);
   // Everything is drawn in the ARTBOARD's coordinate space and scaled to the
   // canvas on the way out; the two are the same unless the document says
   // otherwise. See `Doc.artboard`.

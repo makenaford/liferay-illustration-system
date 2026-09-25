@@ -66,6 +66,13 @@ export function Inspector() {
     const current = elementAt(st.doc, selected);
     if (!current) return;
     let next = typeof value === 'string' ? withText(current, key, value) : ({ ...current, [key]: value } as Element);
+    // Typing a connector end's position takes it off what it was attached to,
+    // or the edit would be undone by the attachment straight away.
+    if (next.type === 'connector' && (key === 'from' || key === 'to') && next.attach?.[key]) {
+      const attach = { ...next.attach };
+      delete attach[key];
+      next = { ...next, attach: attach.from || attach.to ? attach : undefined } as Element;
+    }
 
     /*
      * Typing a width is a resize too. With the ratio locked, the other axis

@@ -11,6 +11,7 @@ import {
   setUI,
 } from './state.ts';
 import { movedDeep } from './geometry.ts';
+import { withoutUids } from '../src/attach.ts';
 
 /**
  * COPY / CUT / PASTE / DUPLICATE.
@@ -116,7 +117,9 @@ export function duplicateSelected(): string | null {
 
   // Offset so the copy is visibly distinct, and land it directly above the
   // original in draw order — which is what "duplicate" means visually.
-  const copy = movedDeep(structuredClone(el), CASCADE, CASCADE);
+  // A copy is a different element: it must not inherit the original's uid,
+  // or it would take the original's connectors with it.
+  const copy = movedDeep(withoutUids(structuredClone(el)), CASCADE, CASCADE);
   const { doc: next, path } = insertAfter(doc, selected, copy);
   commit(next);
   setUI({ selected: path });
@@ -149,7 +152,7 @@ export function paste(text?: string | null): string | null {
   const intoContainer = isContainer(sel) ? selected : null;
   const targetParent = intoContainer ?? parentOf(selected ?? '');
 
-  let element = structuredClone(entry.element);
+  let element = withoutUids(structuredClone(entry.element));
   const targetOrigin = originOf(doc, targetParent);
 
   if (entry.sourceOrigin && targetOrigin) {

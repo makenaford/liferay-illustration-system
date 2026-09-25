@@ -86,6 +86,12 @@ export interface LayoutChild {
   grow?: number;
   /** Override the container's cross-axis alignment for this child. */
   alignSelf?: 'start' | 'center' | 'end' | 'stretch' | 'baseline';
+  /**
+   * Stable identity, for things that refer to this element — an attached
+   * connector end. Paths change when anything is reordered or nested; this
+   * does not. Set only when something needs it. See src/attach.ts.
+   */
+  uid?: string;
 }
 
 export interface CardEl extends LayoutChild {
@@ -314,6 +320,15 @@ export interface ConnectorEl extends LayoutChild {
   fade?: boolean;
   /** A glass disc behind each end node. Defaults on wherever nodes are drawn. */
   rings?: boolean;
+  /**
+   * Ends attached to elements, by `uid`: the end follows that side of the
+   * element as it moves. `auto` faces the connector's other end. See
+   * src/attach.ts.
+   */
+  attach?: {
+    from?: { uid: string; side: 'top' | 'right' | 'bottom' | 'left' | 'auto' };
+    to?: { uid: string; side: 'top' | 'right' | 'bottom' | 'left' | 'auto' };
+  };
 }
 
 /**

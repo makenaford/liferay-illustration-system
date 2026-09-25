@@ -26,7 +26,8 @@ import type { Element as DocElement } from '../src/document.ts';
 import { scaleOf, valueAt, withValue, type ChartScale } from './chartEdit.ts';
 import { linePoints } from '../src/primitives/lineChart.ts';
 import { barGeometry } from '../src/primitives/barChart.ts';
-import type { BarChartEl, LineChartEl } from '../src/document.ts';
+import type { BarChartEl, ConnectorEl, LineChartEl } from '../src/document.ts';
+import { newUid } from '../src/attach.ts';
 
 type DragMode =
   | { kind: 'move' }
@@ -37,7 +38,7 @@ type DragMode =
   /** Dragging one end of the selected connector. */
   | { kind: 'conn-end'; end: 'from' | 'to'; targets: ConnTarget[] }
   /** Drawing a new connector with the connector tool. */
-  | { kind: 'conn-draw'; start: Snapped; targets: ConnTarget[] };
+  | { kind: 'conn-draw'; start: Snapped; targets: ConnTarget[]; last?: Snapped };
 
 /** The preview's path: the connector's own route, without the rounding. */
 function elbow(a: [number, number], b: [number, number], route: 'hv' | 'vh' | 'straight'): string {
@@ -51,6 +52,14 @@ function elbow(a: [number, number], b: [number, number], route: 'hv' | 'vh' | 's
 const SNAP = 10;
 
 const roundPt = ([x, y]: [number, number]): [number, number] => [Math.round(x * 100) / 100, Math.round(y * 100) / 100];
+
+/** The element at `path` given a uid if it has none — what an attachment refers to. */
+function withUid(doc: import('../src/document.ts').Doc, path: string): { doc: import('../src/document.ts').Doc; uid: string } {
+  const el = elementAt(doc, path) as DocElement & { uid?: string };
+  if (el.uid) return { doc, uid: el.uid };
+  const uid = newUid();
+  return { doc: replaceAt(doc, path, { ...el, uid } as DocElement), uid };
+}
 
 /** The item whose anchor a point sits exactly on — where a connector end is attached. */
 function targetOnAnchor(point: [number, number], targets: ConnTarget[]): ConnTarget | undefined {
@@ -381,6 +390,7 @@ export function Canvas() {
         // face wherever the end is now.
         const s0 = start.target && !start.exact ? facing(start.target, endSnap.point) : start;
         d.mode.start = s0;
+        d.mode.last = endSnap;
         setConnPreview({ from: s0.point, to: endSnap.point, route: routeFor(s0.side, endSnap.side, 'hv') });
         setConnHover(endSnap.target ? { box: endSnap.target.box, snapped: endSnap.side ? endSnap.point : undefined } : null);
         d.moved = true;
@@ -398,13 +408,24 @@ export function Canvas() {
       const other = otherOn ? facing(otherOn, snapped.point) : { point: otherEnd, side: undefined };
       if (snapped.target && !snapped.exact) snapped = facing(snapped.target, other.point);
       const [fromSide, toSide] = end === 'from' ? [snapped.side, other.side] : [other.side, snapped.side];
+      // The dragged end attaches to what it landed on, or lets go.
+      let doc = st.doc;
+      const attach = { ...(el.attach ?? {}) };
+      if (snapped.target) {
+        const r = withUid(doc, snapped.target.path);
+        doc = r.doc;
+        attach[end] = { uid: r.uid, side: snapped.exact && snapped.side ? snapped.side : 'auto' };
+      } else {
+        delete attach[end];
+      }
       const next = {
         ...el,
         [end]: roundPt(snapped.point),
         [otherKey]: roundPt(other.point),
         route: routeFor(fromSide, toSide, el.route),
+        attach: attach.from || attach.to ? attach : undefined,
       };
-      commit(replaceAt(st.doc, st.selected!, next), d.moved);
+      commit(replaceAt(doc, st.selected!, next), d.moved);
       setConnHover(snapped.target ? { box: snapped.target.box, snapped: snapped.side ? snapped.point : undefined } : null);
       d.moved = true;
       return;
@@ -485,7 +506,11 @@ export function Canvas() {
       }
       setGuides(hits);
       if (sx === 0 && sy === 0 && !d.moved) return;
-      if (!d.auto) commit(replaceAt(st.doc, st.selected, movedDeep(el, sx, sy)), d.moved);
+      // Dragging a connector by its line lets go of what it was attached to —
+      // otherwise its ends would spring straight back.
+      const moved = movedDeep(el, sx, sy);
+      const loose = moved.type === 'connector' && moved.attach ? ({ ...moved, attach: undefined } as DocElement) : moved;
+      if (!d.auto) commit(replaceAt(st.doc, st.selected, loose), d.moved);
       if (origin) {
         origin.x += sx;
         origin.y += sy;
@@ -606,12 +631,22 @@ export function Canvas() {
     if (d?.mode.kind === 'conn-draw' && connPreview) {
       const { from, to, route } = connPreview;
       if (Math.hypot(to[0] - from[0], to[1] - from[1]) > 4) {
-        addAt(getState().doc, { parent: null }, {
+        // Ends drawn onto items attach to them, so the line follows them.
+        let doc = getState().doc;
+        const attach: NonNullable<ConnectorEl['attach']> = {};
+        for (const [key, snap] of [['from', d.mode.start], ['to', d.mode.last]] as const) {
+          if (!snap?.target) continue;
+          const r = withUid(doc, snap.target.path);
+          doc = r.doc;
+          attach[key] = { uid: r.uid, side: snap.exact && snap.side ? snap.side : 'auto' };
+        }
+        addAt(doc, { parent: null }, {
           type: 'connector',
           from: roundPt(from),
           to: roundPt(to),
           route,
           radius: 10,
+          ...(attach.from || attach.to ? { attach } : {}),
         } as DocElement);
         setUI({ tool: 'select' });
       }

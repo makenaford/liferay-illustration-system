@@ -14,7 +14,8 @@ import { boundsOf, type Box } from './bounds.ts';
  * and one on a top or bottom side runs vertically.
  */
 
-export type Side = 'top' | 'right' | 'bottom' | 'left';
+import { anchors, routeFor, type Side } from '../src/attach.ts';
+export { anchors, routeFor, type Side };
 
 export interface Target {
   path: string;
@@ -61,15 +62,6 @@ export function connectTargets(resolved: Doc, docEl: HTMLElement | null, exclude
   return out;
 }
 
-export function anchors(box: Box): Record<Side, [number, number]> {
-  return {
-    top: [box.x + box.width / 2, box.y],
-    right: [box.x + box.width, box.y + box.height / 2],
-    bottom: [box.x + box.width / 2, box.y + box.height],
-    left: [box.x, box.y + box.height / 2],
-  };
-}
-
 const dist = (a: [number, number], b: [number, number]) => Math.hypot(a[0] - b[0], a[1] - b[1]);
 const within = (p: [number, number], b: Box) =>
   p[0] >= b.x && p[0] <= b.x + b.width && p[1] >= b.y && p[1] <= b.y + b.height;
@@ -107,20 +99,3 @@ export function snapEnd(point: [number, number], other: [number, number], target
   return { point };
 }
 
-/**
- * The elbow that leaves `fromSide` and arrives at `toSide` squarely. `hv`
- * starts horizontal, `vh` starts vertical; the start side wins when both are
- * known and disagree, since that is where the eye picks the line up.
- */
-export function routeFor(
-  fromSide: Side | undefined,
-  toSide: Side | undefined,
-  current: 'hv' | 'vh' | 'straight' | undefined,
-): 'hv' | 'vh' | 'straight' {
-  const horizontal = (s: Side) => s === 'left' || s === 'right';
-  if (fromSide) return horizontal(fromSide) ? 'hv' : 'vh';
-  // Only the end is known: arriving horizontally means the last leg is
-  // horizontal, which is the `vh` route.
-  if (toSide) return horizontal(toSide) ? 'vh' : 'hv';
-  return current ?? 'hv';
-}

@@ -7,7 +7,7 @@ import { Layers } from './Layers.tsx';
 import { Palette } from './Palette.tsx';
 import { DOCS } from './docs.ts';
 import { Library } from './Library.tsx';
-import { save as saveToLibrary, backend } from './library.ts';
+import { save as saveToLibrary, backend, latest, namesOf, subscribe, type Saved } from './library.ts';
 import { copySelected, cutSelected, duplicateSelected, paste } from './clipboard.ts';
 import { copyText, saveFile } from './save.ts';
 import { SourceModal } from './SourceModal.tsx';
@@ -74,10 +74,49 @@ export function App() {
    * library view: an illustration you opened, changed and saved is the one
    * everyone sees next.
    */
-  const saveDoc = async () => {
+  /**
+   * A newer version of the open illustration, saved by someone else since
+   * this editing session started from `base`. As a conflict it came up when
+   * saving; as incoming it arrived live while there were unsaved edits.
+   */
+  const [conflict, setConflict] = useState<{ theirs: Saved; by: string } | null>(null);
+  const [incoming, setIncoming] = useState<{ theirs: Saved; by: string } | null>(null);
+  const saverName = async (s: Saved) =>
+    (s.updatedBy && (await namesOf([s.updatedBy]))[s.updatedBy]) || 'A teammate';
+
+  /** Take the library's version, dropping the open edits. */
+  const loadTheirs = (theirs: Saved) => {
+    initStore(theirs.doc, theirs.updatedAt);
+    setUI({ view: 'editor' });
+    setConflict(null);
+    setIncoming(null);
+  };
+
+  const saveDoc = async (overwrite = false) => {
+    const st = getState();
     try {
-      await saveToLibrary(getState().doc);
-      markSaved();
+      // The library is the source of truth: never save over a version this
+      // edit did not start from without saying so.
+      if (!overwrite) {
+        const current = await latest(st.doc.id);
+        if (current && current.updatedAt > st.base) {
+          setConflict({ theirs: current, by: await saverName(current) });
+          return;
+        }
+      }
+      setConflict(null);
+      setIncoming(null);
+      const at = Date.now();
+      // Claimed before the write lands, so the live echo of this very save
+      // is not mistaken for someone else's.
+      setUI({ base: at });
+      try {
+        await saveToLibrary(getState().doc, at);
+      } catch (e) {
+        setUI({ base: st.base });
+        throw e;
+      }
+      markSaved(at);
       setFlash(
         store_ === 'shared'
           ? 'Saved to the shared library'
@@ -87,6 +126,34 @@ export function App() {
       setFlash(`Could not save: ${(e as Error).message}`);
     }
   };
+
+  /*
+   * A teammate saves the illustration you have open. With nothing unsaved it
+   * simply loads — the library's version is the current one. With edits in
+   * progress it says so and lets you choose, rather than pulling the canvas
+   * out from under you.
+   */
+  useEffect(
+    () =>
+      subscribe(() => {
+        void (async () => {
+          const st = getState();
+          if (st.view !== 'editor') return;
+          const current = await latest(st.doc.id);
+          const now = getState();
+          if (!current || now.doc.id !== st.doc.id || current.updatedAt <= now.base) return;
+          const by = await saverName(current);
+          if (!now.dirty) {
+            loadTheirs(current);
+            setFlash(`Updated to ${by}’s latest save`);
+          } else {
+            setIncoming({ theirs: current, by });
+          }
+        })();
+      }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
 
   /* Global shortcuts. Nudge lives in Canvas; these are document-level. */
   useEffect(() => {
@@ -483,6 +550,19 @@ export function App() {
         </aside>
 
         <main className="center">
+          {incoming && (
+            <div className="sync-banner" role="status">
+              <span>
+                <b>{incoming.by}</b> saved a newer version of this illustration while you were editing.
+              </span>
+              <button type="button" onClick={() => loadTheirs(incoming.theirs)}>
+                Load theirs
+              </button>
+              <button type="button" onClick={() => setIncoming(null)}>
+                Keep editing mine
+              </button>
+            </div>
+          )}
           <Canvas />
           <footer className="statusbar">
             <span>
@@ -503,6 +583,31 @@ export function App() {
           <Inspector />
         </aside>
       </div>
+
+      {conflict && (
+        <div className="modal-scrim" onClick={() => setConflict(null)}>
+          <div className="modal conflict" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-head">
+              <b>Someone saved this first</b>
+            </div>
+            <p className="conflict-body">
+              <b>{conflict.by}</b> saved a newer version of “{conflict.theirs.doc.name}” after you opened
+              it. Saving now replaces their version for everyone.
+            </p>
+            <div className="modal-foot">
+              <button type="button" onClick={() => setConflict(null)}>
+                Cancel
+              </button>
+              <button type="button" onClick={() => loadTheirs(conflict.theirs)}>
+                Load theirs, discard mine
+              </button>
+              <button type="button" className="primary" onClick={() => void saveDoc(true)}>
+                Replace with mine
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {source && (
         <SourceModal

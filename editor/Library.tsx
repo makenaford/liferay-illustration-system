@@ -10,7 +10,11 @@ import {
   isShipped,
   list,
   mergeFolders,
+  namesOf,
   removeFolder,
+  SHARED_LIBRARY_URL,
+  storeKind,
+  subscribe,
   renameFolder,
   save,
   type Entry,
@@ -77,6 +81,17 @@ export function Library() {
     setFolders(f);
   });
   useEffect(() => { void reload(); }, []);
+  // In the shared library, a teammate's save shows up without a reload.
+  useEffect(() => subscribe(() => void reload()), []);
+
+  // Who saved each version, resolved for this viewer on every change and
+  // never stored — only the saver's id travels with a save.
+  const [names, setNames] = useState<Record<string, string>>({});
+  const savers = [...new Set((entries ?? []).map((e) => e.updatedBy).filter((b): b is string => !!b))].join(',');
+  useEffect(() => {
+    if (!savers) return;
+    void namesOf(savers.split(',')).then(setNames);
+  }, [savers]);
 
   // A folder that was deleted elsewhere falls back to All.
   const current: View =
@@ -96,8 +111,8 @@ export function Library() {
     setFolders(await readFolders());
   };
 
-  const open = (doc: Doc) => {
-    initStore(structuredClone(doc));
+  const open = (doc: Doc, base = 0) => {
+    initStore(structuredClone(doc), base);
     setUI({ view: 'editor', selected: null });
   };
 
@@ -123,6 +138,10 @@ export function Library() {
   };
 
   const [note, setNote] = useState<string | null>(null);
+  const [kind, setKind] = useState<'shared' | 'local' | 'none' | null>(null);
+  useEffect(() => {
+    void storeKind().then(setKind);
+  }, []);
 
   const exportAll = async () => {
     const changed = (entries ?? []).filter((e) => e.origin !== 'shipped');
@@ -224,6 +243,20 @@ export function Library() {
           </button>
         </div>
       </header>
+      {kind === 'local' && (
+        <p className="lib-note local" role="note">
+          This copy saves only to this browser — nobody else sees your changes. The team’s shared library is{' '}
+          <a href={SHARED_LIBRARY_URL} target="_blank" rel="noopener noreferrer">
+            the Illustration Builder on Claude
+          </a>
+          . To move your work there, Export here and Import there.
+        </p>
+      )}
+      {kind === 'shared' && (
+        <p className="lib-note shared" role="note">
+          Shared library — every save here is the current version for everyone.
+        </p>
+      )}
       {note && (
         <p className="lib-note" role="status">
           {note}
@@ -273,9 +306,10 @@ export function Library() {
               entry={e}
               theme={theme}
               busy={busy === e.id}
-              onOpen={() => open(e.doc)}
+              onOpen={() => open(e.doc, e.updatedAt ?? 0)}
               onDuplicate={() => void duplicate(e)}
               onRevert={() => void revert(e)}
+              savedBy={e.updatedBy ? names[e.updatedBy] || 'a teammate' : undefined}
               folders={folders.folders}
               folder={folderOf(e.id)}
               onFile={(f) => void file(e.id, f)}
@@ -443,6 +477,7 @@ function Card({
   onOpen,
   onDuplicate,
   onRevert,
+  savedBy,
   folders,
   folder,
   onFile,
@@ -453,6 +488,8 @@ function Card({
   onOpen: () => void;
   onDuplicate: () => void;
   onRevert: () => void;
+  /** Who saved this version, when the library knows. */
+  savedBy?: string;
   folders: { id: string; name: string }[];
   folder: string | null;
   onFile: (folderId: string | null) => void;
@@ -462,6 +499,14 @@ function Card({
   // The builder already loads the font; embedding it in every card is waste.
   const svg = useMemo(() => renderDocument(entry.doc, theme, { embedFont: false }), [entry.doc, theme]);
   const count = useMemo(() => countElements(entry.doc), [entry.doc]);
+  // Revert and Delete discard a saved version — in the shared library, the
+  // whole team's — so each asks once more before it acts.
+  const [confirming, setConfirming] = useState(false);
+  useEffect(() => {
+    if (!confirming) return;
+    const t = setTimeout(() => setConfirming(false), 4000);
+    return () => clearTimeout(t);
+  }, [confirming]);
 
   return (
     <figure
@@ -486,7 +531,12 @@ function Card({
         </div>
         <div className="lib-sub">
           <code>{count} elements</code>
-          {entry.updatedAt ? <code>{when(entry.updatedAt)}</code> : null}
+          {entry.updatedAt ? (
+            <code title={savedBy ? `Saved by ${savedBy}` : undefined}>
+              {when(entry.updatedAt)}
+              {savedBy ? ` · ${savedBy}` : ''}
+            </code>
+          ) : null}
           {folders.length > 0 && (
             <select
               className="lib-card-folder"
@@ -509,15 +559,15 @@ function Card({
           {entry.origin !== 'shipped' && (
             <button
               type="button"
-              className="danger"
-              onClick={onRevert}
+              className={`danger${confirming ? ' confirming' : ''}`}
+              onClick={() => (confirming ? (setConfirming(false), onRevert()) : setConfirming(true))}
               title={
                 isShipped(entry.id)
                   ? 'Discard your changes and go back to the shipped version'
                   : 'Delete this illustration from the library'
               }
             >
-              {isShipped(entry.id) ? 'Revert' : 'Delete'}
+              {confirming ? 'Click to confirm' : isShipped(entry.id) ? 'Revert' : 'Delete'}
             </button>
           )}
         </div>

@@ -909,6 +909,7 @@ button.mini.on { background: var(--accent); border-color: var(--accent); color: 
   font-size: 12.5px; color: var(--ink-dim);
 }
 .lib-note .mini { margin-left: auto; }
+.lib-row button.danger.confirming { color: #ff9d95; border-color: #b4443c; }
 .lib-empty { padding: 40px 28px; color: var(--ink-faint); }
 
 /* Projects: All, Unfiled, then each folder. Folders take dropped cards. */
@@ -1036,3 +1037,26 @@ button.mini.on { background: var(--accent); border-color: var(--accent); color: 
   .lib-grid { grid-template-columns: 1fr; padding: 16px; }
   .lib-head { padding: 20px 16px 16px; }
 }
+
+/* A teammate's newer save of the open illustration. */
+.sync-banner {
+  display: flex; align-items: center; gap: 8px; flex: none;
+  padding: 7px 12px; font-size: 12px;
+  background: #1d2c4d; border-bottom: 1px solid #2c4372; color: var(--ink);
+}
+.sync-banner span { flex: 1; min-width: 0; }
+.sync-banner button {
+  background: var(--panel-2); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 4px 10px; cursor: pointer;
+}
+.sync-banner button:first-of-type { background: var(--accent); border-color: var(--accent); color: #fff; }
+.modal.conflict { width: min(460px, 100%); }
+.conflict-body { margin: 0; padding: 14px; line-height: 1.5; color: var(--ink-dim); }
+.conflict-body b { color: var(--ink); }
+.modal.conflict .modal-foot button:first-child { margin-left: auto; }
+.modal.conflict .modal-foot button + button { margin-left: 0; }
+
+.lib-note a { color: var(--accent-soft); }
+.lib-note.local, .lib-note.shared { display: block; line-height: 1.5; }
+.lib-note.local { border-color: #6b5a2a; background: #2a2416; color: #e6d7a8; }
+.lib-note.shared { border-color: #2c4372; background: #1d2c4d; color: var(--accent-soft); }

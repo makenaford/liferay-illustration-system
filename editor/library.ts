@@ -24,22 +24,51 @@ import { migrateDoc } from '../src/migrate.ts';
 
 export type Origin = 'shipped' | 'edited' | 'new';
 
+/**
+ * The team's shared library: this builder published as a claude.ai Artifact
+ * with the `db` capability. Copies that save only to their browser point
+ * here, so the team's work ends up in one place.
+ */
+export const SHARED_LIBRARY_URL = 'https://claude.ai/artifact/99HVZBUZbx9K3iG8dJStgd';
+
+/** Which store saves go to: resolved once, see `backend`. */
+export async function storeKind(): Promise<'shared' | 'local' | 'none'> {
+  return (await backend()).kind;
+}
+
 export interface Entry {
   id: string;
   name: string;
   doc: Doc;
   origin: Origin;
   updatedAt?: number;
+  /** Who saved this version — an opaque viewer id, shared library only. */
+  updatedBy?: string;
+}
+
+/** One saved illustration, as the store holds it. */
+export interface Saved {
+  doc: Doc;
+  /** When it was saved, ms since epoch. Doubles as its version. */
+  updatedAt: number;
+  updatedBy?: string;
 }
 
 interface Backend {
   readonly kind: 'shared' | 'local' | 'none';
-  all(): Promise<Record<string, { doc: Doc; updatedAt: number }>>;
-  put(id: string, doc: Doc): Promise<void>;
+  all(): Promise<Record<string, Saved>>;
+  /** One illustration's saved version, fresh from the store. */
+  get(id: string): Promise<Saved | null>;
+  put(id: string, saved: Saved): Promise<void>;
   remove(id: string): Promise<void>;
   /** The folder index — see `Folders`. */
   folders(): Promise<Folders>;
   putFolders(f: Folders): Promise<void>;
+  /**
+   * Call `onChange` whenever anyone changes the library — shared library
+   * only, where teammates' saves arrive live. Returns the unsubscribe.
+   */
+  watch?(onChange: () => void): () => void;
 }
 
 /**
@@ -77,9 +106,12 @@ const localBackend: Backend = {
       return {};
     }
   },
-  async put(id, doc) {
+  async get(id) {
+    return (await this.all())[id] ?? null;
+  },
+  async put(id, saved) {
     const all = await this.all();
-    all[id] = { doc, updatedAt: Date.now() };
+    all[id] = saved;
     try {
       localStorage.setItem(KEY, JSON.stringify(all));
     } catch {
@@ -118,6 +150,9 @@ const memoryBackend: Backend = {
   async all() {
     return {};
   },
+  async get() {
+    return null;
+  },
   async put() {},
   async remove() {},
   async folders() {
@@ -129,11 +164,22 @@ const memoryBackend: Backend = {
 };
 
 /** Minimal shape of the `db` capability this module uses. */
+type Body = Record<string, unknown> | undefined;
 interface DbLike {
   collection(path: string): {
-    get(): Promise<{ docs: { id: string; data(): Record<string, unknown> | undefined }[] }>;
-    doc(id: string): { set(d: Record<string, unknown>): Promise<void>; delete(): Promise<void> };
+    get(): Promise<{ docs: { id: string; data(): Body }[] }>;
+    onSnapshot(next: () => void, error?: (e: unknown) => void): () => void;
+    doc(id: string): {
+      get(): Promise<{ exists: boolean; data(): Body }>;
+      set(d: Record<string, unknown>): Promise<void>;
+      delete(): Promise<void>;
+    };
   };
+}
+
+function savedOf(body: Body): Saved | null {
+  const b = body as { doc?: Doc; updatedAt?: number; updatedBy?: string } | undefined;
+  return b?.doc ? { doc: b.doc, updatedAt: b.updatedAt ?? 0, updatedBy: b.updatedBy } : null;
 }
 
 function sharedBackend(db: DbLike): Backend {
@@ -142,17 +188,36 @@ function sharedBackend(db: DbLike): Backend {
     kind: 'shared',
     async all() {
       const snap = await col().get();
-      const out: Record<string, { doc: Doc; updatedAt: number }> = {};
+      const out: Record<string, Saved> = {};
       for (const d of snap.docs) {
-        const body = d.data() as { doc?: Doc; updatedAt?: number } | undefined;
-        if (body?.doc) out[d.id] = { doc: body.doc, updatedAt: body.updatedAt ?? 0 };
+        const s = savedOf(d.data());
+        if (s) out[d.id] = s;
       }
       return out;
     },
-    async put(id, doc) {
+    async get(id) {
+      const snap = await col().doc(id).get();
+      return snap.exists ? savedOf(snap.data()) : null;
+    },
+    async put(id, saved) {
       await col()
         .doc(id)
-        .set({ id, name: doc.name, updatedAt: Date.now(), doc: doc as unknown as Record<string, unknown> });
+        .set({
+          id,
+          name: saved.doc.name,
+          updatedAt: saved.updatedAt,
+          ...(saved.updatedBy ? { updatedBy: saved.updatedBy } : {}),
+          doc: saved.doc as unknown as Record<string, unknown>,
+        });
+    },
+    watch(onChange) {
+      // Errors end a subscription; the library still works, just not live.
+      const offDocs = col().onSnapshot(onChange, () => {});
+      const offMeta = db.collection('library-meta').onSnapshot(onChange, () => {});
+      return () => {
+        offDocs();
+        offMeta();
+      };
     },
     async remove(id) {
       await col().doc(id).delete();
@@ -207,11 +272,74 @@ export async function list(): Promise<Entry[]> {
     if (SHIPPED.has(id)) continue;
     entries.push({ id, name: hit.doc.name, doc: hit.doc, origin: 'new', updatedAt: hit.updatedAt });
   }
+  for (const e of entries) {
+    const by = saved[e.id]?.updatedBy;
+    if (by) e.updatedBy = by;
+  }
   return entries;
 }
 
-export async function save(doc: Doc): Promise<void> {
-  await (await backend()).put(doc.id, doc);
+/**
+ * Save an illustration as the library's current version. Returns the
+ * version's timestamp — what the editor compares against to notice that
+ * someone else saved over it since.
+ */
+export async function save(doc: Doc, at: number = Date.now()): Promise<number> {
+  const by = await viewerId();
+  await (await backend()).put(doc.id, { doc, updatedAt: at, ...(by ? { updatedBy: by } : {}) });
+  return at;
+}
+
+/** The library's current saved version of one illustration, if any. */
+export async function latest(id: string): Promise<Saved | null> {
+  const hit = await (await backend()).get(id);
+  return hit ? { ...hit, doc: migrateDoc(hit.doc) } : null;
+}
+
+/** Hear about every change to the library, where the store can tell. */
+export function subscribe(onChange: () => void): () => void {
+  let off: (() => void) | undefined;
+  let done = false;
+  void backend().then((b) => {
+    if (!done && b.watch) off = b.watch(onChange);
+  });
+  return () => {
+    done = true;
+    off?.();
+  };
+}
+
+/** Minimal shape of the `user` capability this module uses. */
+interface UserLike {
+  id(): Promise<string | null>;
+  profiles(ids: string[]): Promise<Record<string, { name: string }>>;
+}
+let userPromise: Promise<UserLike | null> | undefined;
+function userCap(): Promise<UserLike | null> {
+  if (!userPromise) {
+    const c = (window as { claude?: { use?(n: string): Promise<unknown> } }).claude;
+    userPromise = c?.use
+      ? Promise.resolve(c.use('user')).then((u) => (u as UserLike) ?? null).catch(() => null)
+      : Promise.resolve(null);
+  }
+  return userPromise;
+}
+
+/** This viewer's id in the shared library, or null where there is none. */
+export async function viewerId(): Promise<string | null> {
+  const u = await userCap();
+  return u ? await u.id() : null;
+}
+
+/**
+ * Display names for saver ids, as this viewer sees them. Names are resolved
+ * on every render and never stored: only the id is written with a save.
+ */
+export async function namesOf(ids: string[]): Promise<Record<string, string>> {
+  const u = await userCap();
+  if (!u || !ids.length) return {};
+  const ps = await u.profiles(ids);
+  return Object.fromEntries(ids.map((id) => [id, ps[id]?.name || '']));
 }
 
 /** Drop the saved copy. A shipped illustration reverts; a new one is gone. */

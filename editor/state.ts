@@ -42,6 +42,12 @@ export interface EditorState {
   view: 'library' | 'editor';
   /** Unsaved edits since the document was opened or last saved. */
   dirty: boolean;
+  /**
+   * The library version this editing session started from — its save
+   * timestamp, or 0 for one never saved. A newer version in the library means
+   * someone else saved over it since.
+   */
+  base: number;
   /** Card padding used by the layout actions and the padding guide. */
   padding: number;
   /**
@@ -73,7 +79,7 @@ function emit() {
  * the library would be its own small papercut. History does not survive: undo
  * across two different documents is not a thing anyone wants.
  */
-export function initStore(doc: Doc) {
+export function initStore(doc: Doc, base = 0) {
   const prefs = store?.state;
   store = {
     state: {
@@ -92,6 +98,7 @@ export function initStore(doc: Doc) {
       lockAspect: prefs?.lockAspect ?? false,
       view: 'library',
       dirty: false,
+      base,
       padding: prefs?.padding ?? LAYOUT.cardPadding,
       tool: 'select',
     },
@@ -144,8 +151,8 @@ export function commit(next: Doc, coalesce = false) {
 }
 
 /** Called after a successful write to the library. */
-export function markSaved() {
-  store.state = { ...store.state, dirty: false };
+export function markSaved(base?: number) {
+  store.state = { ...store.state, dirty: false, ...(base !== undefined ? { base } : {}) };
   emit();
 }
 

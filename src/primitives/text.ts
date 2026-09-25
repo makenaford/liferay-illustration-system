@@ -1,4 +1,5 @@
-import { text as textNode, type Ctx, type VNode } from '../vsvg.ts';
+import { h, text as textNode, type Ctx, type VNode } from '../vsvg.ts';
+import { measureText } from '../fontMetrics.generated.ts';
 
 /**
  * TYPE SCALE — nine sizes, from the design system's own scale.
@@ -115,7 +116,16 @@ export interface TextProps {
   weight?: TypeWeight;
   /** Resolved colour. See `resolveTone` in render.ts. */
   color?: string;
+  underline?: boolean;
+  strikethrough?: boolean;
 }
+
+/**
+ * Where the decoration lines sit, as fractions of the font size — Source
+ * Sans 3's own underline position and stroke, and a strike through the
+ * middle of the lowercase (half its 0.486 x-height).
+ */
+const DECORATION = { underline: 0.09, strike: -0.243, thickness: 0.05 } as const;
 
 /**
  * TEXT — a real `<text>` node, which the current exports do not have.
@@ -127,8 +137,9 @@ export interface TextProps {
 export function Text(ctx: Ctx, props: TextProps): VNode {
   const role = typeStyle(props.role, props.weight);
   const f = ctx.tokens.font;
+  const fill = props.color ?? ctx.tokens.text.primary;
 
-  return textNode(
+  const node = textNode(
     'text',
     {
       x: props.x,
@@ -137,10 +148,31 @@ export function Text(ctx: Ctx, props: TextProps): VNode {
       'font-size': role.size,
       'font-weight': role.weight,
       'letter-spacing': role.tracking || undefined,
-      fill: props.color ?? ctx.tokens.text.primary,
+      fill,
       'text-anchor': props.anchor === 'start' ? undefined : props.anchor,
       'data-el': 'text',
     },
     props.content,
   );
+  if (!props.underline && !props.strikethrough) return node;
+
+  /*
+   * Drawn as lines rather than SVG's `text-decoration`, which rasterisers
+   * and a paste into Figma handle unevenly. The width comes from the same
+   * metrics table the layout uses, plus the tracking the text is set with,
+   * so the line spans exactly the words.
+   */
+  const width =
+    measureText(props.content, role.size, role.weight) + (role.tracking || 0) * [...props.content].length;
+  const x0 =
+    props.anchor === 'middle' ? props.x - width / 2 : props.anchor === 'end' ? props.x - width : props.x;
+  const t = Math.max(role.size * DECORATION.thickness, 0.5);
+  const rule = (dy: number) =>
+    h('rect', { x: x0, y: props.y + dy * role.size - t / 2, width, height: t, fill });
+
+  return h('g', { 'data-el': 'text-decorated' }, [
+    node,
+    props.underline ? rule(DECORATION.underline) : null,
+    props.strikethrough ? rule(DECORATION.strike) : null,
+  ]);
 }

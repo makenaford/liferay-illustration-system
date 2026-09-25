@@ -48,6 +48,10 @@ export interface TextEl extends LayoutChild {
    * generated palette. Still a token either way — there is no hex field.
    */
   tone?: string;
+  /** A line under the text, in its own colour. */
+  underline?: boolean;
+  /** A line through the text, in its own colour. */
+  strikethrough?: boolean;
 }
 
 /**

@@ -18,6 +18,8 @@ import {
   canRedo,
   canUndo,
   commit,
+  elementAt,
+  replaceAt,
   getState,
   initStore,
   redo,
@@ -88,7 +90,7 @@ export function App() {
   /* Global shortcuts. Nudge lives in Canvas; these are document-level. */
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      const typing = (e.target as HTMLElement)?.matches('input, textarea, select');
+      const typing = !!(e.target as HTMLElement)?.matches?.('input, textarea, select');
       const mod = e.metaKey || e.ctrlKey;
 
       if (mod && e.key.toLowerCase() === 's') {
@@ -109,6 +111,29 @@ export function App() {
       if (mod && !typing && e.key.toLowerCase() === 'd') {
         e.preventDefault();
         say('Duplicated', duplicateSelected());
+        return;
+      }
+
+      // ⌘U underlines, ⇧⌘X strikes through — Figma's keys — every selected
+      // text element, on if any of them is off, so a mixed selection evens out.
+      const deco = mod && !typing
+        ? e.key.toLowerCase() === 'u' && !e.shiftKey
+          ? 'underline'
+          : e.key.toLowerCase() === 'x' && e.shiftKey
+            ? 'strikethrough'
+            : null
+        : null;
+      if (deco) {
+        const st = getState();
+        const paths = st.selected ? [st.selected, ...st.also] : [];
+        const texts = paths.filter((p) => elementAt(st.doc, p)?.type === 'text');
+        if (!texts.length) return;
+        e.preventDefault();
+        const on = texts.some((p) => !(elementAt(st.doc, p) as unknown as Record<string, unknown>)[deco]);
+        let doc = st.doc;
+        for (const p of texts) doc = replaceAt(doc, p, { ...elementAt(doc, p)!, [deco]: on || undefined } as never);
+        commit(doc);
+        setFlash(`${deco === 'underline' ? 'Underline' : 'Strikethrough'} ${on ? 'on' : 'off'}`);
         return;
       }
 

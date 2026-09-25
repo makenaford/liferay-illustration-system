@@ -120,6 +120,8 @@ export const SCHEMA: {
       { key: 'weight', label: 'Weight', kind: 'select', options: ['', ...WEIGHTS] },
       { key: 'anchor', label: 'Align', kind: 'select', options: ['start', 'middle', 'end'] },
       { key: 'tone', label: 'Colour', kind: 'token' },
+      { key: 'underline', label: 'Underline (⌘U)', kind: 'boolean' },
+      { key: 'strikethrough', label: 'Strikethrough (⇧⌘X)', kind: 'boolean' },
     ],
   },
   card: {

@@ -184,8 +184,14 @@ interface DbLike {
 }
 
 function savedOf(body: Body): Saved | null {
-  const b = body as { doc?: Doc; updatedAt?: number; updatedBy?: string } | undefined;
-  return b?.doc ? { doc: b.doc, updatedAt: b.updatedAt ?? 0, updatedBy: b.updatedBy } : null;
+  // `uploadedAt`/`uploadedBy` are what the Marketing Assets site first
+  // wrote; a save from the builder writes the `updated` pair.
+  const b = body as
+    | { doc?: Doc; updatedAt?: number; updatedBy?: string; uploadedAt?: number; uploadedBy?: string }
+    | undefined;
+  return b?.doc
+    ? { doc: b.doc, updatedAt: b.updatedAt ?? b.uploadedAt ?? 0, updatedBy: b.updatedBy ?? b.uploadedBy }
+    : null;
 }
 
 function sharedBackend(db: DbLike): Backend {
@@ -294,6 +300,15 @@ export async function save(doc: Doc, at: number = Date.now()): Promise<number> {
   const by = await viewerId();
   await (await backend()).put(doc.id, { doc, updatedAt: at, ...(by ? { updatedBy: by } : {}) });
   return at;
+}
+
+/**
+ * Every saved illustration and nothing else — no shipped seeds. What the
+ * Marketing Assets site lists: there, the library IS what has been saved.
+ */
+export async function savedAll(): Promise<Record<string, Saved>> {
+  const all = await (await backend()).all();
+  return Object.fromEntries(Object.entries(all).map(([id, s]) => [id, { ...s, doc: migrateDoc(s.doc) }]));
 }
 
 /** The library's current saved version of one illustration, if any. */

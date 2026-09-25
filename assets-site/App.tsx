@@ -2,11 +2,18 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { renderDocument } from '../src/render.ts';
 import { copyText, saveFile } from '../editor/save.ts';
 import { svgToPng } from '../editor/png.ts';
+import { App as BuilderApp } from '../editor/App.tsx';
+import { blankDoc } from '../editor/docs.ts';
+import { initStore, setUI, useEditor } from '../editor/state.ts';
+import { addFolder, fileIn, freshId, removeFolder, renameFolder } from '../editor/library.ts';
+import type { Doc } from '../src/document.ts';
 import {
   canWrite,
   names as namesOf,
+  setKey,
   store,
   viewerId,
+  type Folders,
   type IconRow,
   type IconSetRow,
   type IllustrationRow,
@@ -16,9 +23,13 @@ import {
 import { parseFiles, slug, svgSrc, type ParsedIcon } from './uploads.ts';
 
 type Theme = 'dark' | 'light';
-type Tab = 'illustrations' | 'icons';
+type Tab = 'illustrations' | 'icons' | 'tools';
+/** Every asset, the unfiled ones, or one folder's. */
+type Place = 'all' | 'unfiled' | string;
 
+/** The standalone builder, whose own library is for drafts. */
 const BUILDER_URL = 'https://claude.ai/artifact/99HVZBUZbx9K3iG8dJStgd';
+const PLACE_KEY = 'marketing-assets-folder';
 
 /** "Sep 25" this year, "Sep 25, 2025" before it. */
 function when(ms: number) {
@@ -29,9 +40,31 @@ function when(ms: number) {
 
 export function App() {
   const [st, setSt] = useState<Store | null>(null);
-  const [lib, setLib] = useState<Library>({ illustrations: [], sets: [], ready: false });
+  const [lib, setLib] = useState<Library>({ illustrations: [], sets: [], folders: { folders: [], assign: {} }, ready: false });
   const [writable, setWritable] = useState(true);
-  const [tab, setTab] = useState<Tab>(() => (location.hash === '#icons' ? 'icons' : 'illustrations'));
+  const [tab, setTab] = useState<Tab>(() =>
+    location.hash === '#icons' ? 'icons' : location.hash === '#tools' ? 'tools' : 'illustrations',
+  );
+  // The folder you were in is a per-viewer convenience, so it lives in
+  // localStorage — which can be unavailable, hence the guards.
+  const [place, setPlaceState] = useState<Place>(() => {
+    try {
+      return localStorage.getItem(PLACE_KEY) || 'all';
+    } catch {
+      return 'all';
+    }
+  });
+  const setPlace = (p: Place) => {
+    setPlaceState(p);
+    try {
+      localStorage.setItem(PLACE_KEY, p);
+    } catch {
+      /* a convenience only */
+    }
+  };
+  /** Whether the builder is open, in place of the library. */
+  const [building, setBuilding] = useState(false);
+  const builderView = useEditor((s) => s.view);
   const [art, setArt] = useState<Theme>('dark');
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState<string | null>(null);
@@ -61,7 +94,7 @@ export function App() {
   const [people, setPeople] = useState<Record<string, string>>({});
   const uploaderIds = [
     ...new Set(
-      [...lib.illustrations.map((i) => i.uploadedBy), ...lib.sets.map((s) => s.createdBy)].filter(
+      [...lib.illustrations.map((i) => i.updatedBy), ...lib.sets.map((s) => s.createdBy)].filter(
         (x): x is string => !!x,
       ),
     ),
@@ -71,17 +104,29 @@ export function App() {
   }, [uploaderIds]);
   const who = (id?: string) => (id ? people[id] || 'A teammate' : null);
 
+  // A folder deleted elsewhere falls back to everything.
+  const known = new Set(lib.folders.folders.map((f) => f.id));
+  const current: Place = place === 'all' || place === 'unfiled' || known.has(place) ? place : 'all';
+  const folderOf = (key: string) => {
+    const f = lib.folders.assign[key];
+    return f && known.has(f) ? f : null;
+  };
+  const inPlace = (key: string) =>
+    current === 'all' ? true : current === 'unfiled' ? !folderOf(key) : folderOf(key) === current;
+
   const needle = query.trim().toLowerCase();
   const illustrations = useMemo(
     () =>
       [...lib.illustrations]
-        .filter((i) => !needle || i.name.toLowerCase().includes(needle))
-        .sort((a, b) => b.uploadedAt - a.uploadedAt),
-    [lib.illustrations, needle],
+        .filter((i) => inPlace(i.id) && (!needle || i.name.toLowerCase().includes(needle)))
+        .sort((a, b) => b.updatedAt - a.updatedAt),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [lib.illustrations, lib.folders, current, needle],
   );
   const sets = useMemo(
     () =>
       [...lib.sets]
+        .filter((s) => inPlace(setKey(s.id)))
         .map((s) => ({
           ...s,
           icons: [...s.icons]
@@ -90,8 +135,41 @@ export function App() {
         }))
         .filter((s) => !needle || s.icons.length)
         .sort((a, b) => a.name.localeCompare(b.name)),
-    [lib.sets, needle],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [lib.sets, lib.folders, current, needle],
   );
+  /** Put something in a folder, or take it out with null. */
+  const file = async (key: string, folderId: string | null) => {
+    try {
+      await fileIn(key, folderId);
+      st?.refresh();
+    } catch (e) {
+      setToast(`Could not move it — ${(e as Error).message}`);
+    }
+  };
+  const here = current !== 'all' && current !== 'unfiled' ? current : null;
+
+  /** Open an illustration in the builder, from the library's own version. */
+  const edit = (row: { doc: Doc; updatedAt: number }) => {
+    initStore(structuredClone(row.doc), row.updatedAt);
+    setUI({ view: 'editor', selected: null });
+    setOpen(null);
+    setBuilding(true);
+  };
+  const create = async () => {
+    const doc = blankDoc();
+    doc.id = freshId('untitled', lib.illustrations.map((i) => i.id));
+    // Made inside a folder, it belongs to that folder once it is saved.
+    if (here) await file(doc.id, here);
+    edit({ doc, updatedAt: 0 });
+  };
+  // The builder's own "‹ Library" button comes back here.
+  useEffect(() => {
+    if (building && builderView === 'library') {
+      setBuilding(false);
+      st?.refresh();
+    }
+  }, [building, builderView, st]);
   const iconCount = lib.sets.reduce((n, s) => n + s.icons.length, 0);
 
   /** Take files from the picker or a drop. */
@@ -104,13 +182,13 @@ export function App() {
     setBusy(true);
     try {
       const parsed = await parseFiles(files);
-      const by = (await viewerId()) ?? undefined;
-      const now = Date.now();
       let added = 0;
       let replaced = 0;
       for (const doc of parsed.illustrations) {
         const had = lib.illustrations.some((i) => i.id === doc.id);
-        await st.putIllustration({ id: doc.id, name: doc.name, doc, uploadedAt: now, uploadedBy: by });
+        await st.putIllustration(doc);
+        // Added inside a folder, a new illustration lands in it.
+        if (!had && here) await fileIn(doc.id, here);
         if (had) replaced++;
         else added++;
       }
@@ -134,7 +212,10 @@ export function App() {
     try {
       const by = (await viewerId()) ?? undefined;
       const now = Date.now();
-      if (set.isNew) await st.putSet({ id: set.id, name: set.name, createdAt: now, createdBy: by });
+      if (set.isNew) {
+        await st.putSet({ id: set.id, name: set.name, createdAt: now, createdBy: by });
+        if (here) await file(setKey(set.id), here);
+      }
       const existing = lib.sets.find((s) => s.id === set.id)?.icons ?? [];
       for (const icon of icons) {
         const id = slug(icon.name);
@@ -163,9 +244,13 @@ export function App() {
 
   const openRow = lib.illustrations.find((i) => i.id === open) ?? null;
 
+  // The builder, in place of the library, until its "‹ Library" button.
+  if (building && builderView === 'editor') return <BuilderApp />;
+
   return (
+    <div className="am-root">
     <div
-      className="page"
+      className="am-page"
       onDragOver={(e) => {
         if (![...e.dataTransfer.types].includes('Files')) return;
         e.preventDefault();
@@ -180,21 +265,21 @@ export function App() {
         void take([...e.dataTransfer.files]);
       }}
     >
-      <header className="top">
-        <div className="brand">
-          <span className="mark" aria-hidden />
+      <header className="am-top">
+        <div className="am-brand">
+          <span className="am-mark" aria-hidden />
           <div>
             <h1>Marketing Assets</h1>
-            <p className="sub">
+            <p className="am-sub">
               {lib.ready
                 ? `${lib.illustrations.length} illustration${lib.illustrations.length === 1 ? '' : 's'} · ${iconCount} icon${iconCount === 1 ? '' : 's'} in ${lib.sets.length} set${lib.sets.length === 1 ? '' : 's'}`
                 : 'Loading the library…'}
             </p>
           </div>
         </div>
-        <div className="tools">
-          <label className="search">
-            <span className="sr">Search assets</span>
+        <div className="am-tools">
+          <label className="am-search">
+            <span className="am-sr">Search assets</span>
             <input
               id="search"
               type="search"
@@ -203,15 +288,15 @@ export function App() {
               onChange={(e) => setQuery(e.target.value)}
             />
           </label>
-          <div className="seg" role="group" aria-label="Artwork theme">
+          <div className="am-seg" role="group" aria-label="Artwork theme">
             {(['dark', 'light'] as const).map((t) => (
-              <button key={t} type="button" className={art === t ? 'on' : ''} onClick={() => setArt(t)}>
+              <button key={t} type="button" className={art === t ? 'am-on' : ''} onClick={() => setArt(t)}>
                 {t === 'dark' ? 'Dark' : 'Light'}
               </button>
             ))}
           </div>
           {writable && (
-            <button type="button" className="primary" disabled={busy} onClick={() => pickRef.current?.click()}>
+            <button type="button" className="am-primary" disabled={busy} onClick={() => pickRef.current?.click()}>
               {busy ? 'Adding…' : 'Upload'}
             </button>
           )}
@@ -230,19 +315,39 @@ export function App() {
         </div>
       </header>
 
-      <nav className="tabs" aria-label="Asset type">
-        <button type="button" className={tab === 'illustrations' ? 'on' : ''} onClick={() => setTab('illustrations')}>
-          Illustrations <span className="count">{lib.illustrations.length}</span>
+      <nav className="am-tabs" aria-label="Asset type">
+        <button type="button" className={tab === 'illustrations' ? 'am-on' : ''} onClick={() => setTab('illustrations')}>
+          Illustrations <span className="am-count">{lib.illustrations.length}</span>
         </button>
-        <button type="button" className={tab === 'icons' ? 'on' : ''} onClick={() => setTab('icons')}>
-          Icon sets <span className="count">{iconCount}</span>
+        <button type="button" className={tab === 'icons' ? 'am-on' : ''} onClick={() => setTab('icons')}>
+          Icon sets <span className="am-count">{iconCount}</span>
+        </button>
+        <button type="button" className={tab === 'tools' ? 'am-on' : ''} onClick={() => setTab('tools')}>
+          Tools
         </button>
       </nav>
 
+      {tab !== 'tools' && (
+        <FolderBar
+          folders={lib.folders}
+          current={current}
+          counts={(v) =>
+            [...lib.illustrations.map((i) => i.id), ...lib.sets.map((x) => setKey(x.id))].filter((k) =>
+              v === 'unfiled' ? !folderOf(k) : folderOf(k) === v,
+            ).length
+          }
+          writable={writable}
+          onPick={setPlace}
+          onDropItem={(key, folderId) => void file(key, folderId)}
+          onToast={setToast}
+          onChanged={() => st?.refresh()}
+        />
+      )}
+
       {toast && (
-        <p className="toast" role="status">
+        <p className="am-toast" role="status">
           {toast}
-          <button type="button" className="x" aria-label="Dismiss" onClick={() => setToast(null)}>
+          <button type="button" className="am-x" aria-label="Dismiss" onClick={() => setToast(null)}>
             ×
           </button>
         </p>
@@ -251,9 +356,16 @@ export function App() {
       <main>
         {tab === 'illustrations' ? (
           illustrations.length ? (
-            <div className="grid">
+            <div className="am-grid">
               {illustrations.map((row) => (
-                <IllustrationCard key={row.id} row={row} theme={art} by={who(row.uploadedBy)} onOpen={() => setOpen(row.id)} />
+                <IllustrationCard
+                  key={row.id}
+                  row={row}
+                  theme={art}
+                  by={who(row.updatedBy)}
+                  onOpen={() => setOpen(row.id)}
+                  onEdit={writable ? () => edit(row) : undefined}
+                />
               ))}
             </div>
           ) : (
@@ -263,18 +375,20 @@ export function App() {
               title="No illustrations yet"
               body={
                 <>
-                  Build one in the{' '}
-                  <a href={BUILDER_URL} target="_blank" rel="noopener noreferrer">
-                    Illustration Builder
-                  </a>
-                  , save its <b>.json</b>, then drop it here. A library file from the builder’s <b>Export</b> adds
-                  every illustration in it at once.
+                  {current === 'all' ? '' : 'Nothing in this folder yet. '}
+                  Start one with{' '}
+                  <button type="button" className="am-linkish" onClick={() => void create()}>
+                    New illustration
+                  </button>{' '}
+                  — it opens the builder, and saving puts it here — or drop a builder <b>.json</b> on the page.
                 </>
               }
             />
           )
+        ) : tab === 'tools' ? (
+          <Tools writable={writable} onNew={() => void create()} />
         ) : sets.length ? (
-          <div className="sets">
+          <div className="am-sets">
             {sets.map((s) => (
               <IconSet
                 key={s.id}
@@ -284,6 +398,9 @@ export function App() {
                 writable={writable}
                 store={st}
                 onToast={setToast}
+                folders={lib.folders}
+                folder={folderOf(setKey(s.id))}
+                onFile={(f) => void file(setKey(s.id), f)}
               />
             ))}
           </div>
@@ -303,7 +420,7 @@ export function App() {
       </main>
 
       {dragging && writable && (
-        <div className="drop" aria-hidden>
+        <div className="am-drop" aria-hidden>
           <p>Drop to add — builder .json files and .svg icons</p>
         </div>
       )}
@@ -312,7 +429,11 @@ export function App() {
         <IllustrationDetail
           row={openRow}
           initialTheme={art}
-          by={who(openRow.uploadedBy)}
+          by={who(openRow.updatedBy)}
+          folders={lib.folders}
+          folder={folderOf(openRow.id)}
+          onFile={(f) => void file(openRow.id, f)}
+          onEdit={() => edit(openRow)}
           writable={writable}
           store={st}
           onToast={setToast}
@@ -330,34 +451,69 @@ export function App() {
         />
       )}
     </div>
+    </div>
   );
 }
 
 function Empty({ ready, searching, title, body }: { ready: boolean; searching: boolean; title: string; body: React.ReactNode }) {
-  if (!ready) return <p className="empty">Loading…</p>;
-  if (searching) return <p className="empty">Nothing matches that search.</p>;
+  if (!ready) return <p className="am-empty">Loading…</p>;
+  if (searching) return <p className="am-empty">Nothing matches that search.</p>;
   return (
-    <div className="empty">
+    <div className="am-empty">
       <h2>{title}</h2>
       <p>{body}</p>
     </div>
   );
 }
 
-function IllustrationCard({ row, theme, by, onOpen }: { row: IllustrationRow; theme: Theme; by: string | null; onOpen: () => void }) {
+/** Drag payload for filing a card or set into a folder. */
+const DRAG = 'application/x-marketing-asset';
+
+function IllustrationCard({
+  row,
+  theme,
+  by,
+  onOpen,
+  onEdit,
+}: {
+  row: IllustrationRow;
+  theme: Theme;
+  by: string | null;
+  onOpen: () => void;
+  /** Absent for viewers who cannot save. */
+  onEdit?: () => void;
+}) {
   const svg = useMemo(() => renderDocument(row.doc, theme, { embedFont: false }), [row.doc, theme]);
   const { width, height } = row.doc.canvas;
   return (
-    <figure className="card">
-      <button type="button" className="thumb" onClick={onOpen} aria-label={`Open ${row.name}`} style={{ aspectRatio: `${width} / ${height}` }}>
-        <span className="art" dangerouslySetInnerHTML={{ __html: svg }} />
+    <figure
+      className="am-card"
+      draggable
+      onDragStart={(e) => {
+        e.dataTransfer.setData(DRAG, row.id);
+        e.dataTransfer.effectAllowed = 'move';
+      }}
+    >
+      <button type="button" className="am-thumb" onClick={onOpen} aria-label={`Open ${row.name}`} style={{ aspectRatio: `${width} / ${height}` }}>
+        <span className="am-art" dangerouslySetInnerHTML={{ __html: svg }} />
       </button>
       <figcaption>
         <b title={row.name}>{row.name}</b>
-        <span className="meta">
-          {width} × {height} · {when(row.uploadedAt)}
+        <span className="am-meta">
+          {width} × {height}
+          {row.updatedAt ? ` · ${when(row.updatedAt)}` : ''}
           {by ? ` · ${by}` : ''}
         </span>
+        <div className="am-card-row">
+          <button type="button" onClick={onOpen}>
+            Details
+          </button>
+          {onEdit && (
+            <button type="button" className="am-primary" onClick={onEdit}>
+              Edit in builder
+            </button>
+          )}
+        </div>
       </figcaption>
     </figure>
   );
@@ -375,6 +531,10 @@ function IllustrationDetail({
   row,
   initialTheme,
   by,
+  folders,
+  folder,
+  onFile,
+  onEdit,
   writable,
   store: st,
   onToast,
@@ -383,6 +543,10 @@ function IllustrationDetail({
   row: IllustrationRow;
   initialTheme: Theme;
   by: string | null;
+  folders: Folders;
+  folder: string | null;
+  onFile: (folderId: string | null) => void;
+  onEdit: () => void;
   writable: boolean;
   store: Store | null;
   onToast: (s: string) => void;
@@ -410,45 +574,56 @@ function IllustrationDetail({
   };
 
   return (
-    <div className="scrim" onClick={onClose}>
-      <div className="sheet" role="dialog" aria-modal="true" aria-label={row.name} onClick={(e) => e.stopPropagation()}>
-        <div className="sheet-head">
+    <div className="am-scrim" onClick={onClose}>
+      <div className="am-sheet" role="dialog" aria-modal="true" aria-label={row.name} onClick={(e) => e.stopPropagation()}>
+        <div className="am-sheet-head">
           <div>
             <h2>{row.name}</h2>
-            <p className="meta">
-              {width} × {height} · uploaded {when(row.uploadedAt)}
+            <p className="am-meta">
+              {width} × {height}
+              {row.updatedAt ? ` · saved ${when(row.updatedAt)}` : ''}
               {by ? ` by ${by}` : ''}
             </p>
           </div>
-          <button type="button" className="x" aria-label="Close" onClick={onClose}>
+          {writable && (
+            <button type="button" className="am-primary" onClick={onEdit}>
+              Edit in builder
+            </button>
+          )}
+          <button type="button" className="am-x" aria-label="Close" onClick={onClose}>
             ×
           </button>
         </div>
 
-        <div className="stage" style={{ aspectRatio: `${width} / ${height}` }}>
-          <span className="art" dangerouslySetInnerHTML={{ __html: preview }} />
+        <div className="am-stage" style={{ aspectRatio: `${width} / ${height}` }}>
+          <span className="am-art" dangerouslySetInnerHTML={{ __html: preview }} />
         </div>
 
-        <div className="sheet-body">
-          <div className="seg" role="group" aria-label="Preview theme">
+        <div className="am-sheet-body">
+          <div className="am-sheet-controls">
+          <div className="am-seg" role="group" aria-label="Preview theme">
             {(['dark', 'light'] as const).map((t) => (
-              <button key={t} type="button" className={theme === t ? 'on' : ''} onClick={() => setTheme(t)}>
+              <button key={t} type="button" className={theme === t ? 'am-on' : ''} onClick={() => setTheme(t)}>
                 {t === 'dark' ? 'Dark' : 'Light'}
               </button>
             ))}
           </div>
+          {writable && folders.folders.length > 0 && (
+            <FolderSelect id={`folder-${row.id}`} folders={folders} value={folder} onChange={onFile} />
+          )}
+          </div>
 
-          <div className="downloads">
+          <div className="am-downloads">
             <h3>Download</h3>
-            <div className="dl-grid">
-              <span className="dl-label">Dark</span>
+            <div className="am-dl-grid">
+              <span className="am-dl-label">Dark</span>
               <button type="button" onClick={() => void offer(`${row.id}.dark.svg`, svgFor('dark'), 'image/svg+xml', onToast)}>SVG</button>
               <button type="button" onClick={() => void png('dark')}>PNG @2x</button>
-              <span className="dl-label">Light</span>
+              <span className="am-dl-label">Light</span>
               <button type="button" onClick={() => void offer(`${row.id}.light.svg`, svgFor('light'), 'image/svg+xml', onToast)}>SVG</button>
               <button type="button" onClick={() => void png('light')}>PNG @2x</button>
             </div>
-            <div className="dl-row">
+            <div className="am-dl-row">
               <button
                 type="button"
                 onClick={() =>
@@ -467,19 +642,16 @@ function IllustrationDetail({
                 Builder file (.json)
               </button>
             </div>
-            <p className="hint">
-              To change it, open the builder file in the{' '}
-              <a href={BUILDER_URL} target="_blank" rel="noopener noreferrer">
-                Illustration Builder
-              </a>{' '}
-              (Import), edit, and upload the new .json here — it replaces this one.
+            <p className="am-hint">
+              <b>Edit in builder</b> opens this illustration in the builder; saving there updates it here for
+              everyone. The builder file opens in any copy of the builder.
             </p>
           </div>
 
           {writable && (
             <button
               type="button"
-              className={`danger${confirming ? ' confirming' : ''}`}
+              className={`am-danger${confirming ? ' am-confirming' : ''}`}
               onClick={async () => {
                 if (!confirming) {
                   setConfirming(true);
@@ -511,6 +683,9 @@ function IconSet({
   writable,
   store: st,
   onToast,
+  folders,
+  folder,
+  onFile,
 }: {
   set: IconSetRow;
   theme: Theme;
@@ -518,23 +693,37 @@ function IconSet({
   writable: boolean;
   store: Store | null;
   onToast: (s: string) => void;
+  folders: Folders;
+  folder: string | null;
+  onFile: (folderId: string | null) => void;
 }) {
   const [picked, setPicked] = useState<IconRow | null>(null);
   const [confirming, setConfirming] = useState(false);
   const variant = (i: IconRow) => (theme === 'light' && i.svgLight ? i.svgLight : i.svg);
 
   return (
-    <section className="set">
-      <div className="set-head">
+    <section
+      className="am-set"
+      draggable={writable}
+      onDragStart={(e) => {
+        if ((e.target as HTMLElement).closest('.am-icons')) return;
+        e.dataTransfer.setData(DRAG, setKey(set.id));
+        e.dataTransfer.effectAllowed = 'move';
+      }}
+    >
+      <div className="am-set-head">
         <h2>{set.name}</h2>
-        <span className="meta">
+        <span className="am-meta">
           {set.icons.length} icon{set.icons.length === 1 ? '' : 's'}
           {by ? ` · started by ${by}` : ''}
         </span>
+        {writable && folders.folders.length > 0 && (
+          <FolderSelect id={`folder-set-${set.id}`} folders={folders} value={folder} onChange={onFile} />
+        )}
         {writable && (
           <button
             type="button"
-            className={`danger mini${confirming ? ' confirming' : ''}`}
+            className={`am-danger am-mini${confirming ? ' am-confirming' : ''}`}
             onClick={async () => {
               if (!confirming) {
                 setConfirming(true);
@@ -553,12 +742,12 @@ function IconSet({
           </button>
         )}
       </div>
-      <ul className={`icons ${theme}`}>
+      <ul className={`am-icons ${theme}`}>
         {set.icons.map((icon) => (
           <li key={icon.id}>
             <button
               type="button"
-              className={picked?.id === icon.id ? 'on' : ''}
+              className={picked?.id === icon.id ? 'am-on' : ''}
               onClick={() => setPicked(picked?.id === icon.id ? null : icon)}
               title={icon.name}
             >
@@ -569,9 +758,9 @@ function IconSet({
         ))}
       </ul>
       {picked && (
-        <div className="icon-bar" role="region" aria-label={picked.name}>
+        <div className="am-icon-bar" role="region" aria-label={picked.name}>
           <b>{picked.name}</b>
-          <span className="meta">{picked.svgLight ? 'Dark and light variants' : 'One variant'}</span>
+          <span className="am-meta">{picked.svgLight ? 'Dark and light variants' : 'One variant'}</span>
           <button type="button" onClick={() => void offer(`${slug(picked.name)}${picked.svgLight ? '-dark' : ''}.svg`, picked.svg, 'image/svg+xml', onToast)}>
             {picked.svgLight ? 'Dark SVG' : 'SVG'}
           </button>
@@ -589,7 +778,7 @@ function IconSet({
           {writable && (
             <button
               type="button"
-              className="danger"
+              className="am-danger"
               onClick={async () => {
                 try {
                   await st?.deleteIcon(set.id, picked.id);
@@ -630,9 +819,9 @@ function AddIcons({
   const ready = isNew ? !!name.trim() && !clash : true;
 
   return (
-    <div className="scrim" onClick={onCancel}>
+    <div className="am-scrim" onClick={onCancel}>
       <form
-        className="sheet small"
+        className="am-sheet am-small"
         role="dialog"
         aria-modal="true"
         aria-label="Add icons"
@@ -644,31 +833,31 @@ function AddIcons({
           onAdd(set);
         }}
       >
-        <div className="sheet-head">
+        <div className="am-sheet-head">
           <div>
             <h2>
               Add {icons.length} icon{icons.length === 1 ? '' : 's'}
             </h2>
-            <p className="meta">
+            <p className="am-meta">
               {icons.filter((i) => i.svgLight).length
                 ? `${icons.filter((i) => i.svgLight).length} with dark and light variants`
                 : 'Single-variant icons'}
             </p>
           </div>
         </div>
-        <ul className="icons preview dark">
+        <ul className="am-icons am-preview dark">
           {icons.slice(0, 24).map((i) => (
             <li key={i.name}>
-              <span className="tile">
+              <span className="am-tile">
                 <img src={svgSrc(i.svg)} alt="" />
                 <span>{i.name}</span>
               </span>
             </li>
           ))}
         </ul>
-        {icons.length > 24 && <p className="meta pad">and {icons.length - 24} more</p>}
-        <div className="sheet-body">
-          <label className="field" htmlFor="icon-set">
+        {icons.length > 24 && <p className="am-meta am-pad">and {icons.length - 24} more</p>}
+        <div className="am-sheet-body">
+          <label className="am-field" htmlFor="icon-set">
             <span>Icon set</span>
             <select id="icon-set" value={choice} onChange={(e) => setChoice(e.target.value)}>
               {sets.map((s) => (
@@ -680,7 +869,7 @@ function AddIcons({
             </select>
           </label>
           {isNew && (
-            <label className="field" htmlFor="icon-set-name">
+            <label className="am-field" htmlFor="icon-set-name">
               <span>Name of the new set</span>
               <input
                 id="icon-set-name"
@@ -689,14 +878,14 @@ function AddIcons({
                 placeholder="e.g. Glass icons"
                 onChange={(e) => setName(e.target.value)}
               />
-              {clash && <em className="err">A set with that name exists — choose it above instead.</em>}
+              {clash && <em className="am-err">A set with that name exists — choose it above instead.</em>}
             </label>
           )}
-          <div className="actions">
+          <div className="am-actions">
             <button type="button" onClick={onCancel}>
               Cancel
             </button>
-            <button type="submit" className="primary" disabled={!ready || busy}>
+            <button type="submit" className="am-primary" disabled={!ready || busy}>
               {busy ? 'Adding…' : 'Add icons'}
             </button>
           </div>
@@ -706,3 +895,228 @@ function AddIcons({
   );
 }
 
+
+function FolderSelect({
+  id,
+  folders,
+  value,
+  onChange,
+}: {
+  id: string;
+  folders: Folders;
+  value: string | null;
+  onChange: (folderId: string | null) => void;
+}) {
+  return (
+    <label className="am-folder-select" htmlFor={id}>
+      <span className="am-sr">Folder</span>
+      <select id={id} value={value ?? ''} onChange={(e) => onChange(e.target.value || null)}>
+        <option value="">Unfiled</option>
+        {folders.folders.map((f) => (
+          <option key={f.id} value={f.id}>
+            {f.name}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+/**
+ * FOLDERS — projects to file assets under. Illustrations and icon sets share
+ * them. Deleting a folder unfiles what was in it; it never deletes an asset.
+ */
+function FolderBar({
+  folders,
+  current,
+  counts,
+  writable,
+  onPick,
+  onDropItem,
+  onToast,
+  onChanged,
+}: {
+  folders: Folders;
+  current: Place;
+  counts: (v: Place) => number;
+  writable: boolean;
+  onPick: (p: Place) => void;
+  onDropItem: (key: string, folderId: string | null) => void;
+  onToast: (s: string) => void;
+  onChanged: () => void;
+}) {
+  const [naming, setNaming] = useState<null | 'new' | string>(null);
+  const [draft, setDraft] = useState('');
+  const [over, setOver] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState(false);
+  const selected = folders.folders.find((f) => f.id === current) ?? null;
+
+  const commit = async () => {
+    const name = draft.trim();
+    setNaming(null);
+    if (!name) return;
+    try {
+      if (naming === 'new') {
+        const f = await addFolder(name);
+        onPick(f.id);
+      } else if (naming) {
+        await renameFolder(naming, name);
+      }
+      onChanged();
+    } catch (e) {
+      onToast(`Could not save the folder — ${(e as Error).message}`);
+    }
+  };
+
+  const target = (id: string | null) => ({
+    onDragOver: (e: React.DragEvent) => {
+      if (!writable || ![...e.dataTransfer.types].includes(DRAG)) return;
+      e.preventDefault();
+      e.stopPropagation();
+      setOver(id ?? 'unfiled');
+    },
+    onDragLeave: () => setOver(null),
+    onDrop: (e: React.DragEvent) => {
+      const key = e.dataTransfer.getData(DRAG);
+      if (!key) return;
+      e.preventDefault();
+      e.stopPropagation();
+      setOver(null);
+      onDropItem(key, id);
+    },
+  });
+
+  const chip = (id: Place, label: string, dropId: string | null | undefined) => (
+    <button
+      key={id}
+      type="button"
+      className={`am-chip${current === id ? ' am-on' : ''}${over === (dropId === null ? 'unfiled' : dropId) ? ' am-over' : ''}`}
+      onClick={() => onPick(id)}
+      {...(dropId !== undefined ? target(dropId) : {})}
+    >
+      {label} <span className="am-count">{id === 'all' ? '' : counts(id)}</span>
+    </button>
+  );
+
+  return (
+    <div className="am-folders" aria-label="Folders">
+      {chip('all', 'All', undefined)}
+      {chip('unfiled', 'Unfiled', null)}
+      {folders.folders.map((f) =>
+        naming === f.id ? (
+          <input
+            key={f.id}
+            id={`rename-${f.id}`}
+            className="am-chip-input"
+            autoFocus
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onBlur={() => void commit()}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') void commit();
+              if (e.key === 'Escape') setNaming(null);
+            }}
+          />
+        ) : (
+          chip(f.id, f.name, f.id)
+        ),
+      )}
+      {writable &&
+        (naming === 'new' ? (
+          <input
+            id="new-folder"
+            className="am-chip-input"
+            autoFocus
+            placeholder="Folder name"
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onBlur={() => void commit()}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') void commit();
+              if (e.key === 'Escape') setNaming(null);
+            }}
+          />
+        ) : (
+          <button
+            type="button"
+            className="am-chip am-ghost"
+            onClick={() => {
+              setDraft('');
+              setNaming('new');
+            }}
+          >
+            + New folder
+          </button>
+        ))}
+      {writable && selected && (
+        <span className="am-folder-actions">
+          <button
+            type="button"
+            className="am-mini"
+            onClick={() => {
+              setDraft(selected.name);
+              setNaming(selected.id);
+            }}
+          >
+            Rename
+          </button>
+          <button
+            type="button"
+            className={`am-mini am-danger${confirming ? ' am-confirming' : ''}`}
+            onClick={async () => {
+              if (!confirming) {
+                setConfirming(true);
+                setTimeout(() => setConfirming(false), 4000);
+                return;
+              }
+              setConfirming(false);
+              try {
+                await removeFolder(selected.id);
+                onPick('all');
+                onChanged();
+                onToast(`Deleted the ${selected.name} folder. What was in it is now Unfiled.`);
+              } catch (e) {
+                onToast(`Could not delete the folder — ${(e as Error).message}`);
+              }
+            }}
+          >
+            {confirming ? 'Click again — assets stay, unfiled' : 'Delete folder'}
+          </button>
+        </span>
+      )}
+      {writable && folders.folders.length > 0 && <span className="am-folder-tip">Drag an illustration onto a folder to file it.</span>}
+    </div>
+  );
+}
+
+/** TOOLS — what the team makes assets with. */
+function Tools({ writable, onNew }: { writable: boolean; onNew: () => void }) {
+  return (
+    <div className="am-tools-grid">
+      <article className="am-tool">
+        <div className="am-tool-mark" aria-hidden />
+        <div className="am-tool-body">
+          <h2>Illustration Builder</h2>
+          <p>
+            Compose marketing illustrations from the Liferay component library — glass panels, charts, badges,
+            chat bubbles, glass icons — in dark and light from one document. It opens right here: saving an
+            illustration puts it in this library for everyone, and <b>Edit in builder</b> on any illustration
+            opens it again.
+          </p>
+          <div className="am-tool-actions">
+            {writable ? (
+              <button type="button" className="am-primary" onClick={onNew}>
+                New illustration
+              </button>
+            ) : (
+              <span className="am-meta">Making illustrations needs Contributor access to this page.</span>
+            )}
+            <a href={BUILDER_URL} target="_blank" rel="noopener noreferrer">
+              Standalone builder for drafts ↗
+            </a>
+          </div>
+        </div>
+      </article>
+    </div>
+  );
+}

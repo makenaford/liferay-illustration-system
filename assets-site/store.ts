@@ -1,29 +1,41 @@
 import type { Doc } from '../src/document.ts';
+import {
+  backend,
+  forget,
+  folders as readFolders,
+  save,
+  savedAll,
+  subscribe,
+  type Folders,
+} from '../editor/library.ts';
 
 /**
  * THE ASSET STORE — where the team's finished assets live.
  *
- * Published as a claude.ai Artifact, this is the `db` capability: one shared
- * store, live for everyone who opens the page, written by anyone the page is
- * shared with at Contributor or above. Run locally (Vite dev) it falls back
- * to `localStorage`, so the page can be worked on without a viewer.
+ * Illustrations and folders go through the builder's own library module,
+ * because the builder runs inside this page: an illustration saved there and
+ * one uploaded here are the same record, in the same place —
  *
- *   illustrations/<id>              one illustration: the builder's document
+ *   illustrations/<id>              one illustration (see editor/library.ts)
+ *   library-meta/folders            the folders, and what is filed in each
  *   iconSets/<id>                   one icon set: its name
  *   iconSets/<id>/icons/<iconId>    one icon: its SVG, dark and light
  *
- * Icons are documents rather than uploaded files so that anyone who can add
- * an illustration can add an icon — file uploads need editor access — and
- * each is small enough that the 256 KB document cap is never near.
+ * Published as a claude.ai Artifact that is the `db` capability, live for
+ * everyone the page is shared with; run locally, it is this browser's
+ * storage. Icons are documents rather than uploaded files so that anyone who
+ * can add an illustration can add an icon — file uploads need editor access.
  */
+
+export type { Folders };
 
 export interface IllustrationRow {
   id: string;
   name: string;
   doc: Doc;
-  uploadedAt: number;
+  updatedAt: number;
   /** An opaque viewer id — never a name; see `names`. */
-  uploadedBy?: string;
+  updatedBy?: string;
 }
 
 export interface IconRow {
@@ -48,9 +60,13 @@ export interface IconSetRow {
 export interface Library {
   illustrations: IllustrationRow[];
   sets: IconSetRow[];
+  folders: Folders;
   /** False until the store has answered once — the page shows "Loading". */
   ready: boolean;
 }
+
+/** An icon set's key in `Folders.assign`, beside illustration ids. */
+export const setKey = (id: string) => `iconset:${id}`;
 
 /** The largest document body the shared store accepts, less some headroom. */
 export const MAX_DOC_BYTES = 250 * 1024;
@@ -58,16 +74,26 @@ export const MAX_DOC_BYTES = 250 * 1024;
 export interface Store {
   readonly kind: 'shared' | 'local';
   watch(onChange: (lib: Library) => void): () => void;
-  putIllustration(row: IllustrationRow): Promise<void>;
+  putIllustration(doc: Doc): Promise<void>;
   deleteIllustration(id: string): Promise<void>;
   putSet(row: Omit<IconSetRow, 'icons'>): Promise<void>;
   deleteSet(set: IconSetRow): Promise<void>;
   putIcon(setId: string, icon: IconRow): Promise<void>;
   deleteIcon(setId: string, iconId: string): Promise<void>;
+  /** Re-read illustrations and folders — after a write the store cannot hear. */
+  refresh(): void;
 }
 
 /* ------------------------------------------------------------------ */
-/* Shared: the `db` capability                                          */
+/* Icon sets                                                             */
+
+interface IconStore {
+  watch(onChange: (sets: IconSetRow[]) => void): () => void;
+  putSet(row: Omit<IconSetRow, 'icons'>): Promise<void>;
+  deleteSet(set: IconSetRow): Promise<void>;
+  putIcon(setId: string, icon: IconRow): Promise<void>;
+  deleteIcon(setId: string, iconId: string): Promise<void>;
+}
 
 type Body = Record<string, unknown> | undefined;
 interface Snap {
@@ -86,46 +112,21 @@ interface Db {
   collection(path: string): Col;
 }
 
-function sharedStore(db: Db): Store {
-  const illos = () => db.collection('illustrations');
+/** Drop `undefined` fields, which a JSON document store rejects. */
+const clean = <T extends object>(o: T) => JSON.parse(JSON.stringify(o)) as Record<string, unknown>;
+
+function sharedIcons(db: Db): IconStore {
   const sets = () => db.collection('iconSets');
   const icons = (setId: string) => sets().doc(setId).collection('icons');
-
   return {
-    kind: 'shared',
     watch(onChange) {
-      let illustrations: IllustrationRow[] = [];
       let setRows: Omit<IconSetRow, 'icons'>[] = [];
       const iconsBySet = new Map<string, IconRow[]>();
       const iconSubs = new Map<string, () => void>();
-      let gotIllos = false;
-      let gotSets = false;
-
-      const emit = () =>
-        onChange({
-          illustrations,
-          sets: setRows.map((s) => ({ ...s, icons: iconsBySet.get(s.id) ?? [] })),
-          ready: gotIllos && gotSets,
-        });
-
-      const offIllos = illos().onSnapshot(
-        (snap) => {
-          gotIllos = true;
-          illustrations = snap.docs
-            .map((d) => d.data() as unknown as IllustrationRow | undefined)
-            .filter((r): r is IllustrationRow => !!r?.doc);
-          emit();
-        },
-        () => {
-          gotIllos = true;
-          emit();
-        },
-      );
-
+      const emit = () => onChange(setRows.map((s) => ({ ...s, icons: iconsBySet.get(s.id) ?? [] })));
       // One subscription per set's icons, opened and closed as sets come and go.
       const offSets = sets().onSnapshot(
         (snap) => {
-          gotSets = true;
           setRows = snap.docs
             .map((d) => d.data() as unknown as Omit<IconSetRow, 'icons'> | undefined)
             .filter((r): r is Omit<IconSetRow, 'icons'> => !!r?.id);
@@ -157,112 +158,67 @@ function sharedStore(db: Db): Store {
           }
           emit();
         },
-        () => {
-          gotSets = true;
-          emit();
-        },
+        () => emit(),
       );
-
       return () => {
-        offIllos();
         offSets();
         for (const off of iconSubs.values()) off();
       };
     },
-    async putIllustration(row) {
-      await illos().doc(row.id).set(clean(row));
-    },
-    async deleteIllustration(id) {
-      await illos().doc(id).delete();
-    },
-    async putSet(row) {
-      await sets().doc(row.id).set(clean(row));
-    },
+    putSet: (row) => sets().doc(row.id).set(clean(row)),
     async deleteSet(set) {
       // Deleting a document leaves its subcollection behind, so icons first.
       for (const icon of set.icons) await icons(set.id).doc(icon.id).delete();
       await sets().doc(set.id).delete();
     },
-    async putIcon(setId, icon) {
-      await icons(setId).doc(icon.id).set(clean(icon));
-    },
-    async deleteIcon(setId, iconId) {
-      await icons(setId).doc(iconId).delete();
-    },
+    putIcon: (setId, icon) => icons(setId).doc(icon.id).set(clean(icon)),
+    deleteIcon: (setId, iconId) => icons(setId).doc(iconId).delete(),
   };
 }
 
-/** Drop `undefined` fields, which a JSON document store rejects or keeps as null. */
-function clean<T extends object>(o: T): Record<string, unknown> {
-  return JSON.parse(JSON.stringify(o)) as Record<string, unknown>;
-}
+const ICONS_KEY = 'marketing-assets-icons';
 
-/* ------------------------------------------------------------------ */
-/* Local: this browser only, for development                           */
-
-const KEY = 'marketing-assets-dev';
-
-function localStore(): Store {
-  const listeners = new Set<(lib: Library) => void>();
-  const read = (): { illustrations: IllustrationRow[]; sets: IconSetRow[] } => {
+function localIcons(): IconStore {
+  const listeners = new Set<(sets: IconSetRow[]) => void>();
+  const read = (): IconSetRow[] => {
     try {
-      const v = JSON.parse(localStorage.getItem(KEY) ?? 'null');
-      if (v && Array.isArray(v.illustrations) && Array.isArray(v.sets)) return v;
+      const v = JSON.parse(localStorage.getItem(ICONS_KEY) ?? '[]');
+      return Array.isArray(v) ? v : [];
     } catch {
-      /* fall through */
+      return [];
     }
-    return { illustrations: [], sets: [] };
   };
-  const write = (fn: (v: ReturnType<typeof read>) => void) => {
-    const v = read();
-    fn(v);
+  const write = (fn: (v: IconSetRow[]) => IconSetRow[]) => {
+    const next = fn(read());
     try {
-      localStorage.setItem(KEY, JSON.stringify(v));
+      localStorage.setItem(ICONS_KEY, JSON.stringify(next));
     } catch {
       throw new Error('This browser is out of local storage.');
     }
-    const lib = { ...read(), ready: true };
-    for (const l of listeners) l(lib);
+    for (const l of listeners) l(next);
   };
-  const upsert = <T extends { id: string }>(list: T[], row: T) => {
-    const i = list.findIndex((x) => x.id === row.id);
-    if (i >= 0) list[i] = row;
-    else list.push(row);
-  };
-
   return {
-    kind: 'local',
     watch(onChange) {
       listeners.add(onChange);
-      onChange({ ...read(), ready: true });
+      onChange(read());
       return () => listeners.delete(onChange);
-    },
-    async putIllustration(row) {
-      write((v) => upsert(v.illustrations, row));
-    },
-    async deleteIllustration(id) {
-      write((v) => (v.illustrations = v.illustrations.filter((x) => x.id !== id)));
     },
     async putSet(row) {
       write((v) => {
-        const prev = v.sets.find((s) => s.id === row.id);
-        upsert(v.sets, { ...row, icons: prev?.icons ?? [] });
+        const prev = v.find((s) => s.id === row.id);
+        return [...v.filter((s) => s.id !== row.id), { ...row, icons: prev?.icons ?? [] }];
       });
     },
     async deleteSet(set) {
-      write((v) => (v.sets = v.sets.filter((x) => x.id !== set.id)));
+      write((v) => v.filter((s) => s.id !== set.id));
     },
     async putIcon(setId, icon) {
-      write((v) => {
-        const s = v.sets.find((x) => x.id === setId);
-        if (s) upsert(s.icons, icon);
-      });
+      write((v) =>
+        v.map((s) => (s.id === setId ? { ...s, icons: [...s.icons.filter((i) => i.id !== icon.id), icon] } : s)),
+      );
     },
     async deleteIcon(setId, iconId) {
-      write((v) => {
-        const s = v.sets.find((x) => x.id === setId);
-        if (s) s.icons = s.icons.filter((i) => i.id !== iconId);
-      });
+      write((v) => v.map((s) => (s.id === setId ? { ...s, icons: s.icons.filter((i) => i.id !== iconId) } : s)));
     },
   };
 }
@@ -277,12 +233,68 @@ const claude = () => (window as { claude?: ClaudeLike }).claude;
 let storePromise: Promise<Store> | undefined;
 export function store(): Promise<Store> {
   if (!storePromise) {
-    const c = claude();
-    storePromise = c?.use
-      ? Promise.resolve(c.use('db'))
-          .then((db) => (db ? sharedStore(db as Db) : localStore()))
-          .catch(() => localStore())
-      : Promise.resolve(localStore());
+    storePromise = (async () => {
+      const kind = (await backend()).kind === 'shared' ? 'shared' : 'local';
+      const c = claude();
+      const db = kind === 'shared' && c?.use ? ((await c.use('db')) as Db | null) : null;
+      const iconStore = db ? sharedIcons(db) : localIcons();
+
+      const listeners = new Set<() => Promise<void>>();
+      const refresh = () => {
+        for (const l of listeners) void l();
+      };
+
+      return {
+        kind,
+        watch(onChange) {
+          let illustrations: IllustrationRow[] = [];
+          let folders: Folders = { folders: [], assign: {} };
+          let sets: IconSetRow[] = [];
+          let gotIllos = false;
+          let gotSets = false;
+          const emit = () => onChange({ illustrations, sets, folders, ready: gotIllos && gotSets });
+          const load = async () => {
+            const [saved, f] = await Promise.all([savedAll(), readFolders()]);
+            illustrations = Object.entries(saved).map(([id, s]) => ({
+              id,
+              name: s.doc.name,
+              doc: s.doc,
+              updatedAt: s.updatedAt,
+              updatedBy: s.updatedBy,
+            }));
+            folders = f;
+            gotIllos = true;
+            emit();
+          };
+          listeners.add(load);
+          void load();
+          const offLib = subscribe(() => void load());
+          const offIcons = iconStore.watch((next) => {
+            sets = next;
+            gotSets = true;
+            emit();
+          });
+          return () => {
+            listeners.delete(load);
+            offLib();
+            offIcons();
+          };
+        },
+        async putIllustration(doc) {
+          await save(doc);
+          refresh();
+        },
+        async deleteIllustration(id) {
+          await forget(id);
+          refresh();
+        },
+        putSet: iconStore.putSet,
+        deleteSet: iconStore.deleteSet,
+        putIcon: iconStore.putIcon,
+        deleteIcon: iconStore.deleteIcon,
+        refresh,
+      } satisfies Store;
+    })();
   }
   return storePromise;
 }
@@ -316,8 +328,7 @@ export async function viewerId(): Promise<string | null> {
 export async function canWrite(): Promise<boolean> {
   const u = await user();
   if (!u) return true;
-  const can = await u.can('data.write');
-  return can !== false;
+  return (await u.can('data.write')) !== false;
 }
 
 /** Display names for uploader ids, as this viewer sees them. Never stored. */

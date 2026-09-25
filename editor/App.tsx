@@ -56,6 +56,14 @@ export function App() {
   // reads as "the shortcut didn't work".
   const [flash, setFlash] = useState<string | null>(null);
   const [pngScale, setPngScale] = useState(2);
+  // Leaving with unsaved edits takes a second click: the Artifact viewer
+  // answers every confirm() with "no", which used to trap you in the editor.
+  const [leaveArmed, setLeaveArmed] = useState(false);
+  useEffect(() => {
+    if (!leaveArmed) return;
+    const t = setTimeout(() => setLeaveArmed(false), 4000);
+    return () => clearTimeout(t);
+  }, [leaveArmed]);
   const say = (verb: string, what: string | null) => {
     if (what) setFlash(`${verb} ${what}`);
   };
@@ -347,15 +355,25 @@ export function App() {
   if (view === 'library') return <Library />;
 
   const leave = () => {
-    if (dirty && !window.confirm('Leave without saving? Your changes to this illustration will be lost.')) return;
+    if (dirty && !leaveArmed) {
+      setLeaveArmed(true);
+      setFlash('Unsaved changes — click Library again to leave without saving');
+      return;
+    }
+    setLeaveArmed(false);
     setUI({ view: 'library', selected: null });
   };
 
   return (
     <div className="app">
       <header className="topbar">
-        <button type="button" className="back" onClick={leave} title="Back to the library">
-          ‹ Library
+        <button
+          type="button"
+          className={`back${leaveArmed ? ' armed' : ''}`}
+          onClick={leave}
+          title="Back to the library"
+        >
+          {leaveArmed ? 'Leave without saving?' : '‹ Library'}
         </button>
 
         <input

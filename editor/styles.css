@@ -1066,3 +1066,4 @@ button.mini.on { background: var(--accent); border-color: var(--accent); color: 
 
 .lib-link { color: var(--accent-soft); text-decoration: none; font-size: 12.5px; }
 .lib-link:hover { text-decoration: underline; }
+.topbar .back.armed { border-color: #b4443c; color: #ff9d95; }

@@ -40,11 +40,36 @@
       "height": 62,
       "children": [
         {
-          "type": "text",
-          "x": 86,
-          "y": 67.92,
-          "role": "label",
-          "content": "Total Connections"
+          "type": "group",
+          "x": 0,
+          "y": 0,
+          "width": 104,
+          "height": 14,
+          "layout": {
+            "direction": "horizontal",
+            "gap": 6,
+            "padding": 0,
+            "align": "center",
+            "justify": "between",
+            "hugHeight": true
+          },
+          "children": [
+            {
+              "type": "text",
+              "x": 86,
+              "y": 67.92,
+              "role": "label",
+              "content": "Total Connections"
+            },
+            {
+              "type": "badge",
+              "x": 0,
+              "y": 0,
+              "label": "+14.2%",
+              "tone": "info",
+              "dot": false
+            }
+          ]
         },
         {
           "type": "group",
@@ -57,7 +82,8 @@
             "gap": 8,
             "padding": 0,
             "align": "end",
-            "justify": "between"
+            "justify": "between",
+            "hugHeight": true
           },
           "children": [
             {
@@ -117,14 +143,6 @@
       "surface": "glass2"
     },
     {
-      "type": "badge",
-      "x": 178,
-      "y": 64,
-      "label": "+14.2%",
-      "tone": "info",
-      "dot": false
-    },
-    {
       "type": "subCard",
       "x": 214,
       "y": 56,
@@ -132,11 +150,35 @@
       "height": 62,
       "children": [
         {
-          "type": "text",
-          "x": 222,
-          "y": 67.92,
-          "role": "label",
-          "content": "Active Sessions"
+          "type": "group",
+          "x": 0,
+          "y": 0,
+          "width": 104,
+          "height": 14,
+          "layout": {
+            "direction": "horizontal",
+            "gap": 6,
+            "padding": 0,
+            "align": "center",
+            "justify": "between",
+            "hugHeight": true
+          },
+          "children": [
+            {
+              "type": "text",
+              "x": 222,
+              "y": 67.92,
+              "role": "label",
+              "content": "Active Sessions"
+            },
+            {
+              "type": "badge",
+              "x": 0,
+              "y": 0,
+              "label": "Active",
+              "tone": "success"
+            }
+          ]
         },
         {
           "type": "group",
@@ -149,7 +191,8 @@
             "gap": 8,
             "padding": 0,
             "align": "end",
-            "justify": "between"
+            "justify": "between",
+            "hugHeight": true
           },
           "children": [
             {
@@ -209,13 +252,6 @@
       "surface": "glass2"
     },
     {
-      "type": "badge",
-      "x": 314,
-      "y": 64,
-      "label": "Active",
-      "tone": "success"
-    },
-    {
       "type": "subCard",
       "x": 352,
       "y": 56,
@@ -223,11 +259,36 @@
       "height": 62,
       "children": [
         {
-          "type": "text",
-          "x": 360,
-          "y": 67.92,
-          "role": "label",
-          "content": "Total Views"
+          "type": "group",
+          "x": 0,
+          "y": 0,
+          "width": 104,
+          "height": 14,
+          "layout": {
+            "direction": "horizontal",
+            "gap": 6,
+            "padding": 0,
+            "align": "center",
+            "justify": "between",
+            "hugHeight": true
+          },
+          "children": [
+            {
+              "type": "text",
+              "x": 360,
+              "y": 67.92,
+              "role": "label",
+              "content": "Total Views"
+            },
+            {
+              "type": "badge",
+              "x": 0,
+              "y": 0,
+              "label": "+6.7%",
+              "tone": "info",
+              "dot": false
+            }
+          ]
         },
         {
           "type": "group",
@@ -240,7 +301,8 @@
             "gap": 8,
             "padding": 0,
             "align": "end",
-            "justify": "between"
+            "justify": "between",
+            "hugHeight": true
           },
           "children": [
             {
@@ -298,14 +360,6 @@
         "align": "start"
       },
       "surface": "glass2"
-    },
-    {
-      "type": "badge",
-      "x": 454,
-      "y": 64,
-      "label": "+6.7%",
-      "tone": "info",
-      "dot": false
     },
     {
       "type": "subCard",

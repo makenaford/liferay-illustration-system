@@ -44,11 +44,36 @@
       "height": 62,
       "children": [
         {
-          "type": "text",
-          "x": 68,
-          "y": 47.92,
-          "role": "label",
-          "content": "AI Visibility Score"
+          "type": "group",
+          "x": 0,
+          "y": 0,
+          "width": 118,
+          "height": 14,
+          "layout": {
+            "direction": "horizontal",
+            "gap": 6,
+            "padding": 0,
+            "align": "center",
+            "justify": "between",
+            "hugHeight": true
+          },
+          "children": [
+            {
+              "type": "text",
+              "x": 68,
+              "y": 47.92,
+              "role": "label",
+              "content": "AI Visibility Score"
+            },
+            {
+              "type": "badge",
+              "x": 0,
+              "y": 0,
+              "label": "+12 pts",
+              "tone": "info",
+              "dot": false
+            }
+          ]
         },
         {
           "type": "group",
@@ -61,7 +86,8 @@
             "gap": 8,
             "padding": 0,
             "align": "end",
-            "justify": "between"
+            "justify": "between",
+            "hugHeight": true
           },
           "children": [
             {
@@ -121,14 +147,6 @@
       "surface": "glass2"
     },
     {
-      "type": "badge",
-      "x": 174,
-      "y": 44,
-      "label": "+12 pts",
-      "tone": "info",
-      "dot": false
-    },
-    {
       "type": "subCard",
       "x": 210,
       "y": 36,
@@ -136,11 +154,35 @@
       "height": 62,
       "children": [
         {
-          "type": "text",
-          "x": 218,
-          "y": 47.92,
-          "role": "label",
-          "content": "AI Citations"
+          "type": "group",
+          "x": 0,
+          "y": 0,
+          "width": 118,
+          "height": 14,
+          "layout": {
+            "direction": "horizontal",
+            "gap": 6,
+            "padding": 0,
+            "align": "center",
+            "justify": "between",
+            "hugHeight": true
+          },
+          "children": [
+            {
+              "type": "text",
+              "x": 218,
+              "y": 47.92,
+              "role": "label",
+              "content": "AI Citations"
+            },
+            {
+              "type": "badge",
+              "x": 0,
+              "y": 0,
+              "label": "Live",
+              "tone": "success"
+            }
+          ]
         },
         {
           "type": "group",
@@ -153,7 +195,8 @@
             "gap": 8,
             "padding": 0,
             "align": "end",
-            "justify": "between"
+            "justify": "between",
+            "hugHeight": true
           },
           "children": [
             {
@@ -213,13 +256,6 @@
       "surface": "glass2"
     },
     {
-      "type": "badge",
-      "x": 326,
-      "y": 44,
-      "label": "Live",
-      "tone": "success"
-    },
-    {
       "type": "subCard",
       "x": 358,
       "y": 36,
@@ -227,11 +263,36 @@
       "height": 62,
       "children": [
         {
-          "type": "text",
-          "x": 366,
-          "y": 47.92,
-          "role": "label",
-          "content": "Share of Voice"
+          "type": "group",
+          "x": 0,
+          "y": 0,
+          "width": 118,
+          "height": 14,
+          "layout": {
+            "direction": "horizontal",
+            "gap": 6,
+            "padding": 0,
+            "align": "center",
+            "justify": "between",
+            "hugHeight": true
+          },
+          "children": [
+            {
+              "type": "text",
+              "x": 366,
+              "y": 47.92,
+              "role": "label",
+              "content": "Share of Voice"
+            },
+            {
+              "type": "badge",
+              "x": 0,
+              "y": 0,
+              "label": "+6.7%",
+              "tone": "info",
+              "dot": false
+            }
+          ]
         },
         {
           "type": "group",
@@ -244,7 +305,8 @@
             "gap": 8,
             "padding": 0,
             "align": "end",
-            "justify": "between"
+            "justify": "between",
+            "hugHeight": true
           },
           "children": [
             {
@@ -302,14 +364,6 @@
         "align": "start"
       },
       "surface": "glass2"
-    },
-    {
-      "type": "badge",
-      "x": 474,
-      "y": 44,
-      "label": "+6.7%",
-      "tone": "info",
-      "dot": false
     },
     {
       "type": "subCard",

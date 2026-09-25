@@ -67,13 +67,30 @@ export const CARD_PRESETS: { label: string; title: string; make: () => Element }
   },
   {
     label: 'Stat card',
-    title: 'Label, figure and progress bar',
-    make: () =>
-      card(160, 4, [
-        t('label', 'Total views', 'muted'),
-        t('heading', '645,789'),
-        { type: 'progress', x: 0, y: 0, width: 160 - PAD * 2, value: 0.62 } as Element,
-      ]),
+    title: 'Label with change badge, figure, caption and progress bar',
+    make: () => {
+      const w = 200;
+      const cw = w - PAD * 2;
+      return card(w, 6, [
+        // The label and its change badge share a line, the badge inside the
+        // padding — not floated over the corner, where it gets cut off.
+        {
+          type: 'group',
+          x: 0,
+          y: 0,
+          width: cw,
+          height: 14,
+          layout: { direction: 'horizontal', gap: 6, padding: 0, align: 'center', justify: 'between', hugHeight: true },
+          children: [
+            t('subheading', 'Total Connections'),
+            { type: 'badge', x: 0, y: 0, label: '+14.2%', tone: 'info', dot: false } as Element,
+          ],
+        } as Element,
+        t('display', '12,847'),
+        t('caption', 'Goal: 11,500 completions', 'muted'),
+        { type: 'progress', x: 0, y: 0, width: cw, value: 0.12, tone: 'info' } as Element,
+      ]);
+    },
   },
   {
     label: 'List card',

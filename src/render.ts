@@ -27,6 +27,7 @@ import {
 } from './primitives/index.ts';
 import { ICONS } from './icons.ts';
 import { GLASS_ICONS } from './glassIcons.generated.ts';
+import { GRAPHICS } from './graphics.generated.ts';
 import { FONT_FACES } from './font.generated.ts';
 import type { Doc, Element } from './document.ts';
 import { boundingBox, resolveLayout } from './autolayout.ts';
@@ -246,6 +247,9 @@ function renderElementInner(ctx: Ctx, el: Element, path?: string): VNode | null 
     case 'spotIcon':
       return renderSpotIcon(ctx, el);
 
+    case 'graphic':
+      return renderGraphic(ctx, el);
+
     case 'image': {
       // An element with no file yet would render nothing at all — invisible
       // and unselectable. Draw the empty box so it can be found and filled.
@@ -388,6 +392,37 @@ function renderSpotIcon(
       fill: 'none',
       'data-el': 'spot-icon',
       'data-icon': el.name,
+    },
+    body,
+  );
+}
+
+/**
+ * A graphic in the current theme, fitted inside its box and centred — so a
+ * resize never distorts it. An unknown graphic draws a visible placeholder.
+ */
+function renderGraphic(ctx: Ctx, el: Extract<Element, { type: 'graphic' }>): VNode {
+  const g = el.art ?? (el.name ? GRAPHICS[el.name] : undefined);
+  if (!g) {
+    return h('g', { 'data-el': 'graphic-missing' }, [
+      h('rect', {
+        x: el.x, y: el.y, width: el.width, height: el.height, rx: 6,
+        fill: ctx.tokens.text.subtle, 'fill-opacity': 0.25,
+      }),
+    ]);
+  }
+  const art = ctx.tokens.name === 'light' ? g.light : g.dark;
+  const [vx, vy, vw, vh] = art.viewBox;
+  const s = Math.min(el.width / vw, el.height / vh);
+  const ox = el.x + (el.width - vw * s) / 2;
+  const oy = el.y + (el.height - vh * s) / 2;
+  const body = art.body.replaceAll('__NS__', `${ctx.uid('gr')}-`);
+  return rawNode(
+    'g',
+    {
+      transform: `translate(${ox} ${oy}) scale(${s}) translate(${-vx} ${-vy})`,
+      fill: 'none',
+      'data-el': 'graphic',
     },
     body,
   );

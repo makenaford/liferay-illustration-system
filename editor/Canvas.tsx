@@ -592,9 +592,9 @@ export function Canvas() {
        * width — drives, and the other is derived. Deriving both from the
        * pointer would fight the constraint.
        */
-      // An avatar is a circle, so it always keeps its proportions.
+      // An avatar is a circle and a graphic is fixed artwork: both keep their proportions.
       const locked =
-        el.type === 'avatar' ? 1 : (lockAspect ? 1 : 0) ^ (e.metaKey || e.ctrlKey ? 1 : 0);
+        el.type === 'avatar' || el.type === 'graphic' ? 1 : (lockAspect ? 1 : 0) ^ (e.metaKey || e.ctrlKey ? 1 : 0);
       if (locked && d.origin.width > 0 && d.origin.height > 0) {
         const aspect = d.origin.width / d.origin.height;
         if (Math.abs(w - d.origin.width) / d.origin.width >=

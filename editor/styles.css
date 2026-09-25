@@ -1067,3 +1067,13 @@ button.mini.on { background: var(--accent); border-color: var(--accent); color: 
 .lib-link { color: var(--accent-soft); text-decoration: none; font-size: 12.5px; }
 .lib-link:hover { text-decoration: underline; }
 .topbar .back.armed { border-color: #b4443c; color: #ff9d95; }
+
+/* Graphics in the add panel: a tile per graphic, placed whole. */
+.palette-graphics { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+.palette-graphics button {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  background: var(--panel-2); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 8px 6px 6px; cursor: pointer; font-size: 11px; color: var(--ink-dim);
+}
+.palette-graphics button:hover { border-color: var(--accent); color: #fff; }
+.palette-graphics img { width: 100%; height: 52px; object-fit: contain; }

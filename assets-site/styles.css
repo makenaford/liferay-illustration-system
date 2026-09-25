@@ -276,3 +276,25 @@ h1 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -0.4px; line-
 .am-tool p { margin: 0 0 14px; color: var(--am-ink-dim); max-width: 62ch; }
 .am-tool-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; }
 .am-tool-actions .am-primary { padding: 7px 14px; border-radius: var(--am-radius); border: 1px solid var(--am-accent); }
+
+/* Graphics */
+.am-graphic-grid {
+  list-style: none; margin: 0; padding: 0;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(min(180px, 100%), 1fr)); gap: 12px;
+}
+.am-graphic-grid button {
+  width: 100%; position: relative;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  padding: 18px 12px 12px; border-radius: 10px; border: 1px solid var(--am-line);
+  background: var(--am-tile-dark); color: #c9d2e3;
+}
+.am-graphic-grid.light button { background: var(--am-tile-light); color: #3b4556; }
+.am-graphic-grid button.am-on { border-color: var(--am-accent); box-shadow: 0 0 0 1px var(--am-accent); }
+.am-graphic-grid img { width: 100%; height: 120px; object-fit: contain; }
+.am-graphic-name { font-size: 12.5px; font-weight: 600; }
+.am-badge {
+  position: absolute; top: 8px; left: 8px;
+  font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;
+  padding: 2px 6px; border-radius: 4px; background: rgba(11, 95, 255, 0.18); color: #70a1ff;
+}
+.am-graphic-grid.light .am-badge { color: #0b5fff; background: rgba(11, 95, 255, 0.1); }

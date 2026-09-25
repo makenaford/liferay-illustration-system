@@ -422,6 +422,30 @@ export interface MapEl extends LayoutChild {
   markers?: [number, number][];
 }
 
+/** One theme's artwork for a graphic: markup whose ids carry `__NS__`. */
+export interface GraphicArt {
+  viewBox: [number, number, number, number];
+  body: string;
+}
+
+/**
+ * A GRAPHIC — larger glass artwork (a rocket, a scene), placed at any size
+ * and kept in proportion inside its box. Either a built-in one by `name`
+ * (src/graphics.generated.ts), or one from the Marketing Assets library,
+ * carried in `art` so the illustration draws anywhere without that library.
+ */
+export interface GraphicEl extends LayoutChild {
+  type: 'graphic';
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  /** A built-in graphic's key. */
+  name?: string;
+  /** A library graphic, embedded. Wins over `name`. */
+  art?: { id: string; label: string; dark: GraphicArt; light: GraphicArt };
+}
+
 export interface SpotIconEl extends LayoutChild {
   type: 'spotIcon';
   /**
@@ -506,6 +530,7 @@ export type Element =
   | LineEl
   | MapEl
   | SpotIconEl
+  | GraphicEl
   | ImageEl
   | SvgEl;
 

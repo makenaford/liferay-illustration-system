@@ -6,14 +6,19 @@ import { App as BuilderApp } from '../editor/App.tsx';
 import { blankDoc } from '../editor/docs.ts';
 import { initStore, setUI, useEditor } from '../editor/state.ts';
 import { addFolder, fileIn, freshId, removeFolder, renameFolder } from '../editor/library.ts';
-import type { Doc } from '../src/document.ts';
+import type { Doc, GraphicArt } from '../src/document.ts';
+import { GRAPHICS } from '../src/graphics.generated.ts';
+import { normaliseFigmaSvg } from '../src/figmaGlass.ts';
 import {
   canWrite,
+  graphicKey,
+  MAX_DOC_BYTES,
   names as namesOf,
   setKey,
   store,
   viewerId,
   type Folders,
+  type GraphicRow,
   type IconRow,
   type IconSetRow,
   type IllustrationRow,
@@ -23,7 +28,7 @@ import {
 import { parseFiles, slug, svgSrc, type ParsedIcon } from './uploads.ts';
 
 type Theme = 'dark' | 'light';
-type Tab = 'illustrations' | 'icons' | 'tools';
+type Tab = 'illustrations' | 'icons' | 'graphics' | 'tools';
 /** Every asset, the unfiled ones, or one folder's. */
 type Place = 'all' | 'unfiled' | string;
 
@@ -40,10 +45,16 @@ function when(ms: number) {
 
 export function App() {
   const [st, setSt] = useState<Store | null>(null);
-  const [lib, setLib] = useState<Library>({ illustrations: [], sets: [], folders: { folders: [], assign: {} }, ready: false });
+  const [lib, setLib] = useState<Library>({ illustrations: [], sets: [], graphics: [], folders: { folders: [], assign: {} }, ready: false });
   const [writable, setWritable] = useState(true);
   const [tab, setTab] = useState<Tab>(() =>
-    location.hash === '#icons' ? 'icons' : location.hash === '#tools' ? 'tools' : 'illustrations',
+    location.hash === '#icons'
+      ? 'icons'
+      : location.hash === '#graphics'
+        ? 'graphics'
+        : location.hash === '#tools'
+          ? 'tools'
+          : 'illustrations',
   );
   // The folder you were in is a per-viewer convenience, so it lives in
   // localStorage — which can be unavailable, hence the guards.
@@ -172,6 +183,23 @@ export function App() {
   }, [building, builderView, st]);
   const iconCount = lib.sets.reduce((n, s) => n + s.icons.length, 0);
 
+  /** Built-in graphics first, then the team's, as one list. */
+  const allGraphics: GraphicItem[] = useMemo(
+    () => [
+      ...Object.entries(GRAPHICS).map(([key, g]) => ({ id: key, name: g.label, dark: g.dark, light: g.light, builtIn: true })),
+      ...lib.graphics.map((g) => ({ ...g, builtIn: false })),
+    ],
+    [lib.graphics],
+  );
+  const graphics = useMemo(
+    () =>
+      allGraphics
+        .filter((g) => inPlace(graphicKey(g.id)) && (!needle || g.name.toLowerCase().includes(needle)))
+        .sort((a, b) => Number(b.builtIn) - Number(a.builtIn) || a.name.localeCompare(b.name)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [allGraphics, lib.folders, current, needle],
+  );
+
   /** Take files from the picker or a drop. */
   const take = async (files: File[]) => {
     if (!st || !files.length) return;
@@ -237,6 +265,45 @@ export function App() {
       setTab('icons');
     } catch (e) {
       setToast(`Could not add the icons — ${(e as Error).message}`);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  /** Uploaded SVGs as graphics, made portable on the way in. */
+  const addGraphics = async (items: ParsedIcon[]) => {
+    if (!st) return;
+    setBusy(true);
+    try {
+      const by = (await viewerId()) ?? undefined;
+      const now = Date.now();
+      const taken = new Set(allGraphics.filter((g) => g.builtIn).map((g) => g.id));
+      const skipped: string[] = [];
+      let added = 0;
+      for (const item of items) {
+        let id = slug(item.name);
+        if (taken.has(id)) id = `${id}-2`;
+        const opts = { anyBlurredGroup: true };
+        const dark = normaliseFigmaSvg(item.svg, `g-${id}-d-`, undefined, opts);
+        const light = normaliseFigmaSvg(item.svgLight ?? item.svg, `g-${id}-l-`, undefined, opts);
+        const row: GraphicRow = { id, name: item.name, dark, light, uploadedAt: now, uploadedBy: by };
+        if (JSON.stringify(row).length > MAX_DOC_BYTES) {
+          skipped.push(`${item.name} (over 250 KB)`);
+          continue;
+        }
+        await st.putGraphic(row);
+        if (here) await fileIn(graphicKey(id), here);
+        added++;
+      }
+      setToast(
+        `Added ${added} graphic${added === 1 ? '' : 's'} — the builder offers ${added === 1 ? 'it' : 'them'} under Graphics.` +
+          (skipped.length ? ` Skipped ${skipped.join(', ')}.` : ''),
+      );
+      setPendingIcons(null);
+      setTab('graphics');
+      st.refresh();
+    } catch (e) {
+      setToast(`Could not add the graphics — ${(e as Error).message}`);
     } finally {
       setBusy(false);
     }
@@ -322,6 +389,9 @@ export function App() {
         <button type="button" className={tab === 'icons' ? 'am-on' : ''} onClick={() => setTab('icons')}>
           Icon sets <span className="am-count">{iconCount}</span>
         </button>
+        <button type="button" className={tab === 'graphics' ? 'am-on' : ''} onClick={() => setTab('graphics')}>
+          Graphics <span className="am-count">{allGraphics.length}</span>
+        </button>
         <button type="button" className={tab === 'tools' ? 'am-on' : ''} onClick={() => setTab('tools')}>
           Tools
         </button>
@@ -332,7 +402,11 @@ export function App() {
           folders={lib.folders}
           current={current}
           counts={(v) =>
-            [...lib.illustrations.map((i) => i.id), ...lib.sets.map((x) => setKey(x.id))].filter((k) =>
+            [
+              ...lib.illustrations.map((i) => i.id),
+              ...lib.sets.map((x) => setKey(x.id)),
+              ...allGraphics.map((g) => graphicKey(g.id)),
+            ].filter((k) =>
               v === 'unfiled' ? !folderOf(k) : folderOf(k) === v,
             ).length
           }
@@ -387,6 +461,26 @@ export function App() {
           )
         ) : tab === 'tools' ? (
           <Tools writable={writable} onNew={() => void create()} />
+        ) : tab === 'graphics' ? (
+          graphics.length ? (
+            <GraphicsGrid
+              items={graphics}
+              theme={art}
+              writable={writable}
+              store={st}
+              folders={lib.folders}
+              folderOf={(id) => folderOf(graphicKey(id))}
+              onFile={(id, f) => void file(graphicKey(id), f)}
+              onToast={setToast}
+            />
+          ) : (
+            <Empty
+              ready={lib.ready}
+              searching={!!needle}
+              title="No graphics in this folder"
+              body={<>Drop <b>.svg</b> files here and choose Graphics. “… - Dark” and “… - Light” pair into one graphic.</>}
+            />
+          )
         ) : sets.length ? (
           <div className="am-sets">
             {sets.map((s) => (
@@ -446,8 +540,10 @@ export function App() {
           icons={pendingIcons}
           sets={lib.sets}
           busy={busy}
+          preferGraphics={tab === 'graphics'}
           onCancel={() => setPendingIcons(null)}
           onAdd={(set) => void addIcons(pendingIcons, set)}
+          onAddGraphics={() => void addGraphics(pendingIcons)}
         />
       )}
     </div>
@@ -802,17 +898,23 @@ function AddIcons({
   icons,
   sets,
   busy,
+  preferGraphics,
   onCancel,
   onAdd,
+  onAddGraphics,
 }: {
   icons: ParsedIcon[];
   sets: IconSetRow[];
   busy: boolean;
+  /** Start on Graphics — the SVGs were dropped while looking at graphics. */
+  preferGraphics: boolean;
   onCancel: () => void;
   onAdd: (set: { id: string; name: string; isNew: boolean }) => void;
+  onAddGraphics: () => void;
 }) {
-  const [choice, setChoice] = useState<string>(sets[0]?.id ?? '__new');
+  const [choice, setChoice] = useState<string>(preferGraphics ? '__graphics' : sets[0]?.id ?? '__new');
   const [name, setName] = useState('');
+  const toGraphics = choice === '__graphics';
   const isNew = choice === '__new';
   const newId = slug(name);
   const clash = isNew && sets.some((s) => s.id === newId);
@@ -829,6 +931,10 @@ function AddIcons({
         onSubmit={(e) => {
           e.preventDefault();
           if (!ready) return;
+          if (toGraphics) {
+            onAddGraphics();
+            return;
+          }
           const set = isNew ? { id: newId, name: name.trim(), isNew: true } : { id: choice, name: sets.find((s) => s.id === choice)!.name, isNew: false };
           onAdd(set);
         }}
@@ -836,7 +942,7 @@ function AddIcons({
         <div className="am-sheet-head">
           <div>
             <h2>
-              Add {icons.length} icon{icons.length === 1 ? '' : 's'}
+              Add {icons.length} SVG{icons.length === 1 ? '' : 's'}
             </h2>
             <p className="am-meta">
               {icons.filter((i) => i.svgLight).length
@@ -858,14 +964,15 @@ function AddIcons({
         {icons.length > 24 && <p className="am-meta am-pad">and {icons.length - 24} more</p>}
         <div className="am-sheet-body">
           <label className="am-field" htmlFor="icon-set">
-            <span>Icon set</span>
+            <span>Add to</span>
             <select id="icon-set" value={choice} onChange={(e) => setChoice(e.target.value)}>
+              <option value="__graphics">Graphics — larger artwork the builder places whole</option>
               {sets.map((s) => (
                 <option key={s.id} value={s.id}>
                   {s.name}
                 </option>
               ))}
-              <option value="__new">New set…</option>
+              <option value="__new">New icon set…</option>
             </select>
           </label>
           {isNew && (
@@ -886,7 +993,7 @@ function AddIcons({
               Cancel
             </button>
             <button type="submit" className="am-primary" disabled={!ready || busy}>
-              {busy ? 'Adding…' : 'Add icons'}
+              {busy ? 'Adding…' : toGraphics ? 'Add graphics' : 'Add icons'}
             </button>
           </div>
         </div>
@@ -1117,6 +1224,126 @@ function Tools({ writable, onNew }: { writable: boolean; onNew: () => void }) {
           </div>
         </div>
       </article>
+    </div>
+  );
+}
+
+interface GraphicItem {
+  id: string;
+  name: string;
+  dark: GraphicArt;
+  light: GraphicArt;
+  builtIn: boolean;
+}
+
+/** A graphic as a standalone SVG document, portable glass and all. */
+function graphicSvg(g: GraphicItem, theme: Theme): string {
+  const art = theme === 'light' ? g.light : g.dark;
+  const [, , w, h] = art.viewBox;
+  const body = art.body.replaceAll('__NS__', `${g.id}-${theme}-`);
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="${art.viewBox.join(' ')}" fill="none">${body}</svg>`;
+}
+
+/** GRAPHICS — larger glass artwork; the builder offers every one of these. */
+function GraphicsGrid({
+  items,
+  theme,
+  writable,
+  store: st,
+  folders,
+  folderOf,
+  onFile,
+  onToast,
+}: {
+  items: GraphicItem[];
+  theme: Theme;
+  writable: boolean;
+  store: Store | null;
+  folders: Folders;
+  folderOf: (id: string) => string | null;
+  onFile: (id: string, folderId: string | null) => void;
+  onToast: (s: string) => void;
+}) {
+  const [picked, setPicked] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState(false);
+  const sel = items.find((g) => g.id === picked) ?? null;
+  const png = async (g: GraphicItem, t: Theme) => {
+    const [, , w, h] = (t === 'light' ? g.light : g.dark).viewBox;
+    try {
+      await offer(`${slug(g.name)}-${t}@2x.png`, await svgToPng(graphicSvg(g, t), w, h, 2), 'image/png', onToast);
+    } catch (e) {
+      onToast(`Could not make the PNG — ${(e as Error).message}`);
+    }
+  };
+  return (
+    <div className="am-graphics">
+      <ul className={`am-graphic-grid ${theme}`}>
+        {items.map((g) => (
+          <li key={g.id}>
+            <button
+              type="button"
+              className={picked === g.id ? 'am-on' : ''}
+              onClick={() => setPicked(picked === g.id ? null : g.id)}
+              draggable={writable}
+              onDragStart={(e) => {
+                e.dataTransfer.setData(DRAG, graphicKey(g.id));
+                e.dataTransfer.effectAllowed = 'move';
+              }}
+            >
+              <img src={svgSrc(graphicSvg(g, theme))} alt="" loading="lazy" />
+              <span className="am-graphic-name">{g.name}</span>
+              {g.builtIn && <span className="am-badge">Built in</span>}
+            </button>
+          </li>
+        ))}
+      </ul>
+      {sel && (
+        <div className="am-icon-bar" role="region" aria-label={sel.name}>
+          <b>{sel.name}</b>
+          <span className="am-meta">{sel.builtIn ? 'Ships with the builder' : 'In the builder under Graphics'}</span>
+          <button type="button" onClick={() => void offer(`${slug(sel.name)}-dark.svg`, graphicSvg(sel, 'dark'), 'image/svg+xml', onToast)}>
+            Dark SVG
+          </button>
+          <button type="button" onClick={() => void offer(`${slug(sel.name)}-light.svg`, graphicSvg(sel, 'light'), 'image/svg+xml', onToast)}>
+            Light SVG
+          </button>
+          <button type="button" onClick={() => void png(sel, theme)}>
+            PNG @2x
+          </button>
+          <button
+            type="button"
+            onClick={() => void copyText(graphicSvg(sel, theme)).then((ok) => onToast(ok ? `Copied ${sel.name}.` : 'Could not reach the clipboard.'))}
+          >
+            Copy SVG
+          </button>
+          {writable && folders.folders.length > 0 && (
+            <FolderSelect id={`folder-graphic-${sel.id}`} folders={folders} value={folderOf(sel.id)} onChange={(f) => onFile(sel.id, f)} />
+          )}
+          {writable && !sel.builtIn && (
+            <button
+              type="button"
+              className={`am-danger${confirming ? ' am-confirming' : ''}`}
+              onClick={async () => {
+                if (!confirming) {
+                  setConfirming(true);
+                  setTimeout(() => setConfirming(false), 4000);
+                  return;
+                }
+                setConfirming(false);
+                try {
+                  await st?.deleteGraphic(sel.id);
+                  onToast(`Removed ${sel.name}. Illustrations already using it keep their copy.`);
+                  setPicked(null);
+                } catch (e) {
+                  onToast(`Could not remove it — ${(e as Error).message}`);
+                }
+              }}
+            >
+              {confirming ? 'Click again to remove' : 'Remove'}
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }

@@ -83,7 +83,9 @@ export type Field<K extends string = string> =
    */
   | { key: K; label: string; kind: 'file' }
   /** An avatar's photo: an upload, embedded small, or an image URL. */
-  | { key: K; label: string; kind: 'photo' };
+  | { key: K; label: string; kind: 'photo' }
+  /** A graphic: built in, or from the Marketing Assets library. Patches several props. */
+  | { key: K; label: string; kind: 'graphic' };
 
 export const ROLES = Object.keys(TYPE_ROLES);
 export const WEIGHTS = ['regular', 'semibold', 'bold'] as const;
@@ -426,6 +428,14 @@ export const SCHEMA: {
       { key: 'fit', label: 'Fit', kind: 'select', options: ['contain', 'fill'] },
     ],
   },
+  graphic: {
+    label: 'Graphic',
+    fields: [
+      { key: 'name', label: 'Graphic', kind: 'graphic' },
+      ...XY,
+      ...WH,
+    ],
+  },
   spotIcon: {
     label: 'Glass icon',
     fields: [
@@ -496,6 +506,7 @@ export const DEFAULTS: Record<Element['type'], () => Element> = {
   line: () => ({ type: 'line', x: 40, y: 40, width: 120, height: 0, tone: 'neutral-02', thickness: 1 }),
   map: () => ({ type: 'map', x: 40, y: 40, width: 168, height: 64, spacing: 4 }),
   spotIcon: () => ({ type: 'spotIcon', name: 'composable', x: 40, y: 40, size: 64 }),
+  graphic: () => ({ type: 'graphic', name: 'rocket', x: 40, y: 40, width: 128, height: 126 }),
   // Both are only ever created by the importer, which supplies the payload.
   image: () => ({ type: 'image', x: 40, y: 40, width: 120, height: 80, href: '' }),
   svg: () => ({
@@ -510,6 +521,6 @@ export const PALETTE: { group: string; types: Element['type'][] }[] = [
   { group: 'Type', types: ['text', 'stat'] },
   { group: 'Controls', types: ['button', 'pill', 'badge', 'toggle', 'input', 'chat', 'chrome'] },
   { group: 'Data', types: ['lineChart', 'barChart', 'progress', 'map', 'skeleton'] },
-  { group: 'Graphics', types: ['spotIcon', 'icon', 'iconGrid', 'avatar', 'line', 'connector', 'arrow', 'cursor'] },
+  { group: 'Icons & shapes', types: ['spotIcon', 'icon', 'iconGrid', 'avatar', 'line', 'connector', 'arrow', 'cursor'] },
   { group: 'Imported', types: ['image', 'svg'] },
 ];

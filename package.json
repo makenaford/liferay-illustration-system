@@ -16,6 +16,7 @@
     "dev": "vite",
     "flatten": "node --experimental-strip-types scripts/flatten.ts",
     "font": "node --experimental-strip-types scripts/build-font.ts",
+    "graphics": "node --experimental-strip-types scripts/build-graphics.ts",
     "icons": "node --experimental-strip-types scripts/build-glass-icons.ts",
     "nest": "node --experimental-strip-types scripts/nest.ts",
     "normalize": "node --experimental-strip-types scripts/normalize.ts",

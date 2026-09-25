@@ -28,6 +28,7 @@ import { AlignGrid, GapPicker, PaddingPicker } from './LayoutControls.tsx';
 import { DocumentPanel } from './DocumentPanel.tsx';
 import { FileField } from './FileField.tsx';
 import { AvatarPhotoField } from './AvatarPhotoField.tsx';
+import { GraphicField } from './GraphicField.tsx';
 import { BarSeriesEditor, LineSeriesEditor } from './ChartData.tsx';
 import { deleteSelection, groupSelection, ungroupSelected } from './grouping.ts';
 import { withText } from './InlineText.tsx';
@@ -612,6 +613,7 @@ function FieldRow({
     field.kind === 'bars' ||
     field.kind === 'file' ||
     field.kind === 'photo' ||
+    field.kind === 'graphic' ||
     field.kind === 'iconList' ||
     field.kind === 'list';
 
@@ -639,6 +641,9 @@ function Control({
   switch (field.kind) {
     case 'file':
       return <FileField el={el} onPatch={onPatch} />;
+
+    case 'graphic':
+      return <GraphicField el={el} onPatch={onPatch} />;
 
     case 'photo':
       return (

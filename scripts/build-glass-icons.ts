@@ -170,12 +170,80 @@ function portableBackdropBlur(svg: string): string {
   const clipFixes: string[] = [];
   let n = 0;
 
+  const painted = (c: XNode) =>
+    !['#text', 'defs', 'clipPath', 'filter', 'foreignObject', 'mask'].includes(c.tag) && !c.open.includes('data-bd');
+
+  /** Re-draw `behind` by reference, blurred, under `wrapAttr` (a clip or mask). */
+  const blurred = (behind: XNode[], wrapAttr: string, radius: number, region: string): XNode => {
+    const id = `bdblur${n++}`;
+    defs.push(
+      `<filter id="${id}" ${region} color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="${radius}"/></filter>`,
+    );
+    const uses = behind
+      .map((b) => {
+        let bid = attr(b, 'id');
+        if (!bid) {
+          bid = `bdsrc${n}-${behind.indexOf(b)}`;
+          b.open = b.open.replace(/^<([\w:-]+)/, `<$1 id="${bid}"`);
+        }
+        return `<use href="#${bid}"/>`;
+      })
+      .join('');
+    return {
+      open: `<g ${wrapAttr} data-bd="">`,
+      tag: 'g',
+      selfClosing: false,
+      children: [{ open: '', tag: '#text', children: [], selfClosing: false, text: `<g filter="url(#${id})">${uses}</g>` }],
+    };
+  };
+
+  /**
+   * A glass shape Figma did not export a blur for. Figma drops the
+   * foreignObject for some glass — notably masked shapes — so the shape is
+   * frosted in the design file and clear in the export. A glass shape is a
+   * group carrying the glass effect (drop shadow plus two inner shadows,
+   * which Figma names `_dii_`); without a blur in front of it, one is made
+   * from its own outline: its mask when it is masked, otherwise a clip built
+   * from references to its shapes. Radius: Figma's recorded bg-blur radius
+   * halved (CSS blur is a radius, Figma's a diameter), or the 3px the
+   * exported blurs use.
+   */
+  const synthesise = (parent: XNode, glass: XNode, at: number): XNode[] => {
+    const behind = parent.children.slice(0, at).filter(painted);
+    if (!behind.length) return [];
+    const radius = Number(attr(glass, 'data-figma-bg-blur-radius') ?? 6) / 2;
+    const region = 'x="-50%" y="-50%" width="200%" height="200%"';
+    const kids = glass.children.filter((c) => c.tag !== '#text');
+    const mask = kids.find((c) => c.tag === 'mask');
+    if (mask && attr(mask, 'id')) return [blurred(behind, `mask="url(#${attr(mask, 'id')})"`, radius, region)];
+    const shapes = kids.filter((c) => ['path', 'rect', 'circle', 'ellipse', 'polygon'].includes(c.tag));
+    if (!shapes.length) return [];
+    const clipId = `bdclip${n}`;
+    const refs = shapes
+      .map((sh, k) => {
+        let sid = attr(sh, 'id');
+        if (!sid) {
+          sid = `bdshape${n}-${k}`;
+          sh.open = sh.open.replace(/^<([\w:-]+)/, `<$1 id="${sid}"`);
+        }
+        return `<use href="#${sid}"/>`;
+      })
+      .join('');
+    defs.push(`<clipPath id="${clipId}">${refs}</clipPath>`);
+    return [blurred(behind, `clip-path="url(#${clipId})"`, radius, region)];
+  };
+
   const visit = (parent: XNode) => {
+    let covered = false;
     parent.children = parent.children.flatMap((child, i) => {
       if (child.tag !== 'foreignObject') {
         visit(child);
-        return [child];
+        const isGlass = child.tag === 'g' && /_dii/.test(attr(child, 'filter') ?? '');
+        const out = isGlass && !covered ? [...synthesise(parent, child, i), child] : [child];
+        if (child.tag !== '#text') covered = false;
+        return out;
       }
+      covered = true;
       const style = child.children.find((c) => c.tag === 'div')?.open ?? '';
       const blur = Number(style.match(/blur\(([\d.]+)px\)/)?.[1] ?? 0);
       const clip = style.match(/clip-path:url\(#([^)]+)\)/)?.[1];

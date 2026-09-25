@@ -5,6 +5,8 @@
   "type": "module",
   "description": "Token-driven SVG illustration system and builder for Liferay marketing sites.",
   "scripts": {
+    "assets:bundle": "vite build --config vite.assets.config.ts && node --experimental-strip-types scripts/bundle-assets-site.ts",
+    "assets:dev": "vite --config vite.assets.config.ts",
     "audit": "node --experimental-strip-types scripts/audit.ts",
     "autolayout": "node --experimental-strip-types scripts/autolayout.ts",
     "build": "vite build",

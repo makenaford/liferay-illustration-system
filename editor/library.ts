@@ -31,6 +31,12 @@ export type Origin = 'shipped' | 'edited' | 'new';
  */
 export const SHARED_LIBRARY_URL = 'https://claude.ai/artifact/99HVZBUZbx9K3iG8dJStgd';
 
+/**
+ * Where finished illustrations go: the team's Marketing Assets site, which
+ * takes an illustration's .json and offers it to everyone as SVG and PNG.
+ */
+export const ASSETS_URL = 'https://claude.ai/artifact/Y9mkyB7RvD5nfKAirBSorS';
+
 /** Which store saves go to: resolved once, see `backend`. */
 export async function storeKind(): Promise<'shared' | 'local' | 'none'> {
   return (await backend()).kind;

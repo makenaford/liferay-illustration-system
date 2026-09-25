@@ -13,6 +13,7 @@ import {
   namesOf,
   removeFolder,
   SHARED_LIBRARY_URL,
+  ASSETS_URL,
   storeKind,
   subscribe,
   renameFolder,
@@ -223,6 +224,15 @@ export function Library() {
               </button>
             ))}
           </div>
+          <a
+            className="lib-link"
+            href={ASSETS_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Finished an illustration? Save its .json and upload it there for the team"
+          >
+            Marketing Assets ↗
+          </a>
           <button
             type="button"
             disabled={busy === 'import'}

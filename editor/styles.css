@@ -1063,3 +1063,6 @@ button.mini.on { background: var(--accent); border-color: var(--accent); color: 
 .lib-note.local, .lib-note.shared { display: block; line-height: 1.5; }
 .lib-note.local { border-color: #6b5a2a; background: #2a2416; color: #e6d7a8; }
 .lib-note.shared { border-color: #2c4372; background: #1d2c4d; color: var(--accent-soft); }
+
+.lib-link { color: var(--accent-soft); text-decoration: none; font-size: 12.5px; }
+.lib-link:hover { text-decoration: underline; }

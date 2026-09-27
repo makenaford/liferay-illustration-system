@@ -1,5 +1,16 @@
 import { useMemo, useState } from 'react';
-import { CENTRED, FRAME, LAYOUTS, makeGlassIcon, type GlyphBounds, type Layer, type LayoutName } from '../src/glassIconMaker.ts';
+import {
+  CENTRED,
+  CORNERS,
+  FRAME,
+  LAYOUTS,
+  cornerOf,
+  makeGlassIcon,
+  type Corner,
+  type GlyphBounds,
+  type Layer,
+  type LayoutName,
+} from '../src/glassIconMaker.ts';
 import { isShape, type GlassRecipe, type RecipeLayer } from '../src/glassRecipe.ts';
 import { normaliseFigmaSvg } from '../src/figmaGlass.ts';
 import { glyphOf, type IconStyle } from '../src/icons.ts';
@@ -63,14 +74,22 @@ function ShapeNote() {
 
 /** The layout choices: which icon leads beside the other, or the two centred. */
 type Family = 'glass' | 'equal' | 'gradient' | 'centred';
-type Position = 'right' | 'left' | 'above' | 'behind';
+type Position = Corner | 'above' | 'behind';
 const FAMILIES: Family[] = ['glass', 'equal', 'gradient', 'centred'];
 const FAMILY_LABEL: Record<Family, string> = { glass: 'Glass', equal: 'Equal', gradient: 'Gradient', centred: 'Center' };
 const POSITION_LABEL: Record<Position, string> = {
-  right: 'Back on the right',
-  left: 'Back on the left',
+  'top-left': 'Top left',
+  'top-right': 'Top right',
+  'bottom-left': 'Bottom left',
+  'bottom-right': 'Bottom right',
   above: 'Back above',
   behind: 'Back behind',
+};
+/** Where a side-by-side layout puts the front icon until another corner is chosen: as LAYOUTS draws it. */
+const HOME_CORNER: Record<Exclude<Family, 'centred'>, Corner> = {
+  glass: 'bottom-left',
+  equal: 'bottom-left',
+  gradient: 'top-right',
 };
 
 /** What each layout is for, as the set uses it. */
@@ -122,17 +141,11 @@ export function GlassIconBuilder({
     recipe ? (CENTRED.includes(recipe.layout) ? 'centred' : (recipe.layout as Family)) : 'glass',
   );
   const [position, setPosition] = useState<Position>(() =>
-    !recipe
-      ? 'right'
-      : recipe.layout === 'above' || recipe.layout === 'behind'
-        ? recipe.layout
-        : recipe.mirror
-          ? 'left'
-          : 'right',
+    !recipe ? HOME_CORNER.glass : recipe.layout === 'above' || recipe.layout === 'behind' ? recipe.layout : cornerOf(recipe),
   );
   const centred = family === 'centred';
   const layout: LayoutName = centred ? (position === 'behind' ? 'behind' : 'above') : family;
-  const mirror = !centred && position === 'left';
+  const corner: Corner | undefined = centred ? undefined : (position as Corner);
   const [name, setName] = useState(editing ? iconParts(editing.icon).name : '');
   // The folder it goes in; blank is Unfiled.
   const [category, setCategory] = useState(() => {
@@ -154,9 +167,9 @@ export function GlassIconBuilder({
       frontBounds: frontShape?.bounds ?? glyphBounds(frontPath),
       backBounds: backShape?.bounds ?? glyphBounds(backPath),
       layout,
-      mirror,
+      corner,
     }),
-    [front, back, frontShape, backShape, frontPath, backPath, layout, mirror],
+    [front, back, frontShape, backShape, frontPath, backPath, layout, corner],
   );
   const hasFront = !!frontShape || !!frontPath;
   const dark = useMemo(() => (hasFront ? makeGlassIcon(spec, 'dark') : ''), [hasFront, spec]);
@@ -167,7 +180,7 @@ export function GlassIconBuilder({
     front: frontShape ?? { icon, style },
     back: backShape ?? (pathOf(backIcon, backStyle) ? { icon: backIcon, style: backStyle } : { icon, style }),
     layout,
-    ...(mirror ? { mirror: true } : {}),
+    ...(corner ? { corner } : {}),
   });
   const darkImg = useMemo(() => (dark ? svgSrc(preview(dark, 'gbd')) : ''), [dark]);
   const lightImg = useMemo(() => (light ? svgSrc(preview(light, 'gbl')) : ''), [light]);
@@ -287,16 +300,18 @@ export function GlassIconBuilder({
                   aria-pressed={family === f}
                   onClick={() => {
                     setFamily(f);
-                    // Beside or centred: each has its own positions.
-                    if ((f === 'centred') !== centred) setPosition(f === 'centred' ? 'above' : 'right');
+                    // Each layout starts from its own positions: centred above,
+                    // beside with the front where the layout draws it.
+                    setPosition(f === 'centred' ? 'above' : HOME_CORNER[f]);
                   }}
                 >
                   {FAMILY_LABEL[f]}
                 </button>
               ))}
             </div>
-            <div className="am-seg am-seg-fill" role="group" aria-label="Where the back sits">
-              {(centred ? (['above', 'behind'] as const) : (['right', 'left'] as const)).map((p) => (
+            {!centred && <span className="am-hint">Front icon · corner</span>}
+            <div className={`am-seg am-seg-fill${centred ? '' : ' am-seg-corners'}`} role="group" aria-label={centred ? 'Where the back sits' : 'Front icon corner'}>
+              {(centred ? (['above', 'behind'] as const) : CORNERS).map((p) => (
                 <button key={p} type="button" className={position === p ? 'am-on' : ''} aria-pressed={position === p} onClick={() => setPosition(p)}>
                   {POSITION_LABEL[p]}
                 </button>

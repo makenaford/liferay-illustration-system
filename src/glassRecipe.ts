@@ -1,4 +1,4 @@
-import type { GlassIconSpec, GlyphBounds, Layer, LayoutName } from './glassIconMaker.ts';
+import type { Corner, GlassIconSpec, GlyphBounds, Layer, LayoutName } from './glassIconMaker.ts';
 
 /**
  * GLASS RECIPE — what the Glass Icon Builder made an icon from, kept with the
@@ -13,6 +13,8 @@ export interface GlassRecipe {
   front: RecipeLayer;
   back: RecipeLayer;
   layout: LayoutName;
+  /** The front icon's corner. Older recipes have `mirror` instead — see `cornerOf`. */
+  corner?: Corner;
   mirror?: boolean;
 }
 
@@ -31,6 +33,6 @@ export function recipeOf(spec: GlassIconSpec): GlassRecipe | undefined {
     front: { shape: front, bounds: frontBounds },
     back: { shape: back, bounds: backBounds },
     layout: spec.layout ?? 'glass',
-    ...(spec.mirror ? { mirror: true } : {}),
+    ...(spec.corner ? { corner: spec.corner } : spec.mirror ? { mirror: true } : {}),
   };
 }

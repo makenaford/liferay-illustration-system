@@ -1,7 +1,9 @@
 import {
   CENTRED,
+  CORNERS,
   LAYOUTS,
   placementsOf,
+  type Corner,
   type GlassIconSpec,
   type GlyphBounds,
   type Layer,
@@ -59,8 +61,8 @@ export interface Rebuilt {
   original: { front?: Box; back?: Box };
   /** Where the builder puts it. */
   rebuilt: { front?: Box; back?: Box };
-  /** The builder layout closest to the original, and whether its back is on the left. */
-  layout?: { name: LayoutName; mirror: boolean };
+  /** The builder layout closest to the original, and the corner its front sits in (none when centred). */
+  layout?: { name: LayoutName; corner?: Corner };
   /**
    * How the layout changed. `sizeRatio`: the back's size over the front's,
    * in the original and as rebuilt (the builder's is about 0.7). `offset`:
@@ -286,13 +288,13 @@ export function rebuild(svg: string): Rebuilt {
       const f = fit(front, original.front);
       const b = fit(back, original.back);
       const orig = { front: original.front, back: original.back };
-      // Every layout, both ways round; the closest to the original wins.
+      // Every layout, in every corner; the closest to the original wins.
       const tries = (Object.keys(LAYOUTS) as LayoutName[]).flatMap((name) =>
-        (CENTRED.includes(name) ? [false] : [false, true]).map((mirror) => {
-          const at = placementsOf({ layout: name, mirror });
+        (CENTRED.includes(name) ? [undefined] : CORNERS).map((corner) => {
+          const at = placementsOf({ layout: name, corner });
           const rebuilt = { front: inFrame(at.front, f.bounds), back: inFrame(at.back, b.bounds) };
           const change = changeOf(orig, rebuilt);
-          return { name, mirror, rebuilt, change, score: change.offset + 40 * Math.abs(change.sizeRatio.was - change.sizeRatio.now) };
+          return { name, corner, rebuilt, change, score: change.offset + 40 * Math.abs(change.sizeRatio.was - change.sizeRatio.now) };
         }),
       );
       const best = tries.reduce((a, z) => (z.score < a.score ? z : a));
@@ -302,9 +304,9 @@ export function rebuild(svg: string): Rebuilt {
         frontBounds: f.bounds,
         backBounds: b.bounds,
         layout: best.name,
-        ...(best.mirror ? { mirror: true } : {}),
+        ...(best.corner ? { corner: best.corner } : {}),
       };
-      result.layout = { name: best.name, mirror: best.mirror };
+      result.layout = { name: best.name, corner: best.corner };
       result.rebuilt = best.rebuilt;
       result.change = best.change;
       if (Math.abs(best.change.sizeRatio.was - best.change.sizeRatio.now) > LIMITS.sizeRatio) {

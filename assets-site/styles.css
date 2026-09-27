@@ -393,6 +393,7 @@ h1 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -0.4px; line-
 /* Choices that share the panel's width, one column each. */
 .am-gib-layer .am-seg.am-seg-fill { align-self: stretch; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; }
 .am-seg.am-seg-fill button { padding-inline: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.am-gib-layer .am-seg.am-seg-corners { grid-auto-flow: row; grid-template-columns: 1fr 1fr; }
 
 /* An icon set's folders, under its heading. */
 .am-icon-folders { margin: 0 0 14px; }

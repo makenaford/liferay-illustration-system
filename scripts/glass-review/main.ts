@@ -170,7 +170,7 @@ function rowEl(row: Row, n: number): HTMLElement {
   };
   const l = row.r.change;
   if (row.r.layout) {
-    fact('Layout', `${LAYOUTS[row.r.layout.name].label}${row.r.layout.mirror ? ', back on the left' : ''}`);
+    fact('Layout', `${LAYOUTS[row.r.layout.name].label}${row.r.layout.corner ? `, front ${row.r.layout.corner.replace('-', ' ')}` : ''}`);
   }
   if (l) {
     fact(

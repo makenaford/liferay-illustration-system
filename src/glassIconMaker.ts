@@ -37,7 +37,9 @@ export interface GlassIconSpec {
   backBounds?: GlyphBounds;
   /** Which of the LAYOUTS; "Glass leads", the Figma frame, when not given. */
   layout?: LayoutName;
-  /** The back on the left of the glass instead of the right. */
+  /** The corner the front (glass) icon sits in; the back takes the opposite one. See `cornerOf`. */
+  corner?: Corner;
+  /** Older icons: the back on the left of the glass instead of the right. `corner` replaces it. */
   mirror?: boolean;
 }
 
@@ -108,18 +110,27 @@ export type LayoutName = 'glass' | 'equal' | 'gradient' | 'above' | 'behind';
 /** The centred layouts, where the back sits above or behind the glass rather than to one side. */
 export const CENTRED: LayoutName[] = ['above', 'behind'];
 
+/** A corner of the frame — where the front icon sits in a side-by-side layout. */
+export type Corner = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+export const CORNERS: Corner[] = ['top-left', 'top-right', 'bottom-left', 'bottom-right'];
+
 /**
  * Where the two icons sit in the 64px frame: each icon's 24px grid, scaled
- * to `size` and placed at (x, y). "Glass leads" is the Figma frame; the
- * others are read off the set itself — the median of its icons whose back
- * is about as big as the glass (Equal), or bigger (Gradient leads). The two
+ * to `size` and placed at (x, y). "Glass leads" is the Figma frame, and
+ * the source of truth for "Gradient leads", which swaps its two boxes. Equal
+ * is read off the set itself — the median of its icons whose back is about
+ * as big as the glass. The two
  * centred ones follow the icons that stack instead: the back rising above
  * the glass ("Out of the box", "DAM") or square behind it ("Analytics").
  */
+const GLASS_LEADS = { front: { size: 68, x: -7, y: 0 }, back: { size: 48, x: 19, y: -5 } };
+
 export const LAYOUTS: Record<LayoutName, { label: string; front: Placement; back: Placement }> = {
-  glass: { label: 'Glass leads', front: { size: 68, x: -7, y: 0 }, back: { size: 48, x: 19, y: -5 } },
+  glass: { label: 'Glass leads', ...GLASS_LEADS },
   equal: { label: 'Equal', front: { size: 62, x: -5.5, y: 7 }, back: { size: 56.5, x: 13.5, y: -4 } },
-  gradient: { label: 'Gradient leads', front: { size: 53, x: -4.5, y: 13.5 }, back: { size: 70, x: 0.5, y: -5 } },
+  // Glass leads with the roles swapped: the gradient takes the glass's 68px
+  // box, the glass the 48px one. Derived, so the two cannot drift apart.
+  gradient: { label: 'Gradient leads', front: { ...GLASS_LEADS.back }, back: { ...GLASS_LEADS.front } },
   above: { label: 'Centered, back above', front: { size: 58, x: 3, y: 9 }, back: { size: 44, x: 10, y: -6.5 } },
   behind: { label: 'Centered, back behind', front: { size: 68, x: -2, y: -1 }, back: { size: 56, x: 4, y: 2 } },
 };
@@ -128,15 +139,39 @@ export const LAYOUTS: Record<LayoutName, { label: string; front: Placement; back
 export const FRONT = LAYOUTS.glass.front;
 export const BACK = LAYOUTS.glass.back;
 
+/** The corner each side-by-side layout draws its front icon in, as LAYOUTS places it. */
+const HOME: Partial<Record<LayoutName, Corner>> = { glass: 'bottom-left', equal: 'bottom-left', gradient: 'top-right' };
+
 /**
- * An icon's two placements: its layout, mirrored left to right when the
- * back sits on the left. Only the places mirror, never the artwork.
+ * The corner an icon's front sits in. An older icon has only `mirror` — the
+ * back on the left — which keeps its side: the front on the right with it,
+ * on the left without, in the layout's own top or bottom.
  */
-export function placementsOf(spec: Pick<GlassIconSpec, 'layout' | 'mirror'>): { front: Placement; back: Placement } {
-  const l = LAYOUTS[spec.layout ?? 'glass'];
-  // A centred layout has no side to mirror.
-  if (!spec.mirror || CENTRED.includes(spec.layout ?? 'glass')) return { front: l.front, back: l.back };
-  const flip = (p: Placement) => ({ ...p, x: FRAME - p.x - p.size });
+export function cornerOf(spec: Pick<GlassIconSpec, 'layout' | 'corner' | 'mirror'>): Corner {
+  if (spec.corner) return spec.corner;
+  const home = HOME[spec.layout ?? 'glass'] ?? 'bottom-left';
+  return `${home.startsWith('top') ? 'top' : 'bottom'}-${spec.mirror ? 'right' : 'left'}` as Corner;
+}
+
+/**
+ * An icon's two placements: its layout, flipped left to right and top to
+ * bottom so the front lands in its corner and the back in the opposite one.
+ * Only the places flip, never the artwork.
+ */
+export function placementsOf(spec: Pick<GlassIconSpec, 'layout' | 'corner' | 'mirror'>): { front: Placement; back: Placement } {
+  const name = spec.layout ?? 'glass';
+  const l = LAYOUTS[name];
+  // A centred layout has no corner.
+  const home = HOME[name];
+  if (!home) return { front: l.front, back: l.back };
+  const want = cornerOf(spec);
+  const fx = home.endsWith('left') !== want.endsWith('left');
+  const fy = home.startsWith('top') !== want.startsWith('top');
+  const flip = (p: Placement) => ({
+    ...p,
+    x: fx ? FRAME - p.x - p.size : p.x,
+    y: fy ? FRAME - p.y - p.size : p.y,
+  });
   return { front: flip(l.front), back: flip(l.back) };
 }
 

@@ -3,9 +3,25 @@
   "configurations": [
     {
       "name": "illustration-builder",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--", "--port", "5273", "--strictPort"],
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--",
+        "--port",
+        "5273",
+        "--strictPort"
+      ],
       "port": 5273
+    },
+    {
+      "name": "cloudflare-local",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "run",
+        "cf:dev"
+      ],
+      "port": 8788
     }
   ]
 }

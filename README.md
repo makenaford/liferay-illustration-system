@@ -15,21 +15,21 @@ All nine marketing illustrations rebuilt as **token-driven JSON documents**,
 each rendering to dark and light SVG from one source.
 
 ```bash
-npm install
-npm run build:svg    # render all nine illustrations, both themes
-npm run dev          # the editor, at http://localhost:5273
+pnpm install
+pnpm run build:svg    # render all nine illustrations, both themes
+pnpm run dev          # the editor, at http://localhost:5273
 open out/compare.html
 ```
 
 Requires Node 22+ (the scripts use native TypeScript type-stripping).
 
-**The token generator reads the design system.** `npm run tokens` pulls
+**The token generator reads the design system.** `pnpm run tokens` pulls
 from `liferay-sites-design-system`, expected as a sibling checkout. Point
-`SDS_PATH` elsewhere if yours lives somewhere else. `npm run icons` reads the
+`SDS_PATH` elsewhere if yours lives somewhere else. `pnpm run icons` reads the
 glass icons committed in `assets/glass-icons/` — no checkout needed:
 
 ```bash
-SDS_PATH=~/work/liferay-sites-design-system npm run tokens
+SDS_PATH=~/work/liferay-sites-design-system pnpm run tokens
 ```
 
 Neither is needed to build — the generated files are committed — but they are
@@ -37,7 +37,7 @@ how you pick up a change to the design file.
 
 **Icons are MingCute.** The icon picker searches MingCute
 (https://www.mingcute.com, Apache License 2.0) — every icon in an outline and a
-filled style, generated into `src/mingcute.generated.ts` by `npm run mingcute`
+filled style, generated into `src/mingcute.generated.ts` by `pnpm run mingcute`
 from the `mingcute_icon` package. Documents name one as `mc:<name>` with an
 `iconStyle` of `line` or `fill`. The original hand-drawn set in `src/icons.ts`
 is no longer offered, but documents that use its keys draw exactly as before.
@@ -49,12 +49,12 @@ the illustration system's own Figma variables — or one of two gradients
 statuses follow the set too: success is Green, warning Yellow, alert Orange,
 danger Red. Surfaces and components still build from the Sites palette above.
 To pick up a change, export the variables from Figma over those two files and
-run `npm run colors`.
+run `pnpm run colors`.
 
 **Every exported SVG embeds Source Sans 3** — only the weights it uses, about
 20 KB each — so it renders in the face its layout was measured in even as an
 `<img>` or a downloaded file, where it cannot load a web font. The faces come
-from `@fontsource/source-sans-3` (SIL OFL) via `npm run font`, and the output,
+from `@fontsource/source-sans-3` (SIL OFL) via `pnpm run font`, and the output,
 `src/font.generated.ts`, is committed like the other generated files.
 
 `reference/` holds the nine original Figma exports (44 MB, two of them 21 MB
@@ -222,7 +222,7 @@ Two layers, the same split the design system itself uses:
 
 ```
 palette.generated.ts   the RAW palette — 95 tokens per scheme, generated from
-                       tokens/figma/color.*.tokens.json by `npm run tokens`.
+                       tokens/figma/color.*.tokens.json by `pnpm run tokens`.
                        Aliases resolved, sub-1 alphas rendered as rgba().
                        Never hand-edited.
 tokens.ts              the SEMANTIC layer — what a stage, a card edge or a
@@ -395,7 +395,7 @@ drag in yourself gets the same treatment and says so in its import note.
 ## Glass icons come from the design system
 
 The five spot glyphs I had hand-drawn are deleted. `SpotIcon` renders the
-real glass icon set, imported by `npm run icons` from `assets/glass-icons/`:
+real glass icon set, imported by `pnpm run icons` from `assets/glass-icons/`:
 165 icons, each as `<Category> - <Name> - Light.svg` and `- Dark.svg`. The
 editor's picker groups them by category.
 
@@ -522,11 +522,11 @@ make it brighter, which makes it look like a *different* material sitting
 among its neighbours. Casting its shadow in brand blue instead of black raises
 it by colour, so it stays the same glass and still pulls the eye.
 
-`npm run surfaces` renders the specimen sheet in both themes.
+`pnpm run surfaces` renders the specimen sheet in both themes.
 
 ### Applied across the nine illustrations
 
-`npm run surface-pass` assigns a surface by what a card **does**, not one by
+`pnpm run surface-pass` assigns a surface by what a card **does**, not one by
 one:
 
 | Role | Surface | Count |
@@ -597,7 +597,7 @@ the 3dp table.
 ### Nested containers
 
 A one-dimensional flow cannot express "a title on the left with two icons on
-the right". A column of rows can — so `npm run nest` decomposes each card with
+the right". A column of rows can — so `pnpm run nest` decomposes each card with
 a **guillotine partition**: find horizontal cut lines no child straddles (a
 vertical flow of bands), else vertical ones (a horizontal flow of columns), and
 recurse. Each intermediate becomes a `group` — a container that draws nothing
@@ -620,13 +620,13 @@ Three things the partition needs beyond the basic algorithm:
   wrong for an element: it turned a 96px outline button into a 174px one and
   moved its centred label 39px.
 
-`npm run flatten` is the inverse — it bakes computed positions back to absolute
+`pnpm run flatten` is the inverse — it bakes computed positions back to absolute
 and dissolves the groups, so the conversion round-trips instead of being
 one-way. That is also what made developing the converter possible.
 
 ### The earlier one-dimensional pass
 
-`npm run autolayout` handles the simpler case — a card that is already a single
+`pnpm run autolayout` handles the simpler case — a card that is already a single
 stack — and is what `nest` falls back on conceptually.
 
 Two things had to be true before a card converted (both still apply to `nest`):
@@ -898,7 +898,7 @@ on either.
 
 ## The conformance audit
 
-`npm run audit` checks the nine documents against the system and reports
+`pnpm run audit` checks the nine documents against the system and reports
 without fixing anything, because most findings are judgement calls: a 6px gap
 is off-scale but might be deliberate. It checks:
 
@@ -927,7 +927,7 @@ rather than drift. Drift is the range where a mistake is invisible.
 | Rule | Found | Resolution |
 |---|---|---|
 | Surface inconsistency | 31 | One rule, applied — see below |
-| Off-grid sizes | 22 | `npm run snap:sizes` |
+| Off-grid sizes | 22 | `pnpm run snap:sizes` |
 | Padding off-scale | 6 | Snapped to the nearest step |
 | Column / row misalignment | 12 | 2 were real drift; the rest were centring, stacking or a deliberate stagger the check could not see |
 | Overflow | 2 | One was a layout **bug**, below |
@@ -945,7 +945,7 @@ surface, which has no shadow — and three drew them on `glass3`, the *floating
 overlay*. The same visual role, three different treatments, because the
 documents were ported before the surface set existed.
 
-`npm run surfaces:conform` replaces taste with depth:
+`pnpm run surfaces:conform` replaces taste with depth:
 
 | Position | Surface |
 |---|---|
@@ -1006,7 +1006,7 @@ No primitive contains a colour literal any more.
 
 ## The documents are on-grid
 
-`npm run normalize` snaps every coordinate and size to the 2px base unit and
+`pnpm run normalize` snaps every coordinate and size to the 2px base unit and
 pulls each card's children onto a common left edge. It reports before it
 writes; `--write` applies.
 
@@ -1077,7 +1077,7 @@ primitives that must agree pixel-for-pixel forever.
 
 ## The contact sheet, if you want it
 
-`npm run showcase` writes `out/artifact/showcase.html` — every document, both
+`pnpm run showcase` writes `out/artifact/showcase.html` — every document, both
 themes, inlined as real SVG rather than screenshots, three of them sitting in
 the kind of marketing section they were drawn for.
 
@@ -1115,7 +1115,7 @@ whatever they feel like.
 
 ## Running it outside Claude
 
-`npm run standalone` writes `out/standalone/illustration-builder.html` — one
+`pnpm run standalone` writes `out/standalone/illustration-builder.html` — one
 complete, self-contained document. No server, no build step, no account. Open
 it, or drop it on any static host.
 
@@ -1181,8 +1181,8 @@ is already there.
 A standalone web app for composing illustrations from the library.
 
 ```bash
-npm run dev          # http://localhost:5273
-npm run build:svg    # render all documents to out/*.svg
+pnpm run dev          # http://localhost:5273
+pnpm run build:svg    # render all documents to out/*.svg
 ```
 
 ## The one rule it enforces
@@ -1248,7 +1248,7 @@ Two details that matter:
 - **The Inspector's W and H honour it too.** Typing a width is a resize; the
   lock holding for the mouse and quietly not for the keyboard would be worse
   than no lock. A locked ratio can therefore produce a fractional height —
-  inherent to the feature, and `npm run audit` catches it if one lands in a
+  inherent to the feature, and `pnpm run audit` catches it if one lands in a
   shipped document.
 
 ## Smart guides

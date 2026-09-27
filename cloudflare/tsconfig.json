@@ -1,0 +1,11 @@
+{
+  // The Worker, the Durable Object and the stack: Cloudflare's runtime
+  // types, not the browser's. runtime.ts runs in the page and is checked
+  // with the app (tsconfig.json at the root).
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "lib": ["ES2022"],
+    "types": ["@cloudflare/workers-types", "node"]
+  },
+  "include": ["Site.ts", "Library.ts", "../alchemy.run.ts"]
+}

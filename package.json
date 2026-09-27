@@ -12,6 +12,11 @@
     "build": "vite build",
     "build:svg": "node --experimental-strip-types scripts/build.ts",
     "bundle": "vite build && node --experimental-strip-types scripts/bundle-artifact.ts",
+    "cf:build": "vite build --config vite.assets.config.ts --mode cloudflare --outDir ../out/cloudflare",
+    "cf:deploy": "pnpm run cf:build && alchemy deploy --stage prod",
+    "cf:destroy": "alchemy destroy --stage prod",
+    "cf:dev": "pnpm run cf:build && alchemy dev",
+    "cf:typecheck": "tsc -p cloudflare/tsconfig.json",
     "colors": "node --experimental-strip-types scripts/build-colors.ts",
     "dev": "vite",
     "flatten": "node --experimental-strip-types scripts/flatten.ts",
@@ -23,7 +28,7 @@
     "normalize": "node --experimental-strip-types scripts/normalize.ts",
     "preview": "vite build && vite preview",
     "showcase": "node --experimental-strip-types scripts/build-showcase.ts",
-    "site": "npm run build:svg && npm run standalone && node --experimental-strip-types scripts/build-site.ts",
+    "site": "pnpm run build:svg && pnpm run standalone && node --experimental-strip-types scripts/build-site.ts",
     "snap:sizes": "node --experimental-strip-types scripts/snap-sizes.ts",
     "standalone": "vite build && node --experimental-strip-types scripts/bundle-standalone.ts",
     "surface-pass": "node --experimental-strip-types scripts/surface-pass.ts",
@@ -33,11 +38,15 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "5.20260923.1",
+    "@effect/platform-node": "4.0.0-rc.117",
     "@fontsource/source-sans-3": "^5.3.0",
     "@types/node": "^26.5.0",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
     "@vitejs/plugin-react": "^6.1.1",
+    "alchemy": "2.0.0-beta.79",
+    "effect": "4.0.0-rc.117",
     "mingcute_icon": "^2.9.72",
     "typescript": "^7.0.2",
     "vite": "^8.2.2"
@@ -45,5 +54,6 @@
   "dependencies": {
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
-  }
+  },
+  "packageManager": "pnpm@12.6.0+sha512.3ef68f951cb111ac204b4a5a16f0b2ddf0da56a96e0413e81d855d9f0b55ef926714709028e1cd00c405c2c5fb7b9e8ec4dc46777c805d0373c2f2ff00fd20ec"
 }

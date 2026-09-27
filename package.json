@@ -21,6 +21,7 @@
     "dev": "vite",
     "flatten": "node --experimental-strip-types scripts/flatten.ts",
     "font": "node --experimental-strip-types scripts/build-font.ts",
+    "glass:review": "node --experimental-strip-types scripts/build-glass-review.ts",
     "graphics": "node --experimental-strip-types scripts/build-graphics.ts",
     "icons": "node --experimental-strip-types scripts/build-glass-icons.ts",
     "mingcute": "node --experimental-strip-types scripts/build-mingcute.ts",

@@ -20,6 +20,7 @@
 
 import type { TypeRole, TypeWeight } from './primitives/text.ts';
 import type { MeshName, SurfaceName } from './tokens.ts';
+import type { TableColumn } from './primitives/table.ts';
 import type { IconStyle } from './icons.ts';
 
 export type Tone = 'accent' | 'success' | 'info' | 'neutral' | 'muted' | 'subtle';
@@ -69,6 +70,8 @@ export interface TextEl extends LayoutChild {
   underline?: boolean;
   /** A line through the text, in its own colour. */
   strikethrough?: boolean;
+  /** Small caps: capitals, semibold, letter-spaced 6%. */
+  smallCaps?: boolean;
 }
 
 /**
@@ -286,6 +289,8 @@ export interface LineChartEl extends LayoutChild {
   series: {
     data: number[];
     role?: 'primary' | 'secondary' | 'success';
+    /** A colour from the set. Omitted: Primary, then Purple — see `CHART_COLORS`. */
+    color?: string;
     strokeWidth?: number;
   }[];
   gridLines?: number;
@@ -307,9 +312,11 @@ export interface BarChartEl extends LayoutChild {
   /** A single series. Ignored when `series` is set. */
   data?: number[];
   /** Two or more bars per category, drawn side by side — a comparison. */
-  series?: { data: (number | null)[]; tone?: 'accent' | 'soft' }[];
+  series?: { data: (number | null)[]; tone?: 'accent' | 'soft'; color?: string }[];
   barRatio?: number;
   gradient?: boolean;
+  /** One colour for a single-series chart, in place of the gradient. */
+  color?: string;
   gridLines?: number;
   /** The value the full height stands for; omit to scale to the tallest bar. */
   max?: number;
@@ -328,6 +335,26 @@ export interface ProgressEl extends LayoutChild {
   label?: string;
   labelGap?: number;
   tone?: 'accent' | 'info' | 'success' | 'warning' | 'alert' | 'danger';
+  /** A colour from the set; wins over `tone`. */
+  color?: string;
+}
+
+/**
+ * TABLE — a header over rows of cells. Its height follows from its rows, so it
+ * has none of its own. See `Table` in src/primitives/table.ts.
+ */
+export interface TableEl extends LayoutChild {
+  type: 'table';
+  x: number;
+  y: number;
+  width: number;
+  columns: TableColumn[];
+  /** One array per row, a string per column. */
+  rows: string[][];
+  compact?: boolean;
+  header?: boolean;
+  dividers?: boolean;
+  rowHeight?: number;
 }
 
 export interface SkeletonEl extends LayoutChild {
@@ -561,6 +588,7 @@ export type Element =
   | ChromeEl
   | LineChartEl
   | BarChartEl
+  | TableEl
   | ProgressEl
   | SkeletonEl
   | StatEl

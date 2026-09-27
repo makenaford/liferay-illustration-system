@@ -2,6 +2,7 @@ import type { Doc, Element } from '../src/document.ts';
 import { LAYOUT } from '../src/tokens.ts';
 import { CURSOR_ASPECT } from '../src/primitives/cursor.ts';
 import { axisBand } from '../src/primitives/axisLabels.ts';
+import { tableLayout } from '../src/primitives/table.ts';
 
 export interface Box {
   x: number;
@@ -37,6 +38,9 @@ export function boundsOf(el: Element, node: SVGGraphicsElement | null): Box | nu
         height: Math.abs(y1 - y0) + reach * 2,
       };
     }
+    case 'table':
+      // No height of its own: it is as tall as its rows.
+      return { x: el.x, y: el.y, width: el.width, height: tableLayout(el).height };
     case 'lineChart':
     case 'barChart':
       // The box takes in the labels, so they are selected and resized with it.

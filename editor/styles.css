@@ -316,10 +316,16 @@ button, input, select, textarea {
 .series { display: flex; flex-direction: column; gap: 5px; }
 .series-row { display: flex; gap: 5px; }
 .series-row select { flex: none; width: 92px; }
+.series-row:has(.series-color) { flex-wrap: wrap; }
+.series-color { flex: 1 0 100%; }
 .series-row input { flex: 1; min-width: 0; }
 .series-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; }
 .series-count { display: inline-flex; align-items: center; gap: 4px; margin-right: auto; font-size: 11px; opacity: 0.8; }
 .series-hint { font-size: 11px; opacity: 0.55; }
+.table-grid { display: grid; gap: 4px; }
+.table-grid input, .table-head select { min-width: 0; width: 100%; }
+.table-head { display: flex; flex-direction: column; gap: 3px; }
+.table-head input { font-weight: 600; }
 
 button.mini {
   background: var(--panel-2);

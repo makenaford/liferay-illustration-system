@@ -1,4 +1,5 @@
-import type { BarChartEl, Element, LineChartEl } from '../src/document.ts';
+import type { BarChartEl, Element, LineChartEl, TableEl } from '../src/document.ts';
+import { TableEditor } from './TableData.tsx';
 import {
   commit,
   elementAt,
@@ -621,11 +622,12 @@ function FieldRow({
     field.kind === 'iconSlots' ||
     field.kind === 'glassIcon' ||
     field.kind === 'iconList' ||
+    field.kind === 'table' ||
     field.kind === 'list';
 
   // A field holding several buttons is not a <label>: a click on its blank
   // space would press the first of them.
-  const Wrap = field.kind === 'iconSlots' || field.kind === 'photo' ? 'div' : 'label';
+  const Wrap = field.kind === 'iconSlots' || field.kind === 'photo' || field.kind === 'table' ? 'div' : 'label';
   return (
     <Wrap className={`field${wide ? ' wide' : ''}`}>
       <span className="field-label">{field.label}</span>
@@ -793,6 +795,7 @@ function Control({
         <TokenPicker
           value={value === undefined ? undefined : String(value)}
           onChange={(v) => onChange(v)}
+          colorsOnly={field.colorsOnly}
         />
       );
 
@@ -833,5 +836,8 @@ function Control({
 
     case 'bars':
       return <BarSeriesEditor el={el as BarChartEl} onPatch={onPatch} />;
+
+    case 'table':
+      return <TableEditor el={el as TableEl} onPatch={onPatch} />;
   }
 }

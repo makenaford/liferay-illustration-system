@@ -73,10 +73,12 @@ export type Field<K extends string = string> =
   | { key: K; label: string; kind: 'iconList' }
   /** An icon grid's icons, each with its own picker and style. Patches icons and styles. */
   | { key: K; label: string; kind: 'iconSlots' }
+  /** A table's columns and cells, edited as a grid. Patches `columns` and `rows`. */
+  | { key: K; label: string; kind: 'table' }
   /** A comma-separated list of words, such as a chart's axis labels. */
   | { key: K; label: string; kind: 'list' }
-  /** A colour, chosen from the design-system palette with swatches. */
-  | { key: K; label: string; kind: 'token' }
+  /** A colour, chosen from the design-system palette with swatches. `colorsOnly` leaves out the gradients. */
+  | { key: K; label: string; kind: 'token'; colorsOnly?: boolean }
   /**
    * A file from the user's computer. Patches several props at once (markup
    * plus viewBox, or data URI plus natural size), so the Inspector handles
@@ -145,6 +147,7 @@ export const SCHEMA: {
       { key: 'tone', label: 'Colour', kind: 'token' },
       { key: 'underline', label: 'Underline (⌘U)', kind: 'boolean' },
       { key: 'strikethrough', label: 'Strikethrough (⇧⌘X)', kind: 'boolean' },
+      { key: 'smallCaps', label: 'Small caps', kind: 'boolean' },
     ],
   },
   card: {
@@ -293,6 +296,18 @@ export const SCHEMA: {
       { key: 'referenceLine', label: 'Reference', kind: 'number', step: 0.05 },
     ],
   },
+  table: {
+    label: 'Table',
+    fields: [
+      ...XY,
+      { key: 'width', label: 'W', kind: 'number', min: 40 },
+      { key: 'rows', label: 'Cells', kind: 'table' },
+      { key: 'compact', label: 'Compact', kind: 'boolean' },
+      { key: 'header', label: 'Header row', kind: 'boolean', default: true },
+      { key: 'dividers', label: 'Dividers', kind: 'boolean', default: (el) => !(el as { compact?: boolean }).compact },
+      { key: 'rowHeight', label: 'Row height', kind: 'number', min: 8 },
+    ],
+  },
   barChart: {
     label: 'Bar chart',
     fields: [
@@ -305,6 +320,7 @@ export const SCHEMA: {
       { key: 'max', label: 'Scale max', kind: 'number', min: 0 },
       { key: 'barRatio', label: 'Bar width', kind: 'number', step: 0.05, min: 0.05, default: 0.68 },
       { key: 'gradient', label: 'Gradient', kind: 'boolean', default: true },
+      { key: 'color', label: 'Colour · single series', kind: 'token', colorsOnly: true },
     ],
   },
   progress: {
@@ -316,6 +332,7 @@ export const SCHEMA: {
       { key: 'value', label: 'Value 0-1', kind: 'number', step: 0.01, min: 0 },
       { key: 'height', label: 'Track H', kind: 'number', min: 1 },
       { key: 'tone', label: 'Tone', kind: 'select', options: ['accent', 'success', 'warning', 'alert', 'danger', 'info'] },
+      { key: 'color', label: 'Colour', kind: 'token', colorsOnly: true },
       { key: 'labelGap', label: 'Label gap', kind: 'number' },
     ],
   },
@@ -502,6 +519,16 @@ export const DEFAULTS: Record<Element['type'], () => Element> = {
     data: [20, 32, 14, 40, 26, 35],
     labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
   }),
+  // "Top opportunities", the table the partner dashboards draw by hand.
+  table: () => ({
+    type: 'table', x: 40, y: 40, width: 214,
+    columns: [{ label: 'Name' }, { label: 'Value' }],
+    rows: [
+      ['Partner Service 1', '$48K'],
+      ['Co-Sell Service 2', '$36K'],
+      ['Partner Service 3', '$22K'],
+    ],
+  }),
   progress: () => ({ type: 'progress', x: 40, y: 40, width: 160, value: 0.6, label: 'Label' }),
   skeleton: () => ({ type: 'skeleton', x: 40, y: 40, width: 120, height: 8 }),
   stat: () => ({ type: 'stat', x: 40, y: 40, value: '12,847', label: 'Metric', valueRole: 'heading' }),
@@ -531,7 +558,7 @@ export const PALETTE: { group: string; types: Element['type'][] }[] = [
   { group: 'Surfaces', types: ['card', 'subCard', 'group'] },
   { group: 'Type', types: ['text', 'stat'] },
   { group: 'Controls', types: ['button', 'pill', 'badge', 'toggle', 'input', 'chat', 'chrome'] },
-  { group: 'Data', types: ['lineChart', 'barChart', 'progress', 'map', 'skeleton'] },
+  { group: 'Data', types: ['table', 'lineChart', 'barChart', 'progress', 'map', 'skeleton'] },
   { group: 'Icons & shapes', types: ['spotIcon', 'icon', 'iconGrid', 'avatar', 'line', 'connector', 'arrow', 'cursor'] },
   { group: 'Imported', types: ['image', 'svg'] },
 ];

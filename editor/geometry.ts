@@ -26,7 +26,7 @@ export function movedBy(el: Element, dx: number, dy: number): Element {
 
 /** Whether this element type can be resized by dragging a corner. */
 export function isResizable(el: Element): boolean {
-  if (el.type === 'avatar') return true;
+  if (el.type === 'avatar' || el.type === 'table') return true;
   return (
     'width' in el &&
     'height' in el &&
@@ -37,6 +37,8 @@ export function isResizable(el: Element): boolean {
 export function resizedTo(el: Element, width: number, height: number): Element {
   // A circle: the larger side is its diameter. Re-centred by the caller.
   if (el.type === 'avatar') return { ...el, r: round(Math.max(width, height, 4) / 2) };
+  // A table's height is its rows': only the width follows the drag.
+  if (el.type === 'table') return { ...el, width: round(Math.max(width, 40)) };
   // A line's box is its run and rise, and 0 is the common case — a flat rule.
   const min = el.type === 'line' ? 0 : 4;
   // A line chart's box includes its labels; its `height` is the plot alone,

@@ -12,6 +12,7 @@ export type BarTone = 'accent' | 'soft';
 export interface BarRow {
   data: (number | null)[];
   tone?: BarTone;
+  color?: string;
 }
 
 /** A bar chart's series, whichever of `data` / `series` it is stored as. */
@@ -25,7 +26,7 @@ export function barRows(el: BarChartEl): BarRow[] {
  * grouped form just because a value changed.
  */
 export function withBarRows(el: BarChartEl, rows: BarRow[]): BarChartEl {
-  if (rows.length === 1 && !el.series && !rows[0].tone) {
+  if (rows.length === 1 && !el.series && !rows[0].tone && !rows[0].color) {
     return { ...el, data: rows[0].data.map((v) => v ?? 0), series: undefined };
   }
   return { ...el, data: undefined, series: rows };

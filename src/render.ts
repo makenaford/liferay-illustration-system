@@ -7,6 +7,7 @@ import {
   Text,
   LineChart,
   BarChart,
+  Table,
   Pill,
   Badge,
   Button,
@@ -191,6 +192,9 @@ function renderElementInner(ctx: Ctx, el: Element, path?: string): VNode | null 
 
     case 'barChart':
       return BarChart(ctx, el);
+
+    case 'table':
+      return Table(ctx, el);
 
     case 'progress':
       return ProgressRow(ctx, el);

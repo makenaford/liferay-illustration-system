@@ -1,4 +1,5 @@
 import { h, type Ctx, type VNode } from '../vsvg.ts';
+import { chartColor } from '../colors.ts';
 import { axisLabels, type AxisLabelProps } from './axisLabels.ts';
 
 export interface BarSeries {
@@ -8,8 +9,10 @@ export interface BarSeries {
    * different tones standing apart rather than shoulder to shoulder.
    */
   data: (number | null)[];
-  /** Which blue. `accent` is the hero, `soft` the comparison. */
+  /** Retained for older documents; the colour now comes from `color`, or the series' place. */
   tone?: 'accent' | 'soft';
+  /** A colour from the set. Omitted: Primary, then Purple — see `CHART_COLORS`. */
+  color?: string;
 }
 
 /** Labels centred under their categories' bars. */
@@ -29,6 +32,8 @@ export interface BarChartProps extends AxisLabelProps {
   barRatio?: number;
   /** Vertical gradient from accent to cyan, as in the references. */
   gradient?: boolean;
+  /** One colour for a single-series chart, in place of the gradient. */
+  color?: string;
   /** Horizontal rules behind the bars, as on the line chart. */
   gridLines?: number;
   /**
@@ -90,7 +95,8 @@ export function BarChart(ctx: Ctx, props: BarChartProps): VNode {
   // would make the two series harder to tell apart, not easier.
   const { series, bars: rects } = barGeometry(props);
   const grouped = !!props.series;
-  const useGradient = (props.gradient ?? true) && !grouped;
+  // A chosen colour is a solid fill; the gradient is the single chart's default.
+  const useGradient = (props.gradient ?? true) && !grouped && !props.color;
 
   const gradId = ctx.uid('bargrad');
   if (useGradient) {
@@ -124,11 +130,7 @@ export function BarChart(ctx: Ctx, props: BarChartProps): VNode {
   }
 
   const fillFor = (si: number) =>
-    useGradient
-      ? `url(#${gradId})`
-      : series[si].tone === 'soft'
-        ? tk.chart.compare
-        : tk.accent.base;
+    useGradient ? `url(#${gradId})` : chartColor(tk, si, grouped ? series[si].color : props.color);
   const bars = rects.map((r) =>
     h('rect', { x: r.x, y: r.y, width: r.width, height: r.height, fill: fillFor(r.series) }),
   );

@@ -1,4 +1,5 @@
 import { h, type Ctx, type VNode } from '../vsvg.ts';
+import { chartColor } from '../colors.ts';
 import { Text } from './text.ts';
 
 export interface ProgressRowProps {
@@ -12,6 +13,8 @@ export interface ProgressRowProps {
   /** Baseline offset of the label above the track. */
   labelGap?: number;
   tone?: 'accent' | 'info' | 'success' | 'warning' | 'alert' | 'danger';
+  /** A colour from the set; wins over `tone`. */
+  color?: string;
 }
 
 /**
@@ -26,7 +29,11 @@ export function ProgressRow(ctx: Ctx, props: ProgressRowProps): VNode {
   const tk = ctx.tokens;
   const light = tk.name === 'light';
 
-  const fill = !props.tone || props.tone === 'accent' ? tk.accent.base : tk.status[props.tone];
+  const fill = props.color
+    ? chartColor(tk, 0, props.color)
+    : !props.tone || props.tone === 'accent'
+      ? tk.accent.base
+      : tk.status[props.tone];
 
   const trackId = ctx.uid('track');
   ctx.defs.push(

@@ -120,3 +120,18 @@ export function paintOf(tk: Tokens, tone: string | undefined): Paint {
   const legacy = (tk.name === 'light' ? paletteLight : paletteDark) as Record<string, string>;
   return legacy[tone] ? { color: legacy[tone] } : null;
 }
+
+/**
+ * DATA COLOURS — the order a chart's series take colours in when none is
+ * chosen: Primary, then Purple, then round the rest of the set. A series can
+ * pick any colour from the set instead.
+ */
+export const CHART_COLORS = ['base-primary', 'base-purple', 'base-cyan', 'base-pink', 'base-orange'] as const;
+
+/** Series `i`'s colour: the one it chose, if that is a colour, or its place in `CHART_COLORS`. */
+export function chartColor(tk: Tokens, i: number, choice?: string): string {
+  if (choice?.startsWith('#')) return choice;
+  const picked = paintOf(tk, choice);
+  if (picked && 'color' in picked) return picked.color;
+  return colorOf(CHART_COLORS[i % CHART_COLORS.length], tk.name)!;
+}

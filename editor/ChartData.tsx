@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { BarChartEl, Element, LineChartEl } from '../src/document.ts';
+import { CHART_COLORS } from '../src/colors.ts';
+import { TokenPicker } from './TokenPicker.tsx';
 import { regenerateSeries } from './chartData.ts';
 import { barRows, regenerateBars, resizeSeries, scaleOf, withBarRows, type BarRow } from './chartEdit.ts';
 
@@ -84,6 +86,18 @@ function CountButtons({
   );
 }
 
+/**
+ * A series' colour: any colour from the set, or none — which draws it in its
+ * place in the data colours, Primary then Purple (`CHART_COLORS`).
+ */
+function SeriesColor({ value, index, onChange }: { value: string | undefined; index: number; onChange: (v: string | undefined) => void }) {
+  return (
+    <span className="series-color" title={value ? undefined : `Default: ${CHART_COLORS[index % CHART_COLORS.length].replace('base-', '')}`}>
+      <TokenPicker value={value} onChange={onChange} colorsOnly />
+    </span>
+  );
+}
+
 type LineSeries = LineChartEl['series'][number];
 
 export function LineSeriesEditor({ el, onChange }: { el: LineChartEl; onChange: (v: LineSeries[]) => void }) {
@@ -97,11 +111,11 @@ export function LineSeriesEditor({ el, onChange }: { el: LineChartEl; onChange: 
     <span className="series">
       {series.map((s, i) => (
         <span key={i} className="series-row">
-          <select value={s.role ?? 'primary'} onChange={(e) => set(i, { role: e.target.value as LineSeries['role'] })}>
-            {['primary', 'secondary', 'success'].map((r) => (
-              <option key={r}>{r}</option>
-            ))}
-          </select>
+          <SeriesColor
+            value={s.color ?? (s.role === 'success' ? 'success' : undefined)}
+            index={i}
+            onChange={(color) => set(i, { color, role: undefined })}
+          />
           <ValuesInput
             values={s.data}
             allowGaps={false}
@@ -136,7 +150,7 @@ export function LineSeriesEditor({ el, onChange }: { el: LineChartEl; onChange: 
           onClick={() =>
             onChange([
               ...series,
-              { role: 'primary', data: regenerateSeries(new Array(Math.max(count, 3)).fill(0), domain) },
+              { data: regenerateSeries(new Array(Math.max(count, 3)).fill(0), domain) },
             ])
           }
         >
@@ -173,12 +187,7 @@ export function BarSeriesEditor({ el, onPatch }: { el: BarChartEl; onPatch: (p: 
     <span className="series">
       {rows.map((r, i) => (
         <span key={i} className="series-row">
-          {grouped && (
-            <select value={r.tone ?? 'accent'} onChange={(e) => set(i, { tone: e.target.value as BarRow['tone'] })}>
-              <option value="accent">accent</option>
-              <option value="soft">soft</option>
-            </select>
-          )}
+          {grouped && <SeriesColor value={r.color} index={i} onChange={(color) => set(i, { color, tone: undefined })} />}
           <ValuesInput values={r.data} allowGaps={grouped} onChange={(v) => set(i, { data: v })} />
           <button
             type="button"
@@ -211,8 +220,8 @@ export function BarSeriesEditor({ el, onPatch }: { el: BarChartEl; onPatch: (p: 
           title="Add a comparison series, drawn beside the first"
           onClick={() =>
             write([
-              ...rows.map((r, j) => (j === 0 && !r.tone ? { ...r, tone: 'accent' as const } : r)),
-              { tone: 'soft', data: regenerateBars(new Array(Math.max(count, 1)).fill(0), max) },
+              ...rows,
+              { data: regenerateBars(new Array(Math.max(count, 1)).fill(0), max) },
             ])
           }
         >

@@ -1,11 +1,13 @@
 import { h, type Ctx, type VNode } from '../vsvg.ts';
+import { chartColor } from '../colors.ts';
 import { axisBand, axisLabels, type AxisLabelProps } from './axisLabels.ts';
 
 export interface Series {
   /** Values in any unit; scaled to the plot box. */
   data: number[];
-  /** `primary` is the hero series, `secondary` the comparison. */
+  /** Retained for older documents: `success` still draws green. */
   role?: 'primary' | 'secondary' | 'success';
+  /** A colour from the set. Omitted: Primary, then Purple — see `CHART_COLORS`. */
   color?: string;
   strokeWidth?: number;
 }
@@ -135,13 +137,8 @@ export function LineChart(ctx: Ctx, props: LineChartProps): VNode {
   const dots: VNode[] = [];
   const lines = series.map((s, si) => {
     const pts = points[si];
-    const color =
-      s.color ??
-      (s.role === 'secondary'
-        ? t.secondary
-        : s.role === 'success'
-          ? tk.status.success
-          : t.primary);
+    // A chosen colour, else green for a growth line, else the next data colour.
+    const color = !s.color && s.role === 'success' ? tk.status.success : chartColor(tk, si, s.color);
     if (props.markers) {
       for (const [px, py] of pts) {
         dots.push(h('circle', { cx: px, cy: py, r: (s.strokeWidth ?? 1.5) * 1.1, fill: color }));

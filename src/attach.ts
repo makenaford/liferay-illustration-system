@@ -1,8 +1,8 @@
 import type { ConnectorEl, Doc, Element } from './document.ts';
 import { resolveLayout } from './autolayout.ts';
-import { textBox } from './fontMetrics.generated.ts';
-import { typeStyle } from './primitives/text.ts';
+import { measureTextEl } from './primitives/text.ts';
 import { badgeWidth } from './primitives/badge.ts';
+import { tableLayout } from './primitives/table.ts';
 
 /**
  * ATTACHED CONNECTORS — ends that follow the items they join.
@@ -73,8 +73,7 @@ export function routeFor(
 export function boxOf(el: Element): Box | null {
   switch (el.type) {
     case 'text': {
-      const st = typeStyle(el.role, el.weight);
-      const b = textBox(el.content, st.size, st.weight);
+      const b = measureTextEl(el);
       const x = el.anchor === 'middle' ? el.x - b.width / 2 : el.anchor === 'end' ? el.x - b.width : el.x;
       return { x, y: el.y - b.baseline, width: b.width, height: b.height };
     }
@@ -93,6 +92,8 @@ export function boxOf(el: Element): Box | null {
       return { x: el.x, y: el.y, width: el.width, height: el.height ?? 3 };
     case 'skeleton':
       return { x: el.x, y: el.y, width: el.width, height: el.height ?? 8 };
+    case 'table':
+      return { x: el.x, y: el.y, width: el.width, height: tableLayout(el).height };
     case 'badge':
       return { x: el.x, y: el.y, width: el.width ?? badgeWidth(el.label, el.dot, el.tone), height: el.height ?? 13 };
   }

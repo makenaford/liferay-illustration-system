@@ -1,5 +1,5 @@
 import { h, text as textNode, type Ctx, type VNode } from '../vsvg.ts';
-import { measureText } from '../fontMetrics.generated.ts';
+import { measureText, textBox } from '../fontMetrics.generated.ts';
 
 /**
  * TYPE SCALE — nine sizes, from the design system's own scale.
@@ -99,6 +99,40 @@ export function typeStyle(role: TypeRole, weight?: TypeWeight) {
  * Kept as a lookup so the rest of the library can read `.size` / `.weight`
  * off a role without threading a weight through every call site.
  */
+/**
+ * SMALL CAPS — the Marketing UI Assets `Small Caps` text style (the "CART
+ * TOTAL" over the Cart Summary card's figure, Figma 665:13337): set in
+ * capitals, semibold, letter-spaced 6% of the size. Any step on the scale can
+ * take it. The capitals are in the text itself rather than a CSS
+ * `text-transform`, which rasterisers and a paste into Figma ignore.
+ */
+const SMALL_CAPS_TRACKING = 0.06;
+
+type Styled = { role: TypeRole; weight?: TypeWeight; smallCaps?: boolean };
+
+/** `typeStyle`, with small caps applied: semibold unless the weight is set, and tracked. */
+export function textStyle(t: Styled) {
+  const base = typeStyle(t.role, t.weight ?? (t.smallCaps ? 'semibold' : undefined));
+  return t.smallCaps ? { ...base, tracking: Math.round(base.size * SMALL_CAPS_TRACKING * 100) / 100 } : base;
+}
+
+/** The characters actually drawn. */
+export function shownText(t: { content: string; smallCaps?: boolean }): string {
+  return t.smallCaps ? t.content.toUpperCase() : t.content;
+}
+
+/**
+ * A text element's line box, as drawn. Small caps counts its letter-spacing
+ * in the width; the scale's own optical tracking has never been counted, and
+ * counting it now would shift the shipped layouts.
+ */
+export function measureTextEl(t: Styled & { content: string }) {
+  const style = textStyle(t);
+  const content = shownText(t);
+  const box = textBox(content, style.size, style.weight);
+  return { ...box, width: box.width + (t.smallCaps ? style.tracking * [...content].length : 0), style, content };
+}
+
 export const TYPE_ROLES = Object.fromEntries(
   (Object.keys(TYPE_SIZES) as TypeRole[]).map((r) => [r, typeStyle(r)]),
 ) as Record<TypeRole, { size: number; weight: number; tracking: number }>;
@@ -118,6 +152,8 @@ export interface TextProps {
   color?: string;
   underline?: boolean;
   strikethrough?: boolean;
+  /** Capitals, semibold, tracked — see `textStyle`. */
+  smallCaps?: boolean;
 }
 
 /**
@@ -135,7 +171,8 @@ const DECORATION = { underline: 0.09, strike: -0.243, thickness: 0.05 } as const
  * illustration drops from 739 paths to a couple of dozen nodes.
  */
 export function Text(ctx: Ctx, props: TextProps): VNode {
-  const role = typeStyle(props.role, props.weight);
+  const role = textStyle(props);
+  const content = shownText(props);
   const f = ctx.tokens.font;
   const fill = props.color ?? ctx.tokens.text.primary;
 
@@ -152,7 +189,7 @@ export function Text(ctx: Ctx, props: TextProps): VNode {
       'text-anchor': props.anchor === 'start' ? undefined : props.anchor,
       'data-el': 'text',
     },
-    props.content,
+    content,
   );
   if (!props.underline && !props.strikethrough) return node;
 
@@ -163,7 +200,7 @@ export function Text(ctx: Ctx, props: TextProps): VNode {
    * so the line spans exactly the words.
    */
   const width =
-    measureText(props.content, role.size, role.weight) + (role.tracking || 0) * [...props.content].length;
+    measureText(content, role.size, role.weight) + (role.tracking || 0) * [...content].length;
   const x0 =
     props.anchor === 'middle' ? props.x - width / 2 : props.anchor === 'end' ? props.x - width : props.x;
   const t = Math.max(role.size * DECORATION.thickness, 0.5);

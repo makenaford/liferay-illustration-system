@@ -10,10 +10,10 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Doc, Element } from '../src/document.ts';
 import { LAYOUT, SPACE, dark as tokens } from '../src/tokens.ts';
-import { textBox } from '../src/fontMetrics.generated.ts';
-import { typeStyle } from '../src/primitives/text.ts';
+import { measureTextEl } from '../src/primitives/text.ts';
 import { resolveLayout } from '../src/autolayout.ts';
 import { badgeWidth } from '../src/primitives/badge.ts';
+import { tableLayout } from '../src/primitives/table.ts';
 
 const DOCS = join(import.meta.dirname, '..', 'docs');
 const SURFACES = Object.keys(tokens.surfaces);
@@ -182,8 +182,7 @@ function textRect(el: Element) {
   // `typeStyle` resolves the role's default weight and maps the name to the
   // numeric weight the metrics table is keyed by — the same call the renderer
   // makes, so the measurement cannot drift from what is drawn.
-  const style = typeStyle(el.role, el.weight);
-  const box = textBox(el.content, style.size, style.weight);
+  const box = measureTextEl(el);
   const x =
     el.anchor === 'middle' ? el.x - box.width / 2 : el.anchor === 'end' ? el.x - box.width : el.x;
   return { x, y: el.y - box.baseline, width: box.width, height: box.height };
@@ -285,6 +284,8 @@ function extent(el: Element): Box | null {
       return { x: el.x, y: el.y, width: el.width, height: el.height ?? 3 };
     case 'skeleton':
       return { x: el.x, y: el.y, width: el.width, height: el.height ?? 8 };
+    case 'table':
+      return { x: el.x, y: el.y, width: el.width, height: tableLayout(el).height };
     case 'badge':
       return {
         x: el.x,

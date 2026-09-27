@@ -1,9 +1,10 @@
 import type { Doc, Element, LayoutSpec } from './document.ts';
-import { TYPE_ROLES, typeStyle } from './primitives/text.ts';
+import { TYPE_ROLES, measureTextEl } from './primitives/text.ts';
 import { badgeWidth } from './primitives/badge.ts';
 import { CHAT_HEIGHT } from './primitives/chatBubble.ts';
 import { CURSOR_ASPECT } from './primitives/cursor.ts';
 import { axisBand } from './primitives/axisLabels.ts';
+import { tableLayout } from './primitives/table.ts';
 import { textBox, VERTICAL } from './fontMetrics.generated.ts';
 import { LAYOUT, SPACE } from './tokens.ts';
 
@@ -46,8 +47,7 @@ export function measureElement(el: Element): Size {
        * the text spilled out of its own box. Two pixels, invisible, and
        * wrong everywhere a weight was overridden.
        */
-      const style = typeStyle(el.role, el.weight);
-      return textBox(el.content, style.size, style.weight);
+      return measureTextEl(el);
     }
     case 'stat': {
       const vr = TYPE_ROLES[el.valueRole ?? 'title'];
@@ -103,6 +103,8 @@ export function measureElement(el: Element): Size {
       };
     case 'skeleton':
       return { width: el.width, height: el.height ?? 8 };
+    case 'table':
+      return { width: el.width, height: tableLayout(el).height };
     case 'input':
       return { width: el.width, height: el.height ?? 28 };
     case 'cursor': {
@@ -146,8 +148,7 @@ export function measureElement(el: Element): Size {
 export function baselineOf(el: Element): number | null {
   switch (el.type) {
     case 'text': {
-      const role = typeStyle(el.role, el.weight);
-      return textBox(el.content, role.size, role.weight).baseline;
+      return measureTextEl(el).baseline;
     }
     case 'stat': {
       const vr = TYPE_ROLES[el.valueRole ?? 'title'];

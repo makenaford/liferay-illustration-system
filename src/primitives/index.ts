@@ -5,6 +5,7 @@ export { SubCard, type SubCardProps } from './subCard.ts';
 export { Text, TYPE_ROLES, type TypeRole, type TextProps } from './text.ts';
 export { LineChart, type LineChartProps, type Series } from './lineChart.ts';
 export { BarChart, type BarChartProps } from './barChart.ts';
+export { Table, tableLayout, type TableProps, type TableColumn } from './table.ts';
 export { Pill, type PillProps } from './pill.ts';
 export { Badge, type BadgeProps } from './badge.ts';
 export { Button, type ButtonProps } from './button.ts';

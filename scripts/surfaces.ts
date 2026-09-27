@@ -26,6 +26,7 @@ const DESCRIPTION: Record<SurfaceName, string> = {
   glass2: 'the default card',
   glass3: 'floating overlay',
   highlighted: 'blue cast shadow',
+  mockup: 'glass over a screenshot',
   gradient: 'Figma Blue Gradient',
   solid: 'opaque action',
   outline: 'structure, no weight',

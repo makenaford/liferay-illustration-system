@@ -241,6 +241,7 @@ export type SurfaceName =
   | 'glass2'
   | 'glass3'
   | 'highlighted'
+  | 'mockup'
   | 'gradient'
   | 'solid'
   | 'outline'
@@ -592,6 +593,21 @@ export const dark: Tokens = {
      * edge. Raising it by colour rather than by contrast keeps it the same
      * material as its neighbours while still pulling the eye.
      */
+    /**
+     * Glass over a screenshot — the Mockup template's panels. Transcribed from
+     * the Marketing UI Assets "Highlighted Card" (Figma 665:13269): a blue tint
+     * rising from 5% to 20% across the card (a radial there), a white 80%
+     * hairline, a blue glow, and a 100 background blur — 50px here, heavy
+     * enough that the screenshot beneath shows only as a faint, blurred tone.
+     * The same in both themes: it sits on the screenshot, not the stage.
+     */
+    mockup: {
+      fill: { angle: 135, stops: [{ color: '#0B5FFF', opacity: 0.05 }, { color: '#0B5FFF', opacity: 0.2 }] },
+      line: { angle: 180, stops: [{ color: '#FFFFFF', opacity: 0.8 }, { color: '#FFFFFF', opacity: 0.6 }] },
+      shadow: [{ dy: 0, blur: 10, color: '#0B5FFF', opacity: 0.9 }],
+      litEdge: { color: '#FFFFFF', opacity: 0.45 },
+      blur: 50,
+    },
     highlighted: {
       fill: { angle: 60, stops: [{ color: '#70A2FF', opacity: 0.1 }, { color: STEP_02.color, opacity: 0.03 }] },
       line: { angle: 225, stops: [{ color: '#70A2FF', opacity: 0.5 }, { color: '#70A2FF', opacity: 0.2 }] },
@@ -853,6 +869,21 @@ export const light: Tokens = {
      * edge. Raising it by colour rather than by contrast keeps it the same
      * material as its neighbours while still pulling the eye.
      */
+    /**
+     * Glass over a screenshot — the Mockup template's panels. Transcribed from
+     * the Marketing UI Assets "Highlighted Card" (Figma 665:13269): a blue tint
+     * rising from 5% to 20% across the card (a radial there), a white 80%
+     * hairline, a blue glow, and a 100 background blur — 50px here, heavy
+     * enough that the screenshot beneath shows only as a faint, blurred tone.
+     * The same in both themes: it sits on the screenshot, not the stage.
+     */
+    mockup: {
+      fill: { angle: 135, stops: [{ color: '#0B5FFF', opacity: 0.05 }, { color: '#0B5FFF', opacity: 0.2 }] },
+      line: { angle: 180, stops: [{ color: '#FFFFFF', opacity: 0.8 }, { color: '#FFFFFF', opacity: 0.6 }] },
+      shadow: [{ dy: 0, blur: 10, color: '#0B5FFF', opacity: 0.9 }],
+      litEdge: { color: '#FFFFFF', opacity: 0.45 },
+      blur: 50,
+    },
     highlighted: {
       /*
        * Light mode's `highlighted` has to work harder than dark's.

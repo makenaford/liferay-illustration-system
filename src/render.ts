@@ -274,7 +274,9 @@ function renderElementInner(ctx: Ctx, el: Element, path?: string): VNode | null 
           y: el.y,
           width: el.width,
           height: el.height,
-          href: el.href,
+          // One attribute, not both: an embedded image's data is most of an
+          // illustration's size. xlink:href is the one every renderer and
+          // design tool reads; a browser reads it as well as href.
           'xlink:href': el.href,
           preserveAspectRatio:
             (el.fit ?? 'cover') === 'cover' ? 'xMidYMid slice' : 'xMidYMid meet',
@@ -575,21 +577,22 @@ export function buildDocument(
       : node;
   };
 
-  const under = new Map<number, string>();
+  /**
+   * What lies beneath element `i`: the base, then every element drawn before
+   * it — by reference to those elements as drawn (`elId`), never a second
+   * drawing, so an image under two frosted panels is still stored once. Each
+   * referenced element was itself drawn with its own backdrop, so the copy is
+   * exact, and it can only point backwards, so never at itself.
+   */
+  const elId = (j: number) => `${ns}-el${j}`;
   const beneath = (i: number) => {
     const id = `${ns}-bd-under${i}`;
     ctx.defs.push(
       h('g', { id }, [
         h('use', { href: `#${baseId}`, 'xlink:href': `#${baseId}` }),
-        ...doc.elements.slice(0, i).map((el, j) => {
-          ctx.backdropId = under.get(j) ?? baseId;
-          const node = draw(el);
-          ctx.backdropId = baseId;
-          return node;
-        }),
+        ...doc.elements.slice(0, i).map((_, j) => h('use', { href: `#${elId(j)}`, 'xlink:href': `#${elId(j)}` })),
       ]),
     );
-    under.set(i, id);
     return id;
   };
 
@@ -604,7 +607,8 @@ export function buildDocument(
       }
       const node = draw(el, options.annotate ? String(i) : undefined);
       ctx.backdropId = baseId;
-      return node;
+      // Named, so what floats above it can frost it by reference (`beneath`).
+      return node ? h('g', { id: elId(i) }, [node]) : node;
     }),
   );
 

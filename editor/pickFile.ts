@@ -1,5 +1,6 @@
 import { dataUriBytes, importSvg, RASTER_WARN_BYTES } from '../src/importAsset.ts';
 import type { Element } from '../src/document.ts';
+import { compressImage } from './compressImage.ts';
 
 /**
  * FILE PICKING — one implementation, two entry points.
@@ -64,9 +65,14 @@ export interface AssetPatch {
 /**
  * Read a picked file into element props: SVGs are parsed and inlined, rasters
  * become data URIs. Both are embedded rather than linked so an exported
- * illustration is one self-contained file.
+ * illustration is one self-contained file. A raster is compressed on the way
+ * in (compressImage.ts) for `slot`, the size it will be shown at.
  */
-export async function readAsset(file: File, cap = 160): Promise<AssetPatch> {
+export async function readAsset(
+  file: File,
+  cap = 160,
+  slot?: { width: number; height: number },
+): Promise<AssetPatch> {
   const isSvg = file.type === 'image/svg+xml' || /\.svg$/i.test(file.name);
 
   if (isSvg) {
@@ -85,7 +91,7 @@ export async function readAsset(file: File, cap = 160): Promise<AssetPatch> {
     };
   }
 
-  const href = await new Promise<string>((resolve, reject) => {
+  const raw = await new Promise<string>((resolve, reject) => {
     const r = new FileReader();
     r.onload = () => resolve(String(r.result));
     r.onerror = () => reject(r.error);
@@ -97,8 +103,11 @@ export async function readAsset(file: File, cap = 160): Promise<AssetPatch> {
     const img = new Image();
     img.onload = () => resolve({ w: img.naturalWidth, h: img.naturalHeight });
     img.onerror = () => resolve({ w: 120, h: 80 });
-    img.src = href;
+    img.src = raw;
   });
+  // For its slot, or for as big as it could be shown when it has none yet.
+  const small = await compressImage(raw, dims.w, dims.h, slot ?? { width: dims.w / 2, height: dims.h / 2 });
+  const href = small.href;
   const scale = Math.min(1, (cap * 1.25) / Math.max(dims.w, dims.h));
 
   const bytes = dataUriBytes(href);
@@ -110,7 +119,7 @@ export async function readAsset(file: File, cap = 160): Promise<AssetPatch> {
     note:
       bytes > RASTER_WARN_BYTES
         ? `Imported ${file.name} — ${kb} KB embedded. Large rasters bloat every export; consider a URL or an SVG.`
-        : `Imported ${file.name} (${kb} KB)`,
+        : `Imported ${file.name} (${small.change ?? `${kb} KB`})`,
   };
 }
 

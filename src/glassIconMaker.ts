@@ -35,6 +35,10 @@ export interface GlassIconSpec {
   /** Where each icon's ink actually lies on that grid; the whole grid when not measured. */
   frontBounds?: GlyphBounds;
   backBounds?: GlyphBounds;
+  /** Which of the LAYOUTS; "Glass leads", the Figma frame, when not given. */
+  layout?: LayoutName;
+  /** The back on the left of the glass instead of the right. */
+  mirror?: boolean;
 }
 
 /**
@@ -93,8 +97,40 @@ const SHADOW = { left: 6, right: 6, top: 2, bottom: 10 };
 
 /** The frame, and each icon's box within it — MingCute's 24px grid scaled up. */
 export const FRAME = 64;
-export const FRONT = { size: 68, x: -7, y: 0 };
-export const BACK = { size: 48, x: 19, y: -5 };
+export interface Placement {
+  size: number;
+  x: number;
+  y: number;
+}
+
+export type LayoutName = 'glass' | 'equal' | 'gradient';
+
+/**
+ * Where the two icons sit in the 64px frame: each icon's 24px grid, scaled
+ * to `size` and placed at (x, y). "Glass leads" is the Figma frame; the
+ * others are read off the set itself — the median of its icons whose back
+ * is about as big as the glass (Equal), or bigger (Gradient leads).
+ */
+export const LAYOUTS: Record<LayoutName, { label: string; front: Placement; back: Placement }> = {
+  glass: { label: 'Glass leads', front: { size: 68, x: -7, y: 0 }, back: { size: 48, x: 19, y: -5 } },
+  equal: { label: 'Equal', front: { size: 62, x: -5.5, y: 7 }, back: { size: 56.5, x: 13.5, y: -4 } },
+  gradient: { label: 'Gradient leads', front: { size: 53, x: -4.5, y: 13.5 }, back: { size: 70, x: 0.5, y: -5 } },
+};
+
+/** The Figma frame's layout. */
+export const FRONT = LAYOUTS.glass.front;
+export const BACK = LAYOUTS.glass.back;
+
+/**
+ * An icon's two placements: its layout, mirrored left to right when the
+ * back sits on the left. Only the places mirror, never the artwork.
+ */
+export function placementsOf(spec: Pick<GlassIconSpec, 'layout' | 'mirror'>): { front: Placement; back: Placement } {
+  const l = LAYOUTS[spec.layout ?? 'glass'];
+  if (!spec.mirror) return { front: l.front, back: l.back };
+  const flip = (p: Placement) => ({ ...p, x: FRAME - p.x - p.size });
+  return { front: flip(l.front), back: flip(l.back) };
+}
 
 /** The back icon's gradient, as the dark icons draw it. Light runs it in reverse. */
 const DARK_STOPS = [
@@ -159,12 +195,13 @@ const THEME = {
  * shadow. Kept square, so a square tile shows it undistorted.
  */
 export function viewBoxOf(spec: GlassIconSpec): [number, number, number, number] {
-  const ink = (box: typeof FRONT, b: GlyphBounds) => {
+  const at = placementsOf(spec);
+  const ink = (box: Placement, b: GlyphBounds) => {
     const k = box.size / 24;
     return { x0: box.x + b.x * k, y0: box.y + b.y * k, x1: box.x + (b.x + b.width) * k, y1: box.y + (b.y + b.height) * k };
   };
-  const f = ink(FRONT, spec.frontBounds ?? WHOLE_GRID);
-  const b = ink(BACK, spec.backBounds ?? WHOLE_GRID);
+  const f = ink(at.front, spec.frontBounds ?? WHOLE_GRID);
+  const b = ink(at.back, spec.backBounds ?? WHOLE_GRID);
   const x0 = Math.floor(Math.min(0, f.x0 - SHADOW.left, b.x0));
   const y0 = Math.floor(Math.min(0, f.y0 - SHADOW.top, b.y0));
   const x1 = Math.ceil(Math.max(FRAME, f.x1 + SHADOW.right, b.x1));
@@ -174,12 +211,13 @@ export function viewBoxOf(spec: GlassIconSpec): [number, number, number, number]
   return [x0 - (size - (x1 - x0)) / 2, y0 - (size - (y1 - y0)) / 2, size, size];
 }
 
-const place = (box: { size: number; x: number; y: number }) =>
+const place = (box: Placement) =>
   `translate(${box.x} ${box.y}) scale(${box.size / 24})`;
 
 /** One theme of the icon, as a Figma-style glass SVG. */
 export function makeGlassIcon(spec: GlassIconSpec, theme: GlassTheme): string {
   const t = THEME[theme];
+  const { front: FRONT, back: BACK } = placementsOf(spec);
   const backLayer = layerOf(spec.back);
   const frontLayer = layerOf(spec.front);
   // The back: one square of gradient on the grid, cut to the back's shapes

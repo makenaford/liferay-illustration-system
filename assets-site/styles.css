@@ -390,3 +390,6 @@ h1 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -0.4px; line-
   padding: 0 4px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--am-ink-faint);
 }
 .am-gib-layer .am-seg { align-self: flex-start; }
+/* Choices that share the panel's width, one column each. */
+.am-gib-layer .am-seg.am-seg-fill { align-self: stretch; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; }
+.am-seg.am-seg-fill button { padding-inline: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

@@ -112,6 +112,7 @@
   .chip.good::before { background: var(--good); }
   .chip.warn::before { background: var(--warn); }
   .chip.bad::before { background: var(--bad); }
+  .chip.layout { border-style: dashed; }
   .sorting { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink-dim); }
   .sorting select {
     font: 13px var(--font); color: var(--ink); background: var(--surface);
@@ -179,8 +180,8 @@
     <h1>Glass Icon Rebuild</h1>
     <p class="lede">
       Each glass icon from the set beside the Glass Icon Builder's rebuild of it: the icon's own glass and gradient
-      shapes, taken apart and redrawn in the builder's layout (64px frame, glass at −7, 0 · gradient at 19, −5),
-      gradient and glass. Flags mark what didn't take apart cleanly, or where the layout changed past
+      shapes, taken apart and redrawn in the builder's gradient and glass, in whichever of its layouts — Glass leads,
+      Equal or Gradient leads, back on the right or the left — is closest to how the icon was drawn. Flags mark what didn't take apart cleanly, or where the layout changed past
       <code>0.15</code> in size ratio or <code>6px</code> in the back's place. Nothing in the library has been
       changed.
     </p>

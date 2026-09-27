@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { MINGCUTE } from '../src/mingcute.generated.ts';
-import { FRAME, makeGlassIcon, type GlyphBounds } from '../src/glassIconMaker.ts';
+import { FRAME, LAYOUTS, makeGlassIcon, type GlyphBounds, type LayoutName } from '../src/glassIconMaker.ts';
 import { normaliseFigmaSvg } from '../src/figmaGlass.ts';
 import { MINGCUTE_PREFIX, type IconStyle } from '../src/icons.ts';
 import { IconPicker } from '../editor/IconPicker.tsx';
@@ -55,6 +55,16 @@ function glyphBounds(d: string): GlyphBounds | undefined {
   }
 }
 
+/** Each layout's name on its button, which says which icon leads. */
+const SHORT: Record<LayoutName, string> = { glass: 'Glass', equal: 'Equal', gradient: 'Gradient' };
+
+/** What each layout is for, as the set uses it. */
+const LAYOUT_HINT: Record<LayoutName, string> = {
+  glass: 'Glass leads: the glass icon is the subject, the gradient one an accent behind it — the Marketing Icons frame.',
+  equal: 'Equal: the two icons carry the same weight — the set’s most common layout.',
+  gradient: 'Gradient leads: the gradient icon is the subject, the glass one a smaller accent in front.',
+};
+
 /** Glass SVG (Figma-export shape) -> something an <img> shows, glass and all. */
 function preview(raw: string, ns: string): string {
   const p = normaliseFigmaSvg(raw, ns);
@@ -79,6 +89,8 @@ export function GlassIconBuilder({
   const [style, setStyle] = useState<IconStyle>('fill');
   const [backIcon, setBackIcon] = useState('mc:planet');
   const [backStyle, setBackStyle] = useState<IconStyle>('fill');
+  const [layout, setLayout] = useState<LayoutName>('glass');
+  const [mirror, setMirror] = useState(false);
   const [name, setName] = useState('');
   const [category, setCategory] = useState('');
   const glass = sets.find((s) => s.id === 'glass-icons');
@@ -88,8 +100,8 @@ export function GlassIconBuilder({
   const front = pathOf(icon, style);
   const back = pathOf(backIcon, backStyle) || front;
   const spec = useMemo(
-    () => ({ front, back, frontBounds: glyphBounds(front), backBounds: glyphBounds(back) }),
-    [front, back],
+    () => ({ front, back, frontBounds: glyphBounds(front), backBounds: glyphBounds(back), layout, mirror }),
+    [front, back, layout, mirror],
   );
   const dark = useMemo(() => (front ? makeGlassIcon(spec, 'dark') : ''), [front, spec]);
   const light = useMemo(() => (front ? makeGlassIcon(spec, 'light') : ''), [front, spec]);
@@ -167,17 +179,42 @@ export function GlassIconBuilder({
           }}
         >
           <fieldset className="am-gib-layer">
-            <legend>Front · frosted glass · 68px</legend>
+            <legend>Front · frosted glass · {Math.round(LAYOUTS[layout].front.size)}px</legend>
             <IconPicker value={icon} style={style} onChange={(v) => v && setIcon(v)} />
             <StyleSwitch label="Front icon style" value={style} onChange={setStyle} />
           </fieldset>
           <fieldset className="am-gib-layer">
-            <legend>Back · gradient · 48px</legend>
+            <legend>Back · gradient · {Math.round(LAYOUTS[layout].back.size)}px</legend>
             <IconPicker value={backIcon} style={backStyle} onChange={(v) => v && setBackIcon(v)} />
             <StyleSwitch label="Back icon style" value={backStyle} onChange={setBackStyle} />
           </fieldset>
+          <fieldset className="am-gib-layer">
+            <legend>Layout · which icon leads</legend>
+            <div className="am-seg am-seg-fill" role="group" aria-label="Layout">
+              {(Object.keys(LAYOUTS) as LayoutName[]).map((name) => (
+                <button
+                  key={name}
+                  type="button"
+                  className={layout === name ? 'am-on' : ''}
+                  aria-pressed={layout === name}
+                  title={LAYOUTS[name].label}
+                  onClick={() => setLayout(name)}
+                >
+                  {SHORT[name]}
+                </button>
+              ))}
+            </div>
+            <div className="am-seg am-seg-fill" role="group" aria-label="Which side the back sits">
+              {[false, true].map((m) => (
+                <button key={String(m)} type="button" className={mirror === m ? 'am-on' : ''} aria-pressed={mirror === m} onClick={() => setMirror(m)}>
+                  {m ? 'Back on the left' : 'Back on the right'}
+                </button>
+              ))}
+            </div>
+          </fieldset>
           <p className="am-hint">
-            In the {FRAME}px frame the glass icon is 68px and the one behind it 48px — the set’s own proportions.
+            {LAYOUT_HINT[layout]} In the {FRAME}px frame the glass icon is {Math.round(LAYOUTS[layout].front.size)}px and
+            the one behind it {Math.round(LAYOUTS[layout].back.size)}px.
           </p>
           <label className="am-field" htmlFor="gib-name">
             <span>Name</span>

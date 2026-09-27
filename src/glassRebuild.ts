@@ -1,4 +1,13 @@
-import { BACK, FRONT, type GlassIconSpec, type GlyphBounds, type Layer, type LayerPath } from './glassIconMaker.ts';
+import {
+  LAYOUTS,
+  placementsOf,
+  type GlassIconSpec,
+  type GlyphBounds,
+  type Layer,
+  type LayerPath,
+  type LayoutName,
+  type Placement,
+} from './glassIconMaker.ts';
 
 /**
  * GLASS REBUILD — an existing glass icon, taken apart into the builder's two
@@ -11,8 +20,10 @@ import { BACK, FRONT, type GlassIconSpec, type GlyphBounds, type Layer, type Lay
  * with a linear gradient — filled or stroked, directly or as a gradient rect
  * cut to shape by a mask. Each layer's shapes keep their own paths; they are
  * measured in the icon's frame and fitted, as a whole, onto the builder's
- * 24px grid the way a MingCute glyph sits on it (INK). What doesn't take
- * apart cleanly is flagged, not guessed.
+ * 24px grid the way a MingCute glyph sits on it (INK), in whichever of the
+ * builder's layouts — and on whichever side — is closest to how the icon
+ * was drawn. What doesn't take apart cleanly, or still sits differently in
+ * the closest layout, is flagged, not guessed.
  *
  * Runs in the browser: the browser's own SVG engine measures the shapes,
  * transforms and all.
@@ -47,12 +58,14 @@ export interface Rebuilt {
   original: { front?: Box; back?: Box };
   /** Where the builder puts it. */
   rebuilt: { front?: Box; back?: Box };
+  /** The builder layout closest to the original, and whether its back is on the left. */
+  layout?: { name: LayoutName; mirror: boolean };
   /**
    * How the layout changed. `sizeRatio`: the back's size over the front's,
    * in the original and as rebuilt (the builder's is about 0.7). `offset`:
    * how far, in frame px, the back's place relative to the front moved.
    */
-  layout?: { sizeRatio: { was: number; now: number }; offset: number };
+  change?: { sizeRatio: { was: number; now: number }; offset: number };
   counts: { front: number; back: number };
 }
 
@@ -190,11 +203,22 @@ function fit(pieces: Piece[], box: Box): { layer: Layer; bounds: GlyphBounds } {
 }
 
 /** Where a layer fitted onto the grid lands in the frame. */
-const inFrame = (place: typeof FRONT, b: GlyphBounds): Box => {
+const inFrame = (place: Placement, b: GlyphBounds): Box => {
   const k = place.size / 24;
   return { x: place.x + b.x * k, y: place.y + b.y * k, width: b.width * k, height: b.height * k };
 };
 const centre = (b: Box) => ({ x: b.x + b.width / 2, y: b.y + b.height / 2 });
+const side = (b: Box) => Math.max(b.width, b.height);
+
+/** How a rebuild's layout differs from the original's: the back's size against the front's, and its place. */
+function changeOf(was: { front: Box; back: Box }, now: { front: Box; back: Box }) {
+  const w = { f: centre(was.front), b: centre(was.back) };
+  const n = { f: centre(now.front), b: centre(now.back) };
+  return {
+    sizeRatio: { was: side(was.back) / side(was.front), now: side(now.back) / side(now.front) },
+    offset: Math.hypot(w.b.x - w.f.x - (n.b.x - n.f.x), w.b.y - w.f.y - (n.b.y - n.f.y)),
+  };
+}
 
 /** Take an existing glass icon's SVG apart into the builder's two layers. */
 export function rebuild(svg: string): Rebuilt {
@@ -260,23 +284,32 @@ export function rebuild(svg: string): Rebuilt {
     if (original.front && original.back) {
       const f = fit(front, original.front);
       const b = fit(back, original.back);
-      result.spec = { front: f.layer, back: b.layer, frontBounds: f.bounds, backBounds: b.bounds };
-      result.rebuilt = { front: inFrame(FRONT, f.bounds), back: inFrame(BACK, b.bounds) };
-      // The back's size against the front's, and its place relative to it.
-      const side = (b: Box) => Math.max(b.width, b.height);
-      const was = { f: centre(original.front), b: centre(original.back) };
-      const now = { f: centre(result.rebuilt.front!), b: centre(result.rebuilt.back!) };
-      result.layout = {
-        sizeRatio: {
-          was: side(original.back) / side(original.front),
-          now: side(result.rebuilt.back!) / side(result.rebuilt.front!),
-        },
-        offset: Math.hypot(was.b.x - was.f.x - (now.b.x - now.f.x), was.b.y - was.f.y - (now.b.y - now.f.y)),
+      const orig = { front: original.front, back: original.back };
+      // Every layout, both ways round; the closest to the original wins.
+      const tries = (Object.keys(LAYOUTS) as LayoutName[]).flatMap((name) =>
+        [false, true].map((mirror) => {
+          const at = placementsOf({ layout: name, mirror });
+          const rebuilt = { front: inFrame(at.front, f.bounds), back: inFrame(at.back, b.bounds) };
+          const change = changeOf(orig, rebuilt);
+          return { name, mirror, rebuilt, change, score: change.offset + 40 * Math.abs(change.sizeRatio.was - change.sizeRatio.now) };
+        }),
+      );
+      const best = tries.reduce((a, z) => (z.score < a.score ? z : a));
+      result.spec = {
+        front: f.layer,
+        back: b.layer,
+        frontBounds: f.bounds,
+        backBounds: b.bounds,
+        layout: best.name,
+        ...(best.mirror ? { mirror: true } : {}),
       };
-      if (Math.abs(result.layout.sizeRatio.was - result.layout.sizeRatio.now) > LIMITS.sizeRatio) {
+      result.layout = { name: best.name, mirror: best.mirror };
+      result.rebuilt = best.rebuilt;
+      result.change = best.change;
+      if (Math.abs(best.change.sizeRatio.was - best.change.sizeRatio.now) > LIMITS.sizeRatio) {
         flags.add('back sized differently');
       }
-      if (result.layout.offset > LIMITS.offset) flags.add('back placed differently');
+      if (best.change.offset > LIMITS.offset) flags.add('back placed differently');
     }
     result.flags = [...flags];
     return result;

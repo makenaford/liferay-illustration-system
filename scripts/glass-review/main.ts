@@ -5,7 +5,7 @@
  * scripts/build-glass-review.ts, with the icons embedded.
  */
 import { normaliseFigmaSvg } from '../../src/figmaGlass.ts';
-import { makeGlassIcon } from '../../src/glassIconMaker.ts';
+import { LAYOUTS, makeGlassIcon } from '../../src/glassIconMaker.ts';
 import { LIMITS, rebuild, type Flag, type Rebuilt } from '../../src/glassRebuild.ts';
 
 interface Source {
@@ -56,7 +56,7 @@ const sources = JSON.parse(document.getElementById('icons')!.textContent!) as So
 const rows: Row[] = sources.map((s) => {
   const i = s.name.indexOf(' - ');
   const r = rebuild(s.dark);
-  const l = r.layout;
+  const l = r.change;
   return {
     ...s,
     category: i > 0 ? s.name.slice(0, i) : 'Uncategorized',
@@ -77,7 +77,7 @@ document.getElementById('ready')!.textContent = String(ready);
 document.getElementById('clean')!.textContent = String(clean);
 document.getElementById('blocked')!.textContent = String(rows.length - ready);
 
-type Filter = 'all' | 'clean' | Flag;
+type Filter = 'all' | 'clean' | Flag | `layout:${keyof typeof LAYOUTS}`;
 let filter: Filter = 'all';
 let sort: 'change' | 'name' = 'change';
 
@@ -100,6 +100,10 @@ chipFor('clean', 'Clean', clean, 'good');
 for (const f of FLAG_ORDER) {
   const n = count(f);
   if (n) chipFor(f, f.replace(/^./, (c) => c.toUpperCase()), n, BLOCKING.includes(f) ? 'bad' : 'warn');
+}
+for (const [name, l] of Object.entries(LAYOUTS) as [keyof typeof LAYOUTS, (typeof LAYOUTS)[keyof typeof LAYOUTS]][]) {
+  const n = rows.filter((r) => r.r.layout?.name === name).length;
+  if (n) chipFor(`layout:${name}`, l.label, n, 'layout');
 }
 
 const sortEl = document.getElementById('sort') as HTMLSelectElement;
@@ -164,7 +168,10 @@ function rowEl(row: Row, n: number): HTMLElement {
     d.append(el('dt', '', k), el('dd', '', v));
     facts.append(d);
   };
-  const l = row.r.layout;
+  const l = row.r.change;
+  if (row.r.layout) {
+    fact('Layout', `${LAYOUTS[row.r.layout.name].label}${row.r.layout.mirror ? ', back on the left' : ''}`);
+  }
   if (l) {
     fact(
       'Back ÷ front size',
@@ -181,7 +188,13 @@ function rowEl(row: Row, n: number): HTMLElement {
 
 function draw() {
   const pick = rows.filter((r) =>
-    filter === 'all' ? true : filter === 'clean' ? !r.r.flags.length : r.r.flags.includes(filter),
+    filter === 'all'
+      ? true
+      : filter === 'clean'
+        ? !r.r.flags.length
+        : filter.startsWith('layout:')
+          ? r.r.layout?.name === filter.slice(7)
+          : r.r.flags.includes(filter as Flag),
   );
   pick.sort((a, b) => (sort === 'name' ? a.name.localeCompare(b.name) : b.change - a.change || a.name.localeCompare(b.name)));
   list.replaceChildren(...pick.map((r) => rowEl(r, rows.indexOf(r))));

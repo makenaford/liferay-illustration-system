@@ -1,4 +1,5 @@
 import {
+  CENTRED,
   LAYOUTS,
   placementsOf,
   type GlassIconSpec,
@@ -287,7 +288,7 @@ export function rebuild(svg: string): Rebuilt {
       const orig = { front: original.front, back: original.back };
       // Every layout, both ways round; the closest to the original wins.
       const tries = (Object.keys(LAYOUTS) as LayoutName[]).flatMap((name) =>
-        [false, true].map((mirror) => {
+        (CENTRED.includes(name) ? [false] : [false, true]).map((mirror) => {
           const at = placementsOf({ layout: name, mirror });
           const rebuilt = { front: inFrame(at.front, f.bounds), back: inFrame(at.back, b.bounds) };
           const change = changeOf(orig, rebuilt);

@@ -1,4 +1,5 @@
 import type { Doc, GraphicArt } from '../src/document.ts';
+import type { GlassRecipe } from '../src/glassRecipe.ts';
 import {
   backend,
   forget,
@@ -49,6 +50,8 @@ export interface IconRow {
   svgLight?: string;
   uploadedAt: number;
   uploadedBy?: string;
+  /** What the Glass Icon Builder made it from, so it can be edited there again. */
+  builder?: GlassRecipe;
 }
 
 /**

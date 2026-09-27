@@ -24,6 +24,7 @@
     "glass:review": "node --experimental-strip-types scripts/build-glass-review.ts",
     "graphics": "node --experimental-strip-types scripts/build-graphics.ts",
     "icons": "node --experimental-strip-types scripts/build-glass-icons.ts",
+    "icons:custom": "node --experimental-strip-types scripts/build-custom-icons.ts",
     "mingcute": "node --experimental-strip-types scripts/build-mingcute.ts",
     "nest": "node --experimental-strip-types scripts/nest.ts",
     "normalize": "node --experimental-strip-types scripts/normalize.ts",

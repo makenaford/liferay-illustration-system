@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { MINGCUTE } from '../src/mingcute.generated.ts';
-import { iconArt, MINGCUTE_PREFIX, type IconStyle } from '../src/icons.ts';
+import { CUSTOM_PREFIX, iconArt, ICON_LIBRARY, MINGCUTE_PREFIX, type IconStyle } from '../src/icons.ts';
 
 /**
- * ICON PICKER — MingCute, searchable, in the style the element uses.
+ * ICON PICKER — the team's own icons and MingCute's, searchable, in the
+ * style the element uses.
  *
  * 1,600 icons do not fit a dropdown, so this is a search over names and
  * MingCute's categories, drawn as a grid of the icons themselves. It shows
@@ -11,8 +11,12 @@ import { iconArt, MINGCUTE_PREFIX, type IconStyle } from '../src/icons.ts';
  * drawing the whole set at once.
  */
 
-const NAMES = Object.keys(MINGCUTE);
-const CATEGORIES = [...new Set(NAMES.map((n) => MINGCUTE[n].c))].sort();
+/** The team's own categories (assets/custom-icons/), listed apart from MingCute's. */
+const OWN = [...new Set(ICON_LIBRARY.filter((i) => i.key.startsWith(CUSTOM_PREFIX)).map((i) => i.c))].sort();
+const CATEGORIES = [...new Set(ICON_LIBRARY.filter((i) => i.key.startsWith(MINGCUTE_PREFIX)).map((i) => i.c))].sort();
+/** A category choice: `own:<c>` for the team's, the bare name for MingCute's. */
+const inCategory = (i: (typeof ICON_LIBRARY)[number], cat: string) =>
+  !cat || (cat.startsWith('own:') ? i.key.startsWith(CUSTOM_PREFIX) && i.c === cat.slice(4) : i.key.startsWith(MINGCUTE_PREFIX) && i.c === cat);
 const SHOWN = 240;
 
 /** A readable name: `arrow_left_circle` -> "arrow left circle". */
@@ -66,13 +70,13 @@ export function IconPicker({
   const needle = q.trim().toLowerCase().replace(/\s+/g, '_');
   const hits = useMemo(
     () =>
-      NAMES.filter(
-        (n) => (!cat || MINGCUTE[n].c === cat) && (!needle || n.includes(needle) || MINGCUTE[n].c.includes(needle)),
+      ICON_LIBRARY.filter(
+        (i) => inCategory(i, cat) && (!needle || i.name.includes(needle) || i.c.toLowerCase().includes(needle)),
       ),
     [needle, cat],
   );
 
-  const name = value?.startsWith(MINGCUTE_PREFIX) ? value.slice(MINGCUTE_PREFIX.length) : value;
+  const name = value?.replace(/^(mc|custom):/, '');
 
   return (
     <div className="iconpick" ref={ref}>
@@ -88,17 +92,28 @@ export function IconPicker({
             <input
               autoFocus
               className="tokenpick-search"
-              placeholder="Search 1,600 icons…"
+              placeholder={`Search ${ICON_LIBRARY.length.toLocaleString()} icons…`}
               value={q}
               onChange={(e) => setQ(e.target.value)}
             />
             <select value={cat} onChange={(e) => setCat(e.target.value)} aria-label="Category">
               <option value="">All</option>
-              {CATEGORIES.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
+              {OWN.length > 0 && (
+                <optgroup label="Our icons">
+                  {OWN.map((c) => (
+                    <option key={c} value={`own:${c}`}>
+                      {c}
+                    </option>
+                  ))}
+                </optgroup>
+              )}
+              <optgroup label="MingCute">
+                {CATEGORIES.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </optgroup>
             </select>
           </div>
           <div className="iconpick-grid">
@@ -113,11 +128,10 @@ export function IconPicker({
             >
               <span className="iconpick-none" />
             </button>
-            {hits.slice(0, SHOWN).map((n) => {
-              const k = MINGCUTE_PREFIX + n;
+            {hits.slice(0, SHOWN).map(({ key: k, name: n }) => {
               return (
                 <button
-                  key={n}
+                  key={k}
                   type="button"
                   className={value === k ? 'on' : ''}
                   title={label(n)}

@@ -1,4 +1,5 @@
-import { MINGCUTE } from './mingcute.generated.ts';
+import { MINGCUTE, type MingCuteIcon } from './mingcute.generated.ts';
+import { CUSTOM_ICONS } from './customIcons.generated.ts';
 
 /**
  * ICONS — MingCute, plus the original hand-drawn set.
@@ -100,18 +101,37 @@ export interface IconArt extends Icon {
 }
 
 export const MINGCUTE_PREFIX = 'mc:';
+/** The team's own icons, from assets/custom-icons/ (scripts/build-custom-icons.ts). */
+export const CUSTOM_PREFIX = 'custom:';
+
+/**
+ * A MingCute or custom icon by key — its paths and category — or undefined:
+ * `mc:rocket`, `custom:rocket`, or a bare `rocket` for MingCute's.
+ */
+export function glyphOf(key: string | null | undefined): MingCuteIcon | undefined {
+  if (!key) return undefined;
+  if (key.startsWith(CUSTOM_PREFIX)) return CUSTOM_ICONS[key.slice(CUSTOM_PREFIX.length)];
+  return MINGCUTE[key.startsWith(MINGCUTE_PREFIX) ? key.slice(MINGCUTE_PREFIX.length) : key];
+}
+
+/** Every icon the picker offers, by key: the team's own first, then MingCute's. */
+export const ICON_LIBRARY: { key: string; name: string; c: string }[] = [
+  ...Object.entries(CUSTOM_ICONS).map(([name, g]) => ({ key: CUSTOM_PREFIX + name, name, c: g.c })),
+  ...Object.entries(MINGCUTE).map(([name, g]) => ({ key: MINGCUTE_PREFIX + name, name, c: g.c })),
+];
 
 /**
  * An icon key, in a style, as artwork — or undefined for no icon.
  *
- *   mc:rocket   MingCute's rocket
- *   check       the hand-drawn check (a key the original set has)
- *   rocket      MingCute's rocket (a bare name the original set lacks)
+ *   mc:rocket      MingCute's rocket
+ *   custom:rocket  the team's own rocket (assets/custom-icons/)
+ *   check          the hand-drawn check (a key the original set has)
+ *   rocket         MingCute's rocket (a bare name the original set lacks)
  */
 export function iconArt(key: string | null | undefined, style: IconStyle = 'line'): IconArt | undefined {
   if (!key) return undefined;
-  if (!key.startsWith(MINGCUTE_PREFIX) && ICONS[key]) return { ...ICONS[key], stroke: true };
-  const m = MINGCUTE[key.startsWith(MINGCUTE_PREFIX) ? key.slice(MINGCUTE_PREFIX.length) : key];
+  if (!key.startsWith(MINGCUTE_PREFIX) && !key.startsWith(CUSTOM_PREFIX) && ICONS[key]) return { ...ICONS[key], stroke: true };
+  const m = glyphOf(key);
   if (!m) return undefined;
   const path = (style === 'fill' ? m.fill : m.line) ?? m.line ?? m.fill;
   return path ? { path, box: 24, stroke: false } : undefined;

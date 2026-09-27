@@ -1,9 +1,8 @@
 import { useMemo, useState } from 'react';
-import { MINGCUTE } from '../src/mingcute.generated.ts';
 import { CENTRED, FRAME, LAYOUTS, makeGlassIcon, type GlyphBounds, type Layer, type LayoutName } from '../src/glassIconMaker.ts';
 import { isShape, type GlassRecipe, type RecipeLayer } from '../src/glassRecipe.ts';
 import { normaliseFigmaSvg } from '../src/figmaGlass.ts';
-import { MINGCUTE_PREFIX, type IconStyle } from '../src/icons.ts';
+import { glyphOf, type IconStyle } from '../src/icons.ts';
 import { IconPicker } from '../editor/IconPicker.tsx';
 import { foldersOf, iconParts, UNFILED, viewerId, type IconRow, type IconSetRow, type Store } from './store.ts';
 import { iconSrc, slug, svgSrc } from './uploads.ts';
@@ -18,15 +17,15 @@ import { iconSrc, slug, svgSrc } from './uploads.ts';
  * apart (src/glassRebuild.ts); picking an icon replaces it.
  */
 
-/** One MingCute icon's path in a style, falling back to whichever it has. */
+/** One MingCute or custom icon's path in a style, falling back to whichever it has. */
 function pathOf(key: string, style: IconStyle): string {
-  const m = MINGCUTE[key.replace(MINGCUTE_PREFIX, '')];
+  const m = glyphOf(key);
   return m ? ((style === 'fill' ? m.fill : m.line) ?? m.line ?? m.fill ?? '') : '';
 }
 
 /** `mc:shopping_cart_1` -> "Shopping cart 1". */
 const nameOf = (key: string) => {
-  const s = key.replace(MINGCUTE_PREFIX, '').replace(/[_-]+/g, ' ');
+  const s = key.replace(/^(mc|custom):/, '').replace(/[_-]+/g, ' ');
   return s.charAt(0).toUpperCase() + s.slice(1);
 };
 

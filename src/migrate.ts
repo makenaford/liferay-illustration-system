@@ -47,10 +47,19 @@ function absorbChartLabels(kids: Element[], gap: number): Element[] {
 }
 
 /**
- * Surfaces renamed: `mockup`, the Mockup template's first glass, is now
- * `glassOver` — Glass over dark or light, for the page's theme.
+ * Surfaces renamed. The glass was condensed to three: basic (was glass1, and
+ * glass2, the old default card), elevated (was glass3) and highlighted —
+ * which took in the glass-over surfaces made for the Mockup template.
  */
-const RENAMED_SURFACES: Record<string, string> = { mockup: 'glassOver' };
+const RENAMED_SURFACES: Record<string, string> = {
+  glass1: 'basic',
+  glass2: 'basic',
+  glass3: 'elevated',
+  glassOver: 'highlighted',
+  glassOverDark: 'highlighted',
+  glassOverLight: 'highlighted',
+  mockup: 'highlighted',
+};
 
 function migrateElement(el: Element): Element {
   const s = (el as { surface?: string }).surface;

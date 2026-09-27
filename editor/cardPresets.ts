@@ -29,7 +29,7 @@ function card(width: number, gap: number, children: Element[]): Element {
     y: 0,
     width,
     height: 0,
-    surface: 'glass2',
+    surface: 'basic',
     radius: 8,
     layout: column(gap),
     children,

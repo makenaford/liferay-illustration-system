@@ -32,7 +32,7 @@
       "y": 24,
       "width": 464,
       "height": 318,
-      "surface": "glass2"
+      "surface": "basic"
     }
   ],
   "elements": [
@@ -144,7 +144,7 @@
         "padding": 12,
         "align": "start"
       },
-      "surface": "glass2"
+      "surface": "basic"
     },
     {
       "type": "subCard",
@@ -253,7 +253,7 @@
         "padding": 12,
         "align": "start"
       },
-      "surface": "glass2"
+      "surface": "basic"
     },
     {
       "type": "subCard",
@@ -363,7 +363,7 @@
         "padding": 12,
         "align": "start"
       },
-      "surface": "glass2"
+      "surface": "basic"
     },
     {
       "type": "subCard",
@@ -518,7 +518,7 @@
         "padding": 12,
         "align": "start"
       },
-      "surface": "glass2"
+      "surface": "basic"
     },
     {
       "type": "subCard",
@@ -603,7 +603,7 @@
         "padding": 12,
         "align": "start"
       },
-      "surface": "glass2"
+      "surface": "basic"
     },
     {
       "type": "subCard",
@@ -678,7 +678,7 @@
         "padding": 12,
         "align": "start"
       },
-      "surface": "glass2"
+      "surface": "basic"
     },
     {
       "type": "subCard",
@@ -797,7 +797,7 @@
         "padding": 12,
         "align": "start"
       },
-      "surface": "glass2"
+      "surface": "basic"
     },
     {
       "type": "subCard",

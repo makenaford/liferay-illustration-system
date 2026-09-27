@@ -101,6 +101,12 @@ export function backdropPane(
   ctx: Ctx,
   clipShape: VNode,
   blur: number,
+  /**
+   * How much the blurred copy covers. Below 1 the pane is see-through: what
+   * is beneath shows sharp, with the blur laid over it at this opacity —
+   * glass you can faintly see through, rather than frosted over.
+   */
+  opacity = 1,
 ): VNode | null {
   if (!ctx.backdropId || blur <= 0) return null;
 
@@ -127,10 +133,14 @@ export function backdropPane(
   );
 
   return h('g', { 'clip-path': `url(#${clipId})`, 'data-el': 'backdrop-pane' }, [
+    // Sharp beneath, when the blur is see-through — it covers the opaque
+    // shadow-casting copy of the card, which would otherwise show instead.
+    opacity < 1 ? h('use', { href: `#${ctx.backdropId}`, 'xlink:href': `#${ctx.backdropId}` }) : null,
     h('use', {
       href: `#${ctx.backdropId}`,
       'xlink:href': `#${ctx.backdropId}`,
       filter: `url(#${blurId})`,
+      opacity: opacity < 1 ? opacity : undefined,
     }),
   ]);
 }

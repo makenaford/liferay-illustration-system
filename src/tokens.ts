@@ -238,18 +238,20 @@ export interface SurfaceSpec {
   litEdge?: { color: string; opacity: number };
   /** Backdrop blur in CSS px. 0 or omitted means the surface is not glass. */
   blur?: number;
+  /**
+   * How much of the blur covers what is beneath, 0–1. Omitted, it is frosted
+   * right over; below 1, the glass is see-through, what is beneath showing
+   * sharp under the blur. See `backdropPane`.
+   */
+  blurOpacity?: number;
   /** Recessed surfaces darken instead of lifting; skips the frosted pane. */
   recessed?: boolean;
 }
 
 export type SurfaceName =
-  | 'glass1'
-  | 'glass2'
-  | 'glass3'
+  | 'basic'
+  | 'elevated'
   | 'highlighted'
-  | 'glassOver'
-  | 'glassOverDark'
-  | 'glassOverLight'
   | 'gradient'
   | 'solid'
   | 'outline'
@@ -538,21 +540,19 @@ const radius = { panel: 8, card: 8, pill: 999 };
 const GLASS_BLUR = 20;
 
 /**
- * GLASS OVER — glass over a screenshot, the Mockup template's panels, from
- * the Marketing UI Assets "Highlighted Card" (Figma 665:13269): the fill is
- * its `radial-gradient(123.41% 118.53% at 13.89% 3.94%, rgba(11, 95, 255,
- * 0.05) 0%, rgba(11, 95, 255, 0.2) 100%)`, over a white 80% hairline, a blue
- * glow and a 45% lit edge.
+ * HIGHLIGHTED — the one card that matters more, and glass over a
+ * screenshot: the Mockup template's panels. The Marketing UI Assets
+ * "Highlighted Card" (Figma 665:13269): its fill `radial-gradient(123.41%
+ * 118.53% at 13.89% 3.94%, rgba(11, 95, 255, 0.05) 0%, rgba(11, 95, 255,
+ * 0.2) 100%)`, a white 80% hairline, a blue glow and a 45% lit edge.
  *
- * The blur is light on purpose: the screenshot beneath stays faintly
- * readable through the glass. Heavier, it averages out to a flat tint and the
- * panel reads as opaque.
- *
- * `glassOver` picks the one for the page's theme: over dark on a dark page,
- * over light on a light one. The two are the same recipe for now.
+ * The glass is see-through: what is beneath shows sharp, a light blur laid
+ * over it at HIGHLIGHTED_BLUR_OPACITY — faintly visible, softened, as glass.
+ * Frosted right over, it read as an opaque tint.
  */
-const GLASS_OVER_BLUR = 12;
-const glassOverSpec = (): SurfaceSpec => ({
+const HIGHLIGHTED_BLUR = 8;
+const HIGHLIGHTED_BLUR_OPACITY = 0.8;
+const highlightedSpec = (): SurfaceSpec => ({
   fill: {
     angle: 0,
     radial: { cx: 0.1389, cy: 0.0394, rx: 1.2341, ry: 1.1853 },
@@ -561,9 +561,10 @@ const glassOverSpec = (): SurfaceSpec => ({
   line: { angle: 180, stops: [{ color: '#FFFFFF', opacity: 0.8 }, { color: '#FFFFFF', opacity: 0.8 }] },
   shadow: [{ dy: 0, blur: 10, color: '#0B5FFF', opacity: 0.9 }],
   litEdge: { color: '#FFFFFF', opacity: 0.45 },
-  blur: GLASS_OVER_BLUR,
+  blur: HIGHLIGHTED_BLUR,
+  blurOpacity: HIGHLIGHTED_BLUR_OPACITY,
 });
-const GLASS_OVER = { dark: glassOverSpec(), light: glassOverSpec() };
+const HIGHLIGHTED = { dark: highlightedSpec(), light: highlightedSpec() };
 /** `Glass Step 02` — the same in both themes. */
 const STEP_02 = { color: '#8C96A9', opacity: 0.03 };
 
@@ -592,27 +593,15 @@ export const dark: Tokens = {
    * edit to undo, not an archaeology problem.
    */
   surfaces: {
-    /** Nested tiles inside a card. No shadow: it is not floating, it is inset. */
-    glass1: {
+    /** Basic: the everyday card — and a tile nested inside one. No shadow. Was glass1 (and glass2). */
+    basic: {
       // DS: 0.03 / 0.02, line 0.1 / 0.07
       fill: { angle: 60, stops: [{ color: '#FFFFFF', opacity: 0.055 }, { color: STEP_02.color, opacity: 0.03 }] },
       line: { angle: 225, stops: [{ color: '#FFFFFF', opacity: 0.14 }, { color: '#FFFFFF', opacity: 0.09 }] },
       blur: GLASS_BLUR,
     },
-    /** The default card — the design system's shipped glass, exactly. */
-    glass2: {
-      // DS: 0.055 / STEP_02.opacity, line 0.16 / 0.12
-      fill: { angle: 60, stops: [{ color: '#FFFFFF', opacity: 0.1 }, { color: STEP_02.color, opacity: 0.045 }] },
-      line: { angle: 225, stops: [{ color: '#FFFFFF', opacity: 0.22 }, { color: '#FFFFFF', opacity: 0.15 }] },
-      shadow: [
-        { dy: 8, blur: 20, color: '#000000', opacity: 0.28 },
-        { dy: 1, blur: 3, color: '#000000', opacity: 0.22 },
-      ],
-      litEdge: { color: '#FFFFFF', opacity: 0.1 },
-      blur: GLASS_BLUR,
-    },
-    /** Floating over the composition — an overlay, a callout, a menu. */
-    glass3: {
+    /** Elevated: floating over the composition — an overlay, a callout, a menu. Was glass3. */
+    elevated: {
       // DS: 0.09 / 0.04, line 0.26 / 0.16
       fill: { angle: 60, stops: [{ color: '#FFFFFF', opacity: 0.16 }, { color: STEP_02.color, opacity: 0.06 }] },
       line: { angle: 225, stops: [{ color: '#FFFFFF', opacity: 0.34 }, { color: '#FFFFFF', opacity: 0.2 }] },
@@ -623,28 +612,8 @@ export const dark: Tokens = {
       litEdge: { color: '#FFFFFF', opacity: 0.18 },
       blur: GLASS_BLUR,
     },
-    /**
-     * The one card that matters more. Same glass, lit BLUE rather than
-     * brighter — a blue cast shadow instead of a black one, and a blue lit
-     * edge. Raising it by colour rather than by contrast keeps it the same
-     * material as its neighbours while still pulling the eye.
-     */
-    /** Glass over a screenshot, lit for a dark page — see GLASS_OVER. */
-    glassOverDark: GLASS_OVER.dark,
-    /** Glass over a screenshot, lit for a light page — see GLASS_OVER. */
-    glassOverLight: GLASS_OVER.light,
-    /** The Mockup template's panels: Glass over dark on a dark page. */
-    glassOver: GLASS_OVER.dark,
-    highlighted: {
-      fill: { angle: 60, stops: [{ color: '#70A2FF', opacity: 0.1 }, { color: STEP_02.color, opacity: 0.03 }] },
-      line: { angle: 225, stops: [{ color: '#70A2FF', opacity: 0.5 }, { color: '#70A2FF', opacity: 0.2 }] },
-      shadow: [
-        { dy: 10, blur: 28, color: '#0B5FFF', opacity: 0.45 },
-        { dy: 2, blur: 6, color: '#0B5FFF', opacity: 0.28 },
-      ],
-      litEdge: { color: '#70A2FF', opacity: 0.22 },
-      blur: GLASS_BLUR,
-    },
+    /** Highlighted: the one card that matters more, and glass over a screenshot — see HIGHLIGHTED. */
+    highlighted: HIGHLIGHTED.dark,
     /**
      * `Blue Gradient` — sampled from the Figma style, not invented.
      *
@@ -854,8 +823,8 @@ export const light: Tokens = {
    * edit to undo, not an archaeology problem.
    */
   surfaces: {
-    /** Nested tiles inside a card. No shadow: it is not floating, it is inset. */
-    glass1: {
+    /** Basic: the everyday card — and a tile nested inside one. No shadow. Was glass1 (and glass2). */
+    basic: {
       /*
        * Light glass is a FROSTED WHITE CARD, not a tinted pane.
        *
@@ -869,19 +838,8 @@ export const light: Tokens = {
       line: { angle: 225, stops: [{ color: '#0B5FFF', opacity: 0.14 }, { color: '#0B5FFF', opacity: 0.1 }] },
       blur: GLASS_BLUR,
     },
-    /** The default card — the design system's shipped glass, exactly. */
-    glass2: {
-      /** The reference card's own values: white 80% into `#BFD5FF` 21%. */
-      fill: { angle: 60, stops: [{ color: '#FFFFFF', opacity: 0.8 }, { color: '#BFD5FF', opacity: 0.21 }] },
-      line: { angle: 225, stops: [{ color: '#0B5FFF', opacity: 0.2 }, { color: '#0B5FFF', opacity: 0.14 }] },
-      shadow: [
-        { dy: 8, blur: 20, color: INK, opacity: 0.08 },
-        { dy: 1, blur: 3, color: INK, opacity: 0.06 },
-      ],
-      blur: GLASS_BLUR,
-    },
-    /** Floating over the composition — an overlay, a callout, a menu. */
-    glass3: {
+    /** Elevated: floating over the composition — an overlay, a callout, a menu. Was glass3. */
+    elevated: {
       fill: { angle: 60, stops: [{ color: '#FFFFFF', opacity: 0.92 }, { color: '#BFD5FF', opacity: 0.28 }] },
       line: { angle: 225, stops: [{ color: '#0B5FFF', opacity: 0.28 }, { color: '#0B5FFF', opacity: 0.18 }] },
       shadow: [
@@ -890,36 +848,8 @@ export const light: Tokens = {
       ],
       blur: GLASS_BLUR,
     },
-    /**
-     * The one card that matters more. Same glass, lit BLUE rather than
-     * brighter — a blue cast shadow instead of a black one, and a blue lit
-     * edge. Raising it by colour rather than by contrast keeps it the same
-     * material as its neighbours while still pulling the eye.
-     */
-    /** Glass over a screenshot, lit for a dark page — see GLASS_OVER. */
-    glassOverDark: GLASS_OVER.dark,
-    /** Glass over a screenshot, lit for a light page — see GLASS_OVER. */
-    glassOverLight: GLASS_OVER.light,
-    /** The Mockup template's panels: Glass over light on a light page. */
-    glassOver: GLASS_OVER.light,
-    highlighted: {
-      /*
-       * Light mode's `highlighted` has to work harder than dark's.
-       *
-       * In dark, a blue cast shadow reads instantly against near-black. On a
-       * near-white stage the same shadow is barely a tint, so the emphasis has
-       * to come from the fill and the edge instead — this is the one card in
-       * an illustration that is saying "look here", and at 22% fill with a 55%
-       * edge it was not saying it loudly enough to survive being seen small.
-       */
-      fill: { angle: 60, stops: [{ color: '#ADC9FF', opacity: 0.42 }, { color: '#6FA0FF', opacity: 0.12 }] },
-      line: { angle: 225, stops: [{ color: '#0B5FFF', opacity: 0.95 }, { color: '#0B5FFF', opacity: 0.5 }] },
-      shadow: [
-        { dy: 10, blur: 30, color: '#0B5FFF', opacity: 0.42 },
-        { dy: 2, blur: 6, color: '#0B5FFF', opacity: 0.24 },
-      ],
-      blur: GLASS_BLUR,
-    },
+    /** Highlighted: the one card that matters more, and glass over a screenshot — see HIGHLIGHTED. */
+    highlighted: HIGHLIGHTED.light,
     /**
      * The same `Blue Gradient`, on the light canvas.
      *

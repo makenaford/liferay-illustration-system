@@ -22,13 +22,9 @@ const PAD = 28;
 const rows = Math.ceil(NAMES.length / COLS);
 
 const DESCRIPTION: Record<SurfaceName, string> = {
-  glass1: 'nested tile, no shadow',
-  glass2: 'the default card',
-  glass3: 'floating overlay',
-  highlighted: 'blue cast shadow',
-  glassOver: 'glass over a screenshot, for the theme',
-  glassOverDark: 'glass over a screenshot, dark page',
-  glassOverLight: 'glass over a screenshot, light page',
+  basic: 'the everyday card, no shadow',
+  elevated: 'floating overlay',
+  highlighted: 'the one that matters; glass over a screenshot',
   gradient: 'Figma Blue Gradient',
   solid: 'opaque action',
   outline: 'structure, no weight',

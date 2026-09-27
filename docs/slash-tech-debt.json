@@ -28,14 +28,14 @@
       "y": 86,
       "width": 218,
       "height": 232,
-      "surface": "glass2"
+      "surface": "basic"
     },
     {
       "x": 288,
       "y": 86,
       "width": 218,
       "height": 230,
-      "surface": "glass2"
+      "surface": "basic"
     }
   ],
   "elements": [

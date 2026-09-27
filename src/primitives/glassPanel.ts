@@ -8,7 +8,7 @@ export interface GlassPanelProps {
   width: number;
   height: number;
   radius?: number;
-  /** Retained for the document schema; both values now mean `glass2`. */
+  /** Retained for the document schema; neither changes the surface. */
   sheen?: 'radial' | 'linear';
   /** Which surface to draw. Defaults to the standard card. */
   surface?: SurfaceName;
@@ -30,7 +30,7 @@ export function GlassPanel(ctx: Ctx, props: GlassPanelProps): VNode {
     height: props.height,
     radius: props.radius ?? ctx.tokens.radius.panel,
     backdrop: props.backdrop,
-    surface: props.surface ?? (props.elevation === 'nested' ? 'glass1' : 'glass2'),
+    surface: props.surface ?? 'basic',
     children: props.children,
   });
 }

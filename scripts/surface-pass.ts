@@ -7,10 +7,10 @@
  * The set is an elevation ladder, so the assignment is structural rather than
  * per-card taste:
  *
- *   hero panel                    -> glass2   the default card
- *   tile sitting on a panel       -> glass1   inset, not floating
- *   card nested inside a card     -> glass1   same reason, one level down
- *   card overlapping its siblings -> glass3   it is floating over them
+ *   hero panel                    -> basic    the everyday card
+ *   tile sitting on a panel       -> basic    inset, not floating
+ *   card nested inside a card     -> basic    same reason, one level down
+ *   card overlapping its siblings -> elevated it is floating over them
  *   stroke-only card              -> outline  structure without weight
  *   recessed well                 -> sunken
  *
@@ -50,9 +50,9 @@ for (const file of readdirSync(DOCS).filter((f) => f.endsWith('.json'))) {
   // Panels are the hero surface.
   for (const p of doc.panels ?? []) {
     if (!p.surface) {
-      p.surface = 'glass2';
-      bump('glass2');
-      lines.push(`    panel ${p.width}x${p.height} → glass2`);
+      p.surface = 'basic';
+      bump('basic');
+      lines.push(`    panel ${p.width}x${p.height} → basic`);
     }
   }
 
@@ -83,9 +83,9 @@ for (const file of readdirSync(DOCS).filter((f) => f.endsWith('.json'))) {
             siblingBoxes.slice(0, i).some((b) => b && overlap(box, b) > 0.25)
           ) {
             // Drawn after something it covers: it is floating over the scene.
-            pick = 'glass3';
+            pick = 'elevated';
           } else {
-            pick = 'glass1';
+            pick = 'basic';
           }
 
           e.surface = pick;

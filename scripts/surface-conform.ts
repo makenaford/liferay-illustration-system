@@ -21,7 +21,7 @@ import { join } from 'node:path';
 import type { Doc, Element } from '../src/document.ts';
 
 const DOCS = join(import.meta.dirname, '..', 'docs');
-const ELEVATION = new Set(['glass1', 'glass2', 'glass3']);
+const ELEVATION = new Set(['basic', 'elevated']);
 const APPLY = !process.argv.includes('--dry');
 
 type Box = { x: number; y: number; width: number; height: number };
@@ -48,7 +48,7 @@ for (const file of readdirSync(DOCS).filter((f) => f.endsWith('.json')).sort()) 
       const index = panels.indexOf(any);
       const floating =
         depth === 0 && index > 0 && panels.slice(0, index).some((p) => overlaps(p, any));
-      const want = depth > 0 ? 'glass1' : floating ? 'glass3' : 'glass2';
+      const want = depth > 0 ? 'basic' : floating ? 'elevated' : 'basic';
       if (any.surface !== want) {
         notes.push(`${trail} ${el.type} ${any.surface} -> ${want}`);
         any.surface = want;

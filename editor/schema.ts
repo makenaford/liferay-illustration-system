@@ -461,7 +461,7 @@ export const DEFAULTS: Record<Element['type'], () => Element> = {
   // Cards arrive as columns: whatever is added stacks at the card padding the
   // audit requires, instead of every addition landing on the same spot.
   card: () => ({
-    type: 'card', x: 40, y: 40, width: 180, height: 100, surface: 'glass2',
+    type: 'card', x: 40, y: 40, width: 180, height: 100, surface: 'basic',
     layout: { direction: 'vertical', gap: 8, padding: LAYOUT.cardPadding, align: 'start' },
     children: [],
   }),
@@ -471,7 +471,7 @@ export const DEFAULTS: Record<Element['type'], () => Element> = {
     children: [],
   }),
   subCard: () => ({
-    type: 'subCard', x: 40, y: 40, width: 160, height: 80, surface: 'glass2', radius: 8,
+    type: 'subCard', x: 40, y: 40, width: 160, height: 80, surface: 'basic', radius: 8,
     layout: { direction: 'vertical', gap: 8, padding: LAYOUT.cardPadding, align: 'start' },
     children: [],
   }),

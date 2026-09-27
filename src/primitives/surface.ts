@@ -138,7 +138,7 @@ export function Surface(ctx: Ctx, props: SurfaceProps): VNode {
   const spec: SurfaceSpec =
     typeof props.surface === 'string' || props.surface === undefined
       ? // A name this build doesn't know — renamed since, say — draws as the standard card.
-        (tk.surfaces[(props.surface as SurfaceName) ?? 'glass2'] ?? tk.surfaces.glass2)
+        (tk.surfaces[(props.surface as SurfaceName) ?? 'basic'] ?? tk.surfaces.basic)
       : props.surface;
 
   const box = { x, y, width, height };
@@ -156,7 +156,7 @@ export function Surface(ctx: Ctx, props: SurfaceProps): VNode {
   }
 
   if (backdrop && spec.blur && !spec.recessed) {
-    layers.push(backdropPane(ctx, shape(), spec.blur));
+    layers.push(backdropPane(ctx, shape(), spec.blur, spec.blurOpacity));
   }
 
   if (spec.fill) {

@@ -20,7 +20,7 @@
       "y": 46,
       "width": 430,
       "height": 280,
-      "surface": "glass2"
+      "surface": "basic"
     }
   ],
   "elements": [
@@ -175,7 +175,7 @@
         ],
         "align": "start"
       },
-      "surface": "glass2"
+      "surface": "basic"
     },
     {
       "type": "card",
@@ -267,7 +267,7 @@
         "padding": 12,
         "align": "start"
       },
-      "surface": "glass2"
+      "surface": "basic"
     }
   ]
 }

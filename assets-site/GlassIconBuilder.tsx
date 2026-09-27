@@ -5,7 +5,7 @@ import { normaliseFigmaSvg } from '../src/figmaGlass.ts';
 import { MINGCUTE_PREFIX, type IconStyle } from '../src/icons.ts';
 import { IconPicker } from '../editor/IconPicker.tsx';
 import { iconParts, viewerId, type IconSetRow, type Store } from './store.ts';
-import { slug, svgSrc } from './uploads.ts';
+import { iconSrc, slug, svgSrc } from './uploads.ts';
 
 /**
  * GLASS ICON BUILDER — a MingCute icon, made into a glass icon in the set's
@@ -205,7 +205,7 @@ export function GlassIconBuilder({
               {neighbours.length > 0 && (
                 <div className="am-gib-row" aria-label="Beside icons already in the set">
                   {neighbours.map((n) => (
-                    <img key={n.id} src={svgSrc(t === 'dark' ? n.svg : n.svgLight!)} width={64} height={64} alt="" title={n.name} />
+                    <img key={n.id} src={iconSrc(t === 'dark' ? n.svg : n.svgLight!)} width={64} height={64} alt="" title={n.name} />
                   ))}
                   <img src={t === 'dark' ? darkImg : lightImg} width={64} height={64} alt="" className="am-gib-new" />
                 </div>

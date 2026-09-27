@@ -24,7 +24,7 @@ import {
   type Library,
   type Store,
 } from './store.ts';
-import { parseFiles, slug, svgSrc, type ParsedIcon } from './uploads.ts';
+import { iconSrc, parseFiles, slug, svgSrc, type ParsedIcon } from './uploads.ts';
 import { GlassIconBuilder } from './GlassIconBuilder.tsx';
 
 type Theme = 'dark' | 'light';
@@ -1003,7 +1003,7 @@ function IconSet({
                       title={`${category} · ${iconParts(icon).name}`}
                     >
                       {selecting && <span className="am-check" aria-hidden />}
-                      <img src={svgSrc(variant(icon))} alt="" loading="lazy" />
+                      <img src={iconSrc(variant(icon))} alt="" loading="lazy" />
                       <span>{iconParts(icon).name}</span>
                     </button>
                   </li>
@@ -1141,7 +1141,7 @@ function AddIcons({
           {icons.slice(0, 24).map((i) => (
             <li key={i.name}>
               <span className="am-tile">
-                <img src={svgSrc(i.svg)} alt="" />
+                <img src={iconSrc(i.svg)} alt="" />
                 <span>{i.name}</span>
               </span>
             </li>

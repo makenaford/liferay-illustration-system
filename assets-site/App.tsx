@@ -3,7 +3,8 @@ import { renderDocument } from '../src/render.ts';
 import { copyText, saveFile } from '../editor/save.ts';
 import { svgToPng } from '../editor/png.ts';
 import { App as BuilderApp } from '../editor/App.tsx';
-import { blankDoc } from '../editor/docs.ts';
+import { TEMPLATES, type TemplateName } from '../editor/docs.ts';
+import { NewMenu } from '../editor/NewMenu.tsx';
 import { initStore, setUI, useEditor } from '../editor/state.ts';
 import { addFolder, fileIn, freshId, removeFolder, renameFolder } from '../editor/library.ts';
 import type { Doc, GraphicArt } from '../src/document.ts';
@@ -212,9 +213,9 @@ export function App() {
     setOpen(null);
     setBuilding(true);
   };
-  const create = async () => {
-    const doc = blankDoc();
-    doc.id = freshId('untitled', lib.illustrations.map((i) => i.id));
+  const create = async (template: TemplateName = 'blank') => {
+    const doc = TEMPLATES[template].make();
+    doc.id = freshId(doc.id, lib.illustrations.map((i) => i.id));
     // Made inside a folder, it belongs to that folder once it is saved.
     if (here) await file(doc.id, here);
     edit({ doc, updatedAt: 0 });
@@ -489,9 +490,15 @@ export function App() {
                 {selecting ? 'Done' : 'Select'}
               </button>
             )}
-            <button type="button" className="am-primary" disabled={busy} onClick={() => pick({ to: tab })}>
+            <button
+              type="button"
+              className={tab === 'illustrations' ? '' : 'am-primary'}
+              disabled={busy}
+              onClick={() => pick({ to: tab })}
+            >
               {busy ? 'Adding…' : UPLOAD_LABEL[tab]}
             </button>
+            {tab === 'illustrations' && <NewMenu className="am-primary" onPick={(t) => void create(t)} />}
           </div>
         )}
       </div>
@@ -555,7 +562,7 @@ export function App() {
             />
           )
         ) : tab === 'tools' ? (
-          <Tools writable={writable} onNew={() => void create()} onGlass={() => setGlassing({})} />
+          <Tools writable={writable} onNew={(t) => void create(t)} onGlass={() => setGlassing({})} />
         ) : tab === 'graphics' ? (
           graphics.length ? (
             <GraphicsGrid
@@ -1554,7 +1561,15 @@ function FolderBar({
 }
 
 /** TOOLS — what the team makes assets with. */
-function Tools({ writable, onNew, onGlass }: { writable: boolean; onNew: () => void; onGlass: () => void }) {
+function Tools({
+  writable,
+  onNew,
+  onGlass,
+}: {
+  writable: boolean;
+  onNew: (template: TemplateName) => void;
+  onGlass: () => void;
+}) {
   return (
     <div className="am-tools-grid">
       <article className="am-tool">
@@ -1563,9 +1578,9 @@ function Tools({ writable, onNew, onGlass }: { writable: boolean; onNew: () => v
           <h2>Glass Icon Builder</h2>
           <p>
             Make a glass icon in the set’s own style from two of MingCute’s 1,600 icons — one as frosted glass in
-            front, one as a gradient behind it — in dark and light, always in the same proportions (68px and 48px in
-            an 80px frame), so every icon comes out evenly sized. Add it to the library by category, and the builder
-            offers it as a Glass icon.
+            front, one as a gradient behind it — in dark and light, in one of the set’s layouts: glass, equal or
+            gradient leading, or centered. Add it to the library by category, and the builder offers it as a Glass
+            icon; <b>Edit in builder</b> on the icon opens it again.
           </p>
           <div className="am-tool-actions">
             <button type="button" className="am-primary" onClick={onGlass}>
@@ -1580,15 +1595,13 @@ function Tools({ writable, onNew, onGlass }: { writable: boolean; onNew: () => v
           <h2>Illustration Builder</h2>
           <p>
             Compose marketing illustrations from the Liferay component library — glass panels, charts, badges,
-            chat bubbles, glass icons — in dark and light from one document. It opens right here: saving an
-            illustration puts it in this library for everyone, and <b>Edit in builder</b> on any illustration
-            opens it again.
+            chat bubbles, glass icons — in dark and light from one document. Start blank, or from <b>Mockup</b>: a
+            3:2 product screenshot with glass panels meeting its edges. It opens right here: saving an illustration
+            puts it in this library for everyone, and <b>Edit in builder</b> on any illustration opens it again.
           </p>
           <div className="am-tool-actions">
             {writable ? (
-              <button type="button" className="am-primary" onClick={onNew}>
-                New illustration
-              </button>
+              <NewMenu className="am-primary" onPick={onNew} />
             ) : (
               <span className="am-meta">Making illustrations needs Contributor access to this page.</span>
             )}

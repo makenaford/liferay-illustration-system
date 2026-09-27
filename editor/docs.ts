@@ -88,6 +88,8 @@ function panel(x: number, y: number, width: number, height: number, label: strin
     surface: 'glass2',
     sheen: 'radial',
     radius: 8,
+    // Frosts the mockup beneath it, not just the stage.
+    frost: 'content',
     children: [
       {
         type: 'image',

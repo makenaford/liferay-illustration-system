@@ -116,6 +116,13 @@ export interface CardEl extends LayoutChild {
   layout?: LayoutSpec;
   /** Clip content: children are cut to this container's shape. */
   clip?: boolean;
+  /**
+   * What the card's glass frosts. By default the stage and the hero panels;
+   * `content` also takes in every element drawn before it, as real glass over
+   * a screenshot would — the Mockup template's panels over its mockup image.
+   * Only a top-level card can; it costs a copy of what is beneath it.
+   */
+  frost?: 'content';
   children?: Element[];
 }
 

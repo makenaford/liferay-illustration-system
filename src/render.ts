@@ -597,8 +597,11 @@ export function buildDocument(
     'g',
     { 'data-el': 'content' },
     doc.elements.map((el, i) => {
-      // Cursors and graphics are glass over the content: they blur it.
-      if (el.type === 'cursor' || el.type === 'graphic') ctx.backdropId = beneath(i);
+      // Cursors and graphics are glass over the content: they blur it. So
+      // does a card that asks to (`frost: 'content'`).
+      if (el.type === 'cursor' || el.type === 'graphic' || (el.type === 'card' && el.frost === 'content')) {
+        ctx.backdropId = beneath(i);
+      }
       const node = draw(el, options.annotate ? String(i) : undefined);
       ctx.backdropId = baseId;
       return node;

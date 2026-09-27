@@ -46,7 +46,15 @@ function absorbChartLabels(kids: Element[], gap: number): Element[] {
   return out;
 }
 
+/**
+ * Surfaces renamed: `mockup`, the Mockup template's first glass, is now
+ * `glassOver` — Glass over dark or light, for the page's theme.
+ */
+const RENAMED_SURFACES: Record<string, string> = { mockup: 'glassOver' };
+
 function migrateElement(el: Element): Element {
+  const s = (el as { surface?: string }).surface;
+  if (s && RENAMED_SURFACES[s]) el = { ...el, surface: RENAMED_SURFACES[s] } as Element;
   const c = el as WithKids;
   if (!c.children) return el;
   const gap = c.layout ? (c.layout.gap ?? LAYOUT.gap) : 4;

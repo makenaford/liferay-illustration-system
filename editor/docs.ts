@@ -85,7 +85,7 @@ function panel(x: number, y: number, width: number, height: number, label: strin
     y,
     width,
     height,
-    surface: 'mockup',
+    surface: 'glassOver',
     sheen: 'radial',
     radius: 8,
     // Frosts the mockup beneath it, not just the stage.

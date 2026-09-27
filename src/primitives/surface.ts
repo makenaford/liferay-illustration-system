@@ -45,14 +45,25 @@ function gradient(
   g: Grad,
   box: { x: number; y: number; width: number; height: number },
 ) {
+  const r = g.radial;
   ctx.defs.push(
     h(
-      'linearGradient',
-      {
-        id,
-        ...cssAngleLine(g.angle, box.x, box.y, box.width, box.height),
-        gradientUnits: 'userSpaceOnUse',
-      },
+      r ? 'radialGradient' : 'linearGradient',
+      r
+        ? {
+            // A unit circle, stretched to the ellipse and set at its centre.
+            id,
+            cx: 0,
+            cy: 0,
+            r: 1,
+            gradientUnits: 'userSpaceOnUse',
+            gradientTransform: `translate(${box.x + r.cx * box.width} ${box.y + r.cy * box.height}) scale(${r.rx * box.width} ${r.ry * box.height})`,
+          }
+        : {
+            id,
+            ...cssAngleLine(g.angle, box.x, box.y, box.width, box.height),
+            gradientUnits: 'userSpaceOnUse',
+          },
       g.stops.map((s, i) =>
         h('stop', {
           offset: s.offset ?? (g.stops.length > 1 ? i / (g.stops.length - 1) : 0),
@@ -126,7 +137,8 @@ export function Surface(ctx: Ctx, props: SurfaceProps): VNode {
   const radius = props.radius ?? tk.radius.card;
   const spec: SurfaceSpec =
     typeof props.surface === 'string' || props.surface === undefined
-      ? tk.surfaces[(props.surface as SurfaceName) ?? 'glass2']
+      ? // A name this build doesn't know — renamed since, say — draws as the standard card.
+        (tk.surfaces[(props.surface as SurfaceName) ?? 'glass2'] ?? tk.surfaces.glass2)
       : props.surface;
 
   const box = { x, y, width, height };

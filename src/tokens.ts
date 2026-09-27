@@ -208,9 +208,15 @@ export interface Stop {
 
 /** A gradient expressed the way CSS states it: an angle and its stops. */
 export interface Grad {
-  /** CSS angle in degrees — 0 points up, increasing clockwise. */
+  /** CSS angle in degrees — 0 points up, increasing clockwise. Unused by a radial gradient. */
   angle: number;
   stops: Stop[];
+  /**
+   * Makes it a CSS `radial-gradient(<rx> <ry> at <cx> <cy>, …)`, every value a
+   * fraction of the box: an ellipse `rx` of its width by `ry` of its height,
+   * centred at (`cx`, `cy`).
+   */
+  radial?: { cx: number; cy: number; rx: number; ry: number };
 }
 
 /**
@@ -241,7 +247,9 @@ export type SurfaceName =
   | 'glass2'
   | 'glass3'
   | 'highlighted'
-  | 'mockup'
+  | 'glassOver'
+  | 'glassOverDark'
+  | 'glassOverLight'
   | 'gradient'
   | 'solid'
   | 'outline'
@@ -528,6 +536,34 @@ const radius = { panel: 8, card: 8, pill: 999 };
  * refraction and keeps some shape.
  */
 const GLASS_BLUR = 20;
+
+/**
+ * GLASS OVER — glass over a screenshot, the Mockup template's panels, from
+ * the Marketing UI Assets "Highlighted Card" (Figma 665:13269): the fill is
+ * its `radial-gradient(123.41% 118.53% at 13.89% 3.94%, rgba(11, 95, 255,
+ * 0.05) 0%, rgba(11, 95, 255, 0.2) 100%)`, over a white 80% hairline, a blue
+ * glow and a 45% lit edge.
+ *
+ * The blur is light on purpose: the screenshot beneath stays faintly
+ * readable through the glass. Heavier, it averages out to a flat tint and the
+ * panel reads as opaque.
+ *
+ * `glassOver` picks the one for the page's theme: over dark on a dark page,
+ * over light on a light one. The two are the same recipe for now.
+ */
+const GLASS_OVER_BLUR = 12;
+const glassOverSpec = (): SurfaceSpec => ({
+  fill: {
+    angle: 0,
+    radial: { cx: 0.1389, cy: 0.0394, rx: 1.2341, ry: 1.1853 },
+    stops: [{ color: '#0B5FFF', opacity: 0.05 }, { color: '#0B5FFF', opacity: 0.2 }],
+  },
+  line: { angle: 180, stops: [{ color: '#FFFFFF', opacity: 0.8 }, { color: '#FFFFFF', opacity: 0.8 }] },
+  shadow: [{ dy: 0, blur: 10, color: '#0B5FFF', opacity: 0.9 }],
+  litEdge: { color: '#FFFFFF', opacity: 0.45 },
+  blur: GLASS_OVER_BLUR,
+});
+const GLASS_OVER = { dark: glassOverSpec(), light: glassOverSpec() };
 /** `Glass Step 02` — the same in both themes. */
 const STEP_02 = { color: '#8C96A9', opacity: 0.03 };
 
@@ -593,21 +629,12 @@ export const dark: Tokens = {
      * edge. Raising it by colour rather than by contrast keeps it the same
      * material as its neighbours while still pulling the eye.
      */
-    /**
-     * Glass over a screenshot — the Mockup template's panels. Transcribed from
-     * the Marketing UI Assets "Highlighted Card" (Figma 665:13269): a blue tint
-     * rising from 5% to 20% across the card (a radial there), a white 80%
-     * hairline, a blue glow, and a 100 background blur — 50px here, heavy
-     * enough that the screenshot beneath shows only as a faint, blurred tone.
-     * The same in both themes: it sits on the screenshot, not the stage.
-     */
-    mockup: {
-      fill: { angle: 135, stops: [{ color: '#0B5FFF', opacity: 0.05 }, { color: '#0B5FFF', opacity: 0.2 }] },
-      line: { angle: 180, stops: [{ color: '#FFFFFF', opacity: 0.8 }, { color: '#FFFFFF', opacity: 0.6 }] },
-      shadow: [{ dy: 0, blur: 10, color: '#0B5FFF', opacity: 0.9 }],
-      litEdge: { color: '#FFFFFF', opacity: 0.45 },
-      blur: 50,
-    },
+    /** Glass over a screenshot, lit for a dark page — see GLASS_OVER. */
+    glassOverDark: GLASS_OVER.dark,
+    /** Glass over a screenshot, lit for a light page — see GLASS_OVER. */
+    glassOverLight: GLASS_OVER.light,
+    /** The Mockup template's panels: Glass over dark on a dark page. */
+    glassOver: GLASS_OVER.dark,
     highlighted: {
       fill: { angle: 60, stops: [{ color: '#70A2FF', opacity: 0.1 }, { color: STEP_02.color, opacity: 0.03 }] },
       line: { angle: 225, stops: [{ color: '#70A2FF', opacity: 0.5 }, { color: '#70A2FF', opacity: 0.2 }] },
@@ -869,21 +896,12 @@ export const light: Tokens = {
      * edge. Raising it by colour rather than by contrast keeps it the same
      * material as its neighbours while still pulling the eye.
      */
-    /**
-     * Glass over a screenshot — the Mockup template's panels. Transcribed from
-     * the Marketing UI Assets "Highlighted Card" (Figma 665:13269): a blue tint
-     * rising from 5% to 20% across the card (a radial there), a white 80%
-     * hairline, a blue glow, and a 100 background blur — 50px here, heavy
-     * enough that the screenshot beneath shows only as a faint, blurred tone.
-     * The same in both themes: it sits on the screenshot, not the stage.
-     */
-    mockup: {
-      fill: { angle: 135, stops: [{ color: '#0B5FFF', opacity: 0.05 }, { color: '#0B5FFF', opacity: 0.2 }] },
-      line: { angle: 180, stops: [{ color: '#FFFFFF', opacity: 0.8 }, { color: '#FFFFFF', opacity: 0.6 }] },
-      shadow: [{ dy: 0, blur: 10, color: '#0B5FFF', opacity: 0.9 }],
-      litEdge: { color: '#FFFFFF', opacity: 0.45 },
-      blur: 50,
-    },
+    /** Glass over a screenshot, lit for a dark page — see GLASS_OVER. */
+    glassOverDark: GLASS_OVER.dark,
+    /** Glass over a screenshot, lit for a light page — see GLASS_OVER. */
+    glassOverLight: GLASS_OVER.light,
+    /** The Mockup template's panels: Glass over light on a light page. */
+    glassOver: GLASS_OVER.light,
     highlighted: {
       /*
        * Light mode's `highlighted` has to work harder than dark's.

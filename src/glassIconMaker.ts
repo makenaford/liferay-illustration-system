@@ -12,7 +12,10 @@
  * Sizes and positions follow the Marketing Icons file (Figma, "Glass icon/",
  * node 394:3099): in a 64px frame, the glass icon's 68px grid sits at
  * (-7, 0) and the one behind it, 48px, at (19, -5) — both overflowing the
- * frame, as they do there.
+ * frame, as they do there. Nothing is clipped: the viewBox grows past the
+ * frame to take in whatever of the two icons and the glass's shadow
+ * overflows it (see `viewBoxOf`), as the set's own icons carry their bleed
+ * ("General - Mail" is `-2 -8 74 74`).
  *
  * The output is the same Figma-export shape the set ships as — a
  * `foreignObject` blur and a `_dii_` filter group — so it goes through the
@@ -28,7 +31,26 @@ export interface GlassIconSpec {
   front: string;
   /** The gradient icon behind it, on the same grid. */
   back: string;
+  /** Where each icon's ink actually lies on that grid; the whole grid when not measured. */
+  frontBounds?: GlyphBounds;
+  backBounds?: GlyphBounds;
 }
+
+/** A glyph's bounding box on the 24px grid. */
+export interface GlyphBounds {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+const WHOLE_GRID: GlyphBounds = { x: 0, y: 0, width: 24, height: 24 };
+
+/**
+ * How far the glass's drop shadow reaches past its shape: an offset of 4
+ * down, blurred by 2 (three deviations, 6, either way). Dark's shadow is the
+ * larger of the two themes', so both share one viewBox.
+ */
+const SHADOW = { left: 6, right: 6, top: 2, bottom: 10 };
 
 /** The frame, and each icon's box within it — MingCute's 24px grid scaled up. */
 export const FRAME = 64;
@@ -87,6 +109,26 @@ const THEME = {
   },
 } as const;
 
+/**
+ * The frame, grown to hold everything drawn: both icons' ink and the glass's
+ * shadow. Kept square, so a square tile shows it undistorted.
+ */
+export function viewBoxOf(spec: GlassIconSpec): [number, number, number, number] {
+  const ink = (box: typeof FRONT, b: GlyphBounds) => {
+    const k = box.size / 24;
+    return { x0: box.x + b.x * k, y0: box.y + b.y * k, x1: box.x + (b.x + b.width) * k, y1: box.y + (b.y + b.height) * k };
+  };
+  const f = ink(FRONT, spec.frontBounds ?? WHOLE_GRID);
+  const b = ink(BACK, spec.backBounds ?? WHOLE_GRID);
+  const x0 = Math.floor(Math.min(0, f.x0 - SHADOW.left, b.x0));
+  const y0 = Math.floor(Math.min(0, f.y0 - SHADOW.top, b.y0));
+  const x1 = Math.ceil(Math.max(FRAME, f.x1 + SHADOW.right, b.x1));
+  const y1 = Math.ceil(Math.max(FRAME, f.y1 + SHADOW.bottom, b.y1));
+  const size = Math.max(x1 - x0, y1 - y0);
+  // The short side grows evenly about its middle.
+  return [x0 - (size - (x1 - x0)) / 2, y0 - (size - (y1 - y0)) / 2, size, size];
+}
+
 const place = (box: { size: number; x: number; y: number }) =>
   `translate(${box.x} ${box.y}) scale(${box.size / 24})`;
 
@@ -106,7 +148,7 @@ export function makeGlassIcon(spec: GlassIconSpec, theme: GlassTheme): string {
     .map(([c, o]) => `<stop${o ? ` offset="${o}"` : ''} stop-color="${c}"/>`)
     .join('');
   return (
-    `<svg width="${FRAME}" height="${FRAME}" viewBox="0 0 ${FRAME} ${FRAME}" fill="none" xmlns="http://www.w3.org/2000/svg">` +
+    `<svg width="${FRAME}" height="${FRAME}" viewBox="${viewBoxOf(spec).join(' ')}" fill="none" xmlns="http://www.w3.org/2000/svg">` +
     back +
     `<foreignObject x="${fx}" y="${fy}" width="${fw}" height="${fh}"><div xmlns="http://www.w3.org/1999/xhtml" ` +
     `style="backdrop-filter:blur(${t.bgBlur / 2}px);clip-path:url(#gi_bgclip);height:100%;width:100%"></div></foreignObject>` +

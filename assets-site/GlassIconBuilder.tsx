@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { MINGCUTE } from '../src/mingcute.generated.ts';
-import { FRAME, makeGlassIcon } from '../src/glassIconMaker.ts';
+import { FRAME, makeGlassIcon, type GlyphBounds } from '../src/glassIconMaker.ts';
 import { normaliseFigmaSvg } from '../src/figmaGlass.ts';
 import { MINGCUTE_PREFIX, type IconStyle } from '../src/icons.ts';
 import { IconPicker } from '../editor/IconPicker.tsx';
@@ -27,6 +27,33 @@ const nameOf = (key: string) => {
   const s = key.replace(MINGCUTE_PREFIX, '').replace(/[_-]+/g, ' ');
   return s.charAt(0).toUpperCase() + s.slice(1);
 };
+
+/**
+ * Where a glyph's ink lies on its 24px grid, measured by the browser, so the
+ * glass icon's viewBox holds exactly what it draws (viewBoxOf). Undefined
+ * when there is nothing to measure; the maker then assumes the whole grid.
+ */
+const boundsCache = new Map<string, GlyphBounds>();
+function glyphBounds(d: string): GlyphBounds | undefined {
+  if (!d || typeof document === 'undefined') return undefined;
+  const hit = boundsCache.get(d);
+  if (hit) return hit;
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('style', 'position:absolute;width:0;height:0;visibility:hidden');
+  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  path.setAttribute('d', d);
+  svg.appendChild(path);
+  document.body.appendChild(svg);
+  try {
+    const { x, y, width, height } = path.getBBox();
+    if (!width || !height) return undefined;
+    const b = { x, y, width, height };
+    boundsCache.set(d, b);
+    return b;
+  } finally {
+    svg.remove();
+  }
+}
 
 /** Glass SVG (Figma-export shape) -> something an <img> shows, glass and all. */
 function preview(raw: string, ns: string): string {
@@ -60,8 +87,12 @@ export function GlassIconBuilder({
 
   const front = pathOf(icon, style);
   const back = pathOf(backIcon, backStyle) || front;
-  const dark = useMemo(() => (front ? makeGlassIcon({ front, back }, 'dark') : ''), [front, back]);
-  const light = useMemo(() => (front ? makeGlassIcon({ front, back }, 'light') : ''), [front, back]);
+  const spec = useMemo(
+    () => ({ front, back, frontBounds: glyphBounds(front), backBounds: glyphBounds(back) }),
+    [front, back],
+  );
+  const dark = useMemo(() => (front ? makeGlassIcon(spec, 'dark') : ''), [front, spec]);
+  const light = useMemo(() => (front ? makeGlassIcon(spec, 'light') : ''), [front, spec]);
   const darkImg = useMemo(() => (dark ? svgSrc(preview(dark, 'gbd')) : ''), [dark]);
   const lightImg = useMemo(() => (light ? svgSrc(preview(light, 'gbl')) : ''), [light]);
 

@@ -393,3 +393,13 @@ h1 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -0.4px; line-
 /* Choices that share the panel's width, one column each. */
 .am-gib-layer .am-seg.am-seg-fill { align-self: stretch; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; }
 .am-seg.am-seg-fill button { padding-inline: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* An icon set's folders, under its heading. */
+.am-icon-folders { margin: 0 0 14px; }
+/* Move to…, in the selection bar. */
+.am-move select {
+  font: inherit; font-size: 13px; color: var(--am-ink);
+  background: var(--am-surface); border: 1px solid var(--am-line); border-radius: var(--am-radius);
+  padding: 5px 8px;
+}
+.am-move select:disabled { opacity: 0.5; }

@@ -5,7 +5,7 @@ import { isShape, type GlassRecipe, type RecipeLayer } from '../src/glassRecipe.
 import { normaliseFigmaSvg } from '../src/figmaGlass.ts';
 import { MINGCUTE_PREFIX, type IconStyle } from '../src/icons.ts';
 import { IconPicker } from '../editor/IconPicker.tsx';
-import { iconParts, viewerId, type IconRow, type IconSetRow, type Store } from './store.ts';
+import { foldersOf, iconParts, UNFILED, viewerId, type IconRow, type IconSetRow, type Store } from './store.ts';
 import { iconSrc, slug, svgSrc } from './uploads.ts';
 
 /**
@@ -135,7 +135,11 @@ export function GlassIconBuilder({
   const layout: LayoutName = centred ? (position === 'behind' ? 'behind' : 'above') : family;
   const mirror = !centred && position === 'left';
   const [name, setName] = useState(editing ? iconParts(editing.icon).name : '');
-  const [category, setCategory] = useState(editing ? iconParts(editing.icon).category : '');
+  // The folder it goes in; blank is Unfiled.
+  const [category, setCategory] = useState(() => {
+    const c = editing ? iconParts(editing.icon).category : '';
+    return c === UNFILED ? '' : c;
+  });
   const glass = sets.find((s) => s.id === 'glass-icons');
   const [setId, setSetId] = useState(editing?.setId ?? glass?.id ?? sets[0]?.id ?? '__new');
   const [busy, setBusy] = useState(false);
@@ -170,10 +174,10 @@ export function GlassIconBuilder({
   const lightImg = useMemo(() => (light ? svgSrc(preview(light, 'gbl')) : ''), [light]);
 
   const target = sets.find((s) => s.id === setId);
-  const categories = [...new Set((target?.icons ?? []).map((i) => iconParts(i).category))].sort();
+  const categories = target ? foldersOf(target) : [];
   const finalName = name.trim() || (icon ? nameOf(icon) : 'Glass icon');
-  const finalCategory = category.trim() || 'General';
-  // Real icons of the same category, or any, to judge size against.
+  const finalCategory = category.trim();
+  // Real icons of the same folder, or any, to judge size against.
   const neighbours = (target?.icons ?? [])
     .filter((i) => i.svgLight && (!category.trim() || iconParts(i).category === finalCategory))
     .slice(0, 3);
@@ -195,7 +199,7 @@ export function GlassIconBuilder({
       await st.putIcon(sid, {
         id,
         name: finalName,
-        category: finalCategory,
+        ...(finalCategory ? { category: finalCategory } : {}),
         svg: dark,
         svgLight: light,
         uploadedAt: now,
@@ -203,7 +207,7 @@ export function GlassIconBuilder({
         builder: recipeNow(),
       });
       onToast(
-        `${replacing ? 'Replaced' : 'Added'} ${finalName} in ${finalCategory} — the builder offers it under Glass icon.`,
+        `${replacing ? 'Replaced' : 'Added'} ${finalName} in ${finalCategory || 'Unfiled'} — the builder offers it under Glass icon.`,
       );
       onClose(sid);
     } catch (e) {
@@ -215,7 +219,7 @@ export function GlassIconBuilder({
 
   const download = async (theme: 'dark' | 'light') => {
     const { saveFile } = await import('../editor/save.ts');
-    const file = `${finalCategory} - ${finalName} - ${theme === 'dark' ? 'Dark' : 'Light'}.svg`;
+    const file = `${finalCategory ? `${finalCategory} - ` : ''}${finalName} - ${theme === 'dark' ? 'Dark' : 'Light'}.svg`;
     const out = await saveFile(file, theme === 'dark' ? dark : light, 'image/svg+xml');
     if (out.status === 'saved') onToast(`Saved ${file}.`);
     else if (out.status === 'error') onToast(`Could not save ${file} — ${out.message}`);
@@ -309,12 +313,12 @@ export function GlassIconBuilder({
             <input id="gib-name" value={name} placeholder={nameOf(icon)} onChange={(e) => setName(e.target.value)} />
           </label>
           <label className="am-field" htmlFor="gib-category">
-            <span>Category</span>
+            <span>Folder</span>
             <input
               id="gib-category"
               list="gib-categories"
               value={category}
-              placeholder="General"
+              placeholder="Unfiled — or a folder, new or existing"
               onChange={(e) => setCategory(e.target.value)}
             />
             <datalist id="gib-categories">

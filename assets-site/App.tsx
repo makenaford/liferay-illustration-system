@@ -13,6 +13,8 @@ import { normaliseFigmaSvg } from '../src/figmaGlass.ts';
 import {
   canWrite,
   iconParts,
+  foldersOf,
+  UNFILED,
   MAX_DOC_BYTES,
   names as namesOf,
   store,
@@ -503,7 +505,7 @@ export function App() {
         )}
       </div>
 
-      {/* Folders are for illustrations; icons are organised by category. */}
+      {/* Illustrations' folders; each icon set has its own (IconFolderBar). */}
       {tab === 'illustrations' && (
         <FolderBar
           folders={lib.folders}
@@ -708,20 +710,186 @@ function Empty({ ready, searching, title, body }: { ready: boolean; searching: b
   );
 }
 
-/** A set's icons in category order, each category's icons by name. */
-function byCategory(icons: IconRow[]): [string, IconRow[]][] {
-  const groups = new Map<string, IconRow[]>();
-  for (const icon of icons) {
-    const c = iconParts(icon).category;
-    groups.set(c, [...(groups.get(c) ?? []), icon]);
-  }
-  return [...groups.entries()]
-    .sort(([a], [b]) => (a === 'Uncategorized' ? 1 : b === 'Uncategorized' ? -1 : a.localeCompare(b)))
-    .map(([c, list]) => [c, list.sort((x, y) => iconParts(x).name.localeCompare(iconParts(y).name))]);
-}
-
 /** Drag payload for filing a card or set into a folder. */
 const DRAG = 'application/x-marketing-asset';
+/** Drag payload for filing an icon into one of its set's folders. */
+const DRAG_ICON = 'application/x-glass-icon';
+
+/** Names a folder can't take: the bar's own chips, and what an unfiled icon reports. */
+const RESERVED = ['all', 'unfiled', UNFILED.toLowerCase()];
+
+/**
+ * An icon set's folders: All, Unfiled, one chip per folder with its count,
+ * and — for writers — New folder, and Rename and Delete for the open one.
+ * Icons dragged onto a chip are filed into it.
+ */
+function IconFolderBar({
+  folders,
+  place,
+  count,
+  writable,
+  onPick,
+  onDropIcon,
+  onCreate,
+  onRename,
+  onDelete,
+  onToast,
+}: {
+  folders: string[];
+  place: 'all' | 'unfiled' | string;
+  /** Icons in a folder; null is Unfiled. */
+  count: (folder: string | null) => number;
+  writable: boolean;
+  onPick: (p: 'all' | 'unfiled' | string) => void;
+  onDropIcon: (iconId: string, folder: string | null) => void;
+  onCreate: (name: string) => Promise<void>;
+  onRename: (from: string, to: string) => Promise<void>;
+  onDelete: (name: string) => Promise<void>;
+  onToast: (s: string) => void;
+}) {
+  const [naming, setNaming] = useState<null | 'new' | string>(null);
+  const [draft, setDraft] = useState('');
+  const [over, setOver] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState(false);
+  const open = place !== 'all' && place !== 'unfiled' ? place : null;
+  // Renaming starts from the name, selected, so typing replaces it.
+  useEffect(() => {
+    if (naming && naming !== 'new') (document.getElementById(`rename-folder-${naming}`) as HTMLInputElement | null)?.select();
+  }, [naming]);
+
+  const commit = async () => {
+    const name = draft.trim().replace(/\s+/g, ' ');
+    const was = naming;
+    setNaming(null);
+    if (!name || name === was) return;
+    if (RESERVED.includes(name.toLowerCase())) return onToast(`“${name}” is taken by the folder bar — choose another name.`);
+    if (folders.some((f) => f.toLowerCase() === name.toLowerCase() && f !== was)) {
+      return onToast(`There is already a ${name} folder.`);
+    }
+    try {
+      if (was === 'new') await onCreate(name);
+      else if (was) await onRename(was, name);
+    } catch (e) {
+      onToast(`Could not save the folder — ${(e as Error).message}`);
+    }
+  };
+
+  const target = (folder: string | null) =>
+    writable
+      ? {
+          onDragOver: (e: React.DragEvent) => {
+            if (![...e.dataTransfer.types].includes(DRAG_ICON)) return;
+            e.preventDefault();
+            setOver(folder ?? '__unfiled');
+          },
+          onDragLeave: () => setOver(null),
+          onDrop: (e: React.DragEvent) => {
+            const id = e.dataTransfer.getData(DRAG_ICON);
+            setOver(null);
+            if (!id) return;
+            e.preventDefault();
+            onDropIcon(id, folder);
+          },
+        }
+      : {};
+
+  const input = (id: string) => (
+    <input
+      key={id}
+      id={id}
+      className="am-chip-input"
+      autoFocus
+      placeholder="Folder name"
+      value={draft}
+      onChange={(e) => setDraft(e.target.value)}
+      onBlur={() => void commit()}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') void commit();
+        if (e.key === 'Escape') setNaming(null);
+      }}
+    />
+  );
+
+  return (
+    <div className="am-folders am-icon-folders" aria-label="Folders">
+      <button type="button" className={`am-chip${place === 'all' ? ' am-on' : ''}`} onClick={() => onPick('all')}>
+        All
+      </button>
+      {folders.map((f) =>
+        naming === f ? (
+          input(`rename-folder-${f}`)
+        ) : (
+          <button
+            key={f}
+            type="button"
+            className={`am-chip${place === f ? ' am-on' : ''}${over === f ? ' am-over' : ''}`}
+            onClick={() => onPick(f)}
+            {...target(f)}
+          >
+            {f} <span className="am-count">{count(f)}</span>
+          </button>
+        ),
+      )}
+      <button
+        type="button"
+        className={`am-chip${place === 'unfiled' ? ' am-on' : ''}${over === '__unfiled' ? ' am-over' : ''}`}
+        onClick={() => onPick('unfiled')}
+        {...target(null)}
+      >
+        Unfiled <span className="am-count">{count(null)}</span>
+      </button>
+      {writable &&
+        (naming === 'new' ? (
+          input('new-icon-folder')
+        ) : (
+          <button
+            type="button"
+            className="am-chip am-ghost"
+            onClick={() => {
+              setDraft('');
+              setNaming('new');
+            }}
+          >
+            + New folder
+          </button>
+        ))}
+      {writable && open && (
+        <span className="am-folder-actions">
+          <button
+            type="button"
+            className="am-mini"
+            onClick={() => {
+              setDraft(open);
+              setNaming(open);
+            }}
+          >
+            Rename
+          </button>
+          <button
+            type="button"
+            className={`am-mini am-danger${confirming ? ' am-confirming' : ''}`}
+            onClick={async () => {
+              if (!confirming) {
+                setConfirming(true);
+                setTimeout(() => setConfirming(false), 4000);
+                return;
+              }
+              setConfirming(false);
+              try {
+                await onDelete(open);
+              } catch (e) {
+                onToast(`Could not delete the folder — ${(e as Error).message}`);
+              }
+            }}
+          >
+            {confirming ? 'Click again — icons stay, unfiled' : 'Delete folder'}
+          </button>
+        </span>
+      )}
+      {writable && <span className="am-folder-tip">Drag an icon onto a folder to file it.</span>}
+    </div>
+  );
+}
 
 function IllustrationCard({
   row,
@@ -972,6 +1140,46 @@ function IconSet({
   const [removing, setRemoving] = useState(false);
   const variant = (i: IconRow) => (theme === 'light' && i.svgLight ? i.svgLight : i.svg);
 
+  // Folders: which one is open, and the set's list of them.
+  const folders = foldersOf(set);
+  const [place, setPlace] = useState<'all' | 'unfiled' | string>('all');
+  // A folder removed or renamed elsewhere falls back to everything.
+  useEffect(() => {
+    if (place !== 'all' && place !== 'unfiled' && !folders.includes(place)) setPlace('all');
+  }, [place, folders]);
+  const folderOf = (i: IconRow) => {
+    const c = iconParts(i).category;
+    return c === UNFILED ? null : c;
+  };
+  /** Keep the set's folders as `names`, in order. */
+  const saveFolders = (names: string[]) =>
+    st?.putSet({ id: set.id, name: set.name, createdAt: set.createdAt, createdBy: set.createdBy, folders: names });
+  /** File icons into `folder` (null: Unfiled). Their names lose any "Category - " they carried. */
+  const file = async (icons: IconRow[], folder: string | null, quiet = false) => {
+    if (!st) return;
+    const moving = icons.filter((i) => folderOf(i) !== folder);
+    try {
+      for (const icon of moving) {
+        await st.putIcon(set.id, { ...icon, name: iconParts(icon).name, category: folder ?? undefined });
+      }
+      if (moving.length && !quiet) {
+        onToast(
+          `Moved ${moving.length === 1 ? iconParts(moving[0]).name : `${moving.length} icons`} to ${folder ?? 'Unfiled'}.`,
+        );
+      }
+    } catch (e) {
+      onToast(`Could not move them — ${(e as Error).message}`);
+    }
+  };
+  /** A folder's icons, by name; null is Unfiled. */
+  const iconsIn = (f: string | null) =>
+    set.icons.filter((i) => folderOf(i) === f).sort((x, y) => iconParts(x).name.localeCompare(iconParts(y).name));
+  // Everything, folder by folder with Unfiled last — or the one folder open.
+  const sections: { folder: string | null; icons: IconRow[] }[] =
+    place === 'all'
+      ? [...folders, null].map((folder) => ({ folder, icons: iconsIn(folder) })).filter((x) => x.icons.length)
+      : [{ folder: place === 'unfiled' ? null : place, icons: iconsIn(place === 'unfiled' ? null : place) }];
+
   // Icons removed elsewhere drop out of the selection.
   const live = set.icons.filter((i) => selected.has(i.id));
 
@@ -1061,7 +1269,41 @@ function IconSet({
           </div>
         )}
       </div>
-      {byCategory(set.icons).map(([category, icons]) => {
+      <IconFolderBar
+        folders={folders}
+        place={place}
+        count={(f) => set.icons.filter((i) => folderOf(i) === f).length}
+        writable={writable}
+        onPick={setPlace}
+        onDropIcon={(id, folder) => {
+          const icon = set.icons.find((i) => i.id === id);
+          if (icon) void file([icon], folder);
+        }}
+        onCreate={async (name) => {
+          await saveFolders([...folders, name]);
+          setPlace(name);
+        }}
+        onRename={async (from, to) => {
+          await saveFolders(folders.map((f) => (f === from ? to : f)));
+          await file(set.icons.filter((i) => folderOf(i) === from), to, true);
+          setPlace(to);
+          onToast(`Renamed ${from} to ${to}.`);
+        }}
+        onDelete={async (name) => {
+          await file(set.icons.filter((i) => folderOf(i) === name), null, true);
+          await saveFolders(folders.filter((f) => f !== name));
+          setPlace('all');
+          onToast(`Deleted the ${name} folder. Its icons are now Unfiled.`);
+        }}
+        onToast={onToast}
+      />
+      {sections.every((x) => !x.icons.length) && (
+        <p className="am-empty am-pad">
+          {place === 'all' ? 'No icons yet.' : 'Nothing in this folder yet — drag icons onto it, or select some and use Move to.'}
+        </p>
+      )}
+      {sections.every((x) => !x.icons.length) ? null : sections.map(({ folder, icons }) => {
+        const category = folder ?? 'Unfiled';
         const all = icons.every((i) => selected.has(i.id));
         return (
           <div key={category} className="am-category">
@@ -1095,6 +1337,11 @@ function IconSet({
                       type="button"
                       className={on ? 'am-on' : ''}
                       aria-pressed={selecting ? on : undefined}
+                      draggable={writable}
+                      onDragStart={(e) => {
+                        e.dataTransfer.setData(DRAG_ICON, icon.id);
+                        e.dataTransfer.effectAllowed = 'move';
+                      }}
                       onClick={() => {
                         if (selecting) toggle(icon.id);
                         else {
@@ -1122,6 +1369,26 @@ function IconSet({
           <button type="button" disabled={!live.length} onClick={() => setSelected(new Set())}>
             Clear
           </button>
+          <label className="am-move" htmlFor={`move-${set.id}`}>
+            <span className="am-sr">Move the selected icons to a folder</span>
+            <select
+              id={`move-${set.id}`}
+              value=""
+              disabled={!live.length}
+              onChange={(e) => {
+                const v = e.target.value;
+                if (v) void file(live, v === '__unfiled' ? null : v).then(() => setSelected(new Set()));
+              }}
+            >
+              <option value="">Move to…</option>
+              {folders.map((f) => (
+                <option key={f} value={f}>
+                  {f}
+                </option>
+              ))}
+              <option value="__unfiled">Unfiled</option>
+            </select>
+          </label>
           <button
             type="button"
             className={`am-danger${arming === 'many' ? ' am-confirming' : ''}`}
@@ -1142,7 +1409,7 @@ function IconSet({
           <div className="am-icon-bar" role="region" aria-label={picked.name}>
             <b>{iconParts(picked).name}</b>
             <span className="am-meta">
-              {iconParts(picked).category} · {picked.svgLight ? 'dark and light variants' : 'one variant'}
+              {folderOf(picked) ?? 'Unfiled'} · {picked.svgLight ? 'dark and light variants' : 'one variant'}
             </span>
             <button type="button" onClick={() => void offer(`${slug(picked.name)}${picked.svgLight ? '-dark' : ''}.svg`, picked.svg, 'image/svg+xml', onToast)}>
               {picked.svgLight ? 'Dark SVG' : 'SVG'}
@@ -1255,9 +1522,8 @@ function AddIcons({
   const fileCategories = [...new Set(icons.map((i) => iconParts({ name: i.name }).category))].filter(
     (c) => c !== 'Uncategorized',
   );
-  const setCategories = [
-    ...new Set((sets.find((s) => s.id === choice)?.icons ?? []).map((i) => iconParts(i).category)),
-  ].sort();
+  const chosen = sets.find((s) => s.id === choice);
+  const setCategories = chosen ? foldersOf(chosen) : [];
   const isNew = choice === '__new';
   const newId = slug(name);
   const clash = isNew && sets.some((s) => s.id === newId);
@@ -1333,7 +1599,7 @@ function AddIcons({
           )}
           {!toGraphics && (
             <label className="am-field" htmlFor="icon-category">
-              <span>Category</span>
+              <span>Folder</span>
               <input
                 id="icon-category"
                 list="icon-categories"
@@ -1341,7 +1607,7 @@ function AddIcons({
                 placeholder={
                   fileCategories.length
                     ? `From the file names — ${fileCategories.slice(0, 3).join(', ')}${fileCategories.length > 3 ? '…' : ''}`
-                    : 'e.g. Business'
+                    : 'Unfiled — or a folder, new or existing'
                 }
                 onChange={(e) => setCategory(e.target.value)}
               />

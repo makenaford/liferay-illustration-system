@@ -86,7 +86,26 @@ export interface IconSetRow {
   name: string;
   createdAt: number;
   createdBy?: string;
+  /**
+   * The set's folders, in order. An icon's folder is its `category`; this
+   * list is what lets a folder exist before anything is in it. Folders its
+   * icons name but this list lacks — every set's, before folders — are
+   * folders all the same (see `foldersOf`).
+   */
+  folders?: string[];
   icons: IconRow[];
+}
+
+/** What an icon outside every folder reports as its category. */
+export const UNFILED = 'Uncategorized';
+
+/** A set's folders: its own list, then any its icons are in that the list lacks, by name. */
+export function foldersOf(set: Pick<IconSetRow, 'folders' | 'icons'>): string[] {
+  const own = set.folders ?? [];
+  const named = [...new Set(set.icons.map((i) => iconParts(i).category))]
+    .filter((c) => c !== UNFILED && !own.includes(c))
+    .sort((a, b) => a.localeCompare(b));
+  return [...own, ...named];
 }
 
 export interface Library {

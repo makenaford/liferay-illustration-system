@@ -600,9 +600,10 @@ export interface Doc {
   /**
    * A mesh background from the design system, in place of the theme's own
    * stage. Absent keeps the original: the blurred bloom in dark, the corner
-   * mesh in light.
+   * mesh in light. `none` draws no background at all — the canvas is
+   * transparent, for an illustration placed over a page's own background.
    */
-  background?: MeshName;
+  background?: MeshName | 'none';
   /**
    * The second colour of the `duo` background, beside the primary blue: a
    * colour from the illustration set (see src/colors.ts). Defaults to Aqua.

@@ -556,7 +556,11 @@ export function buildDocument(
   // A gradient cannot be one bloom's colour; the duo accent takes colours only.
   const accentPaint = doc.background === 'duo' ? paintOf(ctx.tokens, doc.backgroundAccent ?? 'base-aqua') : null;
   const accent = accentPaint && 'color' in accentPaint ? accentPaint.color : undefined;
-  const stage = Stage(ctx, { width, height, glow: doc.glow, mesh: doc.background, accent });
+  // No background: an empty stage, and the glass knows there is nothing under it.
+  ctx.transparent = doc.background === 'none';
+  const stage = ctx.transparent
+    ? h('g', { 'data-el': 'stage' }, [])
+    : Stage(ctx, { width, height, glow: doc.glow, mesh: doc.background === 'none' ? undefined : doc.background, accent });
 
   // Panels blur the stage.
   ctx.backdropId = stageId;

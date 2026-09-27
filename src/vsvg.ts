@@ -74,6 +74,11 @@ export interface Ctx {
    * cards blur the stage plus panels.
    */
   backdropId?: string;
+  /**
+   * No background is drawn (`background: 'none'`): what is behind the glass
+   * is transparent, so nothing opaque may be hidden under it — see `Surface`.
+   */
+  transparent?: boolean;
 }
 
 export function createCtx(

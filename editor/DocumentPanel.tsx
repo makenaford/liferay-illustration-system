@@ -109,7 +109,18 @@ export function DocumentPanel() {
               {m.label}
             </button>
           ))}
+          <button
+            type="button"
+            className={doc.background === 'none' ? 'on' : ''}
+            aria-pressed={doc.background === 'none'}
+            onClick={() => patch({ background: 'none' })}
+          >
+            None
+          </button>
         </div>
+        {doc.background === 'none' && (
+          <p className="bg-note">No background: the canvas exports transparent, for placing over a page.</p>
+        )}
         {doc.background === 'duo' && (
           <label className="field wide bg-accent">
             <span className="field-label">Accent color · beside the primary blue</span>
@@ -121,7 +132,7 @@ export function DocumentPanel() {
             />
           </label>
         )}
-        {!MESH_NAMES.some((m) => m.name === doc.background) && (
+        {doc.background !== 'none' && !MESH_NAMES.some((m) => m.name === doc.background) && (
           <p className="bg-note">
             This illustration uses {doc.background ? 'a background no longer offered' : 'the theme’s original background'}.
             Choose one above to change it.

@@ -150,11 +150,25 @@ export function Surface(ctx: Ctx, props: SurfaceProps): VNode {
 
   if (spec.shadow?.length) {
     const id = castShadow(ctx, spec.shadow, box);
-    layers.push(
-      h('g', { filter: `url(#${id})`, 'data-el': 'elevation' }, [
-        h('rect', { x, y, width, height, rx: radius, fill: tk.stage.bg }),
-      ]),
-    );
+    const caster = h('g', { filter: `url(#${id})`, 'data-el': 'elevation' }, [
+      h('rect', { x, y, width, height, rx: radius, fill: tk.stage.bg }),
+    ]);
+    if (ctx.transparent) {
+      // Over no background the frosted pane is transparent too, so the opaque
+      // caster would show through the glass. Masked to outside the card, only
+      // its shadow is left.
+      const maskId = ctx.uid('smask');
+      const pad = Math.max(...spec.shadow.map((l) => l.blur + Math.max(Math.abs(l.dx ?? 0), Math.abs(l.dy)))) * 2 + 20;
+      ctx.defs.push(
+        h('mask', { id: maskId, maskUnits: 'userSpaceOnUse', x: x - pad, y: y - pad, width: width + pad * 2, height: height + pad * 2 }, [
+          h('rect', { x: x - pad, y: y - pad, width: width + pad * 2, height: height + pad * 2, fill: '#FFFFFF' }),
+          h('rect', { x, y, width, height, rx: radius, fill: '#000000' }),
+        ]),
+      );
+      layers.push(h('g', { mask: `url(#${maskId})` }, [caster]));
+    } else {
+      layers.push(caster);
+    }
   }
 
   if (backdrop && spec.blur && !spec.recessed) {

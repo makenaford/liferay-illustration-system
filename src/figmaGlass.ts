@@ -1,4 +1,3 @@
-import { softenGlassRim } from './importAsset.ts';
 
 /**
  * FIGMA GLASS, MADE PORTABLE — shared by every import of Figma glass artwork:
@@ -315,10 +314,10 @@ export function normaliseFigmaSvg(
   // scaled-down artwork look chewed; the icons are always scaled here.
   s = s.replace(/\s*shape-rendering="crispEdges"/g, '');
 
-  // The glass edge, softened — see `softenGlassRim`. Without it every frosted
-  // shape arrives with an opaque white outline, because the backdrop blur that
-  // was meant to sit behind it cannot survive export.
-  s = softenGlassRim(s);
+  // The glass edge stays as Figma draws it: a full-white inner shadow. It was
+  // once dimmed to 0.45, when the backdrop blur could not survive export and
+  // a bare white rim read as an outline; with the blur rebuilt above, the rim
+  // reads as glass catching light, as in the Figma files.
 
   // Size: long decimals rounded, whitespace between tags dropped.
   s = s.replace(/-?\d*\.\d{4,}(?:e-?\d+)?/g, trim);

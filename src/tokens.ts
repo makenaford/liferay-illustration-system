@@ -537,10 +537,10 @@ const radius = { panel: 8, card: 8, pill: 999 };
  * illustration's smooth stage there is no detail to destroy, so a 50px blur
  * only softened the glow bleeding through the pane into an even wash and cost
  * a wide filter region on every card. Now that glass frosts what is really
- * beneath it — screenshots, photos — there is detail to soften, and 40 keeps
- * text on a card readable over it.
+ * beneath it — screenshots, photos — there is detail to soften, and 28
+ * softens it enough for text without smearing the card into a haze.
  */
-const GLASS_BLUR = 40;
+const GLASS_BLUR = 28;
 
 /**
  * HIGHLIGHTED — the one card that matters more, and glass over a
@@ -548,25 +548,24 @@ const GLASS_BLUR = 40;
  * card (Figma 665:13337, style `Highlighted Card- Light`):
  *
  *   - a WHITE wash: `radial-gradient` from the top-right corner, white 40%
- *     to 5%, on a layer at 40% — 16% to 2% in Figma, raised here to 34% to
- *     14%, and the blur from Figma's 50px to 80, so text on the card stays
- *     readable over a busy screenshot
- *   - a white 80% hairline, a 45% lit edge, and a blue 8px glow
+ *     to 5%, on a layer at 40% — 16% to 2% as drawn — over Figma's 50px blur
+ *   - a white 80% hairline, a 45% lit edge, and a blue glow, softened here
+ *     to 55% so the card reads as lit rather than as blue
  *
  * It frosts whatever is really beneath it — see `buildDocument` — so over a
  * white page it reads as pale frosted glass, over a photo as the photo
  * softened. An earlier version tinted it blue and let the stage through,
  * which is why it went grey over white.
  */
-const HIGHLIGHTED_BLUR = 80;
+const HIGHLIGHTED_BLUR = 50;
 const highlightedSpec = (): SurfaceSpec => ({
   fill: {
     angle: 0,
     radial: { cx: 1, cy: 0.015, rx: 1.16, ry: 1.5 },
-    stops: [{ color: '#FFFFFF', opacity: 0.34 }, { color: '#FFFFFF', opacity: 0.14 }],
+    stops: [{ color: '#FFFFFF', opacity: 0.16 }, { color: '#FFFFFF', opacity: 0.03 }],
   },
   line: { angle: 180, stops: [{ color: '#FFFFFF', opacity: 0.8 }, { color: '#FFFFFF', opacity: 0.8 }] },
-  shadow: [{ dy: 0, blur: 8, color: '#0B5FFF', opacity: 1 }],
+  shadow: [{ dy: 0, blur: 10, color: '#0B5FFF', opacity: 0.55 }],
   litEdge: { color: '#FFFFFF', opacity: 0.45 },
   blur: HIGHLIGHTED_BLUR,
 });
@@ -574,18 +573,16 @@ const highlightedSpec = (): SurfaceSpec => ({
  * LIGHT GLASS — `Glass Card- Light` in the Marketing UI Assets Repo (Figma
  * 665:26612, effect `Card Effect- Light`). Light glass is TINTED BLUE where
  * dark glass is washed white: `radial-gradient` from near the top-left
- * corner, `#0B5FFF` at 5% to 20%, behind a white 80% hairline and a 69% lit
- * edge. Text on it is dark. The three light glass surfaces share it and differ
- * only in depth — flat, a soft cast shadow, the blue glow.
- *
- * Figma blurs 17.5px (a background blur of 35); these keep the heavier blur
- * the dark glass has, for text over a busy screenshot.
+ * corner, `#0B5FFF` — Figma's 5% to 20%, eased here to 4% to 14% — behind a
+ * white 80% hairline and a 69% lit edge, with the blue glow at half. Text on
+ * it is dark. Only light's highlighted card takes it; default and elevated
+ * stay frosted white, so the tint marks the card that matters.
  */
 const lightGlass = (blur: number, shadow?: ShadowLayer[]): SurfaceSpec => ({
   fill: {
     angle: 0,
     radial: { cx: 0.1389, cy: 0.0394, rx: 1.2341, ry: 1.1853 },
-    stops: [{ color: '#0B5FFF', opacity: 0.05 }, { color: '#0B5FFF', opacity: 0.2 }],
+    stops: [{ color: '#0B5FFF', opacity: 0.04 }, { color: '#0B5FFF', opacity: 0.14 }],
   },
   line: { angle: 180, stops: [{ color: '#FFFFFF', opacity: 0.8 }, { color: '#FFFFFF', opacity: 0.8 }] },
   litEdge: { color: '#FFFFFF', opacity: 0.69 },
@@ -595,7 +592,7 @@ const lightGlass = (blur: number, shadow?: ShadowLayer[]): SurfaceSpec => ({
 const HIGHLIGHTED = {
   dark: highlightedSpec(),
   // `Card Effect- Light`'s glow: (-2, 2), 8px, `Brand/Primary` at full.
-  light: lightGlass(HIGHLIGHTED_BLUR, [{ dx: -2, dy: 2, blur: 8, color: '#0B5FFF', opacity: 1 }]),
+  light: lightGlass(HIGHLIGHTED_BLUR, [{ dx: -2, dy: 2, blur: 8, color: '#0B5FFF', opacity: 0.5 }]),
 };
 /** `Glass Step 02` — the same in both themes. */
 const STEP_02 = { color: '#8C96A9', opacity: 0.03 };
@@ -628,14 +625,14 @@ export const dark: Tokens = {
     /** Basic: the everyday card — and a tile nested inside one. No shadow. Was glass1 (and glass2). */
     'glass-default': {
       // DS: 0.03 / 0.02, line 0.1 / 0.07
-      fill: { angle: 60, stops: [{ color: '#FFFFFF', opacity: 0.14 }, { color: '#FFFFFF', opacity: 0.07 }] },
+      fill: { angle: 60, stops: [{ color: '#FFFFFF', opacity: 0.07 }, { color: STEP_02.color, opacity: 0.035 }] },
       line: { angle: 225, stops: [{ color: '#FFFFFF', opacity: 0.14 }, { color: '#FFFFFF', opacity: 0.09 }] },
       blur: GLASS_BLUR,
     },
     /** Elevated: floating over the composition — an overlay, a callout, a menu. Was glass3. */
     'glass-elevated': {
       // DS: 0.09 / 0.04, line 0.26 / 0.16
-      fill: { angle: 60, stops: [{ color: '#FFFFFF', opacity: 0.26 }, { color: '#FFFFFF', opacity: 0.12 }] },
+      fill: { angle: 60, stops: [{ color: '#FFFFFF', opacity: 0.19 }, { color: STEP_02.color, opacity: 0.07 }] },
       line: { angle: 225, stops: [{ color: '#FFFFFF', opacity: 0.34 }, { color: '#FFFFFF', opacity: 0.2 }] },
       shadow: [
         { dy: 18, blur: 40, color: '#000000', opacity: 0.4 },
@@ -856,13 +853,26 @@ export const light: Tokens = {
    */
   surfaces: {
     /** Basic: the everyday card — and a tile nested inside one. No shadow. Was glass1 (and glass2). */
-    /** Default: the everyday card — `Glass Card- Light`, flat. See `lightGlass`. */
-    'glass-default': lightGlass(GLASS_BLUR),
-    /** Elevated: floating over the composition — the same glass, with a soft cast shadow. */
-    'glass-elevated': lightGlass(GLASS_BLUR, [
-      { dy: 18, blur: 40, color: INK, opacity: 0.14 },
-      { dy: 3, blur: 8, color: INK, opacity: 0.1 },
-    ]),
+    /**
+     * Default: the everyday card, a FROSTED WHITE CARD — node `792:13843` in
+     * the Marketing UI Assets Repo fills white into `#BFD5FF` behind a blue
+     * hairline. Only the highlighted card takes the blue tint (`lightGlass`).
+     */
+    'glass-default': {
+      fill: { angle: 60, stops: [{ color: '#FFFFFF', opacity: 0.55 }, { color: '#BFD5FF', opacity: 0.15 }] },
+      line: { angle: 225, stops: [{ color: '#0B5FFF', opacity: 0.14 }, { color: '#0B5FFF', opacity: 0.1 }] },
+      blur: GLASS_BLUR,
+    },
+    /** Elevated: floating over the composition — the same card, whiter, with a soft cast shadow. */
+    'glass-elevated': {
+      fill: { angle: 60, stops: [{ color: '#FFFFFF', opacity: 0.92 }, { color: '#BFD5FF', opacity: 0.28 }] },
+      line: { angle: 225, stops: [{ color: '#0B5FFF', opacity: 0.28 }, { color: '#0B5FFF', opacity: 0.18 }] },
+      shadow: [
+        { dy: 18, blur: 40, color: INK, opacity: 0.14 },
+        { dy: 3, blur: 8, color: INK, opacity: 0.1 },
+      ],
+      blur: GLASS_BLUR,
+    },
     /** Highlighted: the one card that matters more, and glass over a screenshot — see HIGHLIGHTED. */
     'glass-highlighted': HIGHLIGHTED.light,
     /**

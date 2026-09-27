@@ -45,7 +45,7 @@ export function blankDoc(): Doc {
 }
 
 /**
- * MOCKUP — a product screenshot, with glass panels of detail on top of it,
+ * MOCKUP — a product screenshot, with frames of detail on top of it,
  * as the set's mockup illustrations are drawn ("Deploy with enterprise-grade
  * security, anywhere", "Turn your site into a B2B revenue engine"):
  *
@@ -78,7 +78,7 @@ function placeholder(w: number, h: number, label: string): string {
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
 }
 
-/** A glass panel holding a screenshot inset by the pad. */
+/** A frame holding a screenshot inset by the pad. */
 function panel(x: number, y: number, width: number, height: number, label: string): Doc['elements'][number] {
   const p = MOCKUP.pad;
   return {
@@ -108,7 +108,7 @@ function panel(x: number, y: number, width: number, height: number, label: strin
   };
 }
 
-/** A new mockup illustration: the mockup image, and two glass panels at its edges. */
+/** A new mockup illustration: the mockup image, and two frames at its edges. */
 export function mockupDoc(): Doc {
   const { canvas, pad, image } = MOCKUP;
   const left = { width: 290, height: 155 };
@@ -137,10 +137,10 @@ export function mockupDoc(): Doc {
 
 /** What a new illustration can start from. */
 export const TEMPLATES = {
-  blank: { label: 'Blank', description: 'An empty canvas with one glass panel.', make: blankDoc },
+  blank: { label: 'Blank', description: 'An empty canvas with one hero panel.', make: blankDoc },
   mockup: {
     label: 'Mockup',
-    description: 'An 800 × 533 product screenshot with glass panels meeting the edges, 12px in.',
+    description: 'An 800 × 533 product screenshot with frames meeting the edges, 12px in.',
     make: mockupDoc,
   },
 } as const;

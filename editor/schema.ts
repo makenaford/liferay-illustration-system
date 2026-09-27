@@ -151,7 +151,7 @@ export const SCHEMA: {
     ],
   },
   card: {
-    label: 'Glass panel',
+    label: 'Frame',
     fields: [
       ...XY,
       ...WH,
@@ -489,10 +489,15 @@ export const DEFAULTS: Record<Element['type'], () => Element> = {
     layout: { direction: 'vertical', gap: 8, padding: 0 },
     children: [],
   }),
+  // A card arrives with an icon and a heading, hugging them — a start, and
+  // each is an ordinary element to change or delete.
   subCard: () => ({
     type: 'subCard', x: 40, y: 40, width: 160, height: 80, surface: 'glass-default', radius: 8,
-    layout: { direction: 'vertical', gap: 8, padding: LAYOUT.cardPadding, align: 'start' },
-    children: [],
+    layout: { direction: 'vertical', gap: 8, padding: LAYOUT.cardPadding, align: 'start', hugHeight: true },
+    children: [
+      { type: 'icon', x: 0, y: 0, size: 20, icon: 'mc:box_3', tone: 'accentSoft' },
+      { type: 'text', x: 0, y: 0, role: 'subheading', content: 'Card title' },
+    ],
   }),
   pill: () => ({ type: 'pill', x: 40, y: 40, width: 80, height: 24, label: 'Pill', variant: 'accent' }),
   badge: () => ({ type: 'badge', x: 40, y: 40, width: 44, label: 'Badge', tone: 'success' }),

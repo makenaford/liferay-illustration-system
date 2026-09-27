@@ -1860,9 +1860,9 @@ function Tools({
         <div className="am-tool-body">
           <h2>Illustration Builder</h2>
           <p>
-            Compose marketing illustrations from the Liferay component library — glass panels, charts, badges,
+            Compose marketing illustrations from the Liferay component library — frames, charts, badges,
             chat bubbles, glass icons — in dark and light from one document. Start blank, or from <b>Mockup</b>: a
-            3:2 product screenshot with glass panels meeting its edges. It opens right here: saving an illustration
+            3:2 product screenshot with frames meeting its edges. It opens right here: saving an illustration
             puts it in this library for everyone, and <b>Edit in builder</b> on any illustration opens it again.
           </p>
           <div className="am-tool-actions">

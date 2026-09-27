@@ -9,8 +9,10 @@
  * behind. Each theme has its own fill and effects, as there; light mode's
  * gradient is dark mode's, flipped.
  *
- * Sizes follow the house proportions: in an 80px frame, the glass icon is
- * 68px and the one behind it 48px.
+ * Sizes and positions follow the Marketing Icons file (Figma, "Glass icon/",
+ * node 394:3099): in a 64px frame, the glass icon's 68px grid sits at
+ * (-7, 0) and the one behind it, 48px, at (19, -5) — both overflowing the
+ * frame, as they do there.
  *
  * The output is the same Figma-export shape the set ships as — a
  * `foreignObject` blur and a `_dii_` filter group — so it goes through the
@@ -29,9 +31,9 @@ export interface GlassIconSpec {
 }
 
 /** The frame, and each icon's box within it — MingCute's 24px grid scaled up. */
-export const FRAME = 80;
-const FRONT = { size: 68, x: 0, y: FRAME - 68 };
-const BACK = { size: 48, x: FRAME - 48, y: 0 };
+export const FRAME = 64;
+const FRONT = { size: 68, x: -7, y: 0 };
+const BACK = { size: 48, x: 19, y: -5 };
 
 /** The back icon's gradient, as the dark icons draw it. Light runs it in reverse. */
 const DARK_STOPS = [

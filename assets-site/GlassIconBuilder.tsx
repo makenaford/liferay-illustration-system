@@ -1,19 +1,21 @@
 import { useMemo, useState } from 'react';
 import { MINGCUTE } from '../src/mingcute.generated.ts';
-import { FRAME, LAYOUTS, makeGlassIcon, type GlyphBounds, type LayoutName } from '../src/glassIconMaker.ts';
+import { CENTRED, FRAME, LAYOUTS, makeGlassIcon, type GlyphBounds, type Layer, type LayoutName } from '../src/glassIconMaker.ts';
+import { isShape, type GlassRecipe, type RecipeLayer } from '../src/glassRecipe.ts';
 import { normaliseFigmaSvg } from '../src/figmaGlass.ts';
 import { MINGCUTE_PREFIX, type IconStyle } from '../src/icons.ts';
 import { IconPicker } from '../editor/IconPicker.tsx';
-import { iconParts, viewerId, type IconSetRow, type Store } from './store.ts';
+import { iconParts, viewerId, type IconRow, type IconSetRow, type Store } from './store.ts';
 import { iconSrc, slug, svgSrc } from './uploads.ts';
 
 /**
- * GLASS ICON BUILDER — a MingCute icon, made into a glass icon in the set's
- * own style, dark and light, on its 64px grid (see src/glassIconMaker.ts).
+ * GLASS ICON BUILDER — two MingCute icons, made into a glass icon in the
+ * set's own style, dark and light (see src/glassIconMaker.ts).
  *
- * Every icon it makes is the same size, because the glyph always fills the
- * same front square; the preview sets it beside icons already in the set, so
- * that can be seen rather than trusted.
+ * Every icon it makes keeps its recipe (src/glassRecipe.ts), so it can be
+ * opened here again — `editing` — and saved back in place. A layer can also
+ * be an existing icon's own shape, as the rebuild of the set takes them
+ * apart (src/glassRebuild.ts); picking an icon replaces it.
  */
 
 /** One MingCute icon's path in a style, falling back to whichever it has. */
@@ -55,6 +57,11 @@ function glyphBounds(d: string): GlyphBounds | undefined {
   }
 }
 
+/** A layer drawn from the original icon's own shape rather than a MingCute icon. */
+function ShapeNote() {
+  return <p className="am-hint am-shape-note">The original icon’s own shape — pick an icon to replace it.</p>;
+}
+
 /** The layout choices: which icon leads beside the other, or the two centred. */
 type Family = 'glass' | 'equal' | 'gradient' | 'centred';
 type Position = 'right' | 'left' | 'above' | 'behind';
@@ -88,44 +95,83 @@ export function GlassIconBuilder({
   store: st,
   onToast,
   onClose,
+  editing,
 }: {
   sets: IconSetRow[];
   writable: boolean;
   store: Store | null;
   onToast: (s: string) => void;
   onClose: (savedTo?: string) => void;
+  /** An icon made here, opened again: its recipe fills the builder, and saving replaces it. */
+  editing?: { setId: string; icon: IconRow };
 }) {
+  const recipe = editing?.icon.builder;
+  const start = (l: RecipeLayer | undefined, fallback: string) =>
+    l && !isShape(l) ? { key: l.icon, style: l.style as IconStyle } : { key: l ? '' : fallback, style: 'fill' as IconStyle };
+  const f0 = start(recipe?.front, 'mc:rocket');
+  const b0 = start(recipe?.back, 'mc:planet');
   // Two icons: the frosted glass one in front, the gradient one behind it.
-  const [icon, setIcon] = useState('mc:rocket');
-  const [style, setStyle] = useState<IconStyle>('fill');
-  const [backIcon, setBackIcon] = useState('mc:planet');
-  const [backStyle, setBackStyle] = useState<IconStyle>('fill');
+  const [icon, setIcon] = useState(f0.key);
+  const [style, setStyle] = useState<IconStyle>(f0.style);
+  const [backIcon, setBackIcon] = useState(b0.key);
+  const [backStyle, setBackStyle] = useState<IconStyle>(b0.style);
+  // An existing icon's own shapes, until an icon is picked in their place.
+  const [frontShape, setFrontShape] = useState(recipe && isShape(recipe.front) ? recipe.front : null);
+  const [backShape, setBackShape] = useState(recipe && isShape(recipe.back) ? recipe.back : null);
   // Which icon leads, and where the back sits — beside it, or centred.
-  const [family, setFamily] = useState<Family>('glass');
-  const [position, setPosition] = useState<Position>('right');
+  const [family, setFamily] = useState<Family>(() =>
+    recipe ? (CENTRED.includes(recipe.layout) ? 'centred' : (recipe.layout as Family)) : 'glass',
+  );
+  const [position, setPosition] = useState<Position>(() =>
+    !recipe
+      ? 'right'
+      : recipe.layout === 'above' || recipe.layout === 'behind'
+        ? recipe.layout
+        : recipe.mirror
+          ? 'left'
+          : 'right',
+  );
   const centred = family === 'centred';
   const layout: LayoutName = centred ? (position === 'behind' ? 'behind' : 'above') : family;
   const mirror = !centred && position === 'left';
-  const [name, setName] = useState('');
-  const [category, setCategory] = useState('');
+  const [name, setName] = useState(editing ? iconParts(editing.icon).name : '');
+  const [category, setCategory] = useState(editing ? iconParts(editing.icon).category : '');
   const glass = sets.find((s) => s.id === 'glass-icons');
-  const [setId, setSetId] = useState(glass?.id ?? sets[0]?.id ?? '__new');
+  const [setId, setSetId] = useState(editing?.setId ?? glass?.id ?? sets[0]?.id ?? '__new');
   const [busy, setBusy] = useState(false);
 
-  const front = pathOf(icon, style);
-  const back = pathOf(backIcon, backStyle) || front;
+  const frontPath = frontShape ? '' : pathOf(icon, style);
+  const backPath = backShape ? '' : pathOf(backIcon, backStyle) || frontPath;
+  const front: string | Layer = frontShape?.shape ?? frontPath;
+  const back: string | Layer = backShape?.shape ?? backPath;
   const spec = useMemo(
-    () => ({ front, back, frontBounds: glyphBounds(front), backBounds: glyphBounds(back), layout, mirror }),
-    [front, back, layout, mirror],
+    () => ({
+      front,
+      back,
+      frontBounds: frontShape?.bounds ?? glyphBounds(frontPath),
+      backBounds: backShape?.bounds ?? glyphBounds(backPath),
+      layout,
+      mirror,
+    }),
+    [front, back, frontShape, backShape, frontPath, backPath, layout, mirror],
   );
-  const dark = useMemo(() => (front ? makeGlassIcon(spec, 'dark') : ''), [front, spec]);
-  const light = useMemo(() => (front ? makeGlassIcon(spec, 'light') : ''), [front, spec]);
+  const hasFront = !!frontShape || !!frontPath;
+  const dark = useMemo(() => (hasFront ? makeGlassIcon(spec, 'dark') : ''), [hasFront, spec]);
+  const light = useMemo(() => (hasFront ? makeGlassIcon(spec, 'light') : ''), [hasFront, spec]);
+  /** What this icon is made of, kept with it so it can be edited here again. */
+  const recipeNow = (): GlassRecipe => ({
+    v: 1,
+    front: frontShape ?? { icon, style },
+    back: backShape ?? (pathOf(backIcon, backStyle) ? { icon: backIcon, style: backStyle } : { icon, style }),
+    layout,
+    ...(mirror ? { mirror: true } : {}),
+  });
   const darkImg = useMemo(() => (dark ? svgSrc(preview(dark, 'gbd')) : ''), [dark]);
   const lightImg = useMemo(() => (light ? svgSrc(preview(light, 'gbl')) : ''), [light]);
 
   const target = sets.find((s) => s.id === setId);
   const categories = [...new Set((target?.icons ?? []).map((i) => iconParts(i).category))].sort();
-  const finalName = name.trim() || nameOf(icon);
+  const finalName = name.trim() || (icon ? nameOf(icon) : 'Glass icon');
   const finalCategory = category.trim() || 'General';
   // Real icons of the same category, or any, to judge size against.
   const neighbours = (target?.icons ?? [])
@@ -133,7 +179,7 @@ export function GlassIconBuilder({
     .slice(0, 3);
 
   const save = async () => {
-    if (!st || !front) return;
+    if (!st || !hasFront) return;
     setBusy(true);
     try {
       const by = (await viewerId()) ?? undefined;
@@ -143,7 +189,8 @@ export function GlassIconBuilder({
         sid = 'glass-icons';
         await st.putSet({ id: sid, name: 'Glass icons', createdAt: now, createdBy: by });
       }
-      const id = slug(`${finalCategory} ${finalName}`);
+      // An edited icon keeps its id, whatever it is renamed to.
+      const id = editing && sid === editing.setId ? editing.icon.id : slug(`${finalCategory} ${finalName}`);
       const replacing = (sets.find((s) => s.id === sid)?.icons ?? []).some((i) => i.id === id);
       await st.putIcon(sid, {
         id,
@@ -153,6 +200,7 @@ export function GlassIconBuilder({
         svgLight: light,
         uploadedAt: now,
         uploadedBy: by,
+        builder: recipeNow(),
       });
       onToast(
         `${replacing ? 'Replaced' : 'Added'} ${finalName} in ${finalCategory} — the builder offers it under Glass icon.`,
@@ -180,8 +228,12 @@ export function GlassIconBuilder({
           ‹ Library
         </button>
         <div>
-          <h2>Glass Icon Builder</h2>
-          <p className="am-meta">Two MingCute icons, made into one glass icon in the set’s own style — dark and light.</p>
+          <h2>{editing ? `Editing ${iconParts(editing.icon).name}` : 'Glass Icon Builder'}</h2>
+          <p className="am-meta">
+            {editing
+              ? 'Change its icons or layout; saving replaces it in the library, for everyone.'
+              : 'Two MingCute icons, made into one glass icon in the set’s own style — dark and light.'}
+          </p>
         </div>
       </div>
 
@@ -195,12 +247,30 @@ export function GlassIconBuilder({
         >
           <fieldset className="am-gib-layer">
             <legend>Front · frosted glass · {Math.round(LAYOUTS[layout].front.size)}px</legend>
-            <IconPicker value={icon} style={style} onChange={(v) => v && setIcon(v)} />
+            {frontShape && <ShapeNote />}
+            <IconPicker
+              value={frontShape ? undefined : icon}
+              style={style}
+              onChange={(v) => {
+                if (!v) return;
+                setIcon(v);
+                setFrontShape(null);
+              }}
+            />
             <StyleSwitch label="Front icon style" value={style} onChange={setStyle} />
           </fieldset>
           <fieldset className="am-gib-layer">
             <legend>Back · gradient · {Math.round(LAYOUTS[layout].back.size)}px</legend>
-            <IconPicker value={backIcon} style={backStyle} onChange={(v) => v && setBackIcon(v)} />
+            {backShape && <ShapeNote />}
+            <IconPicker
+              value={backShape ? undefined : backIcon}
+              style={backStyle}
+              onChange={(v) => {
+                if (!v) return;
+                setBackIcon(v);
+                setBackShape(null);
+              }}
+            />
             <StyleSwitch label="Back icon style" value={backStyle} onChange={setBackStyle} />
           </fieldset>
           <fieldset className="am-gib-layer">
@@ -265,15 +335,15 @@ export function GlassIconBuilder({
             </select>
           </label>
           <div className="am-actions">
-            <button type="button" onClick={() => void download('dark')} disabled={!front}>
+            <button type="button" onClick={() => void download('dark')} disabled={!hasFront}>
               Dark SVG
             </button>
-            <button type="button" onClick={() => void download('light')} disabled={!front}>
+            <button type="button" onClick={() => void download('light')} disabled={!hasFront}>
               Light SVG
             </button>
             {writable && (
-              <button type="submit" className="am-primary" disabled={!front || busy}>
-                {busy ? 'Adding…' : 'Add to library'}
+              <button type="submit" className="am-primary" disabled={!hasFront || busy}>
+                {busy ? 'Saving…' : editing ? 'Save changes' : 'Add to library'}
               </button>
             )}
           </div>

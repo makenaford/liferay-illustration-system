@@ -92,7 +92,8 @@ export function App() {
   /** Whether the builder is open, in place of the library. */
   const [building, setBuilding] = useState(false);
   /** Whether the Glass Icon Builder is open, in place of the library. */
-  const [glassing, setGlassing] = useState(false);
+  /** The Glass Icon Builder, open — with an icon to edit, when it was made there. */
+  const [glassing, setGlassing] = useState<false | { edit?: { setId: string; icon: IconRow } }>(false);
   const builderView = useEditor((s) => s.view);
   const [art, setArt] = useState<Theme>('dark');
   const [query, setQuery] = useState('');
@@ -388,6 +389,7 @@ export function App() {
             writable={writable}
             store={st}
             onToast={setToast}
+            editing={glassing.edit}
             onClose={(saved) => {
               setGlassing(false);
               if (saved) setTab('icons');
@@ -553,7 +555,7 @@ export function App() {
             />
           )
         ) : tab === 'tools' ? (
-          <Tools writable={writable} onNew={() => void create()} onGlass={() => setGlassing(true)} />
+          <Tools writable={writable} onNew={() => void create()} onGlass={() => setGlassing({})} />
         ) : tab === 'graphics' ? (
           graphics.length ? (
             <GraphicsGrid
@@ -586,6 +588,7 @@ export function App() {
                 store={st}
                 onToast={setToast}
                 onAdd={() => pick({ to: 'icons', set: s })}
+                onEdit={(icon) => setGlassing({ edit: { setId: s.id, icon } })}
               />
             ))}
           </div>
@@ -939,6 +942,7 @@ function IconSet({
   store: st,
   onToast,
   onAdd,
+  onEdit,
 }: {
   set: IconSetRow;
   theme: Theme;
@@ -948,6 +952,8 @@ function IconSet({
   onToast: (s: string) => void;
   /** Upload SVGs straight into this set. */
   onAdd: () => void;
+  /** Open an icon made in the Glass Icon Builder there again. */
+  onEdit: (icon: IconRow) => void;
 }) {
   const [picked, setPicked] = useState<IconRow | null>(null);
   const [confirming, setConfirming] = useState(false);
@@ -1145,6 +1151,11 @@ function IconSet({
             >
               Copy SVG
             </button>
+            {writable && picked.builder && (
+              <button type="button" className="am-primary" onClick={() => onEdit(picked)}>
+                Edit in builder
+              </button>
+            )}
             {writable && (
               <button
                 type="button"

@@ -102,6 +102,23 @@ export function App() {
   const [dragging, setDragging] = useState(false);
   const [busy, setBusy] = useState(false);
   const pickRef = useRef<HTMLInputElement>(null);
+  /** Select mode on Illustrations or Graphics: ids picked for removal. */
+  const [selecting, setSelecting] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(() => new Set());
+  const [removing, setRemoving] = useState(false);
+  const stopSelecting = () => {
+    setSelecting(false);
+    setSelected(new Set());
+  };
+  const toggleSelected = (id: string) =>
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  // A selection belongs to one tab.
+  useEffect(stopSelecting, [tab]);
   /** What the open file picker is adding to. */
   const [upload, setUpload] = useState<Upload | null>(null);
   const pick = (to: Upload) => {
@@ -459,9 +476,21 @@ export function App() {
         </button>
       </nav>
         {writable && tab !== 'tools' && (
-          <button type="button" className="am-primary" disabled={busy} onClick={() => pick({ to: tab })}>
-            {busy ? 'Adding…' : UPLOAD_LABEL[tab]}
-          </button>
+          <div className="am-tabbar-actions">
+            {(tab === 'illustrations' || tab === 'graphics') && (
+              <button
+                type="button"
+                className={selecting ? 'am-on' : ''}
+                aria-pressed={selecting}
+                onClick={() => (selecting ? stopSelecting() : setSelecting(true))}
+              >
+                {selecting ? 'Done' : 'Select'}
+              </button>
+            )}
+            <button type="button" className="am-primary" disabled={busy} onClick={() => pick({ to: tab })}>
+              {busy ? 'Adding…' : UPLOAD_LABEL[tab]}
+            </button>
+          </div>
         )}
       </div>
 
@@ -502,6 +531,7 @@ export function App() {
                   by={who(row.updatedBy)}
                   onOpen={() => setOpen(row.id)}
                   onEdit={writable ? () => edit(row) : undefined}
+                  select={selecting ? { on: selected.has(row.id), toggle: () => toggleSelected(row.id) } : undefined}
                 />
               ))}
             </div>
@@ -532,6 +562,9 @@ export function App() {
               writable={writable}
               store={st}
               onToast={setToast}
+              selecting={selecting}
+              selected={selected}
+              onToggle={toggleSelected}
             />
           ) : (
             <Empty
@@ -570,6 +603,51 @@ export function App() {
           />
         )}
       </main>
+
+      {selecting && (tab === 'illustrations' || tab === 'graphics') && (
+        <SelectionBar
+          count={
+            tab === 'illustrations'
+              ? illustrations.filter((i) => selected.has(i.id)).length
+              : graphics.filter((g) => !g.builtIn && selected.has(g.id)).length
+          }
+          noun={tab === 'illustrations' ? 'illustration' : 'graphic'}
+          hint={
+            tab === 'illustrations'
+              ? 'Click illustrations to add them to the selection.'
+              : 'Click graphics to add them — built-in ones ship with the builder and stay.'
+          }
+          removing={removing}
+          onClear={() => setSelected(new Set())}
+          onRemove={async () => {
+            if (!st) return;
+            const ids =
+              tab === 'illustrations'
+                ? illustrations.filter((i) => selected.has(i.id)).map((i) => i.id)
+                : graphics.filter((g) => !g.builtIn && selected.has(g.id)).map((g) => g.id);
+            setRemoving(true);
+            let done = 0;
+            try {
+              for (const id of ids) {
+                if (tab === 'illustrations') await st.deleteIllustration(id);
+                else await st.deleteGraphic(id);
+                done++;
+              }
+              const noun = tab === 'illustrations' ? 'illustration' : 'graphic';
+              setToast(
+                `Removed ${done} ${noun}${done === 1 ? '' : 's'}.` +
+                  (tab === 'graphics' ? ' Illustrations already using them keep their copy.' : ''),
+              );
+              stopSelecting();
+            } catch (e) {
+              setToast(`Removed ${done} of ${ids.length} — ${(e as Error).message}`);
+            } finally {
+              setRemoving(false);
+              st.refresh();
+            }
+          }}
+        />
+      )}
 
       {dragging && writable && (
         <div className="am-drop" aria-hidden>
@@ -641,6 +719,7 @@ function IllustrationCard({
   by,
   onOpen,
   onEdit,
+  select,
 }: {
   row: IllustrationRow;
   theme: Theme;
@@ -648,19 +727,29 @@ function IllustrationCard({
   onOpen: () => void;
   /** Absent for viewers who cannot save. */
   onEdit?: () => void;
+  /** In select mode: whether it is picked, and how to toggle it. */
+  select?: { on: boolean; toggle: () => void };
 }) {
   const svg = useMemo(() => renderDocument(row.doc, theme, { embedFont: false }), [row.doc, theme]);
   const { width, height } = row.doc.canvas;
   return (
     <figure
-      className="am-card"
-      draggable
+      className={`am-card${select ? ' am-selecting' : ''}${select?.on ? ' am-picked' : ''}`}
+      draggable={!select}
       onDragStart={(e) => {
         e.dataTransfer.setData(DRAG, row.id);
         e.dataTransfer.effectAllowed = 'move';
       }}
     >
-      <button type="button" className="am-thumb" onClick={onOpen} aria-label={`Open ${row.name}`} style={{ aspectRatio: `${width} / ${height}` }}>
+      <button
+        type="button"
+        className="am-thumb"
+        onClick={select ? select.toggle : onOpen}
+        aria-label={select ? `Select ${row.name}` : `Open ${row.name}`}
+        aria-pressed={select ? select.on : undefined}
+        style={{ aspectRatio: `${width} / ${height}` }}
+      >
+        {select && <span className="am-check" aria-hidden />}
         <span className="am-art" dangerouslySetInnerHTML={{ __html: svg }} />
       </button>
       <figcaption>
@@ -670,7 +759,7 @@ function IllustrationCard({
           {row.updatedAt ? ` · ${when(row.updatedAt)}` : ''}
           {by ? ` · ${by}` : ''}
         </span>
-        <div className="am-card-row">
+        <div className="am-card-row" hidden={!!select}>
           <button type="button" onClick={onOpen}>
             Details
           </button>
@@ -1070,6 +1159,56 @@ function IconSet({
         )
       )}
     </section>
+  );
+}
+
+/** The pinned bar for a selection on Illustrations or Graphics: clear, or remove with a second click. */
+function SelectionBar({
+  count,
+  noun,
+  hint,
+  removing,
+  onClear,
+  onRemove,
+}: {
+  count: number;
+  noun: string;
+  hint: string;
+  removing: boolean;
+  onClear: () => void;
+  onRemove: () => void;
+}) {
+  const [armed, setArmed] = useState(false);
+  useEffect(() => {
+    if (!armed) return;
+    const t = setTimeout(() => setArmed(false), 4000);
+    return () => clearTimeout(t);
+  }, [armed]);
+  // A changed selection needs a fresh confirmation.
+  useEffect(() => setArmed(false), [count]);
+  const plural = `${noun}${count === 1 ? '' : 's'}`;
+  return (
+    <div className="am-icon-bar am-selection-bar" role="region" aria-label={`Selected ${noun}s`}>
+      <b>{count} selected</b>
+      <span className="am-meta">{hint}</span>
+      <button type="button" disabled={!count} onClick={onClear}>
+        Clear
+      </button>
+      <button
+        type="button"
+        className={`am-danger${armed ? ' am-confirming' : ''}`}
+        disabled={!count || removing}
+        onClick={() => (armed ? onRemove() : setArmed(true))}
+      >
+        {removing
+          ? 'Removing…'
+          : armed
+            ? `Click again to remove ${count} for everyone`
+            : count
+              ? `Remove ${count} ${plural}`
+              : `Remove ${noun}s`}
+      </button>
+    </div>
   );
 }
 
@@ -1475,14 +1614,25 @@ function GraphicsGrid({
   writable,
   store: st,
   onToast,
+  selecting,
+  selected,
+  onToggle,
 }: {
   items: GraphicItem[];
   theme: Theme;
   writable: boolean;
   store: Store | null;
   onToast: (s: string) => void;
+  /** Select mode: tiles toggle in and out of `selected` instead of opening. */
+  selecting: boolean;
+  selected: Set<string>;
+  onToggle: (id: string) => void;
 }) {
   const [picked, setPicked] = useState<string | null>(null);
+  // Select mode replaces the single-graphic bar.
+  useEffect(() => {
+    if (selecting) setPicked(null);
+  }, [selecting]);
   const [confirming, setConfirming] = useState(false);
   const sel = items.find((g) => g.id === picked) ?? null;
   const png = async (g: GraphicItem, t: Theme) => {
@@ -1495,14 +1645,18 @@ function GraphicsGrid({
   };
   return (
     <div className="am-graphics">
-      <ul className={`am-graphic-grid ${theme}`}>
+      <ul className={`am-graphic-grid ${theme}${selecting ? ' am-selecting' : ''}`}>
         {items.map((g) => (
           <li key={g.id}>
             <button
               type="button"
-              className={picked === g.id ? 'am-on' : ''}
-              onClick={() => setPicked(picked === g.id ? null : g.id)}
+              className={(selecting ? selected.has(g.id) : picked === g.id) ? 'am-on' : ''}
+              // Built-in graphics ship with the code; they can't be removed.
+              disabled={selecting && g.builtIn}
+              aria-pressed={selecting ? selected.has(g.id) : undefined}
+              onClick={() => (selecting ? onToggle(g.id) : setPicked(picked === g.id ? null : g.id))}
             >
+              {selecting && !g.builtIn && <span className="am-check" aria-hidden />}
               <img src={svgSrc(graphicSvg(g, theme))} alt="" loading="lazy" />
               <span className="am-graphic-name">{g.name}</span>
               {g.builtIn && <span className="am-badge">Built in</span>}
@@ -1510,7 +1664,7 @@ function GraphicsGrid({
           </li>
         ))}
       </ul>
-      {sel && (
+      {sel && !selecting && (
         <div className="am-icon-bar" role="region" aria-label={sel.name}>
           <b>{sel.name}</b>
           <span className="am-meta">{sel.builtIn ? 'Ships with the builder' : 'In the builder under Graphics'}</span>

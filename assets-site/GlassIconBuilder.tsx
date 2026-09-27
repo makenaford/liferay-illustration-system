@@ -67,6 +67,10 @@ function glyphBounds(d: string): GlyphBounds | undefined {
   }
 }
 
+/** Joins a set and a folder in the Save to picker's values. */
+const DEST_SEP = '\u0001';
+const NEW_FOLDER = '\u0002new';
+
 /** A layer drawn from the original icon's own shape rather than a MingCute icon. */
 function ShapeNote() {
   return <p className="am-hint am-shape-note">The original icon’s own shape — pick an icon to replace it.</p>;
@@ -119,7 +123,8 @@ export function GlassIconBuilder({
   writable: boolean;
   store: Store | null;
   onToast: (s: string) => void;
-  onClose: (savedTo?: string) => void;
+  /** Back to the library; after a save, with the set and folder (null: Unfiled) the icon went into. */
+  onClose: (savedTo?: { setId: string; folder: string | null }) => void;
   /** An icon made here, opened again: its recipe fills the builder, and saving replaces it. */
   editing?: { setId: string; icon: IconRow };
 }) {
@@ -154,6 +159,8 @@ export function GlassIconBuilder({
   });
   const glass = sets.find((s) => s.id === 'glass-icons');
   const [setId, setSetId] = useState(editing?.setId ?? glass?.id ?? sets[0]?.id ?? '__new');
+  // Saving somewhere new: a folder the set does not have yet, named below the picker.
+  const [newFolder, setNewFolder] = useState(false);
   const [busy, setBusy] = useState(false);
 
   const frontPath = frontShape ? '' : pathOf(icon, style);
@@ -187,6 +194,8 @@ export function GlassIconBuilder({
 
   const target = sets.find((s) => s.id === setId);
   const categories = target ? foldersOf(target) : [];
+  /** The Save to picker's value: the set, and its folder — blank for Unfiled. */
+  const destValue = `${setId}${DEST_SEP}${newFolder || (category.trim() && !categories.includes(category.trim())) ? NEW_FOLDER : category.trim()}`;
   const finalName = name.trim() || (icon ? nameOf(icon) : 'Glass icon');
   const finalCategory = category.trim();
   // Real icons of the same folder, or any, to judge size against.
@@ -221,7 +230,7 @@ export function GlassIconBuilder({
       onToast(
         `${replacing ? 'Replaced' : 'Added'} ${finalName} in ${finalCategory || 'Unfiled'} — the builder offers it under Glass icon.`,
       );
-      onClose(sid);
+      onClose({ setId: sid, folder: finalCategory || null });
     } catch (e) {
       onToast(`Could not save the icon — ${(e as Error).message}`);
     } finally {
@@ -326,32 +335,43 @@ export function GlassIconBuilder({
             <span>Name</span>
             <input id="gib-name" value={name} placeholder={nameOf(icon)} onChange={(e) => setName(e.target.value)} />
           </label>
-          <label className="am-field" htmlFor="gib-category">
-            <span>Folder</span>
-            <input
-              id="gib-category"
-              list="gib-categories"
-              value={category}
-              placeholder="Unfiled — or a folder, new or existing"
-              onChange={(e) => setCategory(e.target.value)}
-            />
-            <datalist id="gib-categories">
-              {categories.map((c) => (
-                <option key={c} value={c} />
-              ))}
-            </datalist>
-          </label>
-          <label className="am-field" htmlFor="gib-set">
-            <span>Add to</span>
-            <select id="gib-set" value={setId} onChange={(e) => setSetId(e.target.value)}>
+          <label className="am-field" htmlFor="gib-dest">
+            <span>Save to</span>
+            <select
+              id="gib-dest"
+              value={destValue}
+              onChange={(e) => {
+                const [sid, f] = e.target.value.split(DEST_SEP);
+                setSetId(sid);
+                setNewFolder(f === NEW_FOLDER);
+                setCategory(f === NEW_FOLDER ? '' : f);
+              }}
+            >
               {sets.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                </option>
+                <optgroup key={s.id} label={s.name}>
+                  {foldersOf(s).map((f) => (
+                    <option key={f} value={`${s.id}${DEST_SEP}${f}`}>
+                      {s.name} › {f}
+                    </option>
+                  ))}
+                  <option value={`${s.id}${DEST_SEP}`}>{s.name} › Unfiled</option>
+                  <option value={`${s.id}${DEST_SEP}${NEW_FOLDER}`}>{s.name} › New folder…</option>
+                </optgroup>
               ))}
-              {!glass && <option value="__new">New set: Glass icons</option>}
+              {!glass && (
+                <optgroup label="New set">
+                  <option value={`__new${DEST_SEP}`}>Glass icons › Unfiled</option>
+                  <option value={`__new${DEST_SEP}${NEW_FOLDER}`}>Glass icons › New folder…</option>
+                </optgroup>
+              )}
             </select>
           </label>
+          {newFolder && (
+            <label className="am-field" htmlFor="gib-new-folder">
+              <span>New folder name</span>
+              <input id="gib-new-folder" autoFocus value={category} placeholder="Commerce" onChange={(e) => setCategory(e.target.value)} />
+            </label>
+          )}
           <div className="am-actions">
             <button type="button" onClick={() => void download('dark')} disabled={!hasFront}>
               Dark SVG

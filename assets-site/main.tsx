@@ -1,3 +1,6 @@
+// First: on Cloudflare, it stands in for claude.ai's capabilities before
+// anything asks for one. Elsewhere it does nothing.
+import '../cloudflare/runtime.ts';
 import { createRoot } from 'react-dom/client';
 import { App } from './App.tsx';
 // The builder's stylesheet first: it runs inside this page. Ours is scoped

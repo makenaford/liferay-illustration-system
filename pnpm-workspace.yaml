@@ -1,0 +1,23 @@
+# pnpm settings for this project, including its supply-chain policy.
+
+# Only install versions published at least 3 days ago (in minutes), so a
+# compromised release is usually caught and pulled before it reaches us.
+minimumReleaseAge: 4320
+
+# Fail when a package's publish trust drops (e.g. from trusted publishing or
+# provenance to a plain token publish), a common sign of a hijacked account.
+trustPolicy: no-downgrade
+
+# No git or tarball URLs anywhere below our direct dependencies.
+blockExoticSubdeps: true
+
+# A dependency's install script that is not approved below fails the
+# install, rather than being silently skipped.
+strictDepBuilds: true
+
+# The only packages allowed to run install scripts.
+allowBuilds:
+  # Fetches esbuild's own binary for this Mac.
+  esbuild: true
+  # Cloudflare's runtime, for `alchemy dev`; its script checks its own binary.
+  workerd: true

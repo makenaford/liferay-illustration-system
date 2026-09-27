@@ -131,13 +131,22 @@ button, input, select, textarea {
   position: relative;
   display: grid;
   place-items: center;
+  /* One cell the viewport's own size, never the drawing's (see .stage). */
+  grid-template: minmax(0, 1fr) / minmax(0, 1fr);
   background:
     repeating-conic-gradient(#191c21 0% 25%, #1d2126 0% 50%) 0 0 / 16px 16px;
   cursor: default;
   touch-action: none;
 }
 
-.stage { position: relative; transform-origin: center center; }
+.stage {
+  position: relative; transform-origin: center center;
+  /* Centred even when the drawing is wider or taller than the viewport, as a
+     1440 × 960 mockup is: the zoom is a transform, which scales about the
+     centre but leaves the layout box full size, and grid's own "center"
+     falls back to the start edge once an item overflows. */
+  place-self: unsafe center;
+}
 
 /* Dragging across SVG text would otherwise select it as text. */
 .doc { position: absolute; inset: 0; user-select: none; }
@@ -1145,3 +1154,25 @@ button.mini.on { background: var(--accent); border-color: var(--accent); color: 
 .slot-x { background: none; border: 0; color: var(--ink-faint); cursor: pointer; font-size: 14px; padding: 0; }
 .slot-x:hover { color: #ff9d95; }
 .slots-add { align-self: flex-start; }
+
+/* New illustration's menu of templates (NewMenu.tsx). The Marketing Assets
+   site's tokens where it hosts the menu, the editor's own otherwise. */
+.newmenu { position: relative; display: inline-flex; }
+.newmenu-pop {
+  position: absolute; top: calc(100% + 6px); right: 0; z-index: 30;
+  width: 280px; padding: 6px;
+  display: flex; flex-direction: column; gap: 2px;
+  background: var(--am-surface, var(--panel));
+  border: 1px solid var(--am-line, var(--line));
+  border-radius: var(--am-radius, var(--radius));
+  box-shadow: var(--am-shadow, 0 8px 24px rgba(0, 0, 0, 0.4));
+}
+.newmenu-pop button {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
+  width: 100%; padding: 8px 10px; text-align: left;
+  border: 0; border-radius: 4px; background: none; cursor: pointer;
+  color: var(--am-ink, var(--ink));
+}
+.newmenu-pop button:hover, .newmenu-pop button:focus-visible { background: var(--am-accent-wash, var(--panel-2)); }
+.newmenu-pop b { font-size: 13px; }
+.newmenu-pop span { font-size: 12px; color: var(--am-ink-dim, var(--ink-dim)); line-height: 1.35; }

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { renderDocument } from '../src/render.ts';
-import { blankDoc } from './docs.ts';
+import { TEMPLATES, type TemplateName } from './docs.ts';
+import { NewMenu } from './NewMenu.tsx';
 import {
   addFolder,
   fileIn,
@@ -117,9 +118,9 @@ export function Library() {
     setUI({ view: 'editor', selected: null });
   };
 
-  const create = async () => {
-    const doc = blankDoc();
-    doc.id = freshId('untitled', (entries ?? []).map((e) => e.id));
+  const create = async (template: TemplateName = 'blank') => {
+    const doc = TEMPLATES[template].make();
+    doc.id = freshId(doc.id, (entries ?? []).map((e) => e.id));
     // Made inside a folder, it belongs to that folder.
     if (current !== 'all' && current !== 'unfiled') await fileIn(doc.id, current);
     open(doc);
@@ -248,9 +249,7 @@ export function Library() {
           >
             Export
           </button>
-          <button type="button" className="primary" onClick={() => void create()}>
-            New illustration
-          </button>
+          <NewMenu onPick={(t) => void create(t)} />
         </div>
       </header>
       {kind === 'local' && (

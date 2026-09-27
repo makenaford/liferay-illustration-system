@@ -386,11 +386,12 @@ values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 1 0"
                                                ^ alpha
 ```
 
-`softenGlassRim` drops it to 0.45, which restores the intent — an edge that
-catches light — without pretending SVG can reproduce a blur it cannot express.
-It runs in both places a Figma glass asset can enter the system: the icon
-generator (79 rims across 19 icons x 2 themes) and `importSvg`, so an icon you
-drag in yourself gets the same treatment and says so in its import note.
+`softenGlassRim` used to drop it to 0.45, to keep an edge that catches light
+without the blur behind it. **It is gone.** The blur now survives export —
+`portableBackdropBlur` rebuilds it in plain SVG, in the icon generator and in
+`importSvg` alike — and with the frosting back, Figma's full-white rim reads as
+glass catching light, not as an outline. The rim is left exactly as the Figma
+files draw it.
 
 ## Glass icons come from the design system
 
@@ -876,7 +877,7 @@ chose:
 | Dark glass | white 10% into Glass Step 02, white hairline 22% |
 | Backdrop blur | 20 CSS px (`stdDeviation` 10) |
 | Charts | 8 dashed rules, markers on, bar grids where there is a value axis |
-| Glass icons | rim softened to 0.45 |
+| Glass icons | rim full white, as in Figma |
 
 ### Two directions the file has not settled
 

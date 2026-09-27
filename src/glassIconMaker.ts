@@ -7,7 +7,8 @@
  * FROSTED GLASS icon in front, down and to the left — a translucent blue fill
  * with a drop shadow and two inner glows, over a background blur of the one
  * behind. Each theme has its own fill and effects, as there; light mode's
- * gradient is dark mode's, flipped.
+ * gradient is dark mode's, flipped. Fill, gradient and effects match the
+ * Marketing Icons file (below) value for value.
  *
  * Sizes and positions follow the Marketing Icons file (Figma, "Glass icon/",
  * node 394:3099): in a 64px frame, the glass icon's 68px grid sits at
@@ -63,8 +64,14 @@ const DARK_STOPS = [
   ['#0B5FFF', 0.485577],
   ['#47FFFC', 1],
 ] as const;
-/** Across the back icon's box, as fractions of it: top right to bottom left. */
-const DARK_LINE = { x1: 0.85, y1: 0, x2: 0.4, y2: 1 } as const;
+/**
+ * Across the back icon's box, as fractions of it: top right to bottom left.
+ * Both lines are read off the Marketing Icons file ("Glass icon/", node
+ * 394:3099), the gradient's ends in its own 48px box.
+ */
+const DARK_LINE = { x1: 0.791, y1: 0.125, x2: 0.411, y2: 0.827 } as const;
+/** Light's line starts bottom left, so the same stops put the cyan top right. */
+const LIGHT_LINE = { x1: 0.315, y1: 0.889, x2: 0.849, y2: 0 } as const;
 
 const THEME = {
   dark: {
@@ -89,13 +96,13 @@ const THEME = {
   },
   light: {
     fill: '#99BCFF',
-    fillOpacity: 0.21,
+    fillOpacity: 0.5,
     /** The dark gradient, flipped: the same stops, run the other way. */
     stops: DARK_STOPS,
-    line: { x1: DARK_LINE.x2, y1: DARK_LINE.y2, x2: DARK_LINE.x1, y2: DARK_LINE.y1 },
+    line: LIGHT_LINE,
     bgBlur: 4,
     effects: `<feOffset dx="1.3"/><feGaussianBlur stdDeviation="0.65"/><feComposite in2="hardAlpha" operator="out"/>
-<feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0.344262 0 0 0 0 1 0 0 0 0.6 0"/>
+<feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0.344262 0 0 0 0 1 0 0 0 0.7 0"/>
 <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow"/>
 <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow" result="shape"/>
 <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
@@ -142,8 +149,10 @@ export function makeGlassIcon(spec: GlassIconSpec, theme: GlassTheme): string {
   const fy = FRONT.y - 6;
   const fw = FRONT.size + 14;
   const fh = FRONT.size + 14;
-  const gx = (f: number) => BACK.x + BACK.size * f;
-  const gy = (f: number) => BACK.y + BACK.size * f;
+  // The gradient is in the back path's own space (userSpaceOnUse takes the
+  // path's transform), so its ends are on the icon's 24px grid.
+  const gx = (f: number) => 24 * f;
+  const gy = (f: number) => 24 * f;
   const stops = t.stops
     .map(([c, o]) => `<stop${o ? ` offset="${o}"` : ''} stop-color="${c}"/>`)
     .join('');

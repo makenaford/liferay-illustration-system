@@ -29,6 +29,22 @@ import { GlassIconBuilder } from './GlassIconBuilder.tsx';
 
 type Theme = 'dark' | 'light';
 type Tab = 'illustrations' | 'icons' | 'graphics' | 'tools';
+
+/** Where an upload goes: a tab, and for icons perhaps one set. */
+interface Upload {
+  to: Exclude<Tab, 'tools'>;
+  set?: IconSetRow;
+}
+const UPLOAD_LABEL: Record<Exclude<Tab, 'tools'>, string> = {
+  illustrations: 'Upload illustrations',
+  icons: 'Upload icons',
+  graphics: 'Upload graphics',
+};
+const ACCEPT: Record<Exclude<Tab, 'tools'>, string> = {
+  illustrations: '.json,application/json',
+  icons: '.svg,image/svg+xml',
+  graphics: '.svg,image/svg+xml',
+};
 /** Every asset, the unfiled ones, or one folder's. */
 type Place = 'all' | 'unfiled' | string;
 
@@ -86,6 +102,16 @@ export function App() {
   const [dragging, setDragging] = useState(false);
   const [busy, setBusy] = useState(false);
   const pickRef = useRef<HTMLInputElement>(null);
+  /** What the open file picker is adding to. */
+  const [upload, setUpload] = useState<Upload | null>(null);
+  const pick = (to: Upload) => {
+    setUpload(to);
+    const input = pickRef.current;
+    if (!input) return;
+    // Set here, not by render: the picker must open within this click.
+    input.accept = ACCEPT[to.to];
+    input.click();
+  };
 
   useEffect(() => {
     let off: (() => void) | undefined;
@@ -201,8 +227,12 @@ export function App() {
     [allGraphics, lib.folders, current, needle],
   );
 
-  /** Take files from the picker or a drop. */
-  const take = async (files: File[]) => {
+  /**
+   * Take files from the picker or a drop. `via` is the tab's own Upload
+   * button (or an icon set's Add icons): its SVGs go where it says, with no
+   * question. A drop asks.
+   */
+  const take = async (files: File[], via?: Upload) => {
     if (!st || !files.length) return;
     if (!writable) {
       setToast('You can browse and download here, but adding assets needs Contributor access — ask the owner.');
@@ -224,7 +254,11 @@ export function App() {
       const parts: string[] = [];
       if (added) parts.push(`Added ${added} illustration${added === 1 ? '' : 's'}`);
       if (replaced) parts.push(`replaced ${replaced} with a newer version`);
-      if (parsed.icons.length) setPendingIcons(parsed.icons);
+      if (parsed.icons.length) {
+        if (via?.to === 'graphics') await addGraphics(parsed.icons);
+        else if (via?.set) await addIcons(parsed.icons, { id: via.set.id, name: via.set.name, isNew: false });
+        else setPendingIcons(parsed.icons);
+      }
       if (parsed.illustrations.length) setTab('illustrations');
       if (parsed.skipped.length) parts.push(`skipped ${parsed.skipped.join('; ')}`);
       if (parts.length) setToast(`${parts.join(', ').replace(/^./, (c) => c.toUpperCase())}.`);
@@ -395,26 +429,21 @@ export function App() {
               </button>
             ))}
           </div>
-          {writable && (
-            <button type="button" className="am-primary" disabled={busy} onClick={() => pickRef.current?.click()}>
-              {busy ? 'Adding…' : 'Upload'}
-            </button>
-          )}
           <input
             ref={pickRef}
             id="upload"
             type="file"
             multiple
-            accept=".json,.svg,application/json,image/svg+xml"
             hidden
             onChange={(e) => {
-              void take([...(e.target.files ?? [])]);
+              void take([...(e.target.files ?? [])], upload ?? undefined);
               e.target.value = '';
             }}
           />
         </div>
       </header>
 
+      <div className="am-tabbar">
       <nav className="am-tabs" aria-label="Asset type">
         <button type="button" className={tab === 'illustrations' ? 'am-on' : ''} onClick={() => setTab('illustrations')}>
           Illustrations <span className="am-count">{lib.illustrations.length}</span>
@@ -429,6 +458,12 @@ export function App() {
           Tools
         </button>
       </nav>
+        {writable && tab !== 'tools' && (
+          <button type="button" className="am-primary" disabled={busy} onClick={() => pick({ to: tab })}>
+            {busy ? 'Adding…' : UPLOAD_LABEL[tab]}
+          </button>
+        )}
+      </div>
 
       {/* Folders are for illustrations; icons are organised by category. */}
       {tab === 'illustrations' && (
@@ -517,6 +552,7 @@ export function App() {
                 writable={writable}
                 store={st}
                 onToast={setToast}
+                onAdd={() => pick({ to: 'icons', set: s })}
               />
             ))}
           </div>
@@ -813,6 +849,7 @@ function IconSet({
   writable,
   store: st,
   onToast,
+  onAdd,
 }: {
   set: IconSetRow;
   theme: Theme;
@@ -820,15 +857,61 @@ function IconSet({
   writable: boolean;
   store: Store | null;
   onToast: (s: string) => void;
+  /** Upload SVGs straight into this set. */
+  onAdd: () => void;
 }) {
   const [picked, setPicked] = useState<IconRow | null>(null);
   const [confirming, setConfirming] = useState(false);
+  /** Select mode: icons toggle in and out of `selected` instead of opening. */
+  const [selecting, setSelecting] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(() => new Set());
+  /** Which delete is waiting for its second click: the picked icon, or the selection. */
+  const [arming, setArming] = useState<'one' | 'many' | null>(null);
+  const [removing, setRemoving] = useState(false);
   const variant = (i: IconRow) => (theme === 'light' && i.svgLight ? i.svgLight : i.svg);
 
+  // Icons removed elsewhere drop out of the selection.
+  const live = set.icons.filter((i) => selected.has(i.id));
+
+  const arm = (which: 'one' | 'many') => {
+    setArming(which);
+    setTimeout(() => setArming((a) => (a === which ? null : a)), 4000);
+  };
+  const stopSelecting = () => {
+    setSelecting(false);
+    setSelected(new Set());
+    setArming(null);
+  };
+  const toggle = (id: string) =>
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+
+  const remove = async (icons: IconRow[]) => {
+    if (!st || !icons.length) return;
+    setRemoving(true);
+    let done = 0;
+    try {
+      for (const icon of icons) {
+        await st.deleteIcon(set.id, icon.id);
+        done++;
+      }
+      onToast(icons.length === 1 ? `Removed ${iconParts(icons[0]).name}.` : `Removed ${done} icons from ${set.name}.`);
+      setPicked(null);
+      stopSelecting();
+    } catch (e) {
+      onToast(`Removed ${done} of ${icons.length} — ${(e as Error).message}`);
+    } finally {
+      setRemoving(false);
+      setArming(null);
+    }
+  };
+
   return (
-    <section
-      className="am-set"
-    >
+    <section className="am-set">
       <div className="am-set-head">
         <h2>{set.name}</h2>
         <span className="am-meta">
@@ -836,87 +919,155 @@ function IconSet({
           {by ? ` · started by ${by}` : ''}
         </span>
         {writable && (
-          <button
-            type="button"
-            className={`am-danger am-mini${confirming ? ' am-confirming' : ''}`}
-            onClick={async () => {
-              if (!confirming) {
-                setConfirming(true);
-                setTimeout(() => setConfirming(false), 4000);
-                return;
-              }
-              try {
-                await st?.deleteSet(set);
-                onToast(`Removed the ${set.name} set.`);
-              } catch (e) {
-                onToast(`Could not remove the set — ${(e as Error).message}`);
-              }
-            }}
-          >
-            {confirming ? 'Click again to remove the set' : 'Remove set'}
-          </button>
-        )}
-      </div>
-      {byCategory(set.icons).map(([category, icons]) => (
-        <div key={category} className="am-category">
-          <h3>
-            {category} <span className="am-count">{icons.length}</span>
-          </h3>
-          <ul className={`am-icons ${theme}`}>
-            {icons.map((icon) => (
-              <li key={icon.id}>
-                <button
-                  type="button"
-                  className={picked?.id === icon.id ? 'am-on' : ''}
-                  onClick={() => setPicked(picked?.id === icon.id ? null : icon)}
-                  title={`${category} · ${iconParts(icon).name}`}
-                >
-                  <img src={svgSrc(variant(icon))} alt="" loading="lazy" />
-                  <span>{iconParts(icon).name}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ))}
-      {picked && (
-        <div className="am-icon-bar" role="region" aria-label={picked.name}>
-          <b>{iconParts(picked).name}</b>
-          <span className="am-meta">
-            {iconParts(picked).category} · {picked.svgLight ? 'dark and light variants' : 'one variant'}
-          </span>
-          <button type="button" onClick={() => void offer(`${slug(picked.name)}${picked.svgLight ? '-dark' : ''}.svg`, picked.svg, 'image/svg+xml', onToast)}>
-            {picked.svgLight ? 'Dark SVG' : 'SVG'}
-          </button>
-          {picked.svgLight && (
-            <button type="button" onClick={() => void offer(`${slug(picked.name)}-light.svg`, picked.svgLight!, 'image/svg+xml', onToast)}>
-              Light SVG
+          <div className="am-set-actions">
+            <button type="button" className="am-mini" onClick={onAdd}>
+              Add icons
             </button>
-          )}
-          <button
-            type="button"
-            onClick={() => void copyText(variant(picked)).then((ok) => onToast(ok ? `Copied ${picked.name}.` : 'Could not reach the clipboard.'))}
-          >
-            Copy SVG
-          </button>
-          {writable && (
             <button
               type="button"
-              className="am-danger"
-              onClick={async () => {
-                try {
-                  await st?.deleteIcon(set.id, picked.id);
-                  onToast(`Removed ${picked.name}.`);
+              className={`am-mini${selecting ? ' am-on' : ''}`}
+              aria-pressed={selecting}
+              onClick={() => {
+                if (selecting) stopSelecting();
+                else {
+                  setSelecting(true);
                   setPicked(null);
-                } catch (e) {
-                  onToast(`Could not remove it — ${(e as Error).message}`);
                 }
               }}
             >
-              Remove
+              {selecting ? 'Done' : 'Select'}
             </button>
-          )}
+            <button
+              type="button"
+              className={`am-danger am-mini${confirming ? ' am-confirming' : ''}`}
+              onClick={async () => {
+                if (!confirming) {
+                  setConfirming(true);
+                  setTimeout(() => setConfirming(false), 4000);
+                  return;
+                }
+                try {
+                  await st?.deleteSet(set);
+                  onToast(`Removed the ${set.name} set.`);
+                } catch (e) {
+                  onToast(`Could not remove the set — ${(e as Error).message}`);
+                }
+              }}
+            >
+              {confirming ? 'Click again to remove the set' : 'Remove set'}
+            </button>
+          </div>
+        )}
+      </div>
+      {byCategory(set.icons).map(([category, icons]) => {
+        const all = icons.every((i) => selected.has(i.id));
+        return (
+          <div key={category} className="am-category">
+            <h3>
+              {category} <span className="am-count">{icons.length}</span>
+              {selecting && (
+                <button
+                  type="button"
+                  className="am-linkish am-select-all"
+                  onClick={() =>
+                    setSelected((prev) => {
+                      const next = new Set(prev);
+                      for (const i of icons) {
+                        if (all) next.delete(i.id);
+                        else next.add(i.id);
+                      }
+                      return next;
+                    })
+                  }
+                >
+                  {all ? 'Clear' : 'Select all'}
+                </button>
+              )}
+            </h3>
+            <ul className={`am-icons ${theme}${selecting ? ' am-selecting' : ''}`}>
+              {icons.map((icon) => {
+                const on = selecting ? selected.has(icon.id) : picked?.id === icon.id;
+                return (
+                  <li key={icon.id}>
+                    <button
+                      type="button"
+                      className={on ? 'am-on' : ''}
+                      aria-pressed={selecting ? on : undefined}
+                      onClick={() => {
+                        if (selecting) toggle(icon.id);
+                        else {
+                          setPicked(picked?.id === icon.id ? null : icon);
+                          setArming(null);
+                        }
+                      }}
+                      title={`${category} · ${iconParts(icon).name}`}
+                    >
+                      {selecting && <span className="am-check" aria-hidden />}
+                      <img src={svgSrc(variant(icon))} alt="" loading="lazy" />
+                      <span>{iconParts(icon).name}</span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        );
+      })}
+      {selecting ? (
+        <div className="am-icon-bar" role="region" aria-label="Selected icons">
+          <b>{live.length} selected</b>
+          <span className="am-meta">Click icons to add them to the selection.</span>
+          <button type="button" disabled={!live.length} onClick={() => setSelected(new Set())}>
+            Clear
+          </button>
+          <button
+            type="button"
+            className={`am-danger${arming === 'many' ? ' am-confirming' : ''}`}
+            disabled={!live.length || removing}
+            onClick={() => (arming === 'many' ? void remove(live) : arm('many'))}
+          >
+            {removing
+              ? 'Removing…'
+              : arming === 'many'
+                ? `Click again to remove ${live.length} for everyone`
+                : live.length
+                  ? `Remove ${live.length} icon${live.length === 1 ? '' : 's'}`
+                  : 'Remove icons'}
+          </button>
         </div>
+      ) : (
+        picked && (
+          <div className="am-icon-bar" role="region" aria-label={picked.name}>
+            <b>{iconParts(picked).name}</b>
+            <span className="am-meta">
+              {iconParts(picked).category} · {picked.svgLight ? 'dark and light variants' : 'one variant'}
+            </span>
+            <button type="button" onClick={() => void offer(`${slug(picked.name)}${picked.svgLight ? '-dark' : ''}.svg`, picked.svg, 'image/svg+xml', onToast)}>
+              {picked.svgLight ? 'Dark SVG' : 'SVG'}
+            </button>
+            {picked.svgLight && (
+              <button type="button" onClick={() => void offer(`${slug(picked.name)}-light.svg`, picked.svgLight!, 'image/svg+xml', onToast)}>
+                Light SVG
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => void copyText(variant(picked)).then((ok) => onToast(ok ? `Copied ${picked.name}.` : 'Could not reach the clipboard.'))}
+            >
+              Copy SVG
+            </button>
+            {writable && (
+              <button
+                type="button"
+                className={`am-danger${arming === 'one' ? ' am-confirming' : ''}`}
+                disabled={removing}
+                onClick={() => (arming === 'one' ? void remove([picked]) : arm('one'))}
+              >
+                {arming === 'one' ? 'Click again to remove it for everyone' : 'Remove'}
+              </button>
+            )}
+          </div>
+        )
       )}
     </section>
   );

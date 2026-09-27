@@ -171,7 +171,7 @@
         "padding": 12,
         "align": "start"
       },
-      "surface": "basic"
+      "surface": "glass-default"
     },
     {
       "type": "card",
@@ -246,7 +246,7 @@
         "padding": 12,
         "align": "start"
       },
-      "surface": "basic"
+      "surface": "glass-default"
     },
     {
       "type": "card",
@@ -321,7 +321,7 @@
         "padding": 12,
         "align": "start"
       },
-      "surface": "basic"
+      "surface": "glass-default"
     },
     {
       "type": "card",
@@ -396,7 +396,7 @@
         "padding": 12,
         "align": "start"
       },
-      "surface": "basic"
+      "surface": "glass-default"
     },
     {
       "type": "card",
@@ -471,7 +471,7 @@
         "padding": 12,
         "align": "start"
       },
-      "surface": "basic"
+      "surface": "glass-default"
     },
     {
       "type": "card",
@@ -507,7 +507,7 @@
         ],
         "align": "start"
       },
-      "surface": "basic"
+      "surface": "glass-default"
     }
   ]
 }

@@ -28,7 +28,7 @@
       "y": 46,
       "width": 426,
       "height": 266,
-      "surface": "basic"
+      "surface": "glass-default"
     }
   ],
   "elements": [
@@ -140,7 +140,7 @@
         "padding": 12,
         "align": "start"
       },
-      "surface": "basic"
+      "surface": "glass-default"
     },
     {
       "type": "subCard",
@@ -249,7 +249,7 @@
         "padding": 12,
         "align": "start"
       },
-      "surface": "basic"
+      "surface": "glass-default"
     },
     {
       "type": "subCard",
@@ -359,7 +359,7 @@
         "padding": 12,
         "align": "start"
       },
-      "surface": "basic"
+      "surface": "glass-default"
     },
     {
       "type": "subCard",
@@ -514,7 +514,7 @@
         "padding": 12,
         "align": "start"
       },
-      "surface": "basic"
+      "surface": "glass-default"
     },
     {
       "type": "subCard",
@@ -574,7 +574,7 @@
         "padding": 12,
         "align": "start"
       },
-      "surface": "basic"
+      "surface": "glass-default"
     },
     {
       "type": "subCard",
@@ -649,7 +649,7 @@
         "padding": 12,
         "align": "start"
       },
-      "surface": "basic"
+      "surface": "glass-default"
     },
     {
       "type": "subCard",
@@ -758,7 +758,7 @@
         "padding": 12,
         "align": "start"
       },
-      "surface": "basic"
+      "surface": "glass-default"
     },
     {
       "type": "button",

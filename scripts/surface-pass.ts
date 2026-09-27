@@ -50,8 +50,8 @@ for (const file of readdirSync(DOCS).filter((f) => f.endsWith('.json'))) {
   // Panels are the hero surface.
   for (const p of doc.panels ?? []) {
     if (!p.surface) {
-      p.surface = 'basic';
-      bump('basic');
+      p.surface = 'glass-default';
+      bump('glass-default');
       lines.push(`    panel ${p.width}x${p.height} → basic`);
     }
   }
@@ -83,9 +83,9 @@ for (const file of readdirSync(DOCS).filter((f) => f.endsWith('.json'))) {
             siblingBoxes.slice(0, i).some((b) => b && overlap(box, b) > 0.25)
           ) {
             // Drawn after something it covers: it is floating over the scene.
-            pick = 'elevated';
+            pick = 'glass-elevated';
           } else {
-            pick = 'basic';
+            pick = 'glass-default';
           }
 
           e.surface = pick;

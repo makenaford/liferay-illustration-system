@@ -30,7 +30,7 @@ export function GlassPanel(ctx: Ctx, props: GlassPanelProps): VNode {
     height: props.height,
     radius: props.radius ?? ctx.tokens.radius.panel,
     backdrop: props.backdrop,
-    surface: props.surface ?? 'basic',
+    surface: props.surface ?? 'glass-default',
     children: props.children,
   });
 }

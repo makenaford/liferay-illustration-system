@@ -21,7 +21,7 @@
       "y": 48,
       "width": 260,
       "height": 276,
-      "surface": "basic"
+      "surface": "glass-default"
     }
   ],
   "elements": [
@@ -98,7 +98,7 @@
         ],
         "align": "center"
       },
-      "surface": "basic"
+      "surface": "glass-default"
     },
     {
       "type": "subCard",
@@ -163,7 +163,7 @@
         "align": "center",
         "justify": "between"
       },
-      "surface": "basic"
+      "surface": "glass-default"
     },
     {
       "type": "spotIcon",

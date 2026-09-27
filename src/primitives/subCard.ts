@@ -10,10 +10,10 @@ import type { SurfaceName } from '../tokens.ts';
  * `surface` directly.
  */
 const ALIAS: Record<string, SurfaceName> = {
-  sheen: 'basic',
-  flat: 'basic',
+  sheen: 'glass-default',
+  flat: 'glass-default',
   sunken: 'sunken',
-  accent: 'highlighted',
+  accent: 'glass-highlighted',
 };
 
 export interface SubCardProps {
@@ -35,7 +35,7 @@ export interface SubCardProps {
  * its default radius and default surface; both now draw through `Surface`.
  */
 export function SubCard(ctx: Ctx, props: SubCardProps): VNode {
-  const surface = props.surface ?? ALIAS[props.variant ?? 'sheen'] ?? 'basic';
+  const surface = props.surface ?? ALIAS[props.variant ?? 'sheen'] ?? 'glass-default';
   return Surface(ctx, {
     x: props.x,
     y: props.y,

@@ -49,19 +49,21 @@ export function blankDoc(): Doc {
  * as the set's mockup illustrations are drawn ("Deploy with enterprise-grade
  * security, anywhere", "Turn your site into a B2B revenue engine"):
  *
- *   canvas   1440 × 960, 3:2
- *   mockup   1360 × 880 at (40, 40), 16px corners — the same size in every
+ *   canvas   800 × 533, 3:2
+ *   mockup   752 × 485 at (24, 24), 10px corners — the same size in every
  *            mockup illustration, so they line up side by side
  *   panels   glass, overlapping the mockup's edge and meeting the canvas
- *            edge with 20px to spare; each holds a screenshot inset 20px
+ *            edge with 12px to spare; each holds a screenshot inset 12px
+ *
+ * It was drawn at 1440 × 960 first; this is that layout scaled to 800 wide.
  *
  * The images are placeholders to replace, not artwork.
  */
 export const MOCKUP = {
-  canvas: { width: 1440, height: 960 },
+  canvas: { width: 800, height: 533 },
   /** Space between a panel and the canvas edge, and between a panel and its screenshot. */
-  pad: 20,
-  image: { x: 40, y: 40, width: 1360, height: 880, radius: 16 },
+  pad: 12,
+  image: { x: 24, y: 24, width: 752, height: 485, radius: 10 },
 } as const;
 
 /** A labelled placeholder image, so the slot's size and purpose read at a glance. */
@@ -85,7 +87,7 @@ function panel(x: number, y: number, width: number, height: number, label: strin
     y,
     width,
     height,
-    surface: 'highlighted',
+    surface: 'glass-highlighted',
     sheen: 'radial',
     radius: 8,
     // Frosts the mockup beneath it, not just the stage.
@@ -109,8 +111,8 @@ function panel(x: number, y: number, width: number, height: number, label: strin
 /** A new mockup illustration: the mockup image, and two glass panels at its edges. */
 export function mockupDoc(): Doc {
   const { canvas, pad, image } = MOCKUP;
-  const left = { width: 522, height: 278 };
-  const right = { width: 442, height: 251 };
+  const left = { width: 290, height: 155 };
+  const right = { width: 246, height: 140 };
   return {
     id: 'untitled-mockup',
     name: 'Untitled mockup',
@@ -126,9 +128,9 @@ export function mockupDoc(): Doc {
         alt: 'Mockup — replace with a product screenshot',
       },
       // Left: meets the canvas's left edge with the pad to spare.
-      panel(pad, 290, left.width, left.height, 'Detail'),
+      panel(pad, 161, left.width, left.height, 'Detail'),
       // Right: meets the canvas's right edge the same way.
-      panel(canvas.width - pad - right.width, 169, right.width, right.height, 'Detail'),
+      panel(canvas.width - pad - right.width, 94, right.width, right.height, 'Detail'),
     ],
   };
 }
@@ -138,7 +140,7 @@ export const TEMPLATES = {
   blank: { label: 'Blank', description: 'An empty canvas with one glass panel.', make: blankDoc },
   mockup: {
     label: 'Mockup',
-    description: 'A 3:2 product screenshot with glass panels meeting the edges, 20px in.',
+    description: 'An 800 × 533 product screenshot with glass panels meeting the edges, 12px in.',
     make: mockupDoc,
   },
 } as const;

@@ -155,6 +155,7 @@ export const SCHEMA: {
       { key: 'surface', label: 'Surface', kind: 'select', options: ['', ...SURFACES] },
       { key: 'radius', label: 'Radius', kind: 'number', min: 0, default: 8 },
       { key: 'clip', label: 'Clip content', kind: 'boolean' },
+      { key: 'ink', label: 'Text', kind: 'select', options: ['', 'dark', 'light'] },
     ],
   },
   group: {
@@ -175,6 +176,7 @@ export const SCHEMA: {
       { key: 'surface', label: 'Surface', kind: 'select', options: ['', ...SURFACES] },
       { key: 'radius', label: 'Radius', kind: 'number', min: 0, default: 4 },
       { key: 'clip', label: 'Clip content', kind: 'boolean' },
+      { key: 'ink', label: 'Text', kind: 'select', options: ['', 'dark', 'light'] },
     ],
   },
   pill: {
@@ -461,7 +463,7 @@ export const DEFAULTS: Record<Element['type'], () => Element> = {
   // Cards arrive as columns: whatever is added stacks at the card padding the
   // audit requires, instead of every addition landing on the same spot.
   card: () => ({
-    type: 'card', x: 40, y: 40, width: 180, height: 100, surface: 'basic',
+    type: 'card', x: 40, y: 40, width: 180, height: 100, surface: 'glass-default',
     layout: { direction: 'vertical', gap: 8, padding: LAYOUT.cardPadding, align: 'start' },
     children: [],
   }),
@@ -471,7 +473,7 @@ export const DEFAULTS: Record<Element['type'], () => Element> = {
     children: [],
   }),
   subCard: () => ({
-    type: 'subCard', x: 40, y: 40, width: 160, height: 80, surface: 'basic', radius: 8,
+    type: 'subCard', x: 40, y: 40, width: 160, height: 80, surface: 'glass-default', radius: 8,
     layout: { direction: 'vertical', gap: 8, padding: LAYOUT.cardPadding, align: 'start' },
     children: [],
   }),

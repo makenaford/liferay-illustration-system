@@ -47,18 +47,22 @@ function absorbChartLabels(kids: Element[], gap: number): Element[] {
 }
 
 /**
- * Surfaces renamed. The glass was condensed to three: basic (was glass1, and
- * glass2, the old default card), elevated (was glass3) and highlighted —
- * which took in the glass-over surfaces made for the Mockup template.
+ * Surfaces renamed. The glass was condensed to three — glass1 and glass2 (the
+ * old default card) became basic, glass3 elevated, and the glass-over surfaces
+ * made for the Mockup template highlighted — and those three then took the
+ * `glass-` prefix, so the glass reads as glass beside the solid surfaces.
  */
 const RENAMED_SURFACES: Record<string, string> = {
-  glass1: 'basic',
-  glass2: 'basic',
-  glass3: 'elevated',
-  glassOver: 'highlighted',
-  glassOverDark: 'highlighted',
-  glassOverLight: 'highlighted',
-  mockup: 'highlighted',
+  glass1: 'glass-default',
+  glass2: 'glass-default',
+  glass3: 'glass-elevated',
+  glassOver: 'glass-highlighted',
+  glassOverDark: 'glass-highlighted',
+  glassOverLight: 'glass-highlighted',
+  mockup: 'glass-highlighted',
+  basic: 'glass-default',
+  elevated: 'glass-elevated',
+  highlighted: 'glass-highlighted',
 };
 
 function migrateElement(el: Element): Element {
@@ -71,5 +75,8 @@ function migrateElement(el: Element): Element {
 }
 
 export function migrateDoc(doc: Doc): Doc {
-  return { ...doc, elements: doc.elements.map(migrateElement) };
+  const panels = doc.panels?.map((p) =>
+    p.surface && RENAMED_SURFACES[p.surface] ? { ...p, surface: RENAMED_SURFACES[p.surface] as typeof p.surface } : p,
+  );
+  return { ...doc, ...(panels && { panels }), elements: doc.elements.map(migrateElement) };
 }

@@ -30,7 +30,7 @@ import { GLASS_ICONS } from './glassIcons.generated.ts';
 import { GRAPHICS } from './graphics.generated.ts';
 import { BACKDROP_SLOT } from './figmaGlass.ts';
 import { FONT_FACES } from './font.generated.ts';
-import type { Doc, Element } from './document.ts';
+import type { Doc, Element, Ink } from './document.ts';
 import { boundingBox, resolveLayout } from './autolayout.ts';
 import { reattach } from './attach.ts';
 import { paintOf } from './colors.ts';
@@ -119,11 +119,20 @@ function renderElementInner(ctx: Ctx, el: Element, path?: string): VNode | null 
     (children ?? []).map((c, i) =>
       renderElement(ctx, c, path === undefined ? undefined : `${path}.${i}`),
     );
-  // A container's children, cut to its own shape when it clips content.
+  // A container's children, cut to its own shape when it clips content, and
+  // drawn in the other theme's ink when the card asks (`Ink`).
   const contents = (
-    c: { x: number; y: number; width: number; height: number; clip?: boolean; children?: Element[] },
+    c: { x: number; y: number; width: number; height: number; clip?: boolean; ink?: Ink; children?: Element[] },
     radius: number,
-  ) => (c.clip ? [clipTo(ctx, { ...c, radius }, kid(c.children))] : kid(c.children));
+  ) => {
+    const outer = ctx.tokens;
+    if (c.ink) ctx.tokens = themes[c.ink === 'dark' ? 'light' : 'dark'];
+    try {
+      return c.clip ? [clipTo(ctx, { ...c, radius }, kid(c.children))] : kid(c.children);
+    } finally {
+      ctx.tokens = outer;
+    }
+  };
 
   switch (el.type) {
     case 'text':
@@ -489,6 +498,25 @@ export interface RenderOptions {
 }
 
 /**
+ * The backdrop blurs of every glass surface in an element and its children —
+ * empty when there is no glass in it. A card with no surface draws the
+ * default glass; a sub-card's legacy `variant` is resolved by `SubCard`, so
+ * one without a surface is taken as glass too.
+ */
+function glassBlurs(ctx: Ctx, el: Element): number[] {
+  const out: number[] = [];
+  const walk = (e: Element) => {
+    if (e.type === 'card' || e.type === 'subCard') {
+      const spec = ctx.tokens.surfaces[e.surface ?? 'glass-default'];
+      if (spec?.blur && !spec.recessed) out.push(spec.blur);
+    }
+    for (const c of (e as { children?: Element[] }).children ?? []) walk(c);
+  };
+  walk(el);
+  return out;
+}
+
+/**
  * Build the document as a virtual-SVG tree.
  *
  * Layering, and why it's shaped this way: glass surfaces need something real
@@ -585,14 +613,26 @@ export function buildDocument(
    * exact, and it can only point backwards, so never at itself.
    */
   const elId = (j: number) => `${ns}-el${j}`;
+  /*
+   * Only what the glass could show: an element clear of it by more than the
+   * blur's reach is left out. Beyond saving work, it keeps a stack of glass
+   * cards from compounding — each copy holds its own copies of what is under
+   * it, so copying everything would double with every card.
+   */
+  const reach = (el: Element) => {
+    const b = boundingBox(el);
+    const pad = Math.max(0, ...glassBlurs(ctx, el)) * 1.5;
+    return b && { x: b.x - pad, y: b.y - pad, x2: b.x + b.width + pad, y2: b.y + b.height + pad };
+  };
   const beneath = (i: number) => {
     const id = `${ns}-bd-under${i}`;
-    ctx.defs.push(
-      h('g', { id }, [
-        h('use', { href: `#${baseId}`, 'xlink:href': `#${baseId}` }),
-        ...doc.elements.slice(0, i).map((_, j) => h('use', { href: `#${elId(j)}`, 'xlink:href': `#${elId(j)}` })),
-      ]),
-    );
+    const r = reach(doc.elements[i]);
+    const under = doc.elements.slice(0, i).flatMap((el, j) => {
+      const b = r && boundingBox(el);
+      const clear = b && (b.x > r.x2 || b.y > r.y2 || b.x + b.width < r.x || b.y + b.height < r.y);
+      return clear ? [] : [h('use', { href: `#${elId(j)}`, 'xlink:href': `#${elId(j)}` })];
+    });
+    ctx.defs.push(h('g', { id }, [h('use', { href: `#${baseId}`, 'xlink:href': `#${baseId}` }), ...under]));
     return id;
   };
 
@@ -600,9 +640,10 @@ export function buildDocument(
     'g',
     { 'data-el': 'content' },
     doc.elements.map((el, i) => {
-      // Cursors and graphics are glass over the content: they blur it. So
-      // does a card that asks to (`frost: 'content'`).
-      if (el.type === 'cursor' || el.type === 'graphic' || (el.type === 'card' && el.frost === 'content')) {
+      // Glass is glass over the content: cursors, graphics and any card with
+      // a glass surface blur what is really beneath them — a screenshot, a
+      // photo, the cards before them — not only the stage.
+      if (el.type === 'cursor' || el.type === 'graphic' || glassBlurs(ctx, el).length) {
         ctx.backdropId = beneath(i);
       }
       const node = draw(el, options.annotate ? String(i) : undefined);

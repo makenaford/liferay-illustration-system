@@ -22,9 +22,9 @@ const PAD = 28;
 const rows = Math.ceil(NAMES.length / COLS);
 
 const DESCRIPTION: Record<SurfaceName, string> = {
-  basic: 'the everyday card, no shadow',
-  elevated: 'floating overlay',
-  highlighted: 'the one that matters; glass over a screenshot',
+  'glass-default': 'the everyday card, no shadow',
+  'glass-elevated': 'floating overlay',
+  'glass-highlighted': 'the one that matters; glass over a screenshot',
   gradient: 'Figma Blue Gradient',
   solid: 'opaque action',
   outline: 'structure, no weight',

@@ -2,6 +2,19 @@
   "version": "0.0.1",
   "configurations": [
     {
+      "name": "assets-site",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "run",
+        "assets:dev",
+        "--",
+        "--port",
+        "5274",
+        "--strictPort"
+      ],
+      "port": 5274
+    },
+    {
       "name": "illustration-builder",
       "runtimeExecutable": "pnpm",
       "runtimeArgs": [

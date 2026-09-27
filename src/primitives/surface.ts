@@ -82,12 +82,14 @@ function castShadow(
   box: { x: number; y: number; width: number; height: number },
 ) {
   const id = ctx.uid('cast');
-  const pad = Math.max(...layers.map((l) => l.blur + Math.abs(l.dy))) * 2 + 20;
+  const pad = Math.max(...layers.map((l) => l.blur + Math.max(Math.abs(l.dx ?? 0), Math.abs(l.dy)))) * 2 + 20;
   let input = 'SourceGraphic';
   const prims = layers.map((l, i) => {
     const result = `sh${i}`;
     const node = h('feDropShadow', {
       in: input,
+      // Explicit: feDropShadow defaults both offsets to 2, not 0.
+      dx: l.dx ?? 0,
       dy: l.dy,
       // A CSS shadow blur is roughly twice the Gaussian sigma.
       stdDeviation: l.blur / 2,
@@ -138,7 +140,7 @@ export function Surface(ctx: Ctx, props: SurfaceProps): VNode {
   const spec: SurfaceSpec =
     typeof props.surface === 'string' || props.surface === undefined
       ? // A name this build doesn't know — renamed since, say — draws as the standard card.
-        (tk.surfaces[(props.surface as SurfaceName) ?? 'basic'] ?? tk.surfaces.basic)
+        (tk.surfaces[(props.surface as SurfaceName) ?? 'glass-default'] ?? tk.surfaces['glass-default'])
       : props.surface;
 
   const box = { x, y, width, height };

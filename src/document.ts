@@ -24,6 +24,15 @@ import type { IconStyle } from './icons.ts';
 
 export type Tone = 'accent' | 'success' | 'info' | 'neutral' | 'muted' | 'subtle';
 
+/**
+ * Which ink a card's contents draw in. Glass shows what is behind it, so a
+ * glass card over a white screenshot is light whatever the theme, and the
+ * theme's white text vanishes on it: `dark` draws its contents in the light
+ * theme's ink, `light` in the dark theme's. Omitted, they follow the theme.
+ * The renderer cannot see a screenshot's pixels, so this is set by hand.
+ */
+export type Ink = 'dark' | 'light';
+
 export interface PanelSpec {
   x: number;
   y: number;
@@ -117,12 +126,13 @@ export interface CardEl extends LayoutChild {
   /** Clip content: children are cut to this container's shape. */
   clip?: boolean;
   /**
-   * What the card's glass frosts. By default the stage and the hero panels;
-   * `content` also takes in every element drawn before it, as real glass over
-   * a screenshot would — the Mockup template's panels over its mockup image.
-   * Only a top-level card can; it costs a copy of what is beneath it.
+   * Retained for older documents. A top-level card's glass now always frosts
+   * what is beneath it — the stage, the panels and every element drawn before
+   * it — as real glass over a screenshot would.
    */
   frost?: 'content';
+  /** Text on the card — see `Ink`. */
+  ink?: Ink;
   children?: Element[];
 }
 
@@ -166,6 +176,8 @@ export interface SubCardEl extends LayoutChild {
   layout?: LayoutSpec;
   /** Clip content: children are cut to this container's shape. */
   clip?: boolean;
+  /** Text on the card — see `Ink`. */
+  ink?: Ink;
   children?: Element[];
 }
 

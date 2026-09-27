@@ -28,14 +28,14 @@
       "y": 108,
       "width": 204,
       "height": 214,
-      "surface": "basic"
+      "surface": "glass-default"
     },
     {
       "x": 286,
       "y": 108,
       "width": 204,
       "height": 214,
-      "surface": "basic"
+      "surface": "glass-default"
     }
   ],
   "elements": [
@@ -162,7 +162,7 @@
           "content": "If Segment = X Show Y"
         }
       ],
-      "surface": "basic"
+      "surface": "glass-default"
     },
     {
       "type": "toggle",

@@ -35,7 +35,7 @@ function spotlight(
     y,
     width,
     height: 62,
-    surface: 'highlighted',
+    surface: 'glass-highlighted',
     radius: 8,
     layout: { direction: 'vertical', gap: 6, padding: [10, 12], align: 'start' },
     children: [

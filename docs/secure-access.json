@@ -29,7 +29,7 @@
       "width": 162,
       "height": 288,
       "sheen": "linear",
-      "surface": "basic"
+      "surface": "glass-default"
     },
     {
       "x": 274,
@@ -37,7 +37,7 @@
       "width": 180,
       "height": 290,
       "sheen": "linear",
-      "surface": "basic"
+      "surface": "glass-default"
     }
   ],
   "elements": [
@@ -215,7 +215,7 @@
         ],
         "align": "start"
       },
-      "surface": "basic"
+      "surface": "glass-default"
     },
     {
       "type": "subCard",
@@ -328,7 +328,7 @@
         ],
         "align": "start"
       },
-      "surface": "basic"
+      "surface": "glass-default"
     }
   ]
 }

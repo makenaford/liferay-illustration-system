@@ -288,7 +288,7 @@ values: success `#00873D` → **`#0C8104`**, info/aqua `#007D7A` → **`#00E0DC`
 text `#020812` → **`#262C37`**.
 
 **The light background is the design system's mesh.** Three radial blooms
-transcribed from the `highlighted` card (`[data-tone='blue']`): `Brand/Primary`
+transcribed from the `glass-highlighted` card (`[data-tone='blue']`): `Brand/Primary`
 from the leading corner at 34%, `Lighten 1` answering from the trailing top at
 26%, and a wider, fainter `Brand/Primary` rising from the bottom edge. The
 corners carry the colour and the middle stays clean — which is what makes a
@@ -326,7 +326,7 @@ should confirm it is wanted rather than discover it.
 |---|---|---|
 | `sheen` | `glass` | Translucent sheen, hairline, frosted backdrop |
 | `flat` | `static` | Opaque `Card BG/Grey`, third-strength edge |
-| `accent` | `highlighted` | `Card BG/Blue` — the one card that matters more |
+| `accent` | `glass-highlighted` | `Card BG/Blue` — the one card that matters more |
 | `sunken` | *no analogue* | A recessed well for log rows |
 
 **One rule I have deliberately not followed.** The site says a non-interactive
@@ -453,7 +453,7 @@ glass elevations plus five specials:
 | `glass1` | Nested tile. No shadow — it is inset, not floating. |
 | `glass2` | The default card. The design system's glass colours, at illustration opacity — see below. |
 | `glass3` | Floating over the composition: an overlay, a callout. |
-| `highlighted` | The one card that matters more — **lit blue rather than brighter**: a blue cast shadow and a blue lit edge instead of a black shadow. |
+| `glass-highlighted` | The one card that matters more — **lit blue rather than brighter**: a blue cast shadow and a blue lit edge instead of a black shadow. |
 | `gradient` | **`Blue Gradient`, sampled from Figma.** Solid, not glass. |
 | `solid` | Opaque brand blue, for a callout that is an action. |
 | `outline` | Structure without weight — hairline only, no fill. |
@@ -518,7 +518,7 @@ Note this is a different gradient from `brandGradient` (blue → purple), which
 is what `GradientText` and the gradient `Label` use. One paints a surface, the
 other paints brand moments; they are not interchangeable and are kept apart.
 
-`highlighted` is worth calling out. The obvious way to emphasise a card is to
+`glass-highlighted` is worth calling out. The obvious way to emphasise a card is to
 make it brighter, which makes it look like a *different* material sitting
 among its neighbours. Casting its shadow in brand blue instead of black raises
 it by colour, so it stays the same glass and still pulls the eye.
@@ -537,7 +537,7 @@ one:
 | Card overlapping its siblings — it floats over them | `glass3` | 4 |
 | Stroke-only in the original export | `outline` | 1 |
 | Sampled `Blue Gradient` | `gradient` | 1 |
-| The focal card of its illustration | `highlighted` | 1 |
+| The focal card of its illustration | `glass-highlighted` | 1 |
 
 The floating test is the useful part: a root-level card is `glass3` if it
 overlaps something drawn before it. That found exactly the overlays — "Order
@@ -546,7 +546,7 @@ sitting over the traffic chart — without anyone listing them.
 
 Two were set by hand, because no structural rule could know them: the b2b
 price table (`outline` — the original drew it as a stroke with no fill) and
-the AI Source Breakdown overlay (`highlighted` — it is the card that
+the AI Source Breakdown overlay (`glass-highlighted` — it is the card that
 illustration is named for).
 
 `solid` and `sunken` are not used at card level. The solid callouts in these
@@ -788,7 +788,7 @@ point, which says "these are readings" rather than "this is a trend".
 
 ### Two follow-ups
 
-**Light mode's `highlighted` was too quiet.** In dark, a blue cast shadow reads
+**Light mode's `glass-highlighted` was too quiet.** In dark, a blue cast shadow reads
 instantly against near-black; on a near-white stage the same shadow is barely a
 tint. This is the one card in an illustration saying "look here", and at 22%
 fill with a 55% edge it was not surviving being seen small. Light now carries a
@@ -845,7 +845,7 @@ renders, scaled, with the callouts authored in artboard coordinates on top.
 A page variant is therefore not a re-author — it is the illustration plus its
 annotation, and editing the dashboard updates both.
 
-The callouts are `subCard` + `surface: highlighted` + `spotIcon` + a figure.
+The callouts are `subCard` + `surface: glass-highlighted` + `spotIcon` + a figure.
 No new primitive was needed, which is the useful result: the spotlight pattern
 was already expressible.
 
@@ -958,7 +958,7 @@ Only the panel drawn on top is the overlay. Document order is paint order, so
 "covers an earlier sibling" is the test; the first pass promoted both sides of
 an overlap and turned base panels into overlays.
 
-Surfaces chosen for *meaning* rather than elevation — `highlighted`,
+Surfaces chosen for *meaning* rather than elevation — `glass-highlighted`,
 `gradient`, `outline`, `sunken`, `solid` — are left alone. They are saying
 something the depth rule cannot. 31 panels changed.
 

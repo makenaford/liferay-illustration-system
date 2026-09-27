@@ -1,5 +1,6 @@
 import type { Doc } from '../src/document.ts';
 import { migrateDoc } from '../src/migrate.ts';
+import { normaliseFigmaSvg } from '../src/figmaGlass.ts';
 import { MAX_DOC_BYTES } from './store.ts';
 
 /**
@@ -115,3 +116,24 @@ export const slug = (s: string) =>
 
 /** An `<img>` source for SVG markup. */
 export const svgSrc = (svg: string) => `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+
+/**
+ * An icon's SVG as an <img> shows it, glass and all. Glass icons keep
+ * Figma's background blur as a `foreignObject` with CSS `backdrop-filter`,
+ * which an SVG shown as an image never renders — the glass reads as flat.
+ * This draws the blur in plain SVG instead (normaliseFigmaSvg), as the
+ * builder does. The stored SVG, and what downloads and copies, stay as
+ * uploaded. Cached: a set redraws its tiles on every selection change.
+ */
+const iconSrcs = new Map<string, string>();
+export function iconSrc(svg: string): string {
+  let src = iconSrcs.get(svg);
+  if (src === undefined) {
+    const p = normaliseFigmaSvg(svg, 'i');
+    src = svgSrc(
+      `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${p.viewBox.join(' ')}" fill="none">${p.body.replaceAll('__NS__', 'i-')}</svg>`,
+    );
+    iconSrcs.set(svg, src);
+  }
+  return src;
+}

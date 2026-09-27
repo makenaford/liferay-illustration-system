@@ -55,14 +55,25 @@ function glyphBounds(d: string): GlyphBounds | undefined {
   }
 }
 
-/** Each layout's name on its button, which says which icon leads. */
-const SHORT: Record<LayoutName, string> = { glass: 'Glass', equal: 'Equal', gradient: 'Gradient' };
+/** The layout choices: which icon leads beside the other, or the two centred. */
+type Family = 'glass' | 'equal' | 'gradient' | 'centred';
+type Position = 'right' | 'left' | 'above' | 'behind';
+const FAMILIES: Family[] = ['glass', 'equal', 'gradient', 'centred'];
+const FAMILY_LABEL: Record<Family, string> = { glass: 'Glass', equal: 'Equal', gradient: 'Gradient', centred: 'Center' };
+const POSITION_LABEL: Record<Position, string> = {
+  right: 'Back on the right',
+  left: 'Back on the left',
+  above: 'Back above',
+  behind: 'Back behind',
+};
 
 /** What each layout is for, as the set uses it. */
 const LAYOUT_HINT: Record<LayoutName, string> = {
   glass: 'Glass leads: the glass icon is the subject, the gradient one an accent behind it — the Marketing Icons frame.',
   equal: 'Equal: the two icons carry the same weight — the set’s most common layout.',
   gradient: 'Gradient leads: the gradient icon is the subject, the glass one a smaller accent in front.',
+  above: 'Centered, back above: the gradient icon rises from behind the glass one, centred — as in “Out of the box”.',
+  behind: 'Centered, back behind: the gradient icon sits square behind the glass one — as in “Analytics”.',
 };
 
 /** Glass SVG (Figma-export shape) -> something an <img> shows, glass and all. */
@@ -89,8 +100,12 @@ export function GlassIconBuilder({
   const [style, setStyle] = useState<IconStyle>('fill');
   const [backIcon, setBackIcon] = useState('mc:planet');
   const [backStyle, setBackStyle] = useState<IconStyle>('fill');
-  const [layout, setLayout] = useState<LayoutName>('glass');
-  const [mirror, setMirror] = useState(false);
+  // Which icon leads, and where the back sits — beside it, or centred.
+  const [family, setFamily] = useState<Family>('glass');
+  const [position, setPosition] = useState<Position>('right');
+  const centred = family === 'centred';
+  const layout: LayoutName = centred ? (position === 'behind' ? 'behind' : 'above') : family;
+  const mirror = !centred && position === 'left';
   const [name, setName] = useState('');
   const [category, setCategory] = useState('');
   const glass = sets.find((s) => s.id === 'glass-icons');
@@ -191,23 +206,26 @@ export function GlassIconBuilder({
           <fieldset className="am-gib-layer">
             <legend>Layout · which icon leads</legend>
             <div className="am-seg am-seg-fill" role="group" aria-label="Layout">
-              {(Object.keys(LAYOUTS) as LayoutName[]).map((name) => (
+              {FAMILIES.map((f) => (
                 <button
-                  key={name}
+                  key={f}
                   type="button"
-                  className={layout === name ? 'am-on' : ''}
-                  aria-pressed={layout === name}
-                  title={LAYOUTS[name].label}
-                  onClick={() => setLayout(name)}
+                  className={family === f ? 'am-on' : ''}
+                  aria-pressed={family === f}
+                  onClick={() => {
+                    setFamily(f);
+                    // Beside or centred: each has its own positions.
+                    if ((f === 'centred') !== centred) setPosition(f === 'centred' ? 'above' : 'right');
+                  }}
                 >
-                  {SHORT[name]}
+                  {FAMILY_LABEL[f]}
                 </button>
               ))}
             </div>
-            <div className="am-seg am-seg-fill" role="group" aria-label="Which side the back sits">
-              {[false, true].map((m) => (
-                <button key={String(m)} type="button" className={mirror === m ? 'am-on' : ''} aria-pressed={mirror === m} onClick={() => setMirror(m)}>
-                  {m ? 'Back on the left' : 'Back on the right'}
+            <div className="am-seg am-seg-fill" role="group" aria-label="Where the back sits">
+              {(centred ? (['above', 'behind'] as const) : (['right', 'left'] as const)).map((p) => (
+                <button key={p} type="button" className={position === p ? 'am-on' : ''} aria-pressed={position === p} onClick={() => setPosition(p)}>
+                  {POSITION_LABEL[p]}
                 </button>
               ))}
             </div>

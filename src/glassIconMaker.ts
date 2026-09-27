@@ -103,18 +103,25 @@ export interface Placement {
   y: number;
 }
 
-export type LayoutName = 'glass' | 'equal' | 'gradient';
+export type LayoutName = 'glass' | 'equal' | 'gradient' | 'above' | 'behind';
+
+/** The centred layouts, where the back sits above or behind the glass rather than to one side. */
+export const CENTRED: LayoutName[] = ['above', 'behind'];
 
 /**
  * Where the two icons sit in the 64px frame: each icon's 24px grid, scaled
  * to `size` and placed at (x, y). "Glass leads" is the Figma frame; the
  * others are read off the set itself — the median of its icons whose back
- * is about as big as the glass (Equal), or bigger (Gradient leads).
+ * is about as big as the glass (Equal), or bigger (Gradient leads). The two
+ * centred ones follow the icons that stack instead: the back rising above
+ * the glass ("Out of the box", "DAM") or square behind it ("Analytics").
  */
 export const LAYOUTS: Record<LayoutName, { label: string; front: Placement; back: Placement }> = {
   glass: { label: 'Glass leads', front: { size: 68, x: -7, y: 0 }, back: { size: 48, x: 19, y: -5 } },
   equal: { label: 'Equal', front: { size: 62, x: -5.5, y: 7 }, back: { size: 56.5, x: 13.5, y: -4 } },
   gradient: { label: 'Gradient leads', front: { size: 53, x: -4.5, y: 13.5 }, back: { size: 70, x: 0.5, y: -5 } },
+  above: { label: 'Centered, back above', front: { size: 58, x: 3, y: 9 }, back: { size: 44, x: 10, y: -6.5 } },
+  behind: { label: 'Centered, back behind', front: { size: 68, x: -2, y: -1 }, back: { size: 56, x: 4, y: 2 } },
 };
 
 /** The Figma frame's layout. */
@@ -127,7 +134,8 @@ export const BACK = LAYOUTS.glass.back;
  */
 export function placementsOf(spec: Pick<GlassIconSpec, 'layout' | 'mirror'>): { front: Placement; back: Placement } {
   const l = LAYOUTS[spec.layout ?? 'glass'];
-  if (!spec.mirror) return { front: l.front, back: l.back };
+  // A centred layout has no side to mirror.
+  if (!spec.mirror || CENTRED.includes(spec.layout ?? 'glass')) return { front: l.front, back: l.back };
   const flip = (p: Placement) => ({ ...p, x: FRAME - p.x - p.size });
   return { front: flip(l.front), back: flip(l.back) };
 }

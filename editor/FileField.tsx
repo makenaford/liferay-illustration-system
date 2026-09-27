@@ -31,13 +31,16 @@ export function FileField({
     try {
       const file = await pickFile();
       if (!file) return;
-      const asset = await readAsset(file);
-
-      // Keep the box the designer already sized; re-derive height from the new
-      // artwork's aspect so it does not arrive stretched.
       const box = el as Element & { width?: number; height?: number };
+      // Compressed for the box it fills, when it has one.
+      const asset = await readAsset(file, 160, filled && box.width && box.height ? { width: box.width, height: box.height } : undefined);
+      // Keep the box the designer already sized. A cover image keeps it whole —
+      // it crops to fill, as the Mockup template's fixed-size images need; any
+      // other re-derives its height from the new artwork, so it isn't stretched.
+      const cover = asset.type === 'image' && ((el as { fit?: string }).fit ?? 'cover') === 'cover';
       const width = filled && box.width ? box.width : asset.size.width;
-      const height = Math.round(width * (asset.size.height / asset.size.width));
+      const height =
+        filled && cover && box.height ? box.height : Math.round(width * (asset.size.height / asset.size.width));
 
       onPatch(
         asset.type === 'svg'

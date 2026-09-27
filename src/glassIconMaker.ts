@@ -28,14 +28,52 @@
 export type GlassTheme = 'dark' | 'light';
 
 export interface GlassIconSpec {
-  /** The frosted glass icon in front, on MingCute's 24px grid. */
-  front: string;
-  /** The gradient icon behind it, on the same grid. */
-  back: string;
+  /** The frosted glass icon in front: a path on MingCute's 24px grid, or drawn shapes fitted onto it. */
+  front: string | Layer;
+  /** The gradient icon behind it, the same way. */
+  back: string | Layer;
   /** Where each icon's ink actually lies on that grid; the whole grid when not measured. */
   frontBounds?: GlyphBounds;
   backBounds?: GlyphBounds;
 }
+
+/**
+ * A layer drawn in its own coordinates — an existing icon's shapes, as
+ * Figma exported them, each with its own transform if it had one — and how
+ * they fit onto the 24px grid: grid = own × scale + (tx, ty).
+ */
+export interface Layer {
+  paths: LayerPath[];
+  toGrid: { scale: number; tx: number; ty: number };
+}
+
+export interface LayerPath {
+  d: string;
+  transform?: string;
+  /** How the shape is drawn, as the original drew it: its fill rule, or its stroke's width and ends. */
+  paint?: { fillRule?: 'evenodd' | 'nonzero'; stroke?: { width: number; linecap?: string; linejoin?: string } };
+}
+
+const layerOf = (l: string | Layer): Layer =>
+  typeof l === 'string' ? { paths: [{ d: l }], toGrid: { scale: 1, tx: 0, ty: 0 } } : l;
+
+/**
+ * A layer's paths as markup, painted with `color`: onto the grid, then by
+ * `placed` (a box's own placement) when given. Every path carries its whole
+ * transform, since a clipPath may hold shapes but not groups. A stroked
+ * shape is stroked in `color`; a filled one keeps its fill rule.
+ */
+const pathsOf = (l: Layer, color: string, extra = '', placed = '') =>
+  l.paths
+    .map((p) => {
+      const t = `${placed ? `${placed} ` : ''}translate(${l.toGrid.tx} ${l.toGrid.ty}) scale(${l.toGrid.scale})${p.transform ? ` ${p.transform}` : ''}`;
+      const s = p.paint?.stroke;
+      const paint = s
+        ? ` fill="none" stroke="${color}" stroke-width="${s.width}"${s.linecap ? ` stroke-linecap="${s.linecap}"` : ''}${s.linejoin ? ` stroke-linejoin="${s.linejoin}"` : ''}`
+        : `${color ? ` fill="${color}"` : ''}${p.paint?.fillRule ? ` fill-rule="${p.paint.fillRule}" clip-rule="${p.paint.fillRule}"` : ''}`;
+      return `<path transform="${t}" d="${p.d}"${paint}${extra}/>`;
+    })
+    .join('');
 
 /** A glyph's bounding box on the 24px grid. */
 export interface GlyphBounds {
@@ -55,8 +93,8 @@ const SHADOW = { left: 6, right: 6, top: 2, bottom: 10 };
 
 /** The frame, and each icon's box within it — MingCute's 24px grid scaled up. */
 export const FRAME = 64;
-const FRONT = { size: 68, x: -7, y: 0 };
-const BACK = { size: 48, x: 19, y: -5 };
+export const FRONT = { size: 68, x: -7, y: 0 };
+export const BACK = { size: 48, x: 19, y: -5 };
 
 /** The back icon's gradient, as the dark icons draw it. Light runs it in reverse. */
 const DARK_STOPS = [
@@ -142,15 +180,22 @@ const place = (box: { size: number; x: number; y: number }) =>
 /** One theme of the icon, as a Figma-style glass SVG. */
 export function makeGlassIcon(spec: GlassIconSpec, theme: GlassTheme): string {
   const t = THEME[theme];
-  const back = `<path transform="${place(BACK)}" d="${spec.back}" fill="url(#gi_grad)"/>`;
-  const front = `<path transform="${place(FRONT)}" d="${spec.front}"`;
+  const backLayer = layerOf(spec.back);
+  const frontLayer = layerOf(spec.front);
+  // The back: one square of gradient on the grid, cut to the back's shapes
+  // by a mask — so the gradient runs across every piece the same way,
+  // however each is placed, and strokes and fill rules hold (the
+  // construction Figma's own light export uses).
+  const back =
+    `<g transform="${place(BACK)}"><rect x="-6" y="-6" width="36" height="36" fill="url(#gi_grad)" mask="url(#gi_backshape)"/></g>`;
+  /** The front's paths, placed. */
+  const front = (color: string, extra = '') => pathsOf(frontLayer, color, extra, place(FRONT));
   // The effect region Figma gives a glass shape: its box, and room for the shadow.
   const fx = FRONT.x - 6;
   const fy = FRONT.y - 6;
   const fw = FRONT.size + 14;
   const fh = FRONT.size + 14;
-  // The gradient is in the back path's own space (userSpaceOnUse takes the
-  // path's transform), so its ends are on the icon's 24px grid.
+  // The gradient is on the back's 24px grid, the square's own space.
   const gx = (f: number) => 24 * f;
   const gy = (f: number) => 24 * f;
   const stops = t.stops
@@ -162,14 +207,16 @@ export function makeGlassIcon(spec: GlassIconSpec, theme: GlassTheme): string {
     `<foreignObject x="${fx}" y="${fy}" width="${fw}" height="${fh}"><div xmlns="http://www.w3.org/1999/xhtml" ` +
     `style="backdrop-filter:blur(${t.bgBlur / 2}px);clip-path:url(#gi_bgclip);height:100%;width:100%"></div></foreignObject>` +
     `<g filter="url(#gi_dii)" data-figma-bg-blur-radius="${t.bgBlur}">` +
-    `${front} fill="${t.fill}" fill-opacity="${t.fillOpacity}"/></g>` +
+    front(t.fill, ` ${frontLayer.paths.some((p) => p.paint?.stroke) ? 'stroke-opacity' : 'fill-opacity'}="${t.fillOpacity}"`) +
+    `</g>` +
     `<defs>` +
     `<filter id="gi_dii" x="${fx}" y="${fy}" width="${fw}" height="${fh}" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">` +
     `<feFlood flood-opacity="0" result="BackgroundImageFix"/>` +
     `<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>` +
     t.effects.replace(/\n/g, '') +
     `</filter>` +
-    `<clipPath id="gi_bgclip" transform="translate(${-fx} ${-fy})">${front}/></clipPath>` +
+    `<clipPath id="gi_bgclip" transform="translate(${-fx} ${-fy})">${front('')}</clipPath>` +
+    `<mask id="gi_backshape" maskUnits="userSpaceOnUse" x="-24" y="-24" width="72" height="72">${pathsOf(backLayer, 'white')}</mask>` +
     `<linearGradient id="gi_grad" x1="${gx(t.line.x1)}" y1="${gy(t.line.y1)}" x2="${gx(t.line.x2)}" y2="${gy(t.line.y2)}" gradientUnits="userSpaceOnUse">${stops}</linearGradient>` +
     `</defs></svg>`
   );

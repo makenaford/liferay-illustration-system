@@ -631,6 +631,13 @@ export interface Doc {
    */
   artboard?: { width: number; height: number };
   /**
+   * The screenshot slot of a mockup illustration: where its product
+   * screenshot goes, at a fixed 3:2 size. The builder draws it as a guide, and
+   * an image dropped inside it fills it — cropped to fill, from the centre —
+   * whatever size the image arrives at. See editor/docs.ts `MOCKUP`.
+   */
+  mockup?: { x: number; y: number; width: number; height: number };
+  /**
    * A mesh background from the design system, in place of the theme's own
    * stage. Absent keeps the original: the blurred bloom in dark, the corner
    * mesh in light. `none` draws no background at all — the canvas is

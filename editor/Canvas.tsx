@@ -952,6 +952,27 @@ export function Canvas() {
             </>
           )}
 
+          {/*
+            * The mockup's screenshot slot: a fixed 3:2 box, with its centre,
+            * which a screenshot dropped inside fills (useFileDrop). Lit while
+            * a file is dragged over the canvas.
+            */}
+          {smartGuides && doc.mockup && (() => {
+            const m = doc.mockup;
+            const cx = m.x + m.width / 2;
+            const cy = m.y + m.height / 2;
+            const arm = 10 / zoom;
+            return (
+              <g className={`mockup-slot${fileDrop.dropping ? ' on' : ''}`}>
+                <rect x={m.x} y={m.y} width={m.width} height={m.height} strokeWidth={1.5 / zoom} strokeDasharray={`${6 / zoom} ${4 / zoom}`} />
+                <path d={`M${cx - arm} ${cy}H${cx + arm}M${cx} ${cy - arm}V${cy + arm}`} strokeWidth={1 / zoom} />
+                <text x={m.x + 8 / zoom} y={m.y + 16 / zoom} fontSize={11 / zoom}>
+                  {`Screenshot · 3:2 · ${m.width} × ${m.height}${fileDrop.dropping ? ' — drop to fill' : ''}`}
+                </text>
+              </g>
+            );
+          })()}
+
           {guide && (
             <rect
               x={guide.x}

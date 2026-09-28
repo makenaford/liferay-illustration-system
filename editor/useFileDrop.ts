@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { assetElement, readAsset } from './pickFile.ts';
-import { commit, getState, setUI } from './state.ts';
+import { commit, elementAt, getState, setUI } from './state.ts';
+import type { Element as DocElement } from '../src/document.ts';
 import { contentWidth, insertAt, slotForDrop } from './insertion.ts';
 import { resolveLayout } from '../src/autolayout.ts';
 import { snap } from './grid.ts';
@@ -84,6 +85,37 @@ export function useFileDrop(stageRef: React.RefObject<HTMLDivElement | null>, zo
       ?.getAttribute('data-path') ?? null;
 
     let doc = getState().doc;
+
+    /*
+     * The mockup's screenshot slot (`Doc.mockup`): a raster dropped inside it
+     * — not onto a frame over it — fills it. It replaces the screenshot there,
+     * cropped to fill from the centre, and the slot keeps its 3:2 size
+     * whatever the image's own; with no screenshot left, one is put back.
+     */
+    const m = doc.mockup;
+    const onFrame = hit !== null && (() => {
+      const el = elementAt(doc, hit);
+      return !!el && el.type !== 'image';
+    })();
+    const raster = usable.find((f) => f.type !== 'image/svg+xml' && !/\.svg$/i.test(f.name));
+    if (m && raster && !onFrame && px >= m.x && px <= m.x + m.width && py >= m.y && py <= m.y + m.height) {
+      try {
+        const asset = await readAsset(raster, 160, { width: m.width, height: m.height });
+        const near = (a: number, b: number) => Math.abs(a - b) < 1;
+        const at = doc.elements.findIndex(
+          (el) => el.type === 'image' && near(el.x, m.x) && near(el.y, m.y) && near(el.width, m.width) && near(el.height, m.height),
+        );
+        const shot = { ...(at >= 0 ? doc.elements[at] : {}), type: 'image', ...m, fit: 'cover', ...asset.patch } as DocElement;
+        const elements = at >= 0 ? doc.elements.map((el, i) => (i === at ? shot : el)) : [shot, ...doc.elements];
+        commit({ ...doc, elements });
+        setUI({ selected: String(at >= 0 ? at : 0) });
+        flash(`Screenshot placed in the ${m.width} × ${m.height} slot, cropped to fill · ${asset.note}`);
+      } catch (err) {
+        flash(`Could not read that file — ${(err as Error).message}`);
+      }
+      return;
+    }
+
     const slot = slotForDrop(doc, resolveLayout(doc), hit, { x: px, y: py });
     const cw = contentWidth(doc, slot);
     let last: string | null = null;

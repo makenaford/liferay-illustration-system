@@ -59,8 +59,10 @@ export function blankDoc(): Doc {
  * security, anywhere", "Turn your site into a B2B revenue engine"):
  *
  *   canvas   800 × 533, 3:2
- *   mockup   752 × 485 at (24, 24), 10px corners — the same size in every
- *            mockup illustration, so they line up side by side
+ *   mockup   720 × 480 — 3:2 — centred, 10px corners: the same size in every
+ *            mockup illustration, so they line up side by side. It is the
+ *            document's screenshot slot (`Doc.mockup`): the builder shows it
+ *            as a guide, and a screenshot dropped in it fills it.
  *   panels   glass, overlapping the mockup's edge and meeting the canvas
  *            edge with 12px to spare; each holds a screenshot inset 12px
  *
@@ -72,7 +74,7 @@ export const MOCKUP = {
   canvas: { width: 800, height: 533 },
   /** Space between a panel and the canvas edge, and between a panel and its screenshot. */
   pad: 12,
-  image: { x: 24, y: 24, width: 752, height: 485, radius: 10 },
+  image: { x: 40, y: 27, width: 720, height: 480, radius: 10 },
 } as const;
 
 /** A labelled placeholder image, so the slot's size and purpose read at a glance. */
@@ -127,6 +129,7 @@ export function mockupDoc(): Doc {
     name: 'Untitled mockup',
     layout: 'bare',
     canvas: { ...canvas },
+    mockup: { x: image.x, y: image.y, width: image.width, height: image.height },
     panels: [],
     elements: [
       {

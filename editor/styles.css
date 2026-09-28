@@ -1182,3 +1182,9 @@ button.mini.on { background: var(--accent); border-color: var(--accent); color: 
 .newmenu-pop button:hover, .newmenu-pop button:focus-visible { background: var(--am-accent-wash, var(--panel-2)); }
 .newmenu-pop b { font-size: 13px; }
 .newmenu-pop span { font-size: 12px; color: var(--am-ink-dim, var(--ink-dim)); line-height: 1.35; }
+
+/* The mockup's screenshot slot guide. */
+.mockup-slot rect { fill: none; stroke: #3b7bff; opacity: 0.7; }
+.mockup-slot path { stroke: #3b7bff; opacity: 0.7; }
+.mockup-slot text { fill: #3b7bff; font-family: 'Source Sans 3', system-ui, sans-serif; font-weight: 600; paint-order: stroke; stroke: rgba(0, 0, 0, 0.55); stroke-width: 3px; }
+.mockup-slot.on rect { fill: rgba(59, 123, 255, 0.12); opacity: 1; }

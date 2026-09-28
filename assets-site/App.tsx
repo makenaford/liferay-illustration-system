@@ -460,9 +460,10 @@ export function App() {
                 await removeFolder(f.id);
                 if (current === f.id) setPlace('all');
                 await st?.refresh();
-                setToast(`Deleted the ${f.name} folder. What was in it is now Unfiled.`);
+                const n = lib.illustrations.filter((i) => folderOf(i.id) === f.id).length;
+                setToast(`Deleted the ${f.name} folder.${n ? ` ${n === 1 ? 'Its illustration is' : `Its ${n} illustrations are`} now Unfiled.` : ''}`);
               },
-              deleteNote: 'Click again — illustrations stay, unfiled',
+              holds: ['illustration', 'illustrations'] as [string, string],
             })),
             {
               key: 'unfiled',
@@ -577,7 +578,7 @@ export function App() {
                     await ops.remove(f);
                     if (iconAt.setId === set.id && iconAt.folder === f) setIconPlace(iconPlaceKey(set.id, 'all'));
                   },
-                  deleteNote: 'Click again — icons stay, unfiled',
+                  holds: ['icon', 'icons'] as [string, string],
                 })),
                 {
                   key: iconPlaceKey(set.id, 'unfiled'),
@@ -977,9 +978,10 @@ function iconFolders(st: Store | null, set: IconSetRow, onToast: (s: string) => 
     onToast(`Renamed ${from} to ${to}.`);
   };
   const remove = async (name: string) => {
-    await file(set.icons.filter((i) => iconFolderOf(i) === name), null, true);
+    const inside = set.icons.filter((i) => iconFolderOf(i) === name);
+    await file(inside, null, true);
     await saveFolders(foldersOf(set).filter((f) => f !== name));
-    onToast(`Deleted the ${name} folder. Its icons are now Unfiled.`);
+    onToast(`Deleted the ${name} folder.${inside.length ? ` Its ${inside.length === 1 ? 'icon is' : `${inside.length} icons are`} now Unfiled.` : ''}`);
   };
   return { saveFolders, file, rename, remove };
 }
@@ -1227,7 +1229,6 @@ function IconSet({
   onEdit: (icon: IconRow) => void;
 }) {
   const [picked, setPicked] = useState<IconRow | null>(null);
-  const [confirming, setConfirming] = useState(false);
   /** Select mode: icons toggle in and out of `selected` instead of opening. */
   const [selecting, setSelecting] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(() => new Set());
@@ -1316,25 +1317,8 @@ function IconSet({
             >
               {selecting ? 'Done' : 'Select'}
             </button>
-            <button
-              type="button"
-              className={`am-danger am-mini${confirming ? ' am-confirming' : ''}`}
-              onClick={async () => {
-                if (!confirming) {
-                  setConfirming(true);
-                  setTimeout(() => setConfirming(false), 4000);
-                  return;
-                }
-                try {
-                  await st?.deleteSet(set);
-                  onToast(`Removed the ${set.name} set.`);
-                } catch (e) {
-                  onToast(`Could not remove the set — ${(e as Error).message}`);
-                }
-              }}
-            >
-              {confirming ? 'Click again to remove the set' : 'Remove set'}
-            </button>
+            {/* Sets are not removed from the page: a set is the team's whole
+                collection, and one click from a folder's delete is too close. */}
           </div>
         )}
       </div>

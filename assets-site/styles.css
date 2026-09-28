@@ -304,6 +304,10 @@ h1 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -0.4px; line-
 }
 .am-nav-menu button { border: 0; background: none; text-align: left; padding: 6px 10px; border-radius: 6px; color: var(--am-ink); }
 .am-nav-menu button:hover { background: var(--am-surface-2); }
+.am-nav-confirm { padding: 8px 10px 6px; max-width: 240px; font-size: 13px; color: var(--am-ink); }
+.am-nav-confirm p { margin: 0 0 8px; line-height: 1.35; }
+.am-nav-confirm div { display: flex; justify-content: flex-end; gap: 6px; }
+.am-nav-confirm button { border: 1px solid var(--am-line) !important; border-radius: 6px; padding: 5px 10px; background: var(--am-surface); }
 .am-nav-new { color: var(--am-ink-faint); font-size: 12.5px; }
 .am-nav-new:hover { color: var(--am-accent); }
 .am-nav-input {

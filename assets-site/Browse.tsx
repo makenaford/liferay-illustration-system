@@ -26,8 +26,8 @@ export interface NavItem {
   /** Offered behind the row's ⋯. */
   onRename?: (name: string) => Promise<void>;
   onDelete?: () => Promise<void>;
-  /** What deleting does, said on the confirming click. */
-  deleteNote?: string;
+  /** What the folder holds, one and many — named when deleting a folder that isn't empty. */
+  holds?: [string, string];
 }
 
 export interface NavSection {
@@ -72,6 +72,16 @@ export function Sidebar({
     document.addEventListener('mousedown', away);
     return () => document.removeEventListener('mousedown', away);
   }, [menu]);
+
+  const remove = async (item: NavItem) => {
+    setMenu(null);
+    setConfirming(null);
+    try {
+      await item.onDelete!();
+    } catch (e) {
+      onToast(`Could not delete the folder — ${(e as Error).message}`);
+    }
+  };
 
   const commit = async (run: (name: string) => Promise<void>) => {
     const name = draft.trim();
@@ -164,25 +174,33 @@ export function Sidebar({
                 Rename
               </button>
             )}
-            {item.onDelete && (
-              <button
-                type="button"
-                role="menuitem"
-                className={`am-danger${confirming === item.key ? ' am-confirming' : ''}`}
-                onClick={async () => {
-                  if (confirming !== item.key) return setConfirming(item.key);
-                  setMenu(null);
-                  setConfirming(null);
-                  try {
-                    await item.onDelete!();
-                  } catch (e) {
-                    onToast(`Could not delete the folder — ${(e as Error).message}`);
-                  }
-                }}
-              >
-                {confirming === item.key ? (item.deleteNote ?? 'Click again to delete') : 'Delete folder'}
-              </button>
-            )}
+            {item.onDelete &&
+              (confirming === item.key ? (
+                // A folder with something in it asks first, and says what happens to it.
+                <div className="am-nav-confirm" role="alertdialog" aria-label={`Delete ${item.label}?`}>
+                  <p>
+                    Delete <b>{item.label}</b>? Its {item.count}{' '}
+                    {(item.holds ?? ['item', 'items'])[item.count === 1 ? 0 : 1]} will move to Unfiled.
+                  </p>
+                  <div>
+                    <button type="button" onClick={() => setConfirming(null)}>
+                      Cancel
+                    </button>
+                    <button type="button" className="am-danger am-confirming" onClick={() => void remove(item)}>
+                      Delete folder
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  role="menuitem"
+                  className="am-danger"
+                  onClick={() => ((item.count ?? 0) > 0 ? setConfirming(item.key) : void remove(item))}
+                >
+                  Delete folder
+                </button>
+              ))}
           </div>
         )}
       </div>

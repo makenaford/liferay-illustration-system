@@ -57,6 +57,18 @@ run `pnpm run colors`.
 from `@fontsource/source-sans-3` (SIL OFL) via `pnpm run font`, and the output,
 `src/font.generated.ts`, is committed like the other generated files.
 
+**Translated exports — Japanese and Spanish.** An illustration can be
+downloaded with its copy in another language, while the illustration itself
+stays as written. In the builder, **Translate…** lists every string beside a
+machine draft (Workers AI, `gpt-oss-120b`, via `/api/translate`). You review
+and correct the drafts, and the corrections are saved on the document under
+`translations`, which the renderer never reads. In the library, the detail
+sheet's language picker downloads in that language, drafting any string that
+has not been reviewed. A Japanese export also embeds Noto Sans JP, cut down
+to only the characters it uses (`/api/font`). Both endpoints live on the
+Worker, so translation works on the Cloudflare site only. See
+`src/translate.ts` and `cloudflare/Translate.ts`.
+
 `reference/` holds the nine original Figma exports (44 MB, two of them 21 MB
 each). They are kept because `out/compare.html` renders against them, so the
 port stays verifiable; move them to LFS or drop them if the repo weight

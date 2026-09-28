@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { renderDocument } from '../src/render.ts';
 import { copyText, saveFile } from '../editor/save.ts';
 import { svgToPng } from '../editor/png.ts';
+import { renderTranslated, tableFor, translator } from '../editor/translate.ts';
+import { LANGUAGES, translateDoc, type Lang } from '../src/translate.ts';
 import { App as BuilderApp } from '../editor/App.tsx';
 import { TEMPLATES, type TemplateName } from '../editor/docs.ts';
 import { NewMenu } from '../editor/NewMenu.tsx';
@@ -1190,8 +1192,34 @@ function IllustrationDetail({
 }) {
   const [theme, setTheme] = useState<Theme>(initialTheme);
   const [confirming, setConfirming] = useState(false);
-  const preview = useMemo(() => renderDocument(row.doc, theme, { embedFont: false }), [row.doc, theme]);
+  // The language the preview and every download are in. The illustration
+  // itself is never changed: a translated copy is made on the way out.
+  const [lang, setLang] = useState<Lang | 'en'>('en');
+  const [translation, setTranslation] = useState<{ lang: Lang; table: Record<string, string>; drafted: number } | null>(null);
+  const [translating, setTranslating] = useState(false);
+  const [canTranslate, setCanTranslate] = useState(false);
+  useEffect(() => void translator().then((t) => setCanTranslate(!!t)), []);
+  useEffect(() => {
+    if (lang === 'en') return;
+    let live = true;
+    setTranslating(true);
+    tableFor(row.doc, lang)
+      .then((r) => live && setTranslation({ lang, ...r }))
+      .catch((e) => {
+        if (!live) return;
+        onToast(`Could not translate — ${(e as Error).message}`);
+        setLang('en');
+      })
+      .finally(() => live && setTranslating(false));
+    return () => {
+      live = false;
+    };
+  }, [row.doc, lang]);
+  const table = lang !== 'en' && translation?.lang === lang ? translation.table : null;
+  const shown = useMemo(() => (table ? translateDoc(row.doc, table) : row.doc), [row.doc, table]);
+  const preview = useMemo(() => renderDocument(shown, theme, { embedFont: false }), [shown, theme]);
   const { width, height } = row.doc.canvas;
+  const stem = table ? `${row.id}.${lang}` : row.id;
 
   useEffect(() => {
     const esc = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
@@ -1199,15 +1227,24 @@ function IllustrationDetail({
     return () => window.removeEventListener('keydown', esc);
   }, [onClose]);
 
-  const svgFor = (t: Theme) => renderDocument(row.doc, t);
+  const svgFor = (t: Theme) =>
+    table && lang !== 'en' ? renderTranslated(row.doc, lang, table, t) : Promise.resolve(renderDocument(row.doc, t));
+  const svg = async (t: Theme) => {
+    try {
+      await offer(`${stem}.${t}.svg`, await svgFor(t), 'image/svg+xml', onToast);
+    } catch (e) {
+      onToast(`Could not make the SVG — ${(e as Error).message}`);
+    }
+  };
   const png = async (t: Theme) => {
     try {
-      const blob = await svgToPng(svgFor(t), width, height, 2);
-      await offer(`${row.id}.${t}@2x.png`, blob, 'image/png', onToast);
+      const blob = await svgToPng(await svgFor(t), width, height, 2);
+      await offer(`${stem}.${t}@2x.png`, blob, 'image/png', onToast);
     } catch (e) {
       onToast(`Could not make the PNG — ${(e as Error).message}`);
     }
   };
+  const busy = lang !== 'en' && !table;
 
   return (
     <div className="am-scrim" onClick={onClose}>
@@ -1244,26 +1281,53 @@ function IllustrationDetail({
               </button>
             ))}
           </div>
+          {canTranslate && (
+            <select
+              aria-label="Language"
+              className="am-lang"
+              value={lang}
+              onChange={(e) => setLang(e.target.value as Lang | 'en')}
+              title="Preview and download the illustration with its text in another language"
+            >
+              <option value="en">English — as written</option>
+              {(Object.keys(LANGUAGES) as Lang[]).map((l) => (
+                <option key={l} value={l}>
+                  {LANGUAGES[l].name} — {LANGUAGES[l].native}
+                </option>
+              ))}
+            </select>
+          )}
           {writable && folders.folders.length > 0 && (
             <FolderSelect id={`folder-${row.id}`} folders={folders} value={folder} onChange={onFile} />
           )}
           </div>
 
           <div className="am-downloads">
-            <h3>Download</h3>
+            <h3>Download{table && lang !== 'en' ? ` in ${LANGUAGES[lang].name}` : ''}</h3>
+            {lang !== 'en' && (
+              <p className="am-hint">
+                {translating
+                  ? 'Translating…'
+                  : translation?.drafted
+                    ? `${translation.drafted} string${translation.drafted === 1 ? ' is' : 's are'} machine-translated and unreviewed — use Translate… in the builder to check ${translation.drafted === 1 ? 'it' : 'them'}.`
+                    : 'Every string has a reviewed translation.'}{' '}
+                The illustration itself stays in English.
+              </p>
+            )}
             <div className="am-dl-grid">
               <span className="am-dl-label">Dark</span>
-              <button type="button" onClick={() => void offer(`${row.id}.dark.svg`, svgFor('dark'), 'image/svg+xml', onToast)}>SVG</button>
-              <button type="button" onClick={() => void png('dark')}>PNG @2x</button>
+              <button type="button" disabled={busy} onClick={() => void svg('dark')}>SVG</button>
+              <button type="button" disabled={busy} onClick={() => void png('dark')}>PNG @2x</button>
               <span className="am-dl-label">Light</span>
-              <button type="button" onClick={() => void offer(`${row.id}.light.svg`, svgFor('light'), 'image/svg+xml', onToast)}>SVG</button>
-              <button type="button" onClick={() => void png('light')}>PNG @2x</button>
+              <button type="button" disabled={busy} onClick={() => void svg('light')}>SVG</button>
+              <button type="button" disabled={busy} onClick={() => void png('light')}>PNG @2x</button>
             </div>
             <div className="am-dl-row">
               <button
                 type="button"
+                disabled={busy}
                 onClick={() =>
-                  void copyText(svgFor(theme)).then((ok) =>
+                  void svgFor(theme).then(copyText).then((ok) =>
                     onToast(ok ? `Copied the ${theme} SVG — paste into Figma.` : 'Could not reach the clipboard.'),
                   )
                 }

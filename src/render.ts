@@ -545,6 +545,13 @@ export interface RenderOptions {
    * way. Off where the host page already has it, e.g. the builder's library.
    */
   embedFont?: boolean;
+  /**
+   * A second face for glyphs Source Sans 3 does not have — Noto Sans JP for a
+   * Japanese export (see editor/translate.ts). Embedded beside it and named
+   * after it in every `font-family`, so Latin text keeps its own face and
+   * the rest falls through per character. `faces` is base64 woff2 by weight.
+   */
+  fallbackFont?: { family: string; faces: Partial<Record<FontWeight, string>> };
 }
 
 /**
@@ -759,8 +766,34 @@ export function renderDocument(
   options: RenderOptions = {},
 ): string {
   const tree = buildDocument(doc, theme, options);
-  if (options.embedFont !== false) embedFont(tree);
+  if (options.embedFont !== false) embedFont(tree, options.fallbackFont);
   return toSVGString(tree);
+}
+
+type FontWeight = keyof typeof FONT_FACES;
+
+/** Snap to the three faces the type scale uses. */
+const snapWeight = (w: number): FontWeight => (w >= 650 ? 700 : w >= 500 ? 600 : 400);
+
+/** The weights a tree sets text in — only text that passes `drawn`, when given. */
+function weightsOf(tree: VNode, drawn?: (text: string) => boolean): Set<FontWeight> {
+  const weights = new Set<FontWeight>();
+  const walk = (n: VNode) => {
+    if (n.attrs['font-family'] !== undefined && (!drawn || drawn(n.text ?? ''))) {
+      weights.add(snapWeight(Number(n.attrs['font-weight'] ?? 400)));
+    }
+    n.children.forEach(walk);
+  };
+  walk(tree);
+  return weights;
+}
+
+/**
+ * The font weights a document's export sets text in, counting only the text
+ * that passes `drawn` — what a fallback face has to cover.
+ */
+export function fontWeights(doc: Doc, theme: ThemeName, drawn?: (text: string) => boolean): FontWeight[] {
+  return [...weightsOf(buildDocument(doc, theme), drawn)].sort();
 }
 
 /**
@@ -769,27 +802,30 @@ export function renderDocument(
  * `<img>`, opened directly, or dropped into a page that never loaded the font.
  * Only the weights actually used are embedded; about 20 KB each.
  */
-function embedFont(tree: VNode) {
-  const weights = new Set<keyof typeof FONT_FACES>();
-  const walk = (n: VNode) => {
-    if (n.attrs['font-family'] !== undefined) {
-      const w = Number(n.attrs['font-weight'] ?? 400);
-      // Snap to the three faces the type scale uses.
-      weights.add(w >= 650 ? 700 : w >= 500 ? 600 : 400);
-    }
-    n.children.forEach(walk);
-  };
-  walk(tree);
+function embedFont(tree: VNode, fallback?: RenderOptions['fallbackFont']) {
+  const weights = weightsOf(tree);
   if (!weights.size) return;
 
-  const css = [...weights]
-    .sort()
-    .map(
-      (w) =>
-        `@font-face{font-family:'Source Sans 3';font-style:normal;font-weight:${w};` +
-        `src:url(data:font/woff2;base64,${FONT_FACES[w]}) format('woff2')}`,
-    )
-    .join('');
+  const face = (family: string, w: FontWeight, b64: string) =>
+    `@font-face{font-family:'${family}';font-style:normal;font-weight:${w};` +
+    `src:url(data:font/woff2;base64,${b64}) format('woff2')}`;
+  let css = [...weights].sort().map((w) => face('Source Sans 3', w, FONT_FACES[w])).join('');
+
+  if (fallback) {
+    css += [...weights]
+      .sort()
+      .flatMap((w) => (fallback.faces[w] ? [face(fallback.family, w, fallback.faces[w])] : []))
+      .join('');
+    const named = `"${fallback.family}"`;
+    const rename = (n: VNode) => {
+      const f = n.attrs['font-family'];
+      if (typeof f === 'string' && !f.includes(named)) {
+        n.attrs['font-family'] = f.replace('"Source Sans 3"', `"Source Sans 3", ${named}`);
+      }
+      n.children.forEach(rename);
+    };
+    rename(tree);
+  }
   const defs = tree.children.find((c) => c.tag === 'defs');
   // Raw because it is CSS, not text to escape — and it is our own generated
   // data, never user input, which is the condition `rawNode` asks for.

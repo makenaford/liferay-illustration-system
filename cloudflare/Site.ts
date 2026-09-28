@@ -5,6 +5,7 @@ import { HttpServerRequest } from "effect/unstable/http/HttpServerRequest";
 import * as HttpServerResponse from "effect/unstable/http/HttpServerResponse";
 import { verifyAccessToken } from "./AccessToken.ts";
 import Library from "./Library.ts";
+import { decodeTranslateRequest, FONT_WEIGHTS, notoSansJp, translate } from "./Translate.ts";
 
 /**
  * THE SITE — Marketing Assets (the illustration builder inside it) on one
@@ -18,6 +19,10 @@ import Library from "./Library.ts";
  *   GET    /api/doc?col=&id=      { body }  (body null when none)
  *   PUT    /api/doc?col=&id=      JSON body -> stored as is
  *   DELETE /api/doc?col=&id=
+ *   POST   /api/translate         { to, strings } -> { translations }
+ *   GET    /api/font?weight=&text= Noto Sans JP, cut to `text` (woff2)
+ *
+ * The last two are the translated export — see cloudflare/Translate.ts.
  *
  * WHO. The Worker sits behind Cloudflare Access (`access`): only people
  * signed in with an address at EMAIL_DOMAIN reach it, by one-time PIN —
@@ -90,6 +95,7 @@ export default class Site extends Cloudflare.Worker<Site>()(
   },
   Effect.gen(function* () {
     const libraries = yield* Library;
+    const ai = yield* Cloudflare.Workers.AI();
 
     return {
       fetch: Effect.gen(function* () {
@@ -111,6 +117,38 @@ export default class Site extends Cloudflare.Worker<Site>()(
         }
         if (route === "live" && request.method === "GET") {
           return yield* library.fetch(request);
+        }
+
+        if (route === "translate" && request.method === "POST") {
+          const raw = yield* request.text;
+          if (raw.length > MAX_BODY) return yield* fail(413, "Too large.");
+          const body = yield* Effect.try(() => JSON.parse(raw) as unknown).pipe(
+            Effect.flatMap(decodeTranslateRequest),
+            Effect.option,
+          );
+          if (body._tag === "None") return yield* fail(400, "Expected { to, strings }.");
+          return yield* translate((model, inputs) => ai.run(model as keyof AiModels, inputs as never), body.value.to, body.value.strings).pipe(
+            Effect.flatMap((translations) => HttpServerResponse.json({ translations })),
+            Effect.catchTag("TranslateError", (e) =>
+              Effect.logWarning(e.message).pipe(Effect.andThen(fail(502, e.message))),
+            ),
+          );
+        }
+        if (route === "font" && request.method === "GET") {
+          const weight = Number(url.searchParams.get("weight"));
+          const text = url.searchParams.get("text") ?? "";
+          if (!(FONT_WEIGHTS as readonly number[]).includes(weight) || !text || text.length > 4000) {
+            return yield* fail(400, "Bad font request.");
+          }
+          return yield* notoSansJp(weight, text).pipe(
+            Effect.map((bytes) =>
+              HttpServerResponse.uint8Array(new Uint8Array(bytes), {
+                contentType: "font/woff2",
+                headers: { "cache-control": "private, max-age=86400" },
+              }),
+            ),
+            Effect.catchTag("TranslateError", (e) => fail(502, e.message)),
+          );
         }
 
         if (!COL.test(col)) return yield* fail(400, "Bad collection.");
@@ -141,5 +179,5 @@ export default class Site extends Cloudflare.Worker<Site>()(
         }
       }),
     };
-  }),
+  }).pipe(Effect.provide(Cloudflare.Workers.AIBinding)),
 ) {}

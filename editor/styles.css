@@ -1188,3 +1188,51 @@ button.mini.on { background: var(--accent); border-color: var(--accent); color: 
 .mockup-slot path { stroke: #3b7bff; opacity: 0.7; }
 .mockup-slot text { fill: #3b7bff; font-family: 'Source Sans 3', system-ui, sans-serif; font-weight: 600; paint-order: stroke; stroke: rgba(0, 0, 0, 0.55); stroke-width: 3px; }
 .mockup-slot.on rect { fill: rgba(59, 123, 255, 0.12); opacity: 1; }
+
+/* ---- translated export ------------------------------------------------- */
+
+.translate-modal { width: min(1100px, 100%); height: min(760px, 100%); }
+.translate-modal .modal-head select { width: auto; }
+.translate-body {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(280px, 1fr);
+}
+.translate-preview {
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: #12151a;
+  border-right: 1px solid var(--line);
+  overflow: auto;
+}
+.translate-preview svg { width: 100%; height: auto; max-height: 100%; }
+.translate-list { overflow: auto; padding: 10px 14px; display: flex; flex-direction: column; gap: 10px; }
+.translate-row { display: flex; flex-direction: column; gap: 4px; }
+.translate-src { color: var(--ink-dim); font-size: 11.5px; white-space: pre-wrap; }
+.translate-row textarea {
+  min-height: 0;
+  flex: none;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 6px 8px;
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+  white-space: pre-wrap;
+  field-sizing: content;
+  resize: vertical;
+}
+.translate-row textarea:focus { outline: none; border-color: var(--accent-soft); }
+.translate-foot { flex-wrap: wrap; }
+.translate-foot .modal-hint { flex: 1 1 240px; }
+.translate-foot button { margin-left: 0; }
+.translate-foot button:disabled { opacity: 0.5; cursor: default; }
+.translate-foot .divider { width: 1px; align-self: stretch; background: var(--line); }
+
+@media (max-width: 720px) {
+  .translate-body { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+  .translate-preview { border-right: none; border-bottom: 1px solid var(--line); }
+}

@@ -16,6 +16,8 @@
  *   user       the Access sign-in's email is the viewer id; the name shown
  *              is read off it (makena.ford@… -> "Makena Ford").
  *   downloads  a plain anchor download — outside a viewer's frame it works.
+ *   translate  ours alone: machine translation and a Japanese font for the
+ *              translated export, from /api/translate and /api/font.
  *
  * Imported first by assets-site/main.tsx; it installs itself only in a
  * Cloudflare build (`--mode cloudflare`, see .env.cloudflare), so the
@@ -221,6 +223,27 @@ const downloads = {
   },
 };
 
+/* ---- translate ----------------------------------------------------------- */
+
+/**
+ * Not a claude.ai capability: the translated export needs a model and a
+ * Japanese font, which only the Worker has (cloudflare/Translate.ts). Offered
+ * under the same `use()` so editor/translate.ts asks for it like the others,
+ * and finds null anywhere else.
+ */
+const translate = {
+  strings: (to: string, strings: string[]) =>
+    call<{ translations: string[] }>('POST', '/translate', { to, strings }).then((r) => r.translations),
+  async font(weight: number, text: string): Promise<string> {
+    const res = await fetch(`${API}/font${q({ weight: String(weight), text })}`, { credentials: 'same-origin' });
+    if (!res.ok) throw new ApiError((await res.text().catch(() => '')) || res.statusText, 'error');
+    const bytes = new Uint8Array(await res.arrayBuffer());
+    let bin = '';
+    for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+    return btoa(bin);
+  },
+};
+
 /* ---- install ------------------------------------------------------------- */
 
 /**
@@ -228,7 +251,7 @@ const downloads = {
  * time, so in the Artifact build this is dead code and is dropped.
  */
 if (import.meta.env.VITE_TARGET === 'cloudflare' && !(window as { claude?: unknown }).claude) {
-  const caps: Record<string, unknown> = { db, user, downloads };
+  const caps: Record<string, unknown> = { db, user, downloads, translate };
   (window as { claude?: unknown }).claude = {
     use: async (name: string) => caps[name] ?? null,
   };

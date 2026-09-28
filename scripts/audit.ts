@@ -15,7 +15,8 @@ import { resolveLayout } from '../src/autolayout.ts';
 import { badgeWidth } from '../src/primitives/badge.ts';
 import { tableLayout } from '../src/primitives/table.ts';
 
-const DOCS = join(import.meta.dirname, '..', 'docs');
+// `AUDIT_DOCS` audits another folder of documents — a translated set, say.
+const DOCS = process.env.AUDIT_DOCS ?? join(import.meta.dirname, '..', 'docs');
 const SURFACES = Object.keys(tokens.surfaces);
 const GRID = LAYOUT.grid;
 
@@ -34,8 +35,11 @@ interface Finding {
 }
 
 const findings: Finding[] = [];
-const add = (doc: string, path: string, rule: string, detail: string) =>
-  findings.push({ doc, path, rule, detail });
+/** `AUDIT_RULES`, comma-separated: check only these — see scripts/audit-translations.ts. */
+const ONLY = process.env.AUDIT_RULES ? new Set(process.env.AUDIT_RULES.split(',')) : null;
+const add = (doc: string, path: string, rule: string, detail: string) => {
+  if (!ONLY || ONLY.has(rule)) findings.push({ doc, path, rule, detail });
+};
 
 /** Walk the resolved tree so auto-layout coordinates are the real ones. */
 function walk(doc: Doc, el: Element, path: string, parent: Element | null, inFlow = false) {

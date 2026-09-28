@@ -527,8 +527,9 @@ export function boundingBox(el: Element): { x: number; y: number; width: number;
   if (typeof e.x !== 'number' || typeof e.y !== 'number') return null;
 
   if (el.type === 'text') {
-    const role = TYPE_ROLES[el.role];
-    const b = textBox(el.content, role.size, role.weight);
+    // At the text's own weight and small caps, as it is drawn and measured
+    // everywhere else — the role's default weight under-measures bold text.
+    const b = measureTextEl(el);
     const x =
       el.anchor === 'middle' ? e.x - b.width / 2 : el.anchor === 'end' ? e.x - b.width : e.x;
     return { x, y: e.y - b.baseline, width: size.width, height: size.height };

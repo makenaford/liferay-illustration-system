@@ -32,6 +32,8 @@ jobs:
       # without it — but the audit must still pass on what is committed.
       - run: pnpm run typecheck
       - run: pnpm run audit
+      # And as each downloads in Japanese and Spanish: nothing out of its box.
+      - run: pnpm run audit:translations
       - run: pnpm run site
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3

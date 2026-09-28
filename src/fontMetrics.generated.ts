@@ -40,8 +40,23 @@ const FALLBACK = 0.547;
 export function measureText(text: string, size: number, weight = 400): number {
   const row = ADVANCE[weight] ?? ADVANCE[400];
   let total = 0;
-  for (const ch of text) total += row[ch] ?? FALLBACK;
+  for (const ch of text) total += row[ch] ?? outside(row, ch);
   return total * size;
+}
+
+/*
+ * Characters the table has no entry for — written by hand, not generated.
+ * Japanese is set in Noto Sans JP (see editor/translate.ts), whose kana, kanji
+ * and full-width punctuation are all one em. An accented Latin letter is
+ * about as wide as its base letter: é as e, ñ as n.
+ */
+const FULL_WIDTH = /[　-ヿ㐀-䶿一-鿿豈-﫿！-｠]/u;
+
+function outside(row: Record<string, number>, ch: string): number {
+  if (FULL_WIDTH.test(ch)) return 1;
+  // Half-width katakana are half an em.
+  if (/[｡-ﾟ]/u.test(ch)) return 0.5;
+  return row[ch.normalize('NFD')[0]] ?? FALLBACK;
 }
 
 /** The line box a run of text occupies. */

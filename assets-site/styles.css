@@ -453,3 +453,7 @@ h1 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -0.4px; line-
   padding: 5px 8px;
 }
 .am-move select:disabled { opacity: 0.5; }
+
+/* The detail sheet's language: what the preview and downloads are in. */
+.am-lang { padding: 6px 9px; border-radius: var(--am-radius); border: 1px solid var(--am-line); background: var(--am-surface); color: var(--am-ink); }
+.am-downloads button:disabled { opacity: 0.5; cursor: default; }

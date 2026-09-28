@@ -21,6 +21,7 @@
 import type { TypeRole, TypeWeight } from './primitives/text.ts';
 import type { MeshName, SurfaceName } from './tokens.ts';
 import type { TableColumn } from './primitives/table.ts';
+import type { Translations } from './translate.ts';
 import type { IconStyle } from './icons.ts';
 
 export type Tone = 'accent' | 'success' | 'info' | 'neutral' | 'muted' | 'subtle';
@@ -672,4 +673,10 @@ export interface Doc {
   /** Hero glass panels, drawn under `elements`. Empty for bare layouts. */
   panels?: PanelSpec[];
   elements: Element[];
+  /**
+   * Reviewed translations of the copy, for translated exports only — the
+   * renderer never reads this, so the illustration itself stays as written.
+   * See src/translate.ts.
+   */
+  translations?: Translations;
 }

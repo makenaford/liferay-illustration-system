@@ -11,6 +11,7 @@ import { save as saveToLibrary, backend, latest, namesOf, subscribe, type Saved 
 import { copySelected, cutSelected, duplicateSelected, paste } from './clipboard.ts';
 import { copyText, saveFile } from './save.ts';
 import { SourceModal } from './SourceModal.tsx';
+import { TranslateModal } from './TranslateModal.tsx';
 import { LAYOUT } from '../src/tokens.ts';
 import { reorderSibling, reorderToEdge } from './state.ts';
 import {
@@ -50,6 +51,7 @@ export function App() {
   const [store_, setStore_] = useState<'shared' | 'local' | 'none' | null>(null);
   const [tab, setTab] = useState<Tab>('layers');
   const [source, setSource] = useState<{ filename: string; text: string } | null>(null);
+  const [translating, setTranslating] = useState(false);
 
   // A short-lived line in the status bar. Clipboard actions are otherwise
   // invisible — nothing on screen changes when you press copy — and silence
@@ -537,6 +539,13 @@ export function App() {
         </span>
         <button
           type="button"
+          onClick={() => setTranslating(true)}
+          title="Download the illustration with its text in Japanese or Spanish — the original stays as it is"
+        >
+          Translate…
+        </button>
+        <button
+          type="button"
           onClick={() =>
             void saveFile(
               `${doc.id}.json`,
@@ -633,6 +642,10 @@ export function App() {
           source={source.text}
           onClose={() => setSource(null)}
         />
+      )}
+
+      {translating && (
+        <TranslateModal pngScale={pngScale} onClose={() => setTranslating(false)} onSaved={report} />
       )}
     </div>
   );

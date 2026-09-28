@@ -567,6 +567,11 @@ function glassBlurs(ctx: Ctx, el: Element): number[] {
       const spec = ctx.tokens.surfaces[e.surface ?? 'glass-default'];
       if (spec?.blur && !spec.recessed) out.push(spec.blur);
     }
+    // A table's background is glass only when it has one.
+    if (e.type === 'table' && e.surface) {
+      const spec = ctx.tokens.surfaces[e.surface];
+      if (spec?.blur && !spec.recessed) out.push(spec.blur);
+    }
     for (const c of (e as { children?: Element[] }).children ?? []) walk(c);
   };
   walk(el);

@@ -30,6 +30,7 @@ function Glyph({ k, style, size = 18 }: { k: string; style: IconStyle; size?: nu
       <path
         d={art.path}
         fill={art.stroke ? 'none' : 'currentColor'}
+        fillRule={art.evenOdd ? 'evenodd' : undefined}
         stroke={art.stroke ? 'currentColor' : undefined}
         strokeWidth={art.stroke ? art.box / 16 : undefined}
         strokeLinecap="round"

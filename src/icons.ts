@@ -98,6 +98,13 @@ export type IconStyle = 'line' | 'fill';
 export interface IconArt extends Icon {
   /** The hand-drawn set is stroked; MingCute is filled, in both styles. */
   stroke: boolean;
+  /**
+   * Fill with the even-odd rule. MingCute draws its holes — a lock's keyhole,
+   * the inside of a ring — as inner subpaths that only cut out under even-odd
+   * (its files set it on the group); under the default rule they fill in. The
+   * team's own icons come from Figma, whose default rule is theirs.
+   */
+  evenOdd?: boolean;
 }
 
 export const MINGCUTE_PREFIX = 'mc:';
@@ -134,5 +141,5 @@ export function iconArt(key: string | null | undefined, style: IconStyle = 'line
   const m = glyphOf(key);
   if (!m) return undefined;
   const path = (style === 'fill' ? m.fill : m.line) ?? m.line ?? m.fill;
-  return path ? { path, box: 24, stroke: false } : undefined;
+  return path ? { path, box: 24, stroke: false, evenOdd: !key.startsWith(CUSTOM_PREFIX) } : undefined;
 }

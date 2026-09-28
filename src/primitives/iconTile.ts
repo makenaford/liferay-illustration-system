@@ -55,6 +55,7 @@ export function IconTile(ctx: Ctx, props: IconTileProps): VNode {
       d: icon.path,
       stroke: strokeIcon ? color : undefined,
       fill: strokeIcon ? 'none' : color,
+      'fill-rule': !strokeIcon && (icon as { evenOdd?: boolean }).evenOdd ? 'evenodd' : undefined,
       'stroke-width': strokeIcon ? 1 / s : undefined,
       'stroke-linecap': 'round',
       'stroke-linejoin': 'round',

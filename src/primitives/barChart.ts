@@ -1,4 +1,5 @@
 import { h, type Ctx, type VNode } from '../vsvg.ts';
+import { monotonePath } from './lineChart.ts';
 import { chartColor } from '../colors.ts';
 import { axisLabels, type AxisLabelProps } from './axisLabels.ts';
 
@@ -42,6 +43,14 @@ export interface BarChartProps extends AxisLabelProps {
    * beside an axis (0 … 100K) that the bars should agree with.
    */
   max?: number;
+  /**
+   * A line over the bars, through the top of each slot — a second measure
+   * on the same months ("recovery time" over the bar counts). On its own
+   * scale, from zero to its largest value.
+   */
+  line?: (number | null)[];
+  /** The line's colour, from the set. Omitted: the text colour, as a highlight. */
+  lineColor?: string;
 }
 
 /** One drawn bar — shared with the editor, so its handles sit on the bars. */
@@ -135,5 +144,21 @@ export function BarChart(ctx: Ctx, props: BarChartProps): VNode {
     h('rect', { x: r.x, y: r.y, width: r.width, height: r.height, fill: fillFor(r.series) }),
   );
 
-  return h('g', { 'data-el': 'bar-chart' }, [...grid, ...bars, ...axisLabels(ctx, props, 'slots')]);
+  // The line: one point over the middle of each slot, on its own scale.
+  const overlay: VNode[] = [];
+  const values = props.line ?? [];
+  if (values.some((v) => v !== null)) {
+    const slots = Math.max(values.length, 1);
+    const top = Math.max(...values.map((v) => v ?? 0), 1);
+    const pts = values.flatMap((v, i): [number, number][] =>
+      v === null ? [] : [[x + (width / slots) * (i + 0.5), y + height - (v / top) * height * 0.9]],
+    );
+    const stroke = props.lineColor ? chartColor(tk, 0, props.lineColor) : tk.text.primary;
+    overlay.push(
+      h('path', { d: monotonePath(pts), stroke, 'stroke-width': 1.25, fill: 'none', 'stroke-linecap': 'round', 'data-el': 'bar-line' }),
+      ...pts.map(([cx, cy]) => h('circle', { cx, cy, r: 1.8, fill: stroke })),
+    );
+  }
+
+  return h('g', { 'data-el': 'bar-chart' }, [...grid, ...bars, ...overlay, ...axisLabels(ctx, props, 'slots')]);
 }

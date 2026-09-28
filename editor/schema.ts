@@ -239,6 +239,40 @@ export const SCHEMA: {
       { key: 'padding', label: 'Padding', kind: 'number', min: 0, default: 12 },
     ],
   },
+  radio: {
+    label: 'Radio option',
+    fields: [
+      { key: 'label', label: 'Label', kind: 'text' },
+      { key: 'checked', label: 'Checked', kind: 'boolean' },
+      ...XY,
+      ...WH,
+    ],
+  },
+  field: {
+    label: 'Form field',
+    fields: [
+      { key: 'label', label: 'Label', kind: 'text' },
+      { key: 'required', label: 'Required', kind: 'boolean' },
+      { key: 'value', label: 'Value', kind: 'text' },
+      { key: 'lines', label: 'Lines · text area', kind: 'list' },
+      { key: 'placeholder', label: 'Placeholder', kind: 'text' },
+      ...XY,
+      ...WH,
+    ],
+  },
+  pieChart: {
+    label: 'Pie chart',
+    fields: [
+      { key: 'values', label: 'Values', kind: 'numbers' },
+      { key: 'hole', label: 'Hole · 0 is a pie', kind: 'number', step: 0.05, min: 0, default: 0 },
+      { key: 'gap', label: 'Gap °', kind: 'number', min: 0 },
+      { key: 'highlight', label: 'Glass segment #', kind: 'number', min: 0 },
+      { key: 'striped', label: 'Striped segment #', kind: 'number', min: 0 },
+      { key: 'gradient', label: 'Gradient', kind: 'boolean' },
+      ...XY,
+      ...WH,
+    ],
+  },
   toggle: {
     label: 'Toggle',
     fields: [...XY, ...WH, { key: 'on', label: 'On', kind: 'boolean' }],
@@ -294,6 +328,7 @@ export const SCHEMA: {
       { key: 'labelGap', label: 'Label gap', kind: 'number', min: 0, default: 4 },
       { key: 'gridLines', label: 'Grid lines', kind: 'number', min: 0 },
       { key: 'referenceLine', label: 'Reference', kind: 'number', step: 0.05 },
+      { key: 'curve', label: 'Curve', kind: 'select', options: ['smooth', 'straight'] },
     ],
   },
   table: {
@@ -324,6 +359,8 @@ export const SCHEMA: {
       { key: 'barRatio', label: 'Bar width', kind: 'number', step: 0.05, min: 0.05, default: 0.68 },
       { key: 'gradient', label: 'Gradient', kind: 'boolean', default: true },
       { key: 'color', label: 'Colour · single series', kind: 'token', colorsOnly: true },
+      { key: 'line', label: 'Line over bars', kind: 'numbers' },
+      { key: 'lineColor', label: 'Line colour', kind: 'token', colorsOnly: true },
     ],
   },
   progress: {
@@ -531,6 +568,9 @@ export const DEFAULTS: Record<Element['type'], () => Element> = {
     label: 'Button', variant: 'solid', radius: 4, role: 'bodySmall',
   }),
   toggle: () => ({ type: 'toggle', x: 40, y: 40, width: 42, height: 13, on: true }),
+  radio: () => ({ type: 'radio', x: 40, y: 40, width: 120, height: 32, label: 'Option', checked: true }),
+  field: () => ({ type: 'field', x: 40, y: 40, width: 180, height: 52, label: 'Full name', required: true, value: 'Elías Navarro' }),
+  pieChart: () => ({ type: 'pieChart', x: 40, y: 40, width: 96, height: 96, values: [48, 22, 18, 12], hole: 0.62, gradient: true, striped: 3 }),
   input: () => ({ type: 'input', x: 40, y: 40, width: 138, height: 28, placeholder: 'Placeholder' }),
   chat: () => ({
     type: 'chat', x: 40, y: 40, width: 216, variant: 'receiver',
@@ -586,8 +626,8 @@ export const DEFAULTS: Record<Element['type'], () => Element> = {
 export const PALETTE: { group: string; types: Element['type'][] }[] = [
   { group: 'Surfaces', types: ['card', 'subCard', 'group'] },
   { group: 'Type', types: ['text', 'stat'] },
-  { group: 'Controls', types: ['button', 'pill', 'badge', 'toggle', 'input', 'chat', 'chrome'] },
-  { group: 'Data', types: ['table', 'lineChart', 'barChart', 'progress', 'map', 'skeleton'] },
+  { group: 'Controls', types: ['button', 'pill', 'badge', 'toggle', 'radio', 'input', 'field', 'chat', 'chrome'] },
+  { group: 'Data', types: ['table', 'lineChart', 'barChart', 'pieChart', 'progress', 'map', 'skeleton'] },
   { group: 'Icons & shapes', types: ['spotIcon', 'icon', 'iconGrid', 'avatar', 'line', 'connector', 'arrow', 'cursor'] },
   { group: 'Imported', types: ['image', 'svg'] },
 ];

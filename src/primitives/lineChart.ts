@@ -10,6 +10,8 @@ export interface Series {
   /** A colour from the set. Omitted: Primary, then Purple — see `CHART_COLORS`. */
   color?: string;
   strokeWidth?: number;
+  /** Fill under the line, fading down to the axis — an area chart. */
+  area?: boolean;
 }
 
 /** Labels spread edge to edge, under points that run edge to edge. */
@@ -34,6 +36,8 @@ export interface LineChartProps extends AxisLabelProps {
    * Used in the reference illustration to mark the "15x" threshold.
    */
   referenceLine?: number;
+  /** `smooth` (default) through the points, or `straight` from point to point. */
+  curve?: 'smooth' | 'straight';
 }
 
 export { axisBand };
@@ -43,7 +47,7 @@ export { axisBand };
  * naive Catmull-Rom, which matters because these charts are decorative and an
  * overshoot below zero looks like a bug.
  */
-function monotonePath(pts: [number, number][]): string {
+export function monotonePath(pts: [number, number][]): string {
   const n = pts.length;
   if (n === 0) return '';
   if (n === 1) return `M${pts[0][0]} ${pts[0][1]}`;
@@ -135,6 +139,9 @@ export function LineChart(ctx: Ctx, props: LineChartProps): VNode {
   }
 
   const dots: VNode[] = [];
+  const areas: VNode[] = [];
+  const path = (pts: [number, number][]) =>
+    props.curve === 'straight' ? pts.map(([px, py], i) => `${i ? 'L' : 'M'}${px} ${py}`).join('') : monotonePath(pts);
   const lines = series.map((s, si) => {
     const pts = points[si];
     // A chosen colour, else green for a growth line, else the next data colour.
@@ -144,8 +151,26 @@ export function LineChart(ctx: Ctx, props: LineChartProps): VNode {
         dots.push(h('circle', { cx: px, cy: py, r: (s.strokeWidth ?? 1.5) * 1.1, fill: color }));
       }
     }
+    if (s.area && pts.length > 1) {
+      // Down from the line to the plot's floor, the colour fading as it goes.
+      const areaId = ctx.uid('area');
+      ctx.defs.push(
+        h('linearGradient', { id: areaId, x1: 0, y1: y, x2: 0, y2: y + height, gradientUnits: 'userSpaceOnUse' }, [
+          h('stop', { 'stop-color': color, 'stop-opacity': 0.45 }),
+          h('stop', { offset: 1, 'stop-color': color, 'stop-opacity': 0 }),
+        ]),
+      );
+      const floor = y + height;
+      areas.push(
+        h('path', {
+          d: `${path(pts)}L${pts[pts.length - 1][0]} ${floor}L${pts[0][0]} ${floor}Z`,
+          fill: `url(#${areaId})`,
+          'data-el': 'area',
+        }),
+      );
+    }
     return h('path', {
-      d: monotonePath(pts),
+      d: path(pts),
       stroke: color,
       'stroke-width': s.strokeWidth ?? 1.5,
       'stroke-linecap': 'round',
@@ -181,6 +206,7 @@ export function LineChart(ctx: Ctx, props: LineChartProps): VNode {
   return h('g', { 'data-el': 'line-chart' }, [
     h('g', { 'data-el': 'grid' }, grid),
     refLine,
+    ...areas,
     ...lines,
     ...dots,
     ...axisLabels(ctx, props, 'between'),

@@ -52,6 +52,16 @@ function visitElement(el: Element, f: Visit): Element {
       return { ...el, label: f(el.label), lines: list(el.lines) };
     case 'input':
       return { ...el, placeholder: f(el.placeholder) };
+    case 'radio':
+      return { ...el, label: f(el.label) };
+    case 'field':
+      return {
+        ...el,
+        label: el.label === undefined ? undefined : f(el.label),
+        value: el.value === undefined ? undefined : f(el.value),
+        lines: list(el.lines),
+        placeholder: el.placeholder === undefined ? undefined : f(el.placeholder),
+      };
     case 'chat':
       return { ...el, message: f(el.message) };
     case 'chrome':

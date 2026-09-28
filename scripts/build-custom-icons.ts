@@ -22,6 +22,7 @@
 import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { customIconKey, customShape as shapes } from '../src/customIconShape.ts';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const DIR = join(ROOT, 'assets', 'custom-icons');
@@ -41,47 +42,12 @@ function* files(dir: string, category: string): Generator<{ path: string; catego
   }
 }
 
-/** One file's painted shapes as a single path, or why it can't be. */
-function shapes(svg: string): { d: string } | { problem: string } {
-  const viewBox = svg.match(/<svg\b[^>]*\sviewBox="([^"]+)"/)?.[1]?.trim().split(/[\s,]+/).map(Number);
-  const w = Number(svg.match(/<svg\b[^>]*\swidth="([\d.]+)/)?.[1]);
-  const h = Number(svg.match(/<svg\b[^>]*\sheight="([\d.]+)/)?.[1]);
-  const box = viewBox ?? (w && h ? [0, 0, w, h] : undefined);
-  if (!box || box[0] !== 0 || box[1] !== 0 || box[2] !== 24 || box[3] !== 24) {
-    return { problem: `draw it on a 24 × 24 grid (viewBox="0 0 24 24")${box ? ` — it is ${box.join(' ')}` : ''}` };
-  }
-  if (/<(rect|circle|ellipse|line|polyline|polygon)\b/.test(svg)) {
-    return { problem: 'convert its rectangles, circles and lines to paths (Outline Stroke / Flatten in Figma)' };
-  }
-  if (/\stransform="/.test(svg)) {
-    return { problem: 'flatten its transforms, so every path is in the grid’s own coordinates' };
-  }
-  // A path with no fill of its own inherits one; inside an unfilled wrapper
-  // (<svg fill="none">, <g fill="none">) it draws nothing — MingCute's frame.
-  const unfilledWrapper = /<(svg|g)\b[^>]*\sfill="none"/.test(svg);
-  const painted: string[] = [];
-  for (const [, attrs] of svg.matchAll(/<path\b([^>]*)\/?>/g)) {
-    const d = attrs.match(/\sd="([^"]+)"/)?.[1];
-    if (!d) continue;
-    const stroke = attrs.match(/\sstroke="([^"]+)"/)?.[1];
-    const fill = attrs.match(/\sfill="([^"]+)"/)?.[1];
-    if (stroke && stroke !== 'none') {
-      return { problem: 'outline its strokes into filled shapes (Outline Stroke in Figma)' };
-    }
-    // An unfilled path draws nothing — a frame, a guide.
-    if (fill === 'none' || (!fill && unfilledWrapper)) continue;
-    painted.push(d);
-  }
-  if (!painted.length) return { problem: 'it has no filled paths to draw' };
-  return { d: painted.join(' ') };
-}
-
 for (const { path, category } of files(DIR, 'Custom')) {
   const file = path.split('/').pop()!;
   const m = file.match(/^(.+?)(?:_(line|fill))?\.svg$/);
   if (!m) continue;
   const [, rawName, style] = m;
-  const name = rawName.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+  const name = customIconKey(rawName);
   const got = shapes(readFileSync(path, 'utf8'));
   if ('problem' in got) {
     problems.push(`${relative(ROOT, path)}: ${got.problem}`);

@@ -11,8 +11,8 @@ import { CUSTOM_PREFIX, iconArt, ICON_LIBRARY, MINGCUTE_PREFIX, type IconStyle }
  * drawing the whole set at once.
  */
 
-/** The team's own categories (assets/custom-icons/), listed apart from MingCute's. */
-const OWN = [...new Set(ICON_LIBRARY.filter((i) => i.key.startsWith(CUSTOM_PREFIX)).map((i) => i.c))].sort();
+/** The team's own categories, listed apart from MingCute's — read each time, as the library's can change. */
+const ownCategories = () => [...new Set(ICON_LIBRARY.filter((i) => i.key.startsWith(CUSTOM_PREFIX)).map((i) => i.c))].sort();
 const CATEGORIES = [...new Set(ICON_LIBRARY.filter((i) => i.key.startsWith(MINGCUTE_PREFIX)).map((i) => i.c))].sort();
 /** A category choice: `own:<c>` for the team's, the bare name for MingCute's. */
 const inCategory = (i: (typeof ICON_LIBRARY)[number], cat: string) =>
@@ -99,9 +99,9 @@ export function IconPicker({
             />
             <select value={cat} onChange={(e) => setCat(e.target.value)} aria-label="Category">
               <option value="">All</option>
-              {OWN.length > 0 && (
+              {ownCategories().length > 0 && (
                 <optgroup label="Our icons">
-                  {OWN.map((c) => (
+                  {ownCategories().map((c) => (
                     <option key={c} value={`own:${c}`}>
                       {c}
                     </option>

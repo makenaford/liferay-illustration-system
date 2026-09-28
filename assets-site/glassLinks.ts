@@ -2,6 +2,10 @@ import { rebuild } from '../src/glassRebuild.ts';
 import { recipeOf, type GlassRecipe } from '../src/glassRecipe.ts';
 import { GLASS_ICON_LINKS } from '../src/glassIconLinks.generated.ts';
 import { iconParts, type IconRow } from './store.ts';
+import { slug } from './uploads.ts';
+
+/** The links by library id — the icon's Figma name slugged — which holds however it has been filed since. */
+const BY_ID = new Map(Object.entries(GLASS_ICON_LINKS).map(([source, link]) => [slug(source), link]));
 
 /**
  * What an icon opens in the Glass Icon Builder with.
@@ -24,7 +28,7 @@ export function recipeFor(icon: IconRow): GlassRecipe | undefined {
   }
   if (!base) return undefined;
   const { category, name } = iconParts(icon);
-  const link = GLASS_ICON_LINKS[`${category} - ${name}`] ?? GLASS_ICON_LINKS[icon.name];
+  const link = BY_ID.get(icon.id) ?? GLASS_ICON_LINKS[`${category} - ${name}`] ?? GLASS_ICON_LINKS[icon.name];
   return {
     ...base,
     ...(link?.front && { front: link.front }),

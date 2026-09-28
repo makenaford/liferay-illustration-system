@@ -9,6 +9,11 @@ import { initStore, setUI, useEditor } from '../editor/state.ts';
 import { addFolder, fileIn, freshId, removeFolder, renameFolder } from '../editor/library.ts';
 import { Sidebar, Toolbar, type NavSection } from './Browse.tsx';
 import { recipeFor } from './glassLinks.ts';
+import { GLASS_FOLDERS, GLASS_ICON_FOLDERS } from '../src/glassIconFolders.ts';
+import { migrateDoc } from '../src/migrate.ts';
+import { CUSTOM_ICONS } from '../src/customIcons.generated.ts';
+import { customIconKey, customShape } from '../src/customIconShape.ts';
+import { setLibraryCustomIcons } from '../src/icons.ts';
 import type { Doc, GraphicArt } from '../src/document.ts';
 import { GRAPHICS } from '../src/graphics.generated.ts';
 import { normaliseFigmaSvg } from '../src/figmaGlass.ts';
@@ -52,6 +57,22 @@ const ACCEPT: Record<Exclude<Tab, 'tools'>, string> = {
 };
 /** Every asset, the recently edited, the unfiled ones, or one folder's. */
 type Place = 'all' | 'recent' | 'unfiled' | string;
+/**
+ * THE TWO ICON GROUPS. Glass icons are the library's glass set; Custom icons
+ * are the team's own flat 24px icons, offered in the builder beside MingCute.
+ * The Custom set starts with the icons the repo ships (assets/custom-icons/)
+ * and takes uploads, which the builder offers straight away.
+ */
+const CUSTOM_SET = 'custom-icons';
+const GLASS_SET = 'glass-icons';
+/** A custom icon's shape as an SVG file, for a set row: one path, in the set's ink. */
+const customSvg = (d: string) =>
+  `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="${d}" fill="#00072B"/></svg>`;
+/** The two groups first — Glass icons, then Custom icons — then any other set. */
+const groupRank = (id: string) => (id === GLASS_SET ? 0 : id === CUSTOM_SET ? 1 : 2);
+/** "server_stack" -> "Server Stack". */
+const titleOf = (key: string) => key.split('_').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+
 /** What "Recently edited" reaches back to. */
 const RECENT_MS = 14 * 24 * 60 * 60 * 1000;
 type IllustrationSort = 'recent' | 'az';
@@ -183,6 +204,45 @@ export function App() {
   }, [uploaderIds]);
   const who = (id?: string) => (id ? people[id] || 'A teammate' : null);
 
+  // The builder offers the Custom icons set as it is — what was removed from
+  // it goes, what was uploaded comes — and, before there is one, the icons the
+  // repo ships.
+  const customSet = lib.sets.find((x) => x.id === CUSTOM_SET);
+  useEffect(() => {
+    if (!customSet) return setLibraryCustomIcons(null);
+    const icons: Record<string, { c: string; line?: string; fill?: string }> = {};
+    for (const row of customSet.icons) {
+      const got = customShape(row.svg);
+      if ('d' in got) icons[row.id] = { c: row.category ?? 'Custom', line: got.d, fill: got.d };
+    }
+    setLibraryCustomIcons(icons);
+  }, [customSet]);
+
+  // The first time the library has no Custom icons set, it is started with
+  // the repo's — once, by whoever can write.
+  const seeding = useRef(false);
+  useEffect(() => {
+    if (!lib.ready || !writable || !st || customSet || seeding.current) return;
+    seeding.current = true;
+    void (async () => {
+      const by = (await viewerId()) ?? undefined;
+      const now = Date.now();
+      await st.putSet({ id: CUSTOM_SET, name: 'Custom icons', createdAt: now, createdBy: by });
+      for (const [key, g] of Object.entries(CUSTOM_ICONS)) {
+        const d = g.line ?? g.fill;
+        if (!d) continue;
+        await st.putIcon(CUSTOM_SET, {
+          id: key,
+          name: titleOf(key),
+          ...(g.c !== 'Custom' ? { category: g.c } : {}),
+          svg: customSvg(d),
+          uploadedAt: now,
+          uploadedBy: by,
+        });
+      }
+    })();
+  }, [lib.ready, writable, st, customSet]);
+
   // A folder deleted elsewhere falls back to everything.
   const known = new Set(lib.folders.folders.map((f) => f.id));
   const current: Place = place === 'all' || place === 'unfiled' || known.has(place) ? place : 'all';
@@ -232,7 +292,7 @@ export function App() {
             .sort((a, b) => a.name.localeCompare(b.name)),
         }))
         .filter((s) => !needle || s.icons.length)
-        .sort((a, b) => a.name.localeCompare(b.name)),
+        .sort((a, b) => groupRank(a.id) - groupRank(b.id) || a.name.localeCompare(b.name)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [lib.sets, lib.folders, current, needle],
   );
@@ -249,7 +309,8 @@ export function App() {
 
   /** Open an illustration in the builder, from the library's own version. */
   const edit = (row: { doc: Doc; updatedAt: number }) => {
-    initStore(structuredClone(row.doc), row.updatedAt);
+    // Brought up to date as it opens — an older mockup gains its screenshot slot.
+    initStore(migrateDoc(structuredClone(row.doc)), row.updatedAt);
     setUI({ view: 'editor', selected: null });
     setOpen(null);
     setBuilding(true);
@@ -344,15 +405,27 @@ export function App() {
         await st.putSet({ id: set.id, name: set.name, createdAt: now, createdBy: by });
       }
       const existing = lib.sets.find((s) => s.id === set.id)?.icons ?? [];
+      // Custom icons must be drawn as MingCute's are (src/customIconShape.ts);
+      // those that aren't are left out, with what to fix.
+      const custom = set.id === CUSTOM_SET;
+      const refused: string[] = [];
+      if (custom) {
+        icons = icons.filter((icon) => {
+          const got = customShape(icon.svg);
+          if ('problem' in got) refused.push(`${icon.name}: ${got.problem}`);
+          return 'd' in got;
+        });
+      }
       // "Business - Costly" in a file name is category and name.
       const place = (icon: ParsedIcon) => {
         const parts = iconParts({ name: icon.name });
         const fromFile = parts.category !== 'Uncategorized';
         return { category: category || (fromFile ? parts.category : undefined), name: fromFile ? parts.name : icon.name };
       };
+      // A custom icon's id is its key in the builder, `custom:<id>`: its name alone.
       const idOf = (icon: ParsedIcon) => {
         const pl = place(icon);
-        return slug(`${pl.category ?? ''} ${pl.name}`);
+        return custom ? customIconKey(pl.name) : slug(`${pl.category ?? ''} ${pl.name}`);
       };
       for (const icon of icons) {
         const pl = place(icon);
@@ -369,7 +442,9 @@ export function App() {
       const replaced = icons.filter((i) => existing.some((e) => e.id === idOf(i))).length;
       setToast(
         `Added ${icons.length - replaced} icon${icons.length - replaced === 1 ? '' : 's'} to ${set.name}` +
-          (replaced ? `, replaced ${replaced}.` : '.'),
+          (replaced ? `, replaced ${replaced}` : '') +
+          (refused.length ? `. Left out ${refused.length} — ${refused.join('; ')}` : '') +
+          (custom && icons.length ? '. The builder offers them now.' : '.'),
       );
       setPendingIcons(null);
       setTab('icons');
@@ -546,7 +621,7 @@ export function App() {
       sections={[
         { key: 'all', items: [{ key: 'all', label: 'All icons', count: iconCount }] },
         ...[...lib.sets]
-          .sort((a, b) => a.name.localeCompare(b.name))
+          .sort((a, b) => groupRank(a.id) - groupRank(b.id) || a.name.localeCompare(b.name))
           .map((set): NavSection => {
             const ops = iconFolders(st, set, setToast);
             const dropInto = (folder: string | null) => ({
@@ -623,7 +698,8 @@ export function App() {
       <div className="am-root">
         <div className="am-page">
           <GlassIconBuilder
-            sets={lib.sets}
+            // Glass icons go to glass sets, never to the flat Custom icons.
+            sets={lib.sets.filter((x) => x.id !== CUSTOM_SET)}
             writable={writable}
             store={st}
             onToast={setToast}
@@ -1242,12 +1318,51 @@ function IconSet({
   /** Which delete is waiting for its second click: the picked icon, or the selection. */
   const [arming, setArming] = useState<'one' | 'many' | null>(null);
   const [removing, setRemoving] = useState(false);
-  const variant = (i: IconRow) => (theme === 'light' && i.svgLight ? i.svgLight : i.svg);
+  // A custom icon is one flat shape: drawn in the page's ink, so it shows on
+  // either tile. Glass icons keep their own art, per theme.
+  const custom = set.id === CUSTOM_SET;
+  const ink = theme === 'light' ? '#0C1424' : '#E8EBF0';
+  const variant = (i: IconRow) =>
+    custom ? i.svg.replace(/fill="#[0-9a-fA-F]{3,8}"/g, `fill="${ink}"`) : theme === 'light' && i.svgLight ? i.svgLight : i.svg;
 
   // The set's folders; which one shows is the sidebar's choice.
   const folders = foldersOf(set);
   const folderOf = iconFolderOf;
-  const { file } = iconFolders(st, set, onToast);
+  const { file, saveFolders } = iconFolders(st, set, onToast);
+
+  // The proposed filing of the glass icons (src/glassIconFolders.ts): which
+  // icons are not yet where it puts them, or not yet named as it names them.
+  const reorg = set.id === GLASS_SET
+    ? set.icons.filter((i) => {
+        const to = GLASS_ICON_FOLDERS[i.id];
+        return to && (folderOf(i) !== to.folder || iconParts(i).name !== to.name);
+      })
+    : [];
+  const [applying, setApplying] = useState(false);
+  const [moving, setMoving] = useState(false);
+  const applyFolders = async () => {
+    if (!st) return;
+    setApplying(false);
+    setMoving(true);
+    let done = 0;
+    try {
+      // The folders first, in their order, keeping any others that still hold icons.
+      const others = foldersOf(set).filter(
+        (f) => !GLASS_FOLDERS.includes(f) && set.icons.some((i) => folderOf(i) === f && !GLASS_ICON_FOLDERS[i.id]),
+      );
+      await saveFolders([...GLASS_FOLDERS, ...others]);
+      for (const icon of reorg) {
+        const to = GLASS_ICON_FOLDERS[icon.id];
+        await st.putIcon(set.id, { ...icon, name: to.name, category: to.folder });
+        done++;
+      }
+      onToast(`Filed ${done} glass icon${done === 1 ? '' : 's'} into the new folders.`);
+    } catch (e) {
+      onToast(`Filed ${done} of ${reorg.length} — ${(e as Error).message}. Apply again to finish.`);
+    } finally {
+      setMoving(false);
+    }
+  };
   /** A folder's icons, by name; null is Unfiled. */
   const iconsIn = (f: string | null) =>
     set.icons.filter((i) => folderOf(i) === f).sort((x, y) => iconParts(x).name.localeCompare(iconParts(y).name));
@@ -1326,6 +1441,21 @@ function IconSet({
             </button>
             {/* Sets are not removed from the page: a set is the team's whole
                 collection, and one click from a folder's delete is too close. */}
+            {set.id === GLASS_SET && reorg.length > 0 && (
+              <button
+                type="button"
+                className={`am-mini${applying ? ' am-confirming' : ''}`}
+                disabled={moving}
+                title="File every glass icon by what it means — src/glassIconFolders.ts"
+                onClick={() => (applying ? void applyFolders() : setApplying(true))}
+              >
+                {moving
+                  ? 'Filing…'
+                  : applying
+                    ? `Click again — ${reorg.length} icon${reorg.length === 1 ? '' : 's'} move or are renamed`
+                    : 'Apply new folders'}
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -1457,7 +1587,7 @@ function IconSet({
             >
               Copy SVG
             </button>
-            {writable && (
+            {writable && !custom && (
               <button
                 type="button"
                 className="am-primary"
@@ -1557,8 +1687,17 @@ function AddIcons({
   onAdd: (set: { id: string; name: string; isNew: boolean }, category?: string) => void;
   onAddGraphics: () => void;
 }) {
-  const [choice, setChoice] = useState<string>(preferGraphics ? '__graphics' : sets[0]?.id ?? '__new');
-  const [name, setName] = useState('');
+  // Where they can go: Glass icons and Custom icons, whether or not the
+  // library has either yet, then any older set it still has.
+  const groups = [
+    { id: GLASS_SET, name: sets.find((x) => x.id === GLASS_SET)?.name ?? 'Glass icons' },
+    { id: CUSTOM_SET, name: sets.find((x) => x.id === CUSTOM_SET)?.name ?? 'Custom icons' },
+    ...sets.filter((x) => x.id !== GLASS_SET && x.id !== CUSTOM_SET).map((x) => ({ id: x.id, name: x.name })),
+  ];
+  // Flat 24px icons that meet the custom rule go to Custom icons; anything
+  // else — glass, with its dark and light — to Glass icons.
+  const allCustom = icons.every((i) => !i.svgLight && 'd' in customShape(i.svg));
+  const [choice, setChoice] = useState<string>(preferGraphics ? '__graphics' : allCustom ? CUSTOM_SET : GLASS_SET);
   const [category, setCategory] = useState('');
   const toGraphics = choice === '__graphics';
   const fileCategories = [...new Set(icons.map((i) => iconParts({ name: i.name }).category))].filter(
@@ -1566,10 +1705,8 @@ function AddIcons({
   );
   const chosen = sets.find((s) => s.id === choice);
   const setCategories = chosen ? foldersOf(chosen) : [];
-  const isNew = choice === '__new';
-  const newId = slug(name);
-  const clash = isNew && sets.some((s) => s.id === newId);
-  const ready = isNew ? !!name.trim() && !clash : true;
+  const isNew = choice !== '__graphics' && !sets.some((x) => x.id === choice);
+  const ready = true;
 
   return (
     <div className="am-scrim" onClick={onCancel}>
@@ -1586,8 +1723,7 @@ function AddIcons({
             onAddGraphics();
             return;
           }
-          const set = isNew ? { id: newId, name: name.trim(), isNew: true } : { id: choice, name: sets.find((s) => s.id === choice)!.name, isNew: false };
-          onAdd(set, category.trim() || undefined);
+          onAdd({ id: choice, name: groups.find((g) => g.id === choice)!.name, isNew }, category.trim() || undefined);
         }}
       >
         <div className="am-sheet-head">
@@ -1618,27 +1754,13 @@ function AddIcons({
             <span>Add to</span>
             <select id="icon-set" value={choice} onChange={(e) => setChoice(e.target.value)}>
               <option value="__graphics">Graphics — larger artwork the builder places whole</option>
-              {sets.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
+              {groups.map((g) => (
+                <option key={g.id} value={g.id}>
+                  {g.id === CUSTOM_SET ? `${g.name} — flat 24px icons the builder offers beside MingCute` : g.name}
                 </option>
               ))}
-              <option value="__new">New icon set…</option>
             </select>
           </label>
-          {isNew && (
-            <label className="am-field" htmlFor="icon-set-name">
-              <span>Name of the new set</span>
-              <input
-                id="icon-set-name"
-                autoFocus
-                value={name}
-                placeholder="e.g. Glass icons"
-                onChange={(e) => setName(e.target.value)}
-              />
-              {clash && <em className="am-err">A set with that name exists — choose it above instead.</em>}
-            </label>
-          )}
           {!toGraphics && (
             <label className="am-field" htmlFor="icon-category">
               <span>Folder</span>

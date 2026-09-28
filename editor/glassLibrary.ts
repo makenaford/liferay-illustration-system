@@ -39,6 +39,9 @@ interface DbLike {
 }
 
 const SHIPPED = new Map(Object.entries(GLASS_ICONS).map(([key, g]) => [g.source, key]));
+/** The same, by library id — the Figma name slugged, as the site files uploads — which survives a move or rename. */
+const slugOf = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 80);
+const SHIPPED_BY_ID = new Map(Object.entries(GLASS_ICONS).map(([key, g]) => [slugOf(g.source), key]));
 
 function parts(r: Row): { category: string; name: string } {
   if (r.category) return { category: r.category, name: r.name ?? '' };
@@ -81,7 +84,7 @@ export function libraryGlassIcons(refresh = false): Promise<LibraryGlass> {
             category: p.category,
             dark: normaliseFigmaSvg(r.svg!, `lg-${r.id}-d-`),
             light: normaliseFigmaSvg(r.svgLight!, `lg-${r.id}-l-`),
-            builtin: SHIPPED.get(`${p.category} - ${p.name}`),
+            builtin: SHIPPED_BY_ID.get(r.id!) ?? SHIPPED.get(`${p.category} - ${p.name}`),
           };
         })
         .sort((a, b) => a.category.localeCompare(b.category) || a.label.localeCompare(b.label));

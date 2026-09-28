@@ -117,15 +117,45 @@ export const CUSTOM_PREFIX = 'custom:';
  */
 export function glyphOf(key: string | null | undefined): MingCuteIcon | undefined {
   if (!key) return undefined;
-  if (key.startsWith(CUSTOM_PREFIX)) return CUSTOM_ICONS[key.slice(CUSTOM_PREFIX.length)];
+  if (key.startsWith(CUSTOM_PREFIX)) {
+    const name = key.slice(CUSTOM_PREFIX.length);
+    // The library's, where the site gave them; the shipped ones still draw
+    // what documents already use.
+    return libraryCustom?.[name] ?? CUSTOM_ICONS[name];
+  }
   return MINGCUTE[key.startsWith(MINGCUTE_PREFIX) ? key.slice(MINGCUTE_PREFIX.length) : key];
 }
 
 /** Every icon the picker offers, by key: the team's own first, then MingCute's. */
-export const ICON_LIBRARY: { key: string; name: string; c: string }[] = [
-  ...Object.entries(CUSTOM_ICONS).map(([name, g]) => ({ key: CUSTOM_PREFIX + name, name, c: g.c })),
-  ...Object.entries(MINGCUTE).map(([name, g]) => ({ key: MINGCUTE_PREFIX + name, name, c: g.c })),
-];
+export const ICON_LIBRARY: { key: string; name: string; c: string }[] = [];
+
+/**
+ * The Marketing Assets site's Custom icons set, when the builder runs there:
+ * those are the custom icons it offers, so one removed from the set is no
+ * longer offered, and one uploaded is, with no deploy. Without it — the
+ * builder on its own — the icons shipped in assets/custom-icons/ are.
+ */
+let libraryCustom: Record<string, MingCuteIcon> | null = null;
+/** Bumped whenever the offered icons change, for a picker to redraw by. */
+export let iconLibraryVersion = 0;
+
+function listIcons() {
+  const own = libraryCustom ?? CUSTOM_ICONS;
+  ICON_LIBRARY.splice(
+    0,
+    ICON_LIBRARY.length,
+    ...Object.entries(own).map(([name, g]) => ({ key: CUSTOM_PREFIX + name, name, c: g.c })),
+    ...Object.entries(MINGCUTE).map(([name, g]) => ({ key: MINGCUTE_PREFIX + name, name, c: g.c })),
+  );
+  iconLibraryVersion++;
+}
+listIcons();
+
+/** The library's custom icons, by key — or null to go back to the shipped ones. */
+export function setLibraryCustomIcons(icons: Record<string, MingCuteIcon> | null) {
+  libraryCustom = icons;
+  listIcons();
+}
 
 /**
  * An icon key, in a style, as artwork — or undefined for no icon.

@@ -123,7 +123,7 @@ export function useFileDrop(stageRef: React.RefObject<HTMLDivElement | null>, zo
 
     try {
       for (const [i, file] of usable.entries()) {
-        const asset = await readAsset(file, cw ? Math.min(160, cw) : 160);
+        const asset = await readAsset(file, cw ? Math.min(160, cw) : 160, undefined, true);
         // Several files fan out a little, so they do not land exactly stacked.
         const at = {
           x: snap(px - asset.size.width / 2 + i * 12, snapStep),

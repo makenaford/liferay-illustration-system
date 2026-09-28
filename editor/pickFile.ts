@@ -1,3 +1,4 @@
+import { glassIconForSvg } from './glassLibrary.ts';
 import { dataUriBytes, importSvg, RASTER_WARN_BYTES } from '../src/importAsset.ts';
 import type { Element } from '../src/document.ts';
 import { compressImage } from './compressImage.ts';
@@ -55,7 +56,7 @@ export function pickFile(accept = ASSET_ACCEPT): Promise<File | null> {
 
 /** The props a file contributes to an element — everything but its position. */
 export interface AssetPatch {
-  type: 'image' | 'svg';
+  type: 'image' | 'svg' | 'spotIcon';
   patch: Record<string, unknown>;
   /** Natural size, capped, for a fresh placement. */
   size: { width: number; height: number };
@@ -72,11 +73,25 @@ export async function readAsset(
   file: File,
   cap = 160,
   slot?: { width: number; height: number },
+  /** Placing a new element: a library glass icon comes in as one. */
+  glass = false,
 ): Promise<AssetPatch> {
   const isSvg = file.type === 'image/svg+xml' || /\.svg$/i.test(file.name);
 
   if (isSvg) {
-    const art = importSvg(await file.text());
+    const text = await file.text();
+    const icon = glass ? await glassIconForSvg(text) : null;
+    if (icon) {
+      return {
+        type: 'spotIcon',
+        patch: icon.builtin
+          ? { name: icon.builtin }
+          : { name: icon.id, art: { id: icon.id, label: icon.label, category: icon.category, dark: icon.dark, light: icon.light } },
+        size: { width: 64, height: 64 },
+        note: `Placed ${icon.label} as a glass icon — it follows the theme`,
+      };
+    }
+    const art = importSvg(text);
     const [, , vw, vh] = art.viewBox;
     const scale = Math.min(1, cap / Math.max(vw, vh));
     return {
@@ -125,6 +140,7 @@ export async function readAsset(
 
 /** A fresh element for a picked file, placed at `at`. */
 export function assetElement(asset: AssetPatch, at: { x: number; y: number }): Element {
+  if (asset.type === 'spotIcon') return { type: 'spotIcon', x: at.x, y: at.y, size: asset.size.width, ...asset.patch } as Element;
   return asset.type === 'svg'
     ? ({ type: 'svg', x: at.x, y: at.y, ...asset.size, ...asset.patch } as Element)
     : ({ type: 'image', x: at.x, y: at.y, ...asset.size, fit: 'cover', ...asset.patch } as Element);

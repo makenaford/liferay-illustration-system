@@ -19,6 +19,8 @@ export interface LibraryGlassIcon {
   light: GraphicArt;
   /** The shipped icon this is, by key into GLASS_ICONS. */
   builtin?: string;
+  /** The file as it is stored, in each variant — what a dropped file is matched against. */
+  raw: { dark: string; light: string };
 }
 
 /** The library's glass icons, or null when there is no library — the builder on its own. */
@@ -85,10 +87,23 @@ export function libraryGlassIcons(refresh = false): Promise<LibraryGlass> {
             dark: normaliseFigmaSvg(r.svg!, `lg-${r.id}-d-`),
             light: normaliseFigmaSvg(r.svgLight!, `lg-${r.id}-l-`),
             builtin: SHIPPED_BY_ID.get(r.id!) ?? SHIPPED.get(`${p.category} - ${p.name}`),
+            raw: { dark: r.svg!, light: r.svgLight! },
           };
         })
         .sort((a, b) => a.category.localeCompare(b.category) || a.label.localeCompare(b.label));
     })().catch(() => null);
   }
   return cached;
+}
+
+/**
+ * The library glass icon a file is, by its contents — either variant, as the
+ * site downloads them — or null. So a glass icon dropped on the canvas comes
+ * in as a glass icon, with both variants, and follows the theme, rather than
+ * as a flat SVG of whichever variant was downloaded.
+ */
+export async function glassIconForSvg(svg: string): Promise<LibraryGlassIcon | null> {
+  const icons = await libraryGlassIcons();
+  const text = svg.trim();
+  return icons?.find((g) => g.raw.dark.trim() === text || g.raw.light.trim() === text) ?? null;
 }

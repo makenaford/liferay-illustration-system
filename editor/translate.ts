@@ -78,17 +78,104 @@ export async function renderTranslated(
   return renderDocument(translated, theme, options);
 }
 
+/*
+ * DRAFTS — machine translations nobody has reviewed, kept per language and
+ * shared by every illustration, so "Dashboard" is translated once for the
+ * whole library, and switching back to a language is instant. Kept in this
+ * browser (a per-viewer convenience: a draft is cheap to make again), and
+ * never written to a document — only a review in the builder does that.
+ */
+const DRAFTS_KEY = 'translation-drafts-v1';
+type Drafts = Partial<Record<Lang, Record<string, string>>>;
+const drafts: Drafts = (() => {
+  try {
+    return JSON.parse(localStorage.getItem(DRAFTS_KEY) ?? '{}') as Drafts;
+  } catch {
+    return {};
+  }
+})();
+const keepDrafts = () => {
+  try {
+    localStorage.setItem(DRAFTS_KEY, JSON.stringify(drafts));
+  } catch {
+    /* storage full or blocked: the drafts last the session */
+  }
+};
+
+/** The table a document draws in `lang` with: its reviewed strings, drafts for the rest. */
+export function tableNow(doc: Doc, lang: Lang): { table: Record<string, string>; drafted: number; missing: number } {
+  const reviewed = doc.translations?.[lang] ?? {};
+  const known = drafts[lang] ?? {};
+  const table: Record<string, string> = {};
+  let drafted = 0;
+  let missing = 0;
+  for (const s of collectStrings(doc)) {
+    if (reviewed[s]?.trim()) table[s] = reviewed[s];
+    else if (known[s]) {
+      table[s] = known[s];
+      drafted++;
+    } else missing++;
+  }
+  return { table, drafted, missing };
+}
+
+/** Strings per request, and requests at once: a library is hundreds of strings. */
+const CHUNK = 40;
+const AT_ONCE = 4;
+const inFlight = new Map<string, Promise<void>>();
+
+/**
+ * Draft every string in `docs` that has neither a review nor a draft in
+ * `lang`, `AT_ONCE` requests at a time. `onProgress` is called as each
+ * request lands, with how many strings are still to come, so the library can
+ * redraw as translations arrive rather than all at the end.
+ */
+export async function draftAll(docs: Doc[], lang: Lang, onProgress: (remaining: number) => void): Promise<void> {
+  const t = await translator();
+  if (!t) return;
+  const known = (drafts[lang] ??= {});
+  const todo = [
+    ...new Set(
+      docs.flatMap((d) => {
+        const reviewed = d.translations?.[lang] ?? {};
+        return collectStrings(d).filter((s) => !reviewed[s]?.trim() && !known[s]);
+      }),
+    ),
+  ];
+  let remaining = todo.length;
+  onProgress(remaining);
+  const chunks: string[][] = [];
+  for (let i = 0; i < todo.length; i += CHUNK) chunks.push(todo.slice(i, i + CHUNK));
+  const run = async (chunk: string[]) => {
+    const key = `${lang}:${chunk.join('\u0000')}`;
+    if (!inFlight.has(key)) {
+      inFlight.set(
+        key,
+        t.strings(lang, chunk).then((out) => {
+          chunk.forEach((s, i) => (known[s] = out[i]));
+          keepDrafts();
+        }).finally(() => inFlight.delete(key)),
+      );
+    }
+    await inFlight.get(key);
+    remaining -= chunk.length;
+    onProgress(remaining);
+  };
+  const queue = [...chunks];
+  await Promise.all(
+    Array.from({ length: Math.min(AT_ONCE, queue.length) }, async () => {
+      for (let c = queue.shift(); c; c = queue.shift()) await run(c);
+    }),
+  );
+}
+
 /**
  * The document's reviewed table for `lang`, with a machine draft for every
  * string it lacks — for a download from the library, where nobody reviews.
  * `drafted` counts the strings nobody has checked.
  */
 export async function tableFor(doc: Doc, lang: Lang): Promise<{ table: Record<string, string>; drafted: number }> {
-  const reviewed = doc.translations?.[lang] ?? {};
-  const missing = collectStrings(doc).filter((s) => !reviewed[s]?.trim());
-  if (!missing.length) return { table: reviewed, drafted: 0 };
-  const t = await translator();
-  if (!t) return { table: reviewed, drafted: 0 };
-  const out = await t.strings(lang, missing);
-  return { table: { ...reviewed, ...Object.fromEntries(missing.map((s, i) => [s, out[i]])) }, drafted: missing.length };
+  if (tableNow(doc, lang).missing) await draftAll([doc], lang, () => {});
+  const { table, drafted } = tableNow(doc, lang);
+  return { table, drafted };
 }

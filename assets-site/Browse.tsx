@@ -254,13 +254,14 @@ export function Sidebar({
  * — which only changes how the artwork is shown, so it is labelled as such
  * and kept apart from the filters. Under it, where you are and how many.
  */
-export function Toolbar<S extends string>({
+export function Toolbar<S extends string, L extends string = string>({
   query,
   onQuery,
   placeholder,
   sort,
   preview,
   onPreview,
+  language,
   scope,
   count,
   noun,
@@ -271,6 +272,12 @@ export function Toolbar<S extends string>({
   sort?: { value: S; options: { value: S; label: string }[]; onChange: (s: S) => void };
   preview: 'dark' | 'light';
   onPreview: (t: 'dark' | 'light') => void;
+  /**
+   * The language the artwork is shown in, beside the preview theme because
+   * it is the same kind of choice: how the art is shown, not what is listed.
+   * `busy` says what is still being translated.
+   */
+  language?: { value: L; onChange: (l: L) => void; options: { value: L; label: string }[]; busy?: string };
   /** Where you are, when narrower than everything; the ✕ goes back to everything. */
   scope?: { label: string; onClear: () => void };
   count: number;
@@ -296,6 +303,18 @@ export function Toolbar<S extends string>({
             </select>
           </label>
         )}
+        {language && (
+          <label className="am-sort am-lang-pick" title="Show every illustration with its text in this language">
+            <span>Language</span>
+            <select value={language.value} onChange={(e) => language.onChange(e.target.value as L)}>
+              {language.options.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
         <div className="am-seg am-preview" role="group" aria-label="Preview theme">
           <span className="am-seg-label">Preview</span>
           {(['dark', 'light'] as const).map((t) => (
@@ -306,6 +325,11 @@ export function Toolbar<S extends string>({
         </div>
       </div>
       <div className="am-scope">
+        {language?.busy && (
+          <span className="am-scope-chip am-translating" role="status">
+            {language.busy}
+          </span>
+        )}
         {searching ? (
           <span className="am-scope-chip am-searching">
             Searching everything

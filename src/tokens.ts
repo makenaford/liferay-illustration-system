@@ -854,13 +854,21 @@ export const light: Tokens = {
   surfaces: {
     /** Basic: the everyday card — and a tile nested inside one. No shadow. Was glass1 (and glass2). */
     /**
-     * Default: the everyday card, a FROSTED WHITE CARD — node `792:13843` in
-     * the Marketing UI Assets Repo fills white into `#BFD5FF` behind a blue
-     * hairline. Only the highlighted card takes the blue tint (`lightGlass`).
+     * Default: the everyday card and hero panel, a PALE BLUE GLASS — the
+     * `Card Detailed` panel of node `792:13847` in the Marketing UI Assets
+     * Repo, as the file draws it now: `Glass Icon White Fill-Light`
+     * (`#99BCFF` at 21%) flat, a `#0053F0` 10% hairline, a 0 0 8px
+     * `#0B5FFF` 20% glow, and an inset 1px highlight in the fill's colour.
+     * Taken as drawn, not raised like the dark set's opacities.
+     *
+     * Was a frosted white card: white 55% into `#BFD5FF` 15% at 60°, behind
+     * a `#0B5FFF` 14%→10% hairline, no shadow.
      */
     'glass-default': {
-      fill: { angle: 60, stops: [{ color: '#FFFFFF', opacity: 0.55 }, { color: '#BFD5FF', opacity: 0.15 }] },
-      line: { angle: 225, stops: [{ color: '#0B5FFF', opacity: 0.14 }, { color: '#0B5FFF', opacity: 0.1 }] },
+      fill: { angle: 180, stops: [{ color: '#99BCFF', opacity: 0.21 }, { color: '#99BCFF', opacity: 0.21 }] },
+      line: { angle: 225, stops: [{ color: '#0053F0', opacity: 0.1 }, { color: '#0053F0', opacity: 0.1 }] },
+      shadow: [{ dy: 0, blur: 8, color: '#0B5FFF', opacity: 0.2 }],
+      litEdge: { color: '#99BCFF', opacity: 0.21 },
       blur: GLASS_BLUR,
     },
     /** Elevated: floating over the composition — the same card, whiter, with a soft cast shadow. */

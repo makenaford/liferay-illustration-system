@@ -1,13 +1,13 @@
 import { h, type Ctx, type VNode } from '../vsvg.ts';
 import { measureText, VERTICAL } from '../fontMetrics.generated.ts';
 import { Text, typeStyle, type TypeRole, type TypeWeight } from './text.ts';
-import { ProgressRow } from './progressRow.ts';
+import { chartColor } from '../colors.ts';
 
 export interface TableColumn {
   label: string;
   /** Defaults: the first column `start`, the rest `end` — names, then values. */
   align?: 'start' | 'end';
-  /** `bar` draws each cell (0–1, or a percentage) as a progress track. */
+  /** `bar` draws each cell's number as a bar, as long as its share of the column's largest. */
   kind?: 'text' | 'bar';
   /** A bar column's colour, from the set. Omitted: Primary. */
   color?: string;
@@ -40,9 +40,10 @@ const GAP = 8;
 /**
  * The type each part of the table is set in — from the two tables the set
  * already draws by hand. "Top opportunities" (the partner dashboards): a
- * muted `label` header over `caption` rows, the value column semibold, a rule
- * under every row but the last, rows 20px apart. The contract prices (B2B
- * commerce): everything `micro`, muted and semibold, no rules, rows tight.
+ * muted header over its rows, the value column semibold, a rule under every
+ * row but the last, rows 20px apart — all in `bodySmall`. The contract
+ * prices (B2B commerce): everything `micro`, muted and semibold, no rules,
+ * rows tight.
  */
 function styles(compact: boolean) {
   return compact
@@ -53,19 +54,21 @@ function styles(compact: boolean) {
         rowHeight: 14,
       }
     : {
-        head: { role: 'label' as TypeRole, weight: undefined, tone: 'muted' as const },
-        body: { role: 'caption' as TypeRole, weight: undefined, tone: 'primary' as const },
-        value: { role: 'caption' as TypeRole, weight: 'semibold' as TypeWeight, tone: 'primary' as const },
+        head: { role: 'bodySmall' as TypeRole, weight: 'semibold' as TypeWeight, tone: 'muted' as const },
+        body: { role: 'bodySmall' as TypeRole, weight: 'regular' as TypeWeight, tone: 'primary' as const },
+        value: { role: 'bodySmall' as TypeRole, weight: 'semibold' as TypeWeight, tone: 'primary' as const },
         rowHeight: 20,
       };
 }
 
-/** A bar cell's value: `0.6`, `60%` or `60` all read as 60%. */
+/** A bar cell's number: `1,250`, `$12.08`, `60%` and `0.6` all read as their number. */
 export function barValue(cell: string | undefined): number {
-  const n = parseFloat((cell ?? '').replace('%', ''));
-  if (!Number.isFinite(n)) return 0;
-  return Math.min(Math.max(cell?.includes('%') || n > 1 ? n / 100 : n, 0), 1);
+  const n = parseFloat((cell ?? '').replace(/[^\d.-]/g, ''));
+  return Number.isFinite(n) && n > 0 ? n : 0;
 }
+
+/** Bar thickness, and the gap either side of it being the row's. */
+const BAR = 6;
 
 /**
  * Where everything goes. Rows are bands `rowHeight` tall with the text centred
@@ -156,13 +159,27 @@ export function Table(ctx: Ctx, props: TableProps): VNode {
   if (L.header) {
     L.columns.forEach((col, c) => col.label && nodes.push(cell(c, props.y, col.label, L.s.head)));
   }
+  // A bar's length is its value's share of the column's largest, so the bars
+  // compare the rows with each other; the largest runs the column's width.
+  const most = L.columns.map((col, c) => (col.kind === 'bar' ? Math.max(0, ...props.rows.map((r) => barValue(r[c]))) : 0));
   props.rows.forEach((row, r) => {
     const top = L.rowTop(r);
     L.columns.forEach((col, c) => {
       if (col.kind === 'bar') {
-        nodes.push(
-          ProgressRow(ctx, { x: col.x, y: top + (L.rowHeight - 3) / 2, width: col.width, value: barValue(row[c]), color: col.color }),
-        );
+        const v = barValue(row[c]);
+        const w = most[c] ? (v / most[c]) * col.width : 0;
+        if (w > 0) {
+          nodes.push(
+            h('rect', {
+              x: col.x,
+              y: top + (L.rowHeight - BAR) / 2,
+              width: Math.max(w, BAR),
+              height: BAR,
+              rx: BAR / 2,
+              fill: chartColor(tk, 0, col.color),
+            }),
+          );
+        }
       } else if (row[c]) {
         nodes.push(cell(c, top, row[c], L.styleOf(c)));
       }

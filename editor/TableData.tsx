@@ -22,7 +22,7 @@ export function TableEditor({ el, onPatch }: { el: TableEl; onPatch: (p: Record<
     // A new row copies the last one's bar values, so a bar column never
     // arrives empty; its text cells start blank.
     const prev = rows.at(-1) ?? [];
-    onPatch({ rows: [...rows, columns.map((col, c) => (col.kind === 'bar' ? (prev[c] ?? '0.5') : ''))] });
+    onPatch({ rows: [...rows, columns.map((col, c) => (col.kind === 'bar' ? (prev[c] ?? '50') : ''))] });
   };
   const addColumn = () =>
     onPatch({ columns: [...columns, { label: 'Column' }], rows: rows.map((row) => [...row, '']) });
@@ -54,7 +54,7 @@ export function TableEditor({ el, onPatch }: { el: TableEl; onPatch: (p: Record<
               key={`${r}.${c}`}
               type="text"
               value={row[c] ?? ''}
-              placeholder={col.kind === 'bar' ? '0–1 or %' : ''}
+              placeholder={col.kind === 'bar' ? 'A number' : ''}
               aria-label={`Row ${r + 1}, ${col.label || `column ${c + 1}`}`}
               onChange={(e) => setCell(r, c, e.target.value)}
             />

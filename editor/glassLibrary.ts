@@ -3,12 +3,13 @@ import { GLASS_ICONS } from '../src/glassIcons.generated.ts';
 import { normaliseFigmaSvg } from '../src/figmaGlass.ts';
 
 /**
- * GLASS ICONS FROM THE LIBRARY — ones the team added to the Marketing Assets
- * site's Glass icons set, or made with its Glass Icon Builder, which the
- * builder offers when it runs inside that site (shared database,
- * `iconSets/glass-icons/icons`). Icons the builder already ships are left
- * out, so nothing is listed twice. Made portable here, the same way the
- * shipped set is (src/figmaGlass.ts).
+ * GLASS ICONS FROM THE LIBRARY — the Marketing Assets site's Glass icons set
+ * (shared database, `iconSets/glass-icons/icons`), which is what the builder
+ * offers when it runs inside that site: an icon removed there is no longer
+ * offered. One the builder also ships (the same "Category - Name") is
+ * offered as the shipped icon, `builtin`, so documents keep referring to it
+ * by name; the rest are made portable here (src/figmaGlass.ts) and carried in
+ * the document.
  */
 export interface LibraryGlassIcon {
   id: string;
@@ -16,7 +17,12 @@ export interface LibraryGlassIcon {
   category: string;
   dark: GraphicArt;
   light: GraphicArt;
+  /** The shipped icon this is, by key into GLASS_ICONS. */
+  builtin?: string;
 }
+
+/** The library's glass icons, or null when there is no library — the builder on its own. */
+export type LibraryGlass = LibraryGlassIcon[] | null;
 
 interface Row {
   id?: string;
@@ -32,7 +38,7 @@ interface DbLike {
   };
 }
 
-const SHIPPED = new Set(Object.values(GLASS_ICONS).map((g) => g.source));
+const SHIPPED = new Map(Object.entries(GLASS_ICONS).map(([key, g]) => [g.source, key]));
 
 function parts(r: Row): { category: string; name: string } {
   if (r.category) return { category: r.category, name: r.name ?? '' };
@@ -41,31 +47,32 @@ function parts(r: Row): { category: string; name: string } {
   return i > 0 ? { category: n.slice(0, i), name: n.slice(i + 3) } : { category: 'Uncategorized', name: n };
 }
 
-let cached: Promise<LibraryGlassIcon[]> | undefined;
+let cached: Promise<LibraryGlass> | undefined;
 
-export function libraryGlassIcons(refresh = false): Promise<LibraryGlassIcon[]> {
+export function libraryGlassIcons(refresh = false): Promise<LibraryGlass> {
   if (!cached || refresh) {
     const c = (window as { claude?: { use?(n: string): Promise<unknown> } }).claude;
     cached = (async () => {
       const db = c?.use ? ((await c.use('db')) as DbLike | null) : null;
-      let rows: Row[];
+      let rows: Row[] | null;
       if (db) {
-        rows = (await db.collection('iconSets/glass-icons/icons').get()).docs.map((d) => d.data() as Row);
+        // No set at all — the standalone builder's own database — is no
+        // library, not an empty one: the builder then offers its own set.
+        const docs = (await db.collection('iconSets/glass-icons/icons').get()).docs;
+        rows = docs.length ? docs.map((d) => d.data() as Row) : null;
       } else {
         // Run locally, the Marketing Assets site keeps its icon sets in this browser.
         try {
-          const sets = JSON.parse(localStorage.getItem('marketing-assets-icons') ?? '[]') as { id: string; icons: Row[] }[];
-          rows = sets.find((s) => s.id === 'glass-icons')?.icons ?? [];
+          const raw = localStorage.getItem('marketing-assets-icons');
+          const sets = raw ? (JSON.parse(raw) as { id: string; icons: Row[] }[]) : null;
+          rows = sets?.find((s) => s.id === 'glass-icons')?.icons ?? null;
         } catch {
-          rows = [];
+          rows = null;
         }
       }
+      if (!rows) return null;
       return rows
         .filter((r) => r?.id && r.svg && r.svgLight)
-        .filter((r) => {
-          const p = parts(r);
-          return !SHIPPED.has(`${p.category} - ${p.name}`);
-        })
         .map((r) => {
           const p = parts(r);
           return {
@@ -74,10 +81,11 @@ export function libraryGlassIcons(refresh = false): Promise<LibraryGlassIcon[]> 
             category: p.category,
             dark: normaliseFigmaSvg(r.svg!, `lg-${r.id}-d-`),
             light: normaliseFigmaSvg(r.svgLight!, `lg-${r.id}-l-`),
+            builtin: SHIPPED.get(`${p.category} - ${p.name}`),
           };
         })
         .sort((a, b) => a.category.localeCompare(b.category) || a.label.localeCompare(b.label));
-    })().catch(() => []);
+    })().catch(() => null);
   }
   return cached;
 }

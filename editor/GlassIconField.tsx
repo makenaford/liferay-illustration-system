@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react';
 import type { Element } from '../src/document.ts';
 import { SPOT_GROUPS, SPOT_KEYS, SPOT_LABELS } from './schema.ts';
-import { libraryGlassIcons, type LibraryGlassIcon } from './glassLibrary.ts';
+import { libraryGlassIcons, type LibraryGlass, type LibraryGlassIcon } from './glassLibrary.ts';
 
 /**
- * The glass icon picker: the shipped set by category, then the team's own
- * from the Marketing Assets library, by category too, where the builder can
- * reach that library. A shipped icon is referenced by key; a library one is
- * copied into the illustration.
+ * The glass icon picker. Inside the Marketing Assets site it offers exactly
+ * the library's Glass icons set, by its folders — an icon removed there is no
+ * longer offered. An icon the builder also ships is referenced by key; one
+ * only the library has is copied into the illustration. On its own, with no
+ * library, the builder offers the set it ships. Whatever the illustration
+ * already uses stays selectable, removed or not.
  */
 export function GlassIconField({
   el,
@@ -17,18 +19,22 @@ export function GlassIconField({
   onPatch: (props: Record<string, unknown>) => void;
 }) {
   const g = el as Extract<Element, { type: 'spotIcon' }>;
-  const [library, setLibrary] = useState<LibraryGlassIcon[]>([]);
+  // undefined while loading, null when there is no library.
+  const [library, setLibrary] = useState<LibraryGlass | undefined>(undefined);
   useEffect(() => {
     void libraryGlassIcons(true).then(setLibrary);
   }, []);
 
   const value = g.art ? `lib:${g.art.id}` : `builtin:${g.name}`;
-  const orphan = g.art && !library.some((l) => l.id === g.art!.id);
+  const valueOf = (l: LibraryGlassIcon) => (l.builtin ? `builtin:${l.builtin}` : `lib:${l.id}`);
 
-  const shippedGroups = new Map<string, string[]>();
-  for (const k of SPOT_KEYS) shippedGroups.set(SPOT_GROUPS[k], [...(shippedGroups.get(SPOT_GROUPS[k]) ?? []), k]);
-  const libGroups = new Map<string, LibraryGlassIcon[]>();
-  for (const l of library) libGroups.set(l.category, [...(libGroups.get(l.category) ?? []), l]);
+  // What to offer, by folder: the library's set, or with none the shipped one.
+  const groups = new Map<string, { value: string; label: string }[]>();
+  const add = (cat: string, o: { value: string; label: string }) => groups.set(cat, [...(groups.get(cat) ?? []), o]);
+  if (library) for (const l of library) add(l.category, { value: valueOf(l), label: l.label });
+  else if (library === null) for (const k of SPOT_KEYS) add(SPOT_GROUPS[k], { value: `builtin:${k}`, label: SPOT_LABELS[k] });
+  const offered = [...groups.values()].some((os) => os.some((o) => o.value === value));
+  const current = g.art ? g.art.label : (SPOT_LABELS[g.name] ?? g.name);
 
   return (
     <select
@@ -37,30 +43,21 @@ export function GlassIconField({
         const v = e.target.value;
         if (v.startsWith('builtin:')) onPatch({ name: v.slice(8), art: undefined });
         else if (v.startsWith('lib:')) {
-          const pick = library.find((l) => l.id === v.slice(4));
-          if (pick) onPatch({ art: { ...pick } });
+          const pick = library?.find((l) => l.id === v.slice(4));
+          if (pick) onPatch({ art: { id: pick.id, label: pick.label, category: pick.category, dark: pick.dark, light: pick.light } });
         }
       }}
     >
-      {[...shippedGroups.entries()].map(([cat, keys]) => (
-        <optgroup key={cat} label={cat}>
-          {keys.map((k) => (
-            <option key={k} value={`builtin:${k}`}>
-              {SPOT_LABELS[k]}
-            </option>
-          ))}
-        </optgroup>
-      ))}
-      {orphan && (
+      {!offered && (
         <optgroup label="In this illustration">
-          <option value={value}>{g.art!.label}</option>
+          <option value={value}>{library === undefined ? `${current} (loading…)` : current}</option>
         </optgroup>
       )}
-      {[...libGroups.entries()].map(([cat, items]) => (
-        <optgroup key={`lib-${cat}`} label={`${cat} · Marketing Assets`}>
-          {items.map((l) => (
-            <option key={l.id} value={`lib:${l.id}`}>
-              {l.label}
+      {[...groups.entries()].map(([cat, options]) => (
+        <optgroup key={cat} label={cat}>
+          {options.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
             </option>
           ))}
         </optgroup>

@@ -722,6 +722,12 @@ export function App() {
               {busy ? 'Adding…' : UPLOAD_LABEL[tab]}
             </button>
             {tab === 'illustrations' && <NewMenu className="am-primary" onPick={(t) => void create(t)} />}
+            {/* Beside Upload icons, where a new icon is wanted: the builder that makes one. */}
+            {tab === 'icons' && (
+              <button type="button" onClick={() => setGlassing({})}>
+                Glass Icon Builder
+              </button>
+            )}
           </div>
         )}
       </div>

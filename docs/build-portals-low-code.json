@@ -18,7 +18,7 @@
     {
       "type": "image",
       "x": 46,
-      "y": 52.5,
+      "y": 52,
       "width": 708,
       "height": 472,
       "fit": "cover",
@@ -29,10 +29,10 @@
     {
       "type": "card",
       "x": 186,
-      "y": 303,
+      "y": 304,
       "width": 154,
       "height": 46,
-      "radius": 9.2,
+      "radius": 10,
       "surface": "glass-highlighted",
       "ink": "dark",
       "children": [
@@ -40,8 +40,8 @@
           "type": "svg",
           "x": 200,
           "y": 316,
-          "width": 16.8,
-          "height": 16.8,
+          "width": 16,
+          "height": 16,
           "viewBox": [
             0,
             0,
@@ -54,8 +54,8 @@
         },
         {
           "type": "text",
-          "x": 227,
-          "y": 330.2,
+          "x": 228,
+          "y": 330,
           "role": "subheading",
           "content": "Button",
           "weight": "regular"
@@ -64,10 +64,10 @@
     },
     {
       "type": "svg",
-      "x": 257.8,
-      "y": 328.2,
-      "width": 54.6,
-      "height": 46.6,
+      "x": 258,
+      "y": 328,
+      "width": 54,
+      "height": 46,
       "viewBox": [
         0,
         0,

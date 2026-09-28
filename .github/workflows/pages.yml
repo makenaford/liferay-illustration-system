@@ -20,17 +20,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # The pnpm version comes from `packageManager` in package.json.
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-          cache: npm
-      - run: npm ci
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
       # The token and glass-icon generators need the design-system checkout,
       # which is not public. Their output is committed, so the site builds
       # without it — but the audit must still pass on what is committed.
-      - run: npm run typecheck
-      - run: npm run audit
-      - run: npm run site
+      - run: pnpm run typecheck
+      - run: pnpm run audit
+      - run: pnpm run site
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

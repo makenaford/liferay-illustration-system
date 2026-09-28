@@ -18,7 +18,7 @@
     {
       "type": "image",
       "x": 46,
-      "y": 52.5,
+      "y": 52,
       "width": 708,
       "height": 472,
       "fit": "cover",
@@ -30,16 +30,16 @@
       "type": "card",
       "x": 30,
       "y": 164,
-      "width": 312.9,
-      "height": 74,
+      "width": 312,
+      "height": 76,
       "radius": 8,
       "surface": "glass-highlighted",
       "ink": "dark",
       "children": [
         {
           "type": "image",
-          "x": 43,
-          "y": 177,
+          "x": 44,
+          "y": 178,
           "width": 48,
           "height": 48,
           "fit": "cover",
@@ -49,16 +49,16 @@
         },
         {
           "type": "text",
-          "x": 99.5,
-          "y": 191.5,
+          "x": 100,
+          "y": 192,
           "role": "heading",
           "content": "Suppliers Co",
           "weight": "regular"
         },
         {
           "type": "text",
-          "x": 99.5,
-          "y": 205.1,
+          "x": 100,
+          "y": 206,
           "role": "bodySmall",
           "content": "4 apps",
           "smallCaps": true,
@@ -67,40 +67,40 @@
         },
         {
           "type": "icon",
-          "x": 99,
+          "x": 100,
           "y": 216,
-          "size": 8.5,
+          "size": 8,
           "icon": "mc:star",
           "iconStyle": "fill",
           "tone": "base-yellow"
         },
         {
           "type": "text",
-          "x": 109.6,
-          "y": 223,
+          "x": 110,
+          "y": 224,
           "role": "bodySmall",
           "content": "4.9 Average Rating"
         },
         {
           "type": "text",
-          "x": 189.5,
-          "y": 223,
+          "x": 190,
+          "y": 224,
           "role": "bodySmall",
-          "content": "\u00b7"
+          "content": "·"
         },
         {
           "type": "icon",
-          "x": 197.7,
-          "y": 215.5,
-          "size": 8.5,
+          "x": 198,
+          "y": 216,
+          "size": 8,
           "icon": "mc:download_2",
           "iconStyle": "line",
           "tone": "primary"
         },
         {
           "type": "text",
-          "x": 207.5,
-          "y": 223,
+          "x": 208,
+          "y": 224,
           "role": "bodySmall",
           "content": "8.5k Total Downloads"
         }
@@ -108,10 +108,10 @@
     },
     {
       "type": "card",
-      "x": 294,
-      "y": 145,
-      "width": 64,
-      "height": 64,
+      "x": 292,
+      "y": 144,
+      "width": 68,
+      "height": 68,
       "radius": 32,
       "surface": "glass-highlighted",
       "ink": "dark",
@@ -120,7 +120,7 @@
           "type": "spotIcon",
           "name": "check",
           "x": 304,
-          "y": 155,
+          "y": 156,
           "size": 44,
           "variant": "dark"
         }

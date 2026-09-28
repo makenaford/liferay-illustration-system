@@ -1236,3 +1236,13 @@ button.mini.on { background: var(--accent); border-color: var(--accent); color: 
   .translate-body { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
   .translate-preview { border-right: none; border-bottom: 1px solid var(--line); }
 }
+.translate-machine {
+  margin-left: 6px;
+  padding: 0 5px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  color: var(--ink-faint);
+  font-size: 10px;
+  font-style: normal;
+  letter-spacing: 0.02em;
+}

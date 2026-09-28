@@ -99,6 +99,6 @@ export function collectStrings(doc: Doc): string[] {
  */
 export function translateDoc(doc: Doc, table: Record<string, string>): Doc {
   const f: Visit = (s) => table[s]?.trim() || s;
-  const { translations: _, ...rest } = doc;
+  const { translations: _, machineTranslated: __, ...rest } = doc;
   return fitTranslation(rest, { ...rest, elements: doc.elements.map((el) => visitElement(el, f)) });
 }

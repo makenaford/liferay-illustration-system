@@ -21,7 +21,7 @@
 import type { TypeRole, TypeWeight } from './primitives/text.ts';
 import type { MeshName, SurfaceName } from './tokens.ts';
 import type { TableColumn } from './primitives/table.ts';
-import type { Translations } from './translate.ts';
+import type { Lang, Translations } from './translate.ts';
 import type { IconStyle } from './icons.ts';
 
 export type Tone = 'accent' | 'success' | 'info' | 'neutral' | 'muted' | 'subtle';
@@ -684,9 +684,12 @@ export interface Doc {
   panels?: PanelSpec[];
   elements: Element[];
   /**
-   * Reviewed translations of the copy, for translated exports only — the
-   * renderer never reads this, so the illustration itself stays as written.
-   * See src/translate.ts.
+   * Translations of the copy, for translated exports only — the renderer
+   * never reads this, so the illustration itself stays as written. Machine
+   * drafts, made when the illustration is saved, sit here beside reviewed
+   * ones; `machineTranslated` says which. See src/translate.ts.
    */
   translations?: Translations;
+  /** Per language, the strings whose translation is a machine draft nobody has reviewed yet. */
+  machineTranslated?: Partial<Record<Lang, string[]>>;
 }

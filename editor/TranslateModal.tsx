@@ -55,9 +55,17 @@ export function TranslateModal({
     [doc, table, theme],
   );
 
-  /** Merge entries into this language's table, on the live document. */
-  const write = (entries: Record<string, string>, coalesce: boolean) => {
+  /**
+   * Merge entries into this language's table, on the live document. `machine`
+   * marks them as drafts nobody has checked; anything typed here is a review.
+   */
+  const write = (entries: Record<string, string>, coalesce: boolean, machine = false) => {
     const current = getState().doc;
+    const drafted = new Set(current.machineTranslated?.[lang] ?? []);
+    for (const s of Object.keys(entries)) {
+      if (machine) drafted.add(s);
+      else drafted.delete(s);
+    }
     commit(
       {
         ...current,
@@ -65,10 +73,13 @@ export function TranslateModal({
           ...current.translations,
           [lang]: { ...current.translations?.[lang], ...entries },
         },
+        machineTranslated: { ...current.machineTranslated, [lang]: [...drafted] },
       },
       coalesce,
     );
   };
+  const drafted = new Set(doc.machineTranslated?.[lang] ?? []);
+  const unreviewed = strings.filter((s) => drafted.has(s) && table[s]?.trim()).length;
 
   const draft = async (which: string[]) => {
     const t = await translator();
@@ -77,7 +88,7 @@ export function TranslateModal({
     setNote(null);
     try {
       const out = await t.strings(lang, which);
-      write(Object.fromEntries(which.map((s, i) => [s, out[i]])), false);
+      write(Object.fromEntries(which.map((s, i) => [s, out[i]])), false, true);
       lastEdited.current = null;
       setNote(`Translated ${which.length} string${which.length === 1 ? '' : 's'} — check them before you download.`);
     } catch (err) {
@@ -130,6 +141,7 @@ export function TranslateModal({
           </select>
           <span className="modal-meta">
             {strings.length - missing.length} of {strings.length} translated
+            {unreviewed ? ` · ${unreviewed} by machine, unreviewed` : ''}
           </span>
           <button type="button" className="modal-x" onClick={onClose} aria-label="Close">
             ✕
@@ -143,7 +155,14 @@ export function TranslateModal({
             {strings.length === 0 && <p className="modal-hint">This illustration has no text to translate.</p>}
             {strings.map((s) => (
               <label key={s} className="translate-row">
-                <span className="translate-src">{s}</span>
+                <span className="translate-src">
+                  {s}
+                  {drafted.has(s) && table[s]?.trim() && (
+                    <em className="translate-machine" title="Machine translation — edit it, or leave it as it is">
+                      machine
+                    </em>
+                  )}
+                </span>
                 <textarea
                   rows={1}
                   lang={lang}

@@ -54,7 +54,46 @@ function listRow(width: number, label: string): Element {
   } as Element;
 }
 
+/**
+ * A phone screen, at a phone's proportions — 180 × 390 is 390 × 844 scaled
+ * to sit in an illustration — so every phone in the set is the same size.
+ * Its layout stretches what it holds across it: inputs and buttons meet the
+ * padding on both sides whatever the phone's width, rather than being sized
+ * by hand and running past its edge.
+ */
+export const PHONE = { width: 180, height: 390, padding: 16, radius: 20 } as const;
+
+function phone(children: Element[]): Element {
+  return {
+    type: 'subCard',
+    x: 0,
+    y: 0,
+    width: PHONE.width,
+    height: PHONE.height,
+    surface: 'glass-default',
+    radius: PHONE.radius,
+    layout: { direction: 'vertical', gap: 10, padding: [28, PHONE.padding], align: 'stretch' },
+    children,
+  } as Element;
+}
+
+const field = (placeholder: string, icon: string, height = 30): Element =>
+  ({ type: 'input', x: 0, y: 0, width: PHONE.width - PHONE.padding * 2, height, placeholder, icon, role: 'caption' }) as Element;
+
 export const CARD_PRESETS: { label: string; title: string; make: () => Element }[] = [
+  {
+    label: 'Phone',
+    title: `A ${PHONE.width} × ${PHONE.height} phone screen: fields and buttons run edge to edge`,
+    make: () =>
+      phone([
+        { type: 'spotIcon', x: 0, y: 0, name: 'compliance', size: 46, alignSelf: 'center' } as Element,
+        { type: 'text', x: 0, y: 0, role: 'subheading', weight: 'semibold', content: 'Enterprise SSO Login', alignSelf: 'center' } as Element,
+        field('Email', 'mc:mail'),
+        field('Password', 'mc:lock'),
+        { type: 'button', x: 0, y: 0, width: PHONE.width - PHONE.padding * 2, height: 32, label: 'Sign in with Okta', variant: 'solid', role: 'bodySmall' } as Element,
+        field('MFA Required', 'mc:fingerprint', 26),
+      ]),
+  },
   {
     label: 'Icon card',
     title: 'Glass icon, title and a line of copy',

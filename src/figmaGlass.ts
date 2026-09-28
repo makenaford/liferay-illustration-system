@@ -177,7 +177,18 @@ export function portableBackdropBlur(svg: string, opts: GlassOptions = {}): stri
     if (mask && attr(mask, 'id')) {
       return { shapes: mask.children.filter((c) => SHAPES.includes(c.tag)), confine: `mask="url(#${attr(mask, 'id')})"` };
     }
-    const shapes = kids.filter((c) => SHAPES.includes(c.tag));
+    let shapes = kids.filter((c) => SHAPES.includes(c.tag));
+    // Some icons wrap the glass one group deeper — Figma's blur and the glass
+    // shape inside an outer drop-shadow group — so the outline is found in
+    // the groups within, not beside the blur. Without this their glass was a
+    // thin tint over a sharp gradient: no frost, the back icon swamping it.
+    if (!shapes.length) {
+      const nested = (node: XNode): XNode[] =>
+        node.children.flatMap((c) =>
+          SHAPES.includes(c.tag) ? [c] : c.tag === 'g' ? nested(c) : [],
+        );
+      shapes = nested(glass);
+    }
     if (!shapes.length) return null;
     const clipId = `bdclip${n}`;
     const refs = shapes.map((sh, k) => `<use href="#${ensureId(sh, `bdshape${n}-${k}`)}"/>`).join('');
@@ -195,10 +206,18 @@ export function portableBackdropBlur(svg: string, opts: GlassOptions = {}): stri
         pendingClip = style.match(/clip-path:url\(#([^)]+)\)/)?.[1];
         continue;
       }
+      // A group holding Figma's blur itself is glass whatever its filter is
+      // called — some icons wrap blur and glass in a `_d` group over `_ii`.
+      const wrapsBlur = child.tag === 'g' && child.children.some((c) => c.tag === 'foreignObject');
       visit(child);
+      // …unless the glass inside it was rebuilt already, which would frost twice.
+      const rebuiltWithin = (node: XNode): boolean =>
+        /mask="url\(#bdcut/.test(node.open) || node.children.some(rebuiltWithin);
       const isGlass =
         child.tag === 'g' &&
-        (/_dii/.test(attr(child, 'filter') ?? '') || (!!opts.anyBlurredGroup && !!pendingClip && !!attr(child, 'filter')));
+        (/_dii/.test(attr(child, 'filter') ?? '') ||
+          (wrapsBlur && !rebuiltWithin(child)) ||
+          (!!opts.anyBlurredGroup && !!pendingClip && !!attr(child, 'filter')));
       if (!isGlass) {
         if (child.tag !== '#text') pendingClip = undefined;
         out.push(child);

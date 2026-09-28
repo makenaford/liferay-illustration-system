@@ -9,7 +9,7 @@ import { initStore, setUI, useEditor } from '../editor/state.ts';
 import { addFolder, fileIn, freshId, removeFolder, renameFolder } from '../editor/library.ts';
 import { Sidebar, Toolbar, type NavSection } from './Browse.tsx';
 import { recipeFor } from './glassLinks.ts';
-import { GLASS_FOLDERS, GLASS_ICON_FOLDERS } from '../src/glassIconFolders.ts';
+import { GLASS_FOLDERS, GLASS_ICON_FOLDERS, GLASS_WAS } from '../src/glassIconFolders.ts';
 import { migrateDoc } from '../src/migrate.ts';
 import { CUSTOM_ICONS } from '../src/customIcons.generated.ts';
 import { customIconKey, customShape } from '../src/customIconShape.ts';
@@ -68,6 +68,31 @@ const GLASS_SET = 'glass-icons';
 /** A custom icon's shape as an SVG file, for a set row: one path, in the set's ink. */
 const customSvg = (d: string) =>
   `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="${d}" fill="#00072B"/></svg>`;
+/**
+ * Where src/glassIconFolders.ts puts a glass icon. By its id first — its
+ * Figma name slugged, as a plain upload files it — then by its folder and
+ * name as they are, then by its name alone when only one icon in the set
+ * was ever called that, so a set uploaded with a folder chosen still matches.
+ */
+const GLASS_BY_LABEL = (() => {
+  const by = new Map<string, string[]>();
+  for (const [id, to] of Object.entries(GLASS_ICON_FOLDERS)) {
+    const was = GLASS_WAS[id];
+    const label = (was?.split(' - ').slice(1).join(' - ') ?? to.name).toLowerCase();
+    by.set(label, [...(by.get(label) ?? []), id]);
+  }
+  return by;
+})();
+function glassHomeOf(icon: IconRow): { folder: string; name: string } | undefined {
+  const direct = GLASS_ICON_FOLDERS[icon.id];
+  if (direct) return direct;
+  const { category, name } = iconParts(icon);
+  const byPlace = GLASS_ICON_FOLDERS[slug(`${category} ${name}`)];
+  if (byPlace) return byPlace;
+  const one = GLASS_BY_LABEL.get(name.toLowerCase());
+  return one?.length === 1 ? GLASS_ICON_FOLDERS[one[0]] : undefined;
+}
+
 /** The two groups first — Glass icons, then Custom icons — then any other set. */
 const groupRank = (id: string) => (id === GLASS_SET ? 0 : id === CUSTOM_SET ? 1 : 2);
 /** "server_stack" -> "Server Stack". */
@@ -1334,7 +1359,7 @@ function IconSet({
   // icons are not yet where it puts them, or not yet named as it names them.
   const reorg = set.id === GLASS_SET
     ? set.icons.filter((i) => {
-        const to = GLASS_ICON_FOLDERS[i.id];
+        const to = glassHomeOf(i);
         return to && (folderOf(i) !== to.folder || iconParts(i).name !== to.name);
       })
     : [];
@@ -1348,11 +1373,11 @@ function IconSet({
     try {
       // The folders first, in their order, keeping any others that still hold icons.
       const others = foldersOf(set).filter(
-        (f) => !GLASS_FOLDERS.includes(f) && set.icons.some((i) => folderOf(i) === f && !GLASS_ICON_FOLDERS[i.id]),
+        (f) => !GLASS_FOLDERS.includes(f) && set.icons.some((i) => folderOf(i) === f && !glassHomeOf(i)),
       );
       await saveFolders([...GLASS_FOLDERS, ...others]);
       for (const icon of reorg) {
-        const to = GLASS_ICON_FOLDERS[icon.id];
+        const to = glassHomeOf(icon)!;
         await st.putIcon(set.id, { ...icon, name: to.name, category: to.folder });
         done++;
       }

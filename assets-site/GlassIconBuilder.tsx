@@ -13,7 +13,7 @@ import {
 } from '../src/glassIconMaker.ts';
 import { isShape, type GlassRecipe, type RecipeLayer } from '../src/glassRecipe.ts';
 import { normaliseFigmaSvg } from '../src/figmaGlass.ts';
-import { glyphOf, type IconStyle } from '../src/icons.ts';
+import { CUSTOM_PREFIX, glyphOf, type IconStyle } from '../src/icons.ts';
 import { IconPicker } from '../editor/IconPicker.tsx';
 import { foldersOf, iconParts, UNFILED, viewerId, type IconRow, type IconSetRow, type Store } from './store.ts';
 import { iconSrc, slug, svgSrc } from './uploads.ts';
@@ -89,10 +89,25 @@ const POSITION_LABEL: Record<Position, string> = {
   above: 'Back above',
   behind: 'Back behind',
 };
-/** Where a side-by-side layout puts the front icon until another corner is chosen: as LAYOUTS draws it. */
+/**
+ * The corner picker names where the ACCENT goes — the smaller icon, the one
+ * whose move is seen: the gradient one when the glass leads (or the two are
+ * equal), the glass one when the gradient leads. The icon's spec keeps the
+ * front icon's corner, so this turns one into the other.
+ */
+const OPPOSITE: Record<Corner, Corner> = {
+  'top-left': 'bottom-right',
+  'top-right': 'bottom-left',
+  'bottom-left': 'top-right',
+  'bottom-right': 'top-left',
+};
+const accentIsFront = (f: Family) => f === 'gradient';
+const frontCorner = (f: Family, accent: Corner): Corner => (accentIsFront(f) ? accent : OPPOSITE[accent]);
+const accentCorner = (f: Family, front: Corner): Corner => (accentIsFront(f) ? front : OPPOSITE[front]);
+/** Where each side-by-side layout puts the accent until another corner is chosen: as LAYOUTS draws it. */
 const HOME_CORNER: Record<Exclude<Family, 'centred'>, Corner> = {
-  glass: 'bottom-left',
-  equal: 'bottom-left',
+  glass: 'top-right',
+  equal: 'top-right',
   gradient: 'top-right',
 };
 
@@ -146,11 +161,16 @@ export function GlassIconBuilder({
     recipe ? (CENTRED.includes(recipe.layout) ? 'centred' : (recipe.layout as Family)) : 'glass',
   );
   const [position, setPosition] = useState<Position>(() =>
-    !recipe ? HOME_CORNER.glass : recipe.layout === 'above' || recipe.layout === 'behind' ? recipe.layout : cornerOf(recipe),
+    !recipe
+      ? HOME_CORNER.glass
+      : recipe.layout === 'above' || recipe.layout === 'behind'
+        ? recipe.layout
+        : accentCorner(recipe.layout, cornerOf(recipe)),
   );
   const centred = family === 'centred';
   const layout: LayoutName = centred ? (position === 'behind' ? 'behind' : 'above') : family;
-  const corner: Corner | undefined = centred ? undefined : (position as Corner);
+  // The picker is the accent's corner; the icon keeps the front's.
+  const corner: Corner | undefined = centred ? undefined : frontCorner(family, position as Corner);
   const [name, setName] = useState(editing ? iconParts(editing.icon).name : '');
   // The folder it goes in; blank is Unfiled.
   const [category, setCategory] = useState(() => {
@@ -165,8 +185,13 @@ export function GlassIconBuilder({
 
   const frontPath = frontShape ? '' : pathOf(icon, style);
   const backPath = backShape ? '' : pathOf(backIcon, backStyle) || frontPath;
-  const front: string | Layer = frontShape?.shape ?? frontPath;
-  const back: string | Layer = backShape?.shape ?? backPath;
+  // MingCute's holes cut out only under even-odd, which its files set; a bare
+  // path would fill with the default rule and close them — a lock with no
+  // keyhole. The team's own icons keep Figma's default.
+  const withRule = (key: string, d: string): string | Layer =>
+    d && !key.startsWith(CUSTOM_PREFIX) ? { paths: [{ d, paint: { fillRule: 'evenodd' } }], toGrid: { scale: 1, tx: 0, ty: 0 } } : d;
+  const front: string | Layer = frontShape?.shape ?? withRule(icon, frontPath);
+  const back: string | Layer = backShape?.shape ?? withRule(pathOf(backIcon, backStyle) ? backIcon : icon, backPath);
   const spec = useMemo(
     () => ({
       front,
@@ -318,8 +343,10 @@ export function GlassIconBuilder({
                 </button>
               ))}
             </div>
-            {!centred && <span className="am-hint">Front icon · corner</span>}
-            <div className={`am-seg am-seg-fill${centred ? '' : ' am-seg-corners'}`} role="group" aria-label={centred ? 'Where the back sits' : 'Front icon corner'}>
+            {!centred && (
+              <span className="am-hint">{accentIsFront(family) ? 'Glass icon' : 'Gradient icon'} · corner</span>
+            )}
+            <div className={`am-seg am-seg-fill${centred ? '' : ' am-seg-corners'}`} role="group" aria-label={centred ? 'Where the back sits' : 'Accent icon corner'}>
               {(centred ? (['above', 'behind'] as const) : CORNERS).map((p) => (
                 <button key={p} type="button" className={position === p ? 'am-on' : ''} aria-pressed={position === p} onClick={() => setPosition(p)}>
                   {POSITION_LABEL[p]}

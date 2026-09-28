@@ -107,8 +107,48 @@ function clipTo(
 }
 
 /** Dispatch one document element to its primitive. */
+/**
+ * An element's colour overrides (`textColor`, `accentColor`), applied to the
+ * tokens it draws with. Returns what undoes them. Only a plain colour can
+ * stand in for an ink; a gradient key is ignored here.
+ */
+function applyOverrides(ctx: Ctx, el: { textColor?: string; accentColor?: string }): () => void {
+  if (!el.textColor && !el.accentColor) return () => {};
+  const outer = ctx.tokens;
+  const plain = (key?: string) => {
+    const p = paintOf(outer, key);
+    return p && 'color' in p ? p.color : undefined;
+  };
+  const text = plain(el.textColor);
+  const accent = plain(el.accentColor);
+  ctx.tokens = {
+    ...outer,
+    // Every ink text is set in, including the one on a filled control.
+    ...(text && { text: { ...outer.text, primary: text, muted: text, subtle: text, onAccent: text } }),
+    // The accent, and the gradients that stand in for it on toggles and
+    // gradient buttons, all in the one colour.
+    ...(accent && {
+      accent: { ...outer.accent, base: accent, soft: accent, gradient: [accent, accent, accent] as [string, string, string] },
+      brandGradient: {
+        ...outer.brandGradient,
+        line: accent,
+        stops: outer.brandGradient.stops.map((st) => ({ ...st, color: accent })),
+      },
+    }),
+  };
+  return () => {
+    ctx.tokens = outer;
+  };
+}
+
 function renderElement(ctx: Ctx, el: Element, path?: string): VNode | null {
-  const node = renderElementInner(ctx, el, path);
+  const restore = applyOverrides(ctx, el as { textColor?: string; accentColor?: string });
+  let node: VNode | null;
+  try {
+    node = renderElementInner(ctx, el, path);
+  } finally {
+    restore();
+  }
   if (!node || path === undefined) return node;
   // One addressable wrapper per element. `pointer-events: all` so clicks land
   // on the group even where the artwork is transparent.
@@ -127,10 +167,16 @@ function renderElementInner(ctx: Ctx, el: Element, path?: string): VNode | null 
     radius: number,
   ) => {
     const outer = ctx.tokens;
-    if (c.ink) ctx.tokens = themes[c.ink === 'dark' ? 'light' : 'dark'];
+    // The other theme's inks — then the container's own overrides again, which win.
+    let undo = () => {};
+    if (c.ink) {
+      ctx.tokens = themes[c.ink === 'dark' ? 'light' : 'dark'];
+      undo = applyOverrides(ctx, c as { textColor?: string; accentColor?: string });
+    }
     try {
       return c.clip ? [clipTo(ctx, { ...c, radius }, kid(c.children))] : kid(c.children);
     } finally {
+      undo();
       ctx.tokens = outer;
     }
   };

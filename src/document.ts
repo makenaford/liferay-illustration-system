@@ -102,6 +102,14 @@ export interface LayoutSpec {
 
 /** Per-child overrides, valid on any element inside a layout container. */
 export interface LayoutChild {
+  /**
+   * Overrides of the template's colours for this element and what is inside
+   * it, as palette keys: `textColor` stands in for the theme's text inks
+   * (primary, muted, subtle), `accentColor` for its accent — a button's fill,
+   * a toggle, a connector. Omitted, the element follows its template.
+   */
+  textColor?: string;
+  accentColor?: string;
   /** Share of the leftover main-axis space, flex-grow style. */
   grow?: number;
   /** Override the container's cross-axis alignment for this child. */

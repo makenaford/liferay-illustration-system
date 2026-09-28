@@ -475,6 +475,21 @@ export const SCHEMA: {
   },
 };
 
+/**
+ * Every element can override its template's colours — its text inks and its
+ * accent — except those that draw no text or accent of their own (a text has
+ * its Colour already; images, imported SVGs, graphics and glass icons keep
+ * their own art). Added last, so they sit at the end of each inspector.
+ */
+const NO_OVERRIDES = new Set(['text', 'image', 'svg', 'graphic', 'spotIcon']);
+for (const [type, entry] of Object.entries(SCHEMA)) {
+  if (NO_OVERRIDES.has(type)) continue;
+  (entry.fields as Field[]).push(
+    { key: 'textColor', label: 'Text colour', kind: 'token', colorsOnly: true },
+    { key: 'accentColor', label: 'Colour', kind: 'token', colorsOnly: true },
+  );
+}
+
 /** Defaults used when adding from the palette. */
 export const DEFAULTS: Record<Element['type'], () => Element> = {
   text: () => ({ type: 'text', x: 40, y: 40, role: 'heading', content: 'New text' }),

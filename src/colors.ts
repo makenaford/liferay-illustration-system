@@ -1,4 +1,4 @@
-import { COLORS, colorsDark, colorsLight } from './colors.generated.ts';
+import { COLORS as SET_COLORS, colorsDark as SET_DARK, colorsLight as SET_LIGHT, type IllustrationColor } from './colors.generated.ts';
 import type { Grad, Tokens } from './tokens.ts';
 import { paletteDark, paletteLight } from './palette.generated.ts';
 
@@ -12,7 +12,19 @@ import { paletteDark, paletteLight } from './palette.generated.ts';
  * made before the illustration set still draw as they did.
  */
 
-export { COLORS };
+/**
+ * Black and White: the two text inks the builder sets type in — light's text
+ * colour and dark's — as colours to pick, the same in both themes. Where
+ * `primary` follows the theme, these stay put: white text on a dark card in
+ * a light illustration, say.
+ */
+const TEXT_INKS: IllustrationColor[] = [
+  { key: 'text-black', label: 'Black', group: 'Text', light: '#262C37', dark: '#262C37' },
+  { key: 'text-white', label: 'White', group: 'Text', light: '#F0F1F5', dark: '#F0F1F5' },
+];
+export const COLORS: IllustrationColor[] = [...TEXT_INKS, ...SET_COLORS];
+const colorsLight: Record<string, string> = { ...SET_LIGHT, ...Object.fromEntries(TEXT_INKS.map((c) => [c.key, c.light])) };
+const colorsDark: Record<string, string> = { ...SET_DARK, ...Object.fromEntries(TEXT_INKS.map((c) => [c.key, c.dark])) };
 
 /** An illustration-set colour in one scheme, or undefined for another name. */
 export function colorOf(key: string, scheme: 'light' | 'dark'): string | undefined {

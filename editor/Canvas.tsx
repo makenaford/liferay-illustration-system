@@ -967,7 +967,7 @@ export function Canvas() {
                 <rect x={m.x} y={m.y} width={m.width} height={m.height} strokeWidth={1.5 / zoom} strokeDasharray={`${6 / zoom} ${4 / zoom}`} />
                 <path d={`M${cx - arm} ${cy}H${cx + arm}M${cx} ${cy - arm}V${cy + arm}`} strokeWidth={1 / zoom} />
                 <text x={m.x + 8 / zoom} y={m.y + 16 / zoom} fontSize={11 / zoom}>
-                  {`Screenshot · 3:2 · ${m.width} × ${m.height}${fileDrop.dropping ? ' — drop to fill' : ''}`}
+                  {`Screenshot · ${Math.abs(m.width / m.height - 1.5) < 0.01 ? '3:2' : 'not 3:2'} · ${Math.round(m.width)} × ${Math.round(m.height)}${fileDrop.dropping ? ' — drop to fill' : ''}`}
                 </text>
               </g>
             );

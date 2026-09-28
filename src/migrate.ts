@@ -74,7 +74,24 @@ function migrateElement(el: Element): Element {
   return { ...el, children: absorbChartLabels(c.children.map(migrateElement), gap) } as Element;
 }
 
+/**
+ * A mockup made before documents recorded their screenshot slot: the
+ * template's (and the rebuilt mockups') first element is the screenshot, a
+ * bare canvas's image covering most of it. Its own box becomes the slot, so
+ * the builder shows the guide and a dropped screenshot fills it — nothing on
+ * it moves. A box that isn't 3:2 keeps its size; the guide says so.
+ */
+function withMockupSlot(doc: Doc): Doc {
+  if (doc.mockup || doc.layout !== 'bare') return doc;
+  const first = doc.elements[0];
+  if (first?.type !== 'image') return doc;
+  const { width: cw, height: ch } = doc.artboard ?? doc.canvas;
+  if (first.width * first.height < 0.5 * cw * ch) return doc;
+  return { ...doc, mockup: { x: first.x, y: first.y, width: first.width, height: first.height } };
+}
+
 export function migrateDoc(doc: Doc): Doc {
+  doc = withMockupSlot(doc);
   const panels = doc.panels?.map((p) =>
     p.surface && RENAMED_SURFACES[p.surface] ? { ...p, surface: RENAMED_SURFACES[p.surface] as typeof p.surface } : p,
   );

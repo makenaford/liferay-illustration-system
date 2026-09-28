@@ -1,0 +1,338 @@
+{
+  "id": "orders-overview",
+  "name": "Orders overview",
+  "layout": "bare",
+  "canvas": {
+    "width": 800,
+    "height": 533
+  },
+  "mockup": {
+    "x": 40,
+    "y": 28,
+    "width": 720,
+    "height": 480
+  },
+  "background": "none",
+  "panels": [],
+  "elements": [
+    {
+      "type": "image",
+      "x": 40,
+      "y": 28,
+      "width": 720,
+      "height": 480,
+      "radius": 10,
+      "fit": "cover",
+      "href": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22720%22%20height%3D%22480%22%20viewBox%3D%220%200%20720%20480%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%231b2434%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%230e1420%22%2F%3E%3C%2FlinearGradient%3E%3Cpattern%20id%3D%22p%22%20width%3D%2240%22%20height%3D%2240%22%20patternUnits%3D%22userSpaceOnUse%22%3E%3Cpath%20d%3D%22M40%200H0V40%22%20fill%3D%22none%22%20stroke%3D%22%232a3548%22%20stroke-width%3D%221%22%2F%3E%3C%2Fpattern%3E%3C%2Fdefs%3E%3Crect%20width%3D%22720%22%20height%3D%22480%22%20fill%3D%22url(%23g)%22%2F%3E%3Crect%20width%3D%22720%22%20height%3D%22480%22%20fill%3D%22url(%23p)%22%2F%3E%3Ctext%20x%3D%2250%25%22%20y%3D%2250%25%22%20fill%3D%22%238a97ad%22%20font-family%3D%22'Source%20Sans%203'%2C%20system-ui%2C%20sans-serif%22%20font-size%3D%2234%22%20text-anchor%3D%22middle%22%20dominant-baseline%3D%22middle%22%3EImage%20%C2%B7%20720%20%C3%97%20480%3C%2Ftext%3E%3C%2Fsvg%3E",
+      "alt": "Image — replace with a photo"
+    },
+    {
+      "type": "card",
+      "x": 462,
+      "y": 124,
+      "width": 318,
+      "height": 292,
+      "surface": "glass-highlighted",
+      "sheen": "radial",
+      "radius": 10,
+      "frost": "content",
+      "ink": "light",
+      "layout": {
+        "direction": "vertical",
+        "gap": 8,
+        "padding": 16,
+        "align": "stretch",
+        "hugHeight": true
+      },
+      "children": [
+        {
+          "type": "group",
+          "x": 0,
+          "y": 0,
+          "width": 10,
+          "height": 10,
+          "layout": {
+            "direction": "horizontal",
+            "gap": 12,
+            "padding": 0,
+            "align": "start",
+            "hugHeight": true,
+            "hugWidth": false,
+            "justify": "end"
+          },
+          "children": [
+            {
+              "type": "icon",
+              "x": 0,
+              "y": 0,
+              "size": 16,
+              "icon": "mc:download_2",
+              "tone": "neutral"
+            },
+            {
+              "type": "icon",
+              "x": 0,
+              "y": 0,
+              "size": 16,
+              "icon": "mc:chart_bar",
+              "iconStyle": "fill",
+              "tone": "neutral"
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "x": 0,
+          "y": 0,
+          "width": 10,
+          "height": 10,
+          "layout": {
+            "direction": "horizontal",
+            "gap": 16,
+            "padding": 0,
+            "align": "start",
+            "hugHeight": true,
+            "hugWidth": false
+          },
+          "children": [
+            {
+              "type": "group",
+              "x": 0,
+              "y": 0,
+              "width": 10,
+              "height": 10,
+              "layout": {
+                "direction": "vertical",
+                "gap": 10,
+                "padding": 0,
+                "align": "start",
+                "hugHeight": true,
+                "hugWidth": true
+              },
+              "children": [
+                {
+                  "type": "group",
+                  "x": 0,
+                  "y": 0,
+                  "width": 10,
+                  "height": 10,
+                  "layout": {
+                    "direction": "horizontal",
+                    "gap": 6,
+                    "padding": 0,
+                    "align": "center",
+                    "hugHeight": true,
+                    "hugWidth": true
+                  },
+                  "children": [
+                    {
+                      "type": "icon",
+                      "x": 0,
+                      "y": 0,
+                      "size": 14,
+                      "icon": "mc:calendar",
+                      "tone": "neutral"
+                    },
+                    {
+                      "type": "text",
+                      "x": 0,
+                      "y": 0,
+                      "role": "caption",
+                      "content": "Inventory Turnover by Month",
+                      "weight": "semibold"
+                    }
+                  ]
+                },
+                {
+                  "type": "lineChart",
+                  "x": 0,
+                  "y": 0,
+                  "width": 176,
+                  "height": 64,
+                  "gridLines": 0,
+                  "curve": "straight",
+                  "markers": true,
+                  "domain": [
+                    0,
+                    1
+                  ],
+                  "series": [
+                    {
+                      "data": [
+                        0.3,
+                        0.45,
+                        0.35,
+                        0.62,
+                        0.66,
+                        0.46,
+                        0.8,
+                        0.7,
+                        0.95
+                      ],
+                      "color": "base-white",
+                      "area": true
+                    }
+                  ]
+                }
+              ],
+              "grow": 1
+            },
+            {
+              "type": "group",
+              "x": 0,
+              "y": 0,
+              "width": 10,
+              "height": 10,
+              "layout": {
+                "direction": "vertical",
+                "gap": 10,
+                "padding": 0,
+                "align": "center",
+                "hugHeight": true,
+                "hugWidth": true
+              },
+              "children": [
+                {
+                  "type": "text",
+                  "x": 0,
+                  "y": 0,
+                  "role": "caption",
+                  "content": "Orders by Channel",
+                  "weight": "semibold"
+                },
+                {
+                  "type": "pieChart",
+                  "x": 0,
+                  "y": 0,
+                  "width": 80,
+                  "height": 80,
+                  "values": [
+                    62,
+                    8,
+                    12,
+                    18
+                  ],
+                  "colors": [
+                    "base-primary",
+                    "base-indigo",
+                    "base-aqua",
+                    "base-cyan"
+                  ],
+                  "highlight": 3
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "line",
+          "x": 0,
+          "y": 0,
+          "width": 176,
+          "height": 0,
+          "tone": "neutral-02",
+          "thickness": 1
+        },
+        {
+          "type": "text",
+          "x": 0,
+          "y": 0,
+          "role": "subheading",
+          "content": "Open Orders",
+          "weight": "semibold"
+        },
+        {
+          "type": "group",
+          "x": 0,
+          "y": 0,
+          "width": 10,
+          "height": 10,
+          "layout": {
+            "direction": "horizontal",
+            "gap": 16,
+            "padding": 0,
+            "align": "start",
+            "hugHeight": true,
+            "hugWidth": false
+          },
+          "children": [
+            {
+              "type": "group",
+              "x": 0,
+              "y": 0,
+              "width": 10,
+              "height": 10,
+              "layout": {
+                "direction": "vertical",
+                "gap": 16,
+                "padding": 0,
+                "align": "start",
+                "hugHeight": true,
+                "hugWidth": true
+              },
+              "children": [
+                {
+                  "type": "stat",
+                  "x": 0,
+                  "y": 0,
+                  "value": "52",
+                  "label": "New Orders",
+                  "labelPosition": "above"
+                },
+                {
+                  "type": "stat",
+                  "x": 0,
+                  "y": 0,
+                  "value": "$11.2M",
+                  "label": "Order value",
+                  "labelPosition": "above"
+                }
+              ],
+              "grow": 1
+            },
+            {
+              "type": "group",
+              "x": 0,
+              "y": 0,
+              "width": 10,
+              "height": 10,
+              "layout": {
+                "direction": "vertical",
+                "gap": 10,
+                "padding": 0,
+                "align": "center",
+                "hugHeight": true,
+                "hugWidth": true
+              },
+              "children": [
+                {
+                  "type": "text",
+                  "x": 0,
+                  "y": 0,
+                  "role": "caption",
+                  "content": "Top Expense Items",
+                  "weight": "semibold"
+                },
+                {
+                  "type": "pieChart",
+                  "x": 0,
+                  "y": 0,
+                  "width": 80,
+                  "height": 80,
+                  "values": [
+                    72,
+                    12,
+                    16
+                  ],
+                  "hole": 0.62,
+                  "gradient": true,
+                  "striped": 1
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { renderDocument } from '../src/render.ts';
 import { copyText, saveFile } from '../editor/save.ts';
 import { svgToPng } from '../editor/png.ts';
-import { renderTranslated, tableFor, translator } from '../editor/translate.ts';
+import { draftAll, renderTranslated, tableFor, tableNow, translator } from '../editor/translate.ts';
 import { LANGUAGES, translateDoc, type Lang } from '../src/translate.ts';
 import { App as BuilderApp } from '../editor/App.tsx';
 import { TEMPLATES, type TemplateName } from '../editor/docs.ts';
@@ -164,6 +164,28 @@ export function App() {
   const [glassing, setGlassing] = useState<false | { edit?: { setId: string; icon: IconRow } }>(false);
   const builderView = useEditor((s) => s.view);
   const [art, setArt] = useState<Theme>('dark');
+  // The language the whole library is shown in. Remembered in this browser;
+  // English is the illustrations as written.
+  const [libLang, setLibLangState] = useState<Lang | 'en'>(() => {
+    try {
+      const v = localStorage.getItem('library-lang');
+      return v && v in LANGUAGES ? (v as Lang) : 'en';
+    } catch {
+      return 'en';
+    }
+  });
+  const setLibLang = (l: Lang | 'en') => {
+    setLibLangState(l);
+    try {
+      localStorage.setItem('library-lang', l);
+    } catch {
+      /* not remembered: fine */
+    }
+  };
+  const [canTranslate, setCanTranslate] = useState(false);
+  useEffect(() => void translator().then((t) => setCanTranslate(!!t)), []);
+  /** Strings still being translated for the library, and a tick per batch landed. */
+  const [drafting, setDrafting] = useState<{ remaining: number; tick: number }>({ remaining: 0, tick: 0 });
   const [query, setQuery] = useState('');
   const [illSort, setIllSort] = useState<IllustrationSort>('recent');
   const [iconPlace, setIconPlace] = useState('all');
@@ -589,6 +611,21 @@ export function App() {
   );
   const placeLabel =
     current === 'all' ? null : current === 'recent' ? 'Recently edited' : current === 'unfiled' ? 'Unfiled' : folderName(current);
+  // In another language, every illustration shown is translated: what has a
+  // review in the builder as reviewed, the rest drafted by machine — all the
+  // library's strings at once, the thumbnails redrawing as batches land.
+  const shownDocs = useMemo(() => illustrations.map((r) => r.doc), [illustrations]);
+  useEffect(() => {
+    if (libLang === 'en' || !canTranslate) return;
+    let live = true;
+    draftAll(shownDocs, libLang, (remaining) => live && setDrafting((d) => ({ remaining, tick: d.tick + 1 }))).catch(
+      (e) => live && setToast(`Could not translate the library — ${(e as Error).message}`),
+    );
+    return () => {
+      live = false;
+    };
+  }, [shownDocs, libLang, canTranslate]);
+
   const illustrationTools = (
     <Toolbar
       query={query}
@@ -604,6 +641,19 @@ export function App() {
       }}
       preview={art}
       onPreview={setArt}
+      language={
+        canTranslate
+          ? {
+              value: libLang,
+              onChange: setLibLang,
+              options: [
+                { value: 'en', label: 'English' },
+                ...(Object.keys(LANGUAGES) as Lang[]).map((l) => ({ value: l, label: LANGUAGES[l].native })),
+              ],
+              busy: libLang !== 'en' && drafting.remaining > 0 ? `Translating ${drafting.remaining} strings…` : undefined,
+            }
+          : undefined
+      }
       scope={placeLabel ? { label: placeLabel, onClear: () => setPlace('all') } : undefined}
       count={illustrations.length}
       noun={['illustration', 'illustrations']}
@@ -858,6 +908,8 @@ export function App() {
                   key={row.id}
                   row={row}
                   theme={art}
+                  lang={libLang}
+                  tick={drafting.tick}
                   by={who(row.updatedBy)}
                   onOpen={() => setOpen(row.id)}
                   onEdit={writable ? () => edit(row) : undefined}
@@ -1004,6 +1056,7 @@ export function App() {
         <IllustrationDetail
           row={openRow}
           initialTheme={art}
+          initialLang={canTranslate ? libLang : 'en'}
           by={who(openRow.updatedBy)}
           folders={lib.folders}
           folder={folderOf(openRow.id)}
@@ -1099,6 +1152,8 @@ function iconFolders(st: Store | null, set: IconSetRow, onToast: (s: string) => 
 function IllustrationCard({
   row,
   theme,
+  lang,
+  tick,
   by,
   onOpen,
   onEdit,
@@ -1106,6 +1161,10 @@ function IllustrationCard({
 }: {
   row: IllustrationRow;
   theme: Theme;
+  /** The library's language; the thumbnail draws in it as far as it is translated. */
+  lang: Lang | 'en';
+  /** Changes as translations land, so the thumbnail picks them up. */
+  tick: number;
   by: string | null;
   onOpen: () => void;
   /** Absent for viewers who cannot save. */
@@ -1113,7 +1172,11 @@ function IllustrationCard({
   /** In select mode: whether it is picked, and how to toggle it. */
   select?: { on: boolean; toggle: () => void };
 }) {
-  const svg = useMemo(() => renderDocument(row.doc, theme, { embedFont: false }), [row.doc, theme]);
+  const svg = useMemo(() => {
+    const doc = lang === 'en' ? row.doc : translateDoc(row.doc, tableNow(row.doc, lang).table);
+    return renderDocument(doc, theme, { embedFont: false });
+    // `tick` stands for the drafts, which live outside React.
+  }, [row.doc, theme, lang, tick]);
   const { width, height } = row.doc.canvas;
   return (
     <figure
@@ -1168,6 +1231,7 @@ async function offer(filename: string, data: string | Blob, mime: string, onToas
 function IllustrationDetail({
   row,
   initialTheme,
+  initialLang,
   by,
   folders,
   folder,
@@ -1180,6 +1244,8 @@ function IllustrationDetail({
 }: {
   row: IllustrationRow;
   initialTheme: Theme;
+  /** The library's language, which the sheet opens in. */
+  initialLang: Lang | 'en';
   by: string | null;
   folders: Folders;
   folder: string | null;
@@ -1194,7 +1260,7 @@ function IllustrationDetail({
   const [confirming, setConfirming] = useState(false);
   // The language the preview and every download are in. The illustration
   // itself is never changed: a translated copy is made on the way out.
-  const [lang, setLang] = useState<Lang | 'en'>('en');
+  const [lang, setLang] = useState<Lang | 'en'>(initialLang);
   const [translation, setTranslation] = useState<{ lang: Lang; table: Record<string, string>; drafted: number } | null>(null);
   const [translating, setTranslating] = useState(false);
   const [canTranslate, setCanTranslate] = useState(false);

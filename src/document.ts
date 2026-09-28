@@ -391,6 +391,8 @@ export interface StatEl extends LayoutChild {
   labelPosition?: 'above' | 'below';
   valueRole?: TypeRole;
   labelRole?: TypeRole;
+  /** The label in small caps. Defaults on. */
+  labelSmallCaps?: boolean;
   anchor?: 'start' | 'middle' | 'end';
 }
 

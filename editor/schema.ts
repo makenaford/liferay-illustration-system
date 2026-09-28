@@ -355,6 +355,7 @@ export const SCHEMA: {
       ...XY,
       { key: 'valueRole', label: 'Value style', kind: 'select', options: ROLES },
       { key: 'labelRole', label: 'Label style', kind: 'select', options: ROLES },
+      { key: 'labelSmallCaps', label: 'Label small caps', kind: 'boolean', default: true },
       { key: 'labelPosition', label: 'Label pos', kind: 'select', options: ['below', 'above'] },
       { key: 'anchor', label: 'Align', kind: 'select', options: ['start', 'middle', 'end'] },
     ],
@@ -559,7 +560,7 @@ export const DEFAULTS: Record<Element['type'], () => Element> = {
   }),
   progress: () => ({ type: 'progress', x: 40, y: 40, width: 160, value: 0.6, label: 'Label' }),
   skeleton: () => ({ type: 'skeleton', x: 40, y: 40, width: 120, height: 8 }),
-  stat: () => ({ type: 'stat', x: 40, y: 40, value: '12,847', label: 'Metric', valueRole: 'heading' }),
+  stat: () => ({ type: 'stat', x: 40, y: 50, value: '12,847', label: 'Metric' }),
   icon: () => ({ type: 'icon', x: 40, y: 40, size: 20, icon: 'mc:check_circle', tone: 'accentSoft' }),
   iconGrid: () => ({
     type: 'iconGrid', x: 40, y: 40, columns: 4, size: 22, gapX: 34, gapY: 34,

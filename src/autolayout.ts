@@ -5,6 +5,7 @@ import { CHAT_HEIGHT } from './primitives/chatBubble.ts';
 import { CURSOR_ASPECT } from './primitives/cursor.ts';
 import { axisBand } from './primitives/axisLabels.ts';
 import { tableLayout } from './primitives/table.ts';
+import { statLayout } from './primitives/statBlock.ts';
 import { textBox, VERTICAL } from './fontMetrics.generated.ts';
 import { LAYOUT, SPACE } from './tokens.ts';
 
@@ -50,14 +51,8 @@ export function measureElement(el: Element): Size {
       return measureTextEl(el);
     }
     case 'stat': {
-      const vr = TYPE_ROLES[el.valueRole ?? 'title'];
-      const lr = TYPE_ROLES[el.labelRole ?? 'caption'];
-      const v = textBox(el.value, vr.size, vr.weight);
-      const l = el.label ? textBox(el.label, lr.size, lr.weight) : { width: 0, height: 0 };
-      return {
-        width: Math.max(v.width, l.width),
-        height: v.height + (el.label ? l.height + 2 : 0),
-      };
+      const L = statLayout(el);
+      return { width: L.width, height: L.height };
     }
     case 'avatar': {
       const r = el.r ?? 11.875;
@@ -150,13 +145,8 @@ export function baselineOf(el: Element): number | null {
     case 'text': {
       return measureTextEl(el).baseline;
     }
-    case 'stat': {
-      const vr = TYPE_ROLES[el.valueRole ?? 'title'];
-      const above = el.labelPosition === 'above' && el.label;
-      const lr = TYPE_ROLES[el.labelRole ?? 'caption'];
-      const rise = above ? (VERTICAL.ascent + VERTICAL.descent) * lr.size + 2 : 0;
-      return rise + textBox(el.value, vr.size, vr.weight).baseline;
-    }
+    case 'stat':
+      return statLayout(el).baseline;
     // These centre their label vertically, so their baseline is derived from
     // the same expression the primitive uses to place it.
     case 'badge':
@@ -231,16 +221,9 @@ function placeAt(el: Element, x: number, y: number, size: Size): Element {
     return { ...el, x: round(x), y: round(y + progressLabelRise(el)) };
   }
   if (el.type === 'stat') {
-    const vr = TYPE_ROLES[el.valueRole ?? 'title'];
-    const b = textBox(el.value, vr.size, vr.weight);
-    const lr = TYPE_ROLES[el.labelRole ?? 'caption'];
-    const rise =
-      el.labelPosition === 'above' && el.label
-        ? 14 - lr.size * 0.2 + VERTICAL.ascent * lr.size - VERTICAL.ascent * lr.size
-        : 0;
     const anchorX =
       el.anchor === 'middle' ? x + size.width / 2 : el.anchor === 'end' ? x + size.width : x;
-    return { ...el, x: round(anchorX), y: round(y + b.baseline + rise) };
+    return { ...el, x: round(anchorX), y: round(y + statLayout(el).baseline) };
   }
   if (isContainer(el) && !el.layout && el.children?.length) {
     // A free container's children are absolute, so they move with it —
@@ -551,11 +534,9 @@ export function boundingBox(el: Element): { x: number; y: number; width: number;
     return { x, y: e.y - b.baseline, width: size.width, height: size.height };
   }
   if (el.type === 'stat') {
-    const vr = TYPE_ROLES[el.valueRole ?? 'title'];
-    const b = textBox(el.value, vr.size, vr.weight);
     const x =
       el.anchor === 'middle' ? e.x - size.width / 2 : el.anchor === 'end' ? e.x - size.width : e.x;
-    return { x, y: e.y - b.baseline, width: size.width, height: size.height };
+    return { x, y: e.y - statLayout(el).baseline, width: size.width, height: size.height };
   }
   if (el.type === 'progress') {
     return { x: e.x, y: e.y - progressLabelRise(el), width: size.width, height: size.height };

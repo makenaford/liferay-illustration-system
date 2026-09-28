@@ -342,7 +342,7 @@ export function App() {
     setOpen(null);
     setBuilding(true);
   };
-  const create = async (template: TemplateName = 'blank') => {
+  const create = async (template: TemplateName = 'simple') => {
     const doc = TEMPLATES[template].make();
     doc.id = freshId(doc.id, lib.illustrations.map((i) => i.id));
     // Made inside a folder, it belongs to that folder once it is saved.
@@ -1947,8 +1947,9 @@ function Tools({
           <h2>Illustration Builder</h2>
           <p>
             Compose marketing illustrations from the Liferay component library — frames, charts, badges,
-            chat bubbles, glass icons — in dark and light from one document. Start blank, or from <b>Mockup</b>: a
-            3:2 product screenshot with frames meeting its edges. It opens right here: saving an illustration
+            chat bubbles, glass icons — in dark and light from one document. Start from a <b>Simple illustration</b>,
+            an <b>Image base</b> (a 3:2 product screenshot with frames meeting its edges) or a <b>Dashboard</b> (a
+            grid of stat tiles and charts). It opens right here: saving an illustration
             puts it in this library for everyone, and <b>Edit in builder</b> on any illustration opens it again.
           </p>
           <div className="am-tool-actions">

@@ -118,7 +118,7 @@ export function Library() {
     setUI({ view: 'editor', selected: null });
   };
 
-  const create = async (template: TemplateName = 'blank') => {
+  const create = async (template: TemplateName = 'simple') => {
     const doc = TEMPLATES[template].make();
     doc.id = freshId(doc.id, (entries ?? []).map((e) => e.id));
     // Made inside a folder, it belongs to that folder.

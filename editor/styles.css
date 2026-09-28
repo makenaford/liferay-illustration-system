@@ -1246,3 +1246,4 @@ button.mini.on { background: var(--accent); border-color: var(--accent); color: 
   font-style: normal;
   letter-spacing: 0.02em;
 }
+button.mini.on { background: var(--accent); border-color: var(--accent); color: #fff; }

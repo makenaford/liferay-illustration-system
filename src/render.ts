@@ -25,6 +25,9 @@ import {
   Arrow,
   Cursor,
   MapDots,
+  PieChart,
+  Radio,
+  FormField,
 } from './primitives/index.ts';
 import { iconArt } from './icons.ts';
 import { GLASS_ICONS } from './glassIcons.generated.ts';
@@ -223,6 +226,15 @@ function renderElementInner(ctx: Ctx, el: Element, path?: string): VNode | null 
 
     case 'toggle':
       return Toggle(ctx, el);
+
+    case 'pieChart':
+      return PieChart(ctx, el);
+
+    case 'radio':
+      return Radio(ctx, el);
+
+    case 'field':
+      return FormField(ctx, el);
 
     case 'input':
       return InputField(ctx, el);

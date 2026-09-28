@@ -15,6 +15,10 @@ import deploySecurity from '../docs/deploy-security-anywhere.json';
 import buildPortals from '../docs/build-portals-low-code.json';
 import connectSystems from '../docs/connect-every-system.json';
 import bringProduct from '../docs/bring-product-enterprise.json';
+import patientCare from '../docs/patient-care-insights.json';
+import ordersOverview from '../docs/orders-overview.json';
+import permitApplication from '../docs/permit-application.json';
+import energyConsumption from '../docs/energy-consumption.json';
 
 /**
  * The nine ported illustrations plus anything built since, loaded as the
@@ -38,6 +42,11 @@ export const DOCS = [
   buildPortals,
   connectSystems,
   bringProduct,
+  // Image base, a photo left to fill: one glass panel of UI at its edge.
+  patientCare,
+  ordersOverview,
+  permitApplication,
+  energyConsumption,
 ] as unknown as Doc[];
 
 /** A blank document, for starting something new. */

@@ -303,6 +303,8 @@ export interface LineChartEl extends LayoutChild {
     /** A colour from the set. Omitted: Primary, then Purple — see `CHART_COLORS`. */
     color?: string;
     strokeWidth?: number;
+    /** Fill under the line — an area chart. */
+    area?: boolean;
   }[];
   gridLines?: number;
   domain?: [number, number];
@@ -312,6 +314,8 @@ export interface LineChartEl extends LayoutChild {
   /** Axis labels under the plot — see `LineChartProps.labels`. */
   labels?: string[];
   labelGap?: number;
+  /** `smooth` (default) through the points, or `straight` point to point. */
+  curve?: 'smooth' | 'straight';
 }
 
 export interface BarChartEl extends LayoutChild {
@@ -334,6 +338,10 @@ export interface BarChartEl extends LayoutChild {
   /** Category labels, centred under each bar — see `axisLabels`. */
   labels?: string[];
   labelGap?: number;
+  /** A line over the bars, one value per slot, on its own scale. */
+  line?: (number | null)[];
+  /** The line's colour. Omitted: the text colour. */
+  lineColor?: string;
 }
 
 export interface ProgressEl extends LayoutChild {
@@ -597,6 +605,52 @@ export interface SvgEl extends LayoutChild {
   alt?: string;
 }
 
+/** Shares of a whole, as a pie or a ring. See `PieChart` in src/primitives/pieChart.ts. */
+export interface PieChartEl extends LayoutChild {
+  type: 'pieChart';
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  values: number[];
+  colors?: (string | null)[];
+  /** 0 a pie; up to 0.9 a ring. */
+  hole?: number;
+  gap?: number;
+  /** The segment lifted out as glass. */
+  highlight?: number;
+  /** The segment drawn in stripes. */
+  striped?: number;
+  gradient?: boolean;
+}
+
+/** One option of a radio group, as a tile. */
+export interface RadioEl extends LayoutChild {
+  type: 'radio';
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  label: string;
+  checked?: boolean;
+}
+
+/** A labelled input, filled in or waiting — `height` takes in the label. */
+export interface FieldEl extends LayoutChild {
+  type: 'field';
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  label?: string;
+  required?: boolean;
+  value?: string;
+  /** Several lines: a text area. */
+  lines?: string[];
+  placeholder?: string;
+  role?: TypeRole;
+}
+
 export type Element =
   | TextEl
   | CardEl
@@ -626,7 +680,10 @@ export type Element =
   | SpotIconEl
   | GraphicEl
   | ImageEl
-  | SvgEl;
+  | SvgEl
+  | PieChartEl
+  | RadioEl
+  | FieldEl;
 
 export interface Doc {
   id: string;

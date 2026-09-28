@@ -123,6 +123,16 @@ export function LineSeriesEditor({ el, onChange }: { el: LineChartEl; onChange: 
           />
           <button
             type="button"
+            className={`mini${s.area ? ' on' : ''}`}
+            aria-pressed={!!s.area}
+            title="Fill under this line — an area chart"
+            aria-label={`Area under line ${i + 1}`}
+            onClick={() => set(i, { area: !s.area || undefined })}
+          >
+            ▤
+          </button>
+          <button
+            type="button"
             className="mini"
             title="Draw this line again at random — same points, same direction"
             aria-label={`Regenerate line ${i + 1}`}

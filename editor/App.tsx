@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { renderDocument } from '../src/render.ts';
 import type { Element } from '../src/document.ts';
 import { Canvas } from './Canvas.tsx';
@@ -12,9 +12,11 @@ import { copySelected, cutSelected, duplicateSelected, paste } from './clipboard
 import { copyText, saveFile } from './save.ts';
 import { SourceModal } from './SourceModal.tsx';
 import { TranslateModal } from './TranslateModal.tsx';
+import { draftMissing, withTranslations } from './translate.ts';
 import { LAYOUT } from '../src/tokens.ts';
 import { reorderSibling, reorderToEdge } from './state.ts';
 import {
+  amendDoc,
   markSaved,
   canRedo,
   canUndo,
@@ -132,8 +134,47 @@ export function App() {
           ? 'Saved to the shared library'
           : 'Saved to this browser',
       );
+      void translateSaved();
     } catch (e) {
       setFlash(`Could not save: ${(e as Error).message}`);
+    }
+  };
+
+  /*
+   * Every save translates what has no translation yet, in the background, so
+   * an illustration is translated as soon as it exists and its maker only
+   * corrects it (Translate…). The drafts land on the document as it is by
+   * then: still open with nothing changed since, they are saved with it
+   * straight away; with edits in progress they wait for the next save; if
+   * the editor has moved on, they go into the saved copy — unless someone
+   * saved over it meanwhile, in which case their save will translate it.
+   */
+  const translatingAfterSave = useRef(false);
+  const translateSaved = async () => {
+    if (translatingAfterSave.current) return;
+    translatingAfterSave.current = true;
+    try {
+      const saved = getState().doc;
+      const savedAt = getState().base;
+      const additions = await draftMissing(saved);
+      if (!additions || !Object.keys(additions).length) return;
+      const now = getState();
+      if (now.view === 'editor' && now.doc.id === saved.id) {
+        const { doc, added } = withTranslations(now.doc, additions);
+        if (!added) return;
+        amendDoc(doc);
+        if (!now.dirty) await saveDoc();
+        setFlash(`Translated ${added} strings into Japanese and Spanish — check them in Translate…`);
+      } else {
+        const current = await latest(saved.id);
+        if (!current || current.updatedAt !== savedAt) return;
+        const { doc, added } = withTranslations(current.doc, additions);
+        if (added) await saveToLibrary(doc);
+      }
+    } catch (e) {
+      setFlash(`Saved, but could not translate it — ${(e as Error).message}`);
+    } finally {
+      translatingAfterSave.current = false;
     }
   };
 

@@ -156,6 +156,16 @@ export function commit(next: Doc, coalesce = false) {
   emit();
 }
 
+/**
+ * Replace the document without an undo step or marking it changed — for
+ * data that arrives on its own, like the machine translations made after a
+ * save (editor/translate.ts), which are not an edit the designer made.
+ */
+export function amendDoc(next: Doc) {
+  store.state = { ...store.state, doc: next };
+  emit();
+}
+
 /** Called after a successful write to the library. */
 export function markSaved(base?: number) {
   store.state = { ...store.state, dirty: false, ...(base !== undefined ? { base } : {}) };

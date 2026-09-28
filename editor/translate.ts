@@ -1,7 +1,7 @@
 import type { Doc } from '../src/document.ts';
 import { fontWeights, renderDocument, type RenderOptions } from '../src/render.ts';
 import type { ThemeName } from '../src/tokens.ts';
-import { collectStrings, translateDoc, type Lang } from '../src/translate.ts';
+import { collectStrings, LANGUAGES, translateDoc, type Lang, type Translations } from '../src/translate.ts';
 
 /**
  * The translated export, on the page's side — see src/translate.ts for the
@@ -109,8 +109,12 @@ export function tableNow(doc: Doc, lang: Lang): { table: Record<string, string>;
   const table: Record<string, string> = {};
   let drafted = 0;
   let missing = 0;
+  const machine = new Set(doc.machineTranslated?.[lang] ?? []);
   for (const s of collectStrings(doc)) {
-    if (reviewed[s]?.trim()) table[s] = reviewed[s];
+    if (reviewed[s]?.trim()) {
+      table[s] = reviewed[s];
+      if (machine.has(s)) drafted++;
+    }
     else if (known[s]) {
       table[s] = known[s];
       drafted++;
@@ -178,4 +182,65 @@ export async function tableFor(doc: Doc, lang: Lang): Promise<{ table: Record<st
   if (tableNow(doc, lang).missing) await draftAll([doc], lang, () => {});
   const { table, drafted } = tableNow(doc, lang);
   return { table, drafted };
+}
+
+/* ---- on save ----------------------------------------------------------- */
+
+type Additions = Partial<Record<Lang, Record<string, string>>>;
+
+/**
+ * Machine translations for every string `doc` has no translation of, in
+ * every language — what a save sets off, so an illustration is translated
+ * as soon as it exists and whoever made it only has to correct it. Null
+ * where there is no translator (the Artifact build, local Vite).
+ */
+export async function draftMissing(doc: Doc): Promise<Additions | null> {
+  if (!(await translator())) return null;
+  const strings = collectStrings(doc);
+  const out: Additions = {};
+  for (const lang of Object.keys(LANGUAGES) as Lang[]) {
+    const have = doc.translations?.[lang] ?? {};
+    const missing = strings.filter((s) => !have[s]?.trim());
+    if (!missing.length) continue;
+    await draftAll([doc], lang, () => {});
+    const known = drafts[lang] ?? {};
+    const got = Object.fromEntries(missing.filter((s) => known[s]).map((s) => [s, known[s]]));
+    if (Object.keys(got).length) out[lang] = got;
+  }
+  return out;
+}
+
+/**
+ * `doc` with `additions` merged in — onto the document as it is now, which
+ * may have changed while they were made: a string edited away since takes
+ * nothing, one translated by hand meanwhile keeps its translation. What it
+ * no longer has is dropped from its translations, so they do not pile up as
+ * the copy changes. Added strings are marked as machine drafts.
+ */
+export function withTranslations(doc: Doc, additions: Additions): { doc: Doc; added: number } {
+  const strings = new Set(collectStrings(doc));
+  const translations: Translations = {};
+  const machine: Partial<Record<Lang, string[]>> = {};
+  let added = 0;
+  for (const lang of Object.keys(LANGUAGES) as Lang[]) {
+    const table: Record<string, string> = {};
+    const drafted = new Set((doc.machineTranslated?.[lang] ?? []).filter((s) => strings.has(s)));
+    for (const [s, t] of Object.entries(doc.translations?.[lang] ?? {})) if (strings.has(s) && t.trim()) table[s] = t;
+    for (const [s, t] of Object.entries(additions[lang] ?? {})) {
+      if (!strings.has(s) || table[s]) continue;
+      table[s] = t;
+      drafted.add(s);
+      added++;
+    }
+    if (Object.keys(table).length) translations[lang] = table;
+    if (drafted.size) machine[lang] = [...drafted];
+  }
+  return {
+    doc: {
+      ...doc,
+      translations: Object.keys(translations).length ? translations : undefined,
+      machineTranslated: Object.keys(machine).length ? machine : undefined,
+    },
+    added,
+  };
 }

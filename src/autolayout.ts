@@ -259,7 +259,7 @@ function placeAt(el: Element, x: number, y: number, size: Size): Element {
 }
 
 /** An element moved by (dx, dy), with everything inside it. */
-function shifted(el: Element, dx: number, dy: number): Element {
+export function shifted(el: Element, dx: number, dy: number): Element {
   if (!dx && !dy) return el;
   let next: Element;
   if (el.type === 'avatar') next = { ...el, cx: round(el.cx + dx), cy: round(el.cy + dy) };

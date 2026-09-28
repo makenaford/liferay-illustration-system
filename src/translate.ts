@@ -1,4 +1,5 @@
 import type { Doc, Element } from './document.ts';
+import { fitTranslation } from './fit.ts';
 
 /**
  * TRANSLATED EXPORTS — the same illustration, its copy in another language.
@@ -93,9 +94,11 @@ export function collectStrings(doc: Doc): string[] {
 /**
  * The document with its copy in `lang`, for export. The original is not
  * touched; `translations` is dropped from the copy so it never ships.
+ * Every element is refitted to its translated copy — a button whose label
+ * got longer gets wider — see src/fit.ts.
  */
 export function translateDoc(doc: Doc, table: Record<string, string>): Doc {
   const f: Visit = (s) => table[s]?.trim() || s;
   const { translations: _, ...rest } = doc;
-  return { ...rest, elements: doc.elements.map((el) => visitElement(el, f)) };
+  return fitTranslation(rest, { ...rest, elements: doc.elements.map((el) => visitElement(el, f)) });
 }

@@ -1,6 +1,6 @@
 import { h, type Ctx, type VNode } from '../vsvg.ts';
 import { measureText, VERTICAL } from '../fontMetrics.generated.ts';
-import { Text, typeStyle, type TypeRole, type TypeWeight } from './text.ts';
+import { Text, measureTextEl, typeStyle, type TypeRole, type TypeWeight } from './text.ts';
 import { chartColor } from '../colors.ts';
 
 export interface TableColumn {
@@ -91,11 +91,11 @@ export function tableLayout(p: TableProps) {
     if (col.width !== undefined) return col.width;
     // What stretches: the bars if there are any, otherwise the first column.
     if (col.kind === 'bar' || (c === 0 && !hasBars)) return null;
-    const hs = typeStyle(s.head.role, s.head.weight);
+    const head = (label: string) => measureTextEl({ role: s.head.role, weight: s.head.weight, content: label, smallCaps: true }).width;
     const bs = typeStyle(styleOf(c).role, styleOf(c).weight);
     return Math.ceil(
       Math.max(
-        header ? measureText(col.label, hs.size, hs.weight) : 0,
+        header ? head(col.label) : 0,
         ...p.rows.map((r) => measureText(r[c] ?? '', bs.size, bs.weight)),
       ),
     );
@@ -143,7 +143,13 @@ export function Table(ctx: Ctx, props: TableProps): VNode {
   const ink = (tone: 'muted' | 'primary') => (tone === 'muted' ? tk.text.muted : tk.text.primary);
   const nodes: VNode[] = [];
 
-  const cell = (c: number, top: number, content: string, st: { role: TypeRole; weight?: TypeWeight; tone: 'muted' | 'primary' }) => {
+  const cell = (
+    c: number,
+    top: number,
+    content: string,
+    st: { role: TypeRole; weight?: TypeWeight; tone: 'muted' | 'primary' },
+    smallCaps = false,
+  ) => {
     const col = L.columns[c];
     return Text(ctx, {
       x: col.align === 'end' ? col.x + col.width : col.x,
@@ -153,11 +159,13 @@ export function Table(ctx: Ctx, props: TableProps): VNode {
       content,
       anchor: col.align === 'end' ? 'end' : 'start',
       color: ink(st.tone),
+      smallCaps,
     });
   };
 
   if (L.header) {
-    L.columns.forEach((col, c) => col.label && nodes.push(cell(c, props.y, col.label, L.s.head)));
+    // The header in small caps, as the set's column labels are.
+    L.columns.forEach((col, c) => col.label && nodes.push(cell(c, props.y, col.label, L.s.head, true)));
   }
   // A bar's length is its value's share of the column's largest, so the bars
   // compare the rows with each other; the largest runs the column's width.
@@ -168,15 +176,19 @@ export function Table(ctx: Ctx, props: TableProps): VNode {
       if (col.kind === 'bar') {
         const v = barValue(row[c]);
         const w = most[c] ? (v / most[c]) * col.width : 0;
+        const fill = chartColor(tk, 0, col.color);
+        const y = top + (L.rowHeight - BAR) / 2;
+        // The whole bar, faint, so each row's share reads against its full length.
+        nodes.push(h('rect', { x: col.x, y, width: col.width, height: BAR, rx: BAR / 2, fill, 'fill-opacity': 0.2 }));
         if (w > 0) {
           nodes.push(
             h('rect', {
               x: col.x,
-              y: top + (L.rowHeight - BAR) / 2,
+              y,
               width: Math.max(w, BAR),
               height: BAR,
               rx: BAR / 2,
-              fill: chartColor(tk, 0, col.color),
+              fill,
             }),
           );
         }
@@ -190,7 +202,7 @@ export function Table(ctx: Ctx, props: TableProps): VNode {
     const count = (L.header ? 1 : 0) + props.rows.length - 1;
     for (let i = 1; i <= count; i++) {
       const y = props.y + i * L.rowHeight;
-      nodes.push(h('line', { x1: props.x, y1: y, x2: props.x + props.width, y2: y, stroke: tk.chart.gridLine, 'stroke-width': 1 }));
+      nodes.push(h('line', { x1: props.x, y1: y, x2: props.x + props.width, y2: y, stroke: '#FFFFFF', 'stroke-opacity': 0.2, 'stroke-width': 1 }));
     }
   }
 

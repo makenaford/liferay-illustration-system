@@ -1,0 +1,228 @@
+{
+  "id": "energy-consumption",
+  "name": "Energy consumption",
+  "layout": "bare",
+  "canvas": {
+    "width": 800,
+    "height": 533
+  },
+  "mockup": {
+    "x": 40,
+    "y": 28,
+    "width": 720,
+    "height": 480
+  },
+  "background": "none",
+  "panels": [],
+  "elements": [
+    {
+      "type": "image",
+      "x": 40,
+      "y": 28,
+      "width": 720,
+      "height": 480,
+      "radius": 10,
+      "fit": "cover",
+      "href": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22720%22%20height%3D%22480%22%20viewBox%3D%220%200%20720%20480%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%231b2434%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%230e1420%22%2F%3E%3C%2FlinearGradient%3E%3Cpattern%20id%3D%22p%22%20width%3D%2240%22%20height%3D%2240%22%20patternUnits%3D%22userSpaceOnUse%22%3E%3Cpath%20d%3D%22M40%200H0V40%22%20fill%3D%22none%22%20stroke%3D%22%232a3548%22%20stroke-width%3D%221%22%2F%3E%3C%2Fpattern%3E%3C%2Fdefs%3E%3Crect%20width%3D%22720%22%20height%3D%22480%22%20fill%3D%22url(%23g)%22%2F%3E%3Crect%20width%3D%22720%22%20height%3D%22480%22%20fill%3D%22url(%23p)%22%2F%3E%3Ctext%20x%3D%2250%25%22%20y%3D%2250%25%22%20fill%3D%22%238a97ad%22%20font-family%3D%22'Source%20Sans%203'%2C%20system-ui%2C%20sans-serif%22%20font-size%3D%2234%22%20text-anchor%3D%22middle%22%20dominant-baseline%3D%22middle%22%3EImage%20%C2%B7%20720%20%C3%97%20480%3C%2Ftext%3E%3C%2Fsvg%3E",
+      "alt": "Image — replace with a photo"
+    },
+    {
+      "type": "card",
+      "x": 556,
+      "y": 42,
+      "width": 224,
+      "height": 452,
+      "surface": "glass-highlighted",
+      "sheen": "radial",
+      "radius": 10,
+      "frost": "content",
+      "ink": "light",
+      "layout": {
+        "direction": "vertical",
+        "gap": 12,
+        "padding": 16,
+        "align": "stretch",
+        "hugHeight": true
+      },
+      "children": [
+        {
+          "type": "text",
+          "x": 0,
+          "y": 0,
+          "role": "subheading",
+          "content": "Total Consumption",
+          "weight": "semibold"
+        },
+        {
+          "type": "stat",
+          "x": 0,
+          "y": 0,
+          "value": "176K",
+          "label": "Total",
+          "labelPosition": "above"
+        },
+        {
+          "type": "stat",
+          "x": 0,
+          "y": 0,
+          "value": "80B",
+          "label": "Production cost",
+          "labelPosition": "above"
+        },
+        {
+          "type": "group",
+          "x": 0,
+          "y": 0,
+          "width": 10,
+          "height": 10,
+          "layout": {
+            "direction": "vertical",
+            "gap": 2,
+            "padding": 0,
+            "align": "start",
+            "hugHeight": true,
+            "hugWidth": true
+          },
+          "children": [
+            {
+              "type": "text",
+              "x": 0,
+              "y": 0,
+              "role": "caption",
+              "content": "Number of Power Cuts &",
+              "weight": "semibold"
+            },
+            {
+              "type": "text",
+              "x": 0,
+              "y": 0,
+              "role": "caption",
+              "content": "Average Duration",
+              "weight": "semibold"
+            }
+          ]
+        },
+        {
+          "type": "barChart",
+          "x": 0,
+          "y": 0,
+          "width": 196,
+          "height": 150,
+          "data": [
+            0.9,
+            0.38,
+            0.55,
+            0.06,
+            0.28,
+            0.74
+          ],
+          "color": "base-primary",
+          "gradient": false,
+          "barRatio": 0.62,
+          "line": [
+            0.1,
+            0.3,
+            0.2,
+            0.45,
+            0.3,
+            0.8
+          ]
+        },
+        {
+          "type": "text",
+          "x": 0,
+          "y": 0,
+          "role": "caption",
+          "content": "Consumption by sector",
+          "weight": "semibold"
+        },
+        {
+          "type": "group",
+          "x": 0,
+          "y": 0,
+          "width": 10,
+          "height": 10,
+          "layout": {
+            "direction": "horizontal",
+            "gap": 12,
+            "padding": 0,
+            "align": "center",
+            "hugHeight": true,
+            "hugWidth": false
+          },
+          "children": [
+            {
+              "type": "pieChart",
+              "x": 0,
+              "y": 0,
+              "width": 84,
+              "height": 84,
+              "values": [
+                70,
+                12,
+                18
+              ],
+              "hole": 0.62,
+              "gradient": true,
+              "striped": 1
+            },
+            {
+              "type": "group",
+              "x": 0,
+              "y": 0,
+              "width": 10,
+              "height": 10,
+              "layout": {
+                "direction": "vertical",
+                "gap": 12,
+                "padding": 0,
+                "align": "start",
+                "hugHeight": true,
+                "hugWidth": true
+              },
+              "children": [
+                {
+                  "type": "progress",
+                  "x": 0,
+                  "y": 0,
+                  "width": 92,
+                  "value": 0.95,
+                  "label": "Renewable",
+                  "tone": "accent"
+                },
+                {
+                  "type": "progress",
+                  "x": 0,
+                  "y": 0,
+                  "width": 92,
+                  "value": 0.62,
+                  "label": "Brown Coal",
+                  "tone": "accent"
+                },
+                {
+                  "type": "progress",
+                  "x": 0,
+                  "y": 0,
+                  "width": 92,
+                  "value": 0.1,
+                  "label": "Nuclear",
+                  "tone": "accent"
+                },
+                {
+                  "type": "progress",
+                  "x": 0,
+                  "y": 0,
+                  "width": 92,
+                  "value": 0.44,
+                  "label": "Gas",
+                  "tone": "accent"
+                }
+              ],
+              "grow": 1
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

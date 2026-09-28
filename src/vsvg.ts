@@ -133,7 +133,16 @@ export function backdropPane(
         'color-interpolation-filters': 'sRGB',
       },
       // Figma's "background blur: 20" is a radius; feGaussianBlur takes sigma.
-      [h('feGaussianBlur', { stdDeviation: blur / 2 })],
+      [
+        h('feGaussianBlur', { stdDeviation: blur / 2 }),
+        // Over no background the blur fades to transparent at the edge of
+        // what is beneath — a screenshot's border — and the sharp copy under
+        // the pane shows through. Wherever there is anything at all, the
+        // frosted copy is made opaque, as it would be over a page.
+        ctx.transparent
+          ? h('feComponentTransfer', {}, [h('feFuncA', { type: 'table', tableValues: '0 1 1 1 1 1 1 1' })])
+          : null,
+      ],
     ),
   );
 

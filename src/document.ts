@@ -525,6 +525,11 @@ export interface SpotIconEl extends LayoutChild {
    * Wins over `name`.
    */
   art?: { id: string; label: string; category: string; dark: GraphicArt; light: GraphicArt };
+  /**
+   * Which artwork to draw, whatever the theme. Omitted, it follows the theme.
+   * The mockups set the Dark icons on their light glass cards, in both.
+   */
+  variant?: 'dark' | 'light';
 }
 
 /**

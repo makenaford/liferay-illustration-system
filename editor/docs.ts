@@ -11,6 +11,10 @@ import partnerDashboardPage from '../docs/partner-dashboard-page.json';
 import secureAccess from '../docs/secure-access.json';
 import slashTechDebt from '../docs/slash-tech-debt.json';
 import turnAnalytics from '../docs/turn-analytics.json';
+import deploySecurity from '../docs/deploy-security-anywhere.json';
+import buildPortals from '../docs/build-portals-low-code.json';
+import connectSystems from '../docs/connect-every-system.json';
+import bringProduct from '../docs/bring-product-enterprise.json';
 
 /**
  * The nine ported illustrations plus anything built since, loaded as the
@@ -29,6 +33,11 @@ export const DOCS = [
   launchCampaigns,
   partnerDashboard,
   partnerDashboardPage,
+  // The mockups: a product screenshot with glass frames of real UI over it.
+  deploySecurity,
+  buildPortals,
+  connectSystems,
+  bringProduct,
 ] as unknown as Doc[];
 
 /** A blank document, for starting something new. */

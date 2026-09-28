@@ -394,7 +394,7 @@ function renderSpotIcon(
     ]);
   }
 
-  const art = ctx.tokens.name === 'light' ? icon.light : icon.dark;
+  const art = (el.variant ?? ctx.tokens.name) === 'light' ? icon.light : icon.dark;
   const [vx, vy, vw, vh] = art.viewBox;
   const scale = size / Math.max(vw, vh);
 

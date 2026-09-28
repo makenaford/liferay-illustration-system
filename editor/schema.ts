@@ -470,6 +470,7 @@ export const SCHEMA: {
       { key: 'name', label: 'Artwork', kind: 'glassIcon' },
       ...XY,
       { key: 'size', label: 'Size', kind: 'number', min: 1, default: 48 },
+      { key: 'variant', label: 'Variant', kind: 'select', options: ['', 'dark', 'light'], labels: { '': 'Follow the theme', dark: 'Dark', light: 'Light' } },
     ],
   },
 };

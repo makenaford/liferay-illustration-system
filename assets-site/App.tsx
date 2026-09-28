@@ -8,6 +8,7 @@ import { NewMenu } from '../editor/NewMenu.tsx';
 import { initStore, setUI, useEditor } from '../editor/state.ts';
 import { addFolder, fileIn, freshId, removeFolder, renameFolder } from '../editor/library.ts';
 import { Sidebar, Toolbar, type NavSection } from './Browse.tsx';
+import { recipeFor } from './glassLinks.ts';
 import type { Doc, GraphicArt } from '../src/document.ts';
 import { GRAPHICS } from '../src/graphics.generated.ts';
 import { normaliseFigmaSvg } from '../src/figmaGlass.ts';
@@ -1456,8 +1457,18 @@ function IconSet({
             >
               Copy SVG
             </button>
-            {writable && picked.builder && (
-              <button type="button" className="am-primary" onClick={() => onEdit(picked)}>
+            {writable && (
+              <button
+                type="button"
+                className="am-primary"
+                onClick={() => {
+                  // An icon uploaded from Figma is taken apart and opened with
+                  // the MingCute icons it is drawn from (assets-site/glassLinks.ts).
+                  const builder = recipeFor(picked);
+                  if (builder) onEdit({ ...picked, builder });
+                  else onToast(`${iconParts(picked).name} doesn't take apart into a glass and a gradient icon, so it can't open in the builder.`);
+                }}
+              >
                 Edit in builder
               </button>
             )}

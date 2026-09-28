@@ -6,6 +6,8 @@ export interface CursorProps {
   y: number;
   /** Width of that box. The height follows at the artwork's 86:99. */
   size?: number;
+  /** `arrow`, the pointer (default), or `hand`, an open hand for dragging. */
+  variant?: 'arrow' | 'hand';
 }
 
 /**
@@ -22,6 +24,18 @@ const GLASS =
   'M24.9268 69.3363C20.5987 73.5322 13.3541 70.4653 13.3541 64.4373V17.0367C13.3541 10.9566 20.7061 7.91282 25.0038 12.2136L59.7158 46.9499C64.0119 51.249 60.9671 58.5962 54.8894 58.5962H37.0988C36.467 58.5962 35.8547 58.8151 35.3661 59.2157L24.9268 69.3363Z';
 
 /**
+ * The drag hand, drawn to the arrow's recipe in the same box: a glass hand —
+ * four fingers, palm and thumb as rounded strokes, unioned by the fill — over
+ * the same hand in the gradient, smaller and offset down and right, as the
+ * arrow's back is. Every subpath winds clockwise, so the union has no holes
+ * for the clip and the inner glow. Generated from those shapes, not traced.
+ */
+const HAND_BACK =
+  'M38.284 39.2L38.284 54A4.144 4.144 0 0 1 29.996 54L29.996 39.2A4.144 4.144 0 0 1 38.284 39.2ZM46.794 35.5L46.794 54A4.144 4.144 0 0 1 38.506 54L38.506 35.5A4.144 4.144 0 0 1 46.794 35.5ZM55.304 36.98L55.304 54A4.144 4.144 0 0 1 47.016 54L47.016 36.98A4.144 4.144 0 0 1 55.304 36.98ZM63.814 42.16L63.814 55.48A4.144 4.144 0 0 1 55.526 55.48L55.526 42.16A4.144 4.144 0 0 1 63.814 42.16ZM39.616 46.6H54.194A9.62 9.62 0 0 1 63.814 56.22V63.62A9.62 9.62 0 0 1 54.194 73.24H39.616A9.62 9.62 0 0 1 29.996 63.62V56.22A9.62 9.62 0 0 1 39.616 46.6ZM28.976 50.075L36.006 59.695A4.144 4.144 0 0 1 29.314 64.585L22.284 54.965A4.144 4.144 0 0 1 28.976 50.075Z';
+const HAND_GLASS =
+  'M29.6 24L29.6 44A5.6 5.6 0 0 1 18.4 44L18.4 24A5.6 5.6 0 0 1 29.6 24ZM41.1 19L41.1 44A5.6 5.6 0 0 1 29.9 44L29.9 19A5.6 5.6 0 0 1 41.1 19ZM52.6 21L52.6 44A5.6 5.6 0 0 1 41.4 44L41.4 21A5.6 5.6 0 0 1 52.6 21ZM64.1 28L64.1 46A5.6 5.6 0 0 1 52.9 46L52.9 28A5.6 5.6 0 0 1 64.1 28ZM31.4 34H51.1A13 13 0 0 1 64.1 47V57A13 13 0 0 1 51.1 70H31.4A13 13 0 0 1 18.4 57V47A13 13 0 0 1 31.4 34ZM17.021 38.696L26.521 51.696A5.6 5.6 0 0 1 17.479 58.304L7.979 45.304A5.6 5.6 0 0 1 17.021 38.696Z';
+
+/**
  * Figma's background blur on the glass: 4.38639, which it exports as CSS
  * `blur(2.19px)`. `backdropPane` halves what it is given for the sigma, so
  * this is the Figma value, scaled with the cursor.
@@ -29,7 +43,7 @@ const GLASS =
 const GLASS_BLUR = 4.38639;
 
 /**
- * CURSOR — a pointer that keeps its frosted glass.
+ * CURSOR — a pointer, or a drag hand, that keeps its frosted glass.
  *
  * Figma exports the glass's background blur as a `foreignObject` with CSS
  * `backdrop-filter`, which only a browser renders and which blurs nothing an
@@ -44,6 +58,10 @@ export function Cursor(ctx: Ctx, props: CursorProps): VNode {
   const size = props.size ?? BOX.width;
   const s = size / BOX.width;
   const place = `translate(${x} ${y}) scale(${s})`;
+  const hand = props.variant === 'hand';
+  const [backD, glassD] = hand ? [HAND_BACK, HAND_GLASS] : [BACK, GLASS];
+  // The hand's parts overlap, and must union rather than cut each other out.
+  const rule = hand ? 'nonzero' : 'evenodd';
 
   const gradId = ctx.uid('cursorgrad');
   const fxId = ctx.uid('cursorfx');
@@ -94,7 +112,7 @@ export function Cursor(ctx: Ctx, props: CursorProps): VNode {
   );
 
   const back = () =>
-    h('path', { d: BACK, transform: place, 'fill-rule': 'evenodd', 'clip-rule': 'evenodd', fill: `url(#${gradId})` });
+    h('path', { d: backD, transform: place, 'fill-rule': rule, 'clip-rule': rule, fill: `url(#${gradId})` });
 
   // What the glass sees: the document beneath it, then the gradient arrow.
   let pane: VNode | null = null;
@@ -108,7 +126,7 @@ export function Cursor(ctx: Ctx, props: CursorProps): VNode {
     );
     const outer = ctx.backdropId;
     ctx.backdropId = underId;
-    pane = backdropPane(ctx, h('path', { d: GLASS, transform: place }), GLASS_BLUR * s);
+    pane = backdropPane(ctx, h('path', { d: glassD, transform: place }), GLASS_BLUR * s);
     ctx.backdropId = outer;
   }
 
@@ -117,9 +135,9 @@ export function Cursor(ctx: Ctx, props: CursorProps): VNode {
     pane,
     h('g', { transform: place }, [
       h('path', {
-        d: GLASS,
-        'fill-rule': 'evenodd',
-        'clip-rule': 'evenodd',
+        d: glassD,
+        'fill-rule': rule,
+        'clip-rule': rule,
         fill: '#70A1FF',
         'fill-opacity': 0.3,
         filter: `url(#${fxId})`,

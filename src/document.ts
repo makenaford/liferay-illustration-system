@@ -263,6 +263,8 @@ export interface CursorEl extends LayoutChild {
   y: number;
   /** Width of the artwork's box, shadow included. Defaults to 86. */
   size?: number;
+  /** `arrow` (default) or `hand`, the drag hand. */
+  variant?: 'arrow' | 'hand';
 }
 
 export interface ChatEl extends LayoutChild {
@@ -364,6 +366,12 @@ export interface TableEl extends LayoutChild {
   header?: boolean;
   dividers?: boolean;
   rowHeight?: number;
+  /** A background behind the table, from the surface set — see `TableProps.surface`. */
+  surface?: SurfaceName;
+  /** Inset of the rows inside the background. Defaults 8. */
+  padding?: number;
+  /** The background's corner radius. Defaults 4. */
+  radius?: number;
 }
 
 export interface SkeletonEl extends LayoutChild {

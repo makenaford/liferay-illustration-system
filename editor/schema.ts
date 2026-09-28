@@ -306,6 +306,9 @@ export const SCHEMA: {
       { key: 'header', label: 'Header row', kind: 'boolean', default: true },
       { key: 'dividers', label: 'Dividers', kind: 'boolean', default: (el) => !(el as { compact?: boolean }).compact },
       { key: 'rowHeight', label: 'Row height', kind: 'number', min: 8 },
+      { key: 'surface', label: 'Background', kind: 'select', options: ['', ...SURFACES] },
+      { key: 'padding', label: 'Padding', kind: 'number', min: 0, default: 8 },
+      { key: 'radius', label: 'Radius', kind: 'number', min: 0, default: 4 },
     ],
   },
   barChart: {
@@ -402,7 +405,11 @@ export const SCHEMA: {
   },
   cursor: {
     label: 'Cursor',
-    fields: [...XY, { key: 'size', label: 'Size', kind: 'number', min: 1, default: 86 }],
+    fields: [
+      ...XY,
+      { key: 'size', label: 'Size', kind: 'number', min: 1, default: 86 },
+      { key: 'variant', label: 'Style', kind: 'select', options: ['arrow', 'hand'], labels: { arrow: 'Arrow', hand: 'Hand (drag)' } },
+    ],
   },
   arrow: {
     label: 'Arrow',

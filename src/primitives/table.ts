@@ -2,6 +2,8 @@ import { h, type Ctx, type VNode } from '../vsvg.ts';
 import { measureText, VERTICAL } from '../fontMetrics.generated.ts';
 import { Text, measureTextEl, typeStyle, type TypeRole, type TypeWeight } from './text.ts';
 import { chartColor } from '../colors.ts';
+import { Surface } from './surface.ts';
+import type { SurfaceName } from '../tokens.ts';
 
 export interface TableColumn {
   label: string;
@@ -32,6 +34,16 @@ export interface TableProps {
   dividers?: boolean;
   /** Height of each row band. Defaults 20, or 14 compact. */
   rowHeight?: number;
+  /**
+   * A surface drawn behind the table itself — a well or a tile inside its
+   * card, from the same set cards take. The rows are inset by `padding`, so
+   * the table's box is the background's box.
+   */
+  surface?: SurfaceName;
+  /** Inset of the rows from the background's edge. Defaults 8; only with a `surface`. */
+  padding?: number;
+  /** The background's corner radius. Defaults 4, a sub-card's. */
+  radius?: number;
 }
 
 /** Space between columns. */
@@ -81,6 +93,11 @@ export function tableLayout(p: TableProps) {
   const header = p.header !== false;
   const dividers = p.dividers ?? !p.compact;
   const rowHeight = p.rowHeight ?? s.rowHeight;
+  // With a background the rows sit inside it; without, padding means nothing.
+  const pad = p.surface ? Math.max(p.padding ?? 8, 0) : 0;
+  const x = p.x + pad;
+  const y = p.y + pad;
+  const width = Math.max(p.width - pad * 2, 0);
   const cols = p.columns.length ? p.columns : [{ label: '' }];
   const last = cols.length - 1;
 
@@ -102,9 +119,9 @@ export function tableLayout(p: TableProps) {
   };
   const fixed = cols.map((_, c) => fits(c));
   const flex = fixed.filter((w) => w === null).length || 1;
-  const spare = p.width - GAP * last - fixed.reduce<number>((a, w) => a + (w ?? 0), 0);
+  const spare = width - GAP * last - fixed.reduce<number>((a, w) => a + (w ?? 0), 0);
   const widths = fixed.map((w) => w ?? Math.max(spare / flex, 0));
-  let cx = p.x;
+  let cx = x;
   const columns = cols.map((col, c) => {
     const out = { ...col, x: cx, width: widths[c], align: col.align ?? (c === 0 || col.kind === 'bar' ? 'start' : 'end') };
     cx += widths[c] + GAP;
@@ -124,9 +141,11 @@ export function tableLayout(p: TableProps) {
     columns,
     styleOf,
     baseline,
-    height: bands * rowHeight,
+    /** Where the rows start and how wide they run — inside the background. */
+    inner: { x, y, width },
+    height: bands * rowHeight + pad * 2,
     /** Top of body row `r`. */
-    rowTop: (r: number) => p.y + (header ? 1 + r : r) * rowHeight,
+    rowTop: (r: number) => y + (header ? 1 + r : r) * rowHeight,
   };
 }
 
@@ -165,7 +184,7 @@ export function Table(ctx: Ctx, props: TableProps): VNode {
 
   if (L.header) {
     // The header in small caps, as the set's column labels are.
-    L.columns.forEach((col, c) => col.label && nodes.push(cell(c, props.y, col.label, L.s.head, true)));
+    L.columns.forEach((col, c) => col.label && nodes.push(cell(c, L.inner.y, col.label, L.s.head, true)));
   }
   // A bar's length is its value's share of the column's largest, so the bars
   // compare the rows with each other; the largest runs the column's width.
@@ -201,10 +220,23 @@ export function Table(ctx: Ctx, props: TableProps): VNode {
   if (L.dividers) {
     const count = (L.header ? 1 : 0) + props.rows.length - 1;
     for (let i = 1; i <= count; i++) {
-      const y = props.y + i * L.rowHeight;
-      nodes.push(h('line', { x1: props.x, y1: y, x2: props.x + props.width, y2: y, stroke: '#FFFFFF', 'stroke-opacity': 0.2, 'stroke-width': 1 }));
+      const y = L.inner.y + i * L.rowHeight;
+      nodes.push(h('line', { x1: L.inner.x, y1: y, x2: L.inner.x + L.inner.width, y2: y, stroke: '#FFFFFF', 'stroke-opacity': 0.2, 'stroke-width': 1 }));
     }
   }
 
+  if (props.surface) {
+    return h('g', { 'data-el': 'table' }, [
+      Surface(ctx, {
+        x: props.x,
+        y: props.y,
+        width: props.width,
+        height: L.height,
+        radius: props.radius ?? 4,
+        surface: props.surface,
+        children: nodes,
+      }),
+    ]);
+  }
   return h('g', { 'data-el': 'table' }, nodes);
 }

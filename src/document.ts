@@ -142,6 +142,11 @@ export interface CardEl extends LayoutChild {
    * sets its own width; see editor/cardPresets.ts.
    */
   maxWidth?: number;
+  /**
+   * A dashboard: slots per row, one count per row (up to four of each). Its
+   * rows are the children marked `gridRow`; see editor/dashboardGrid.ts.
+   */
+  grid?: number[];
   layout?: LayoutSpec;
   /** Clip content: children are cut to this container's shape. */
   clip?: boolean;
@@ -182,6 +187,13 @@ export interface GroupEl extends LayoutChild {
    * sets its own width; see editor/cardPresets.ts.
    */
   maxWidth?: number;
+  /**
+   * A dashboard: slots per row, one count per row (up to four of each). Its
+   * rows are the children marked `gridRow`; see editor/dashboardGrid.ts.
+   */
+  grid?: number[];
+  /** A row of a dashboard's grid. */
+  gridRow?: boolean;
   layout?: LayoutSpec;
   /** Clip content: children are cut to this container's shape. */
   clip?: boolean;
@@ -205,6 +217,11 @@ export interface SubCardEl extends LayoutChild {
    * sets its own width; see editor/cardPresets.ts.
    */
   maxWidth?: number;
+  /**
+   * A dashboard: slots per row, one count per row (up to four of each). Its
+   * rows are the children marked `gridRow`; see editor/dashboardGrid.ts.
+   */
+  grid?: number[];
   layout?: LayoutSpec;
   /** Clip content: children are cut to this container's shape. */
   clip?: boolean;

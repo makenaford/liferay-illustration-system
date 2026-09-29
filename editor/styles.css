@@ -1252,3 +1252,5 @@ button.mini.on { background: var(--accent); border-color: var(--accent); color: 
 .edit-lang { display: inline-flex; align-items: center; gap: 6px; color: var(--ink-dim); font-size: 12px; }
 .edit-lang select { width: auto; }
 .lang-banner { border-color: var(--accent-soft); }
+.grid-data .grid-row { display: flex; align-items: center; gap: 6px; }
+.grid-row-label { color: var(--ink-dim); min-width: 44px; }

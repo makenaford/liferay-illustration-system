@@ -1,4 +1,5 @@
 import type { Doc, Element } from '../src/document.ts';
+import { dashboard } from './dashboardGrid.ts';
 
 import aiVisibility from '../docs/ai-visibility-dashboard.json';
 import b2bCommerce from '../docs/b2b-commerce.json';
@@ -156,53 +157,15 @@ export function mockupDoc(): Doc {
   };
 }
 
-/** A stat tile: label and change, the figure and its sparkline, a note. */
-function statTile(label: string, change: string, value: string, note: string, data: number[]): Element {
-  const row = (align: 'center' | 'end', gap: number, children: Element[]): Element => ({
-    type: 'group', x: 0, y: 0, width: 122, height: 16,
-    layout: { direction: 'horizontal', gap, padding: 0, align, justify: 'between', hugHeight: true },
-    children,
-  });
-  return {
-    type: 'subCard', x: 0, y: 0, width: 146, height: 62, grow: 1, surface: 'glass-default',
-    layout: { direction: 'vertical', gap: 2, padding: 12, align: 'start', hugHeight: true },
-    children: [
-      row('center', 6, [
-        { type: 'text', x: 0, y: 0, role: 'label', content: label },
-        { type: 'badge', x: 0, y: 0, label: change, tone: 'info', dot: false },
-      ]),
-      row('end', 8, [
-        { type: 'text', x: 0, y: 0, role: 'heading', weight: 'bold', content: value },
-        {
-          type: 'lineChart', x: 0, y: 0, width: 36, height: 12, gridLines: 0, domain: [0, 1],
-          series: [{ role: 'secondary', data, strokeWidth: 1.25 }],
-        },
-      ]),
-      { type: 'text', x: 0, y: 0, role: 'micro', weight: 'semibold', tone: 'muted', content: note },
-    ],
-  };
-}
-
-/** A progress row with its figure, as the set's category breakdowns are drawn. */
-function progressRow(label: string, value: number): Element {
-  return {
-    type: 'group', x: 0, y: 0, width: 152, height: 14,
-    layout: { direction: 'horizontal', gap: 8, padding: 0, align: 'baseline', justify: 'between' },
-    children: [
-      { type: 'progress', x: 0, y: 0, width: 122, value, label, tone: 'accent' },
-      { type: 'text', x: 0, y: 0, role: 'micro', tone: 'muted', content: `${Math.round(value * 100)}%` },
-    ],
-  };
-}
-
 /**
  * DASHBOARD — a hero panel holding a grid of cards, as the set's dashboards
  * ("Turn analytics into action", "AI visibility") are drawn: a header, a row
  * of three stat tiles, and a chart beside a breakdown.
  *
- * The grid is auto-layout, not placed by hand: one column of rows, the
- * tiles sharing their row's width equally (`grow`), so editing a label, a
- * figure or the grid's width reflows it rather than leaving cards to nudge.
+ * The grid is a dashboard grid (editor/dashboardGrid.ts): rows of slots
+ * that divide the panel exactly, set under Grid — up to four rows of up to
+ * four — so editing a label, a figure or the size reflows it rather than
+ * leaving cards to nudge.
  */
 export function dashboardDoc(): Doc {
   return {
@@ -216,63 +179,8 @@ export function dashboardDoc(): Doc {
     ],
     panels: [{ x: 40, y: 30, width: 480, height: 312, surface: 'glass-default' }],
     elements: [
-      {
-        type: 'group', x: 52, y: 42, width: 456, height: 288,
-        layout: { direction: 'vertical', gap: 8, padding: 0, align: 'stretch', hugHeight: true },
-        children: [
-          {
-            type: 'group', x: 0, y: 0, width: 456, height: 20,
-            layout: { direction: 'horizontal', gap: 8, padding: 0, align: 'center', justify: 'between', hugHeight: true },
-            children: [
-              { type: 'text', x: 0, y: 0, role: 'subheading', content: 'Performance overview' },
-              { type: 'badge', x: 0, y: 0, label: 'Live', tone: 'success' },
-            ],
-          },
-          {
-            type: 'group', x: 0, y: 0, width: 456, height: 62,
-            layout: { direction: 'horizontal', gap: 8, padding: 0, align: 'start', hugHeight: true },
-            children: [
-              statTile('Visitors', '+12.4%', '48,210', 'Last 30 days', [0.3, 0.36, 0.34, 0.48, 0.55, 0.62, 0.78]),
-              statTile('Conversions', '+6.1%', '3,982', 'vs. 3,750 target', [0.4, 0.38, 0.5, 0.47, 0.6, 0.66, 0.7]),
-              statTile('Revenue', '+9.8%', '$1.2M', 'This quarter', [0.2, 0.3, 0.42, 0.4, 0.58, 0.64, 0.84]),
-            ],
-          },
-          {
-            type: 'group', x: 0, y: 0, width: 456, height: 190,
-            layout: { direction: 'horizontal', gap: 8, padding: 0, align: 'stretch' },
-            children: [
-              {
-                type: 'subCard', x: 0, y: 0, width: 272, height: 190, grow: 1, surface: 'glass-default',
-                layout: { direction: 'vertical', gap: 4, padding: 12, align: 'start' },
-                children: [
-                  { type: 'text', x: 0, y: 0, role: 'bodySmall', content: 'Traffic growth' },
-                  {
-                    type: 'lineChart', x: 0, y: 0, width: 248, height: 124, gridLines: 6, domain: [0, 1],
-                    series: [
-                      { role: 'secondary', data: [0.2, 0.3, 0.28, 0.45, 0.52, 0.6, 0.82] },
-                      { role: 'primary', data: [0.1, 0.18, 0.24, 0.3, 0.34, 0.46, 0.5] },
-                    ],
-                    markers: true,
-                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
-                    labelGap: 2,
-                  },
-                ],
-              },
-              {
-                type: 'subCard', x: 0, y: 0, width: 176, height: 190, surface: 'glass-default',
-                layout: { direction: 'vertical', gap: 10, padding: 12, align: 'start' },
-                children: [
-                  { type: 'text', x: 0, y: 0, role: 'bodySmall', content: 'By channel' },
-                  progressRow('Organic', 0.68),
-                  progressRow('Paid', 0.42),
-                  progressRow('Email', 0.31),
-                  progressRow('Social', 0.18),
-                ],
-              },
-            ],
-          },
-        ],
-      },
+      // The grid itself, inside the panel: rows and slots set under Grid.
+      { ...dashboard('full', 'group'), x: 52, y: 42, width: 456, height: 288 } as Element,
     ],
   };
 }

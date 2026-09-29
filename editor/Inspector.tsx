@@ -1,5 +1,6 @@
 import type { BarChartEl, Element, LineChartEl, TableEl } from '../src/document.ts';
 import { TableEditor } from './TableData.tsx';
+import { GridEditor } from './GridEditor.tsx';
 import {
   commit,
   elementAt,
@@ -170,6 +171,8 @@ export function Inspector() {
       <div className="fields">
         {spec.fields
           .filter((f) => !(autoPlaced && (f.key === 'x' || f.key === 'y')))
+          // The grid is a dashboard's: other cards have no rows to count.
+          .filter((f) => f.kind !== 'grid' || !!(el as { grid?: number[] }).grid)
           .map((f) => (
           <FieldRow
             key={f.key}
@@ -623,11 +626,12 @@ function FieldRow({
     field.kind === 'glassIcon' ||
     field.kind === 'iconList' ||
     field.kind === 'table' ||
+    field.kind === 'grid' ||
     field.kind === 'list';
 
   // A field holding several buttons is not a <label>: a click on its blank
   // space would press the first of them.
-  const Wrap = field.kind === 'iconSlots' || field.kind === 'photo' || field.kind === 'table' ? 'div' : 'label';
+  const Wrap = field.kind === 'iconSlots' || field.kind === 'photo' || field.kind === 'table' || field.kind === 'grid' ? 'div' : 'label';
   return (
     <Wrap className={`field${wide ? ' wide' : ''}`}>
       <span className="field-label">{field.label}</span>
@@ -839,5 +843,8 @@ function Control({
 
     case 'table':
       return <TableEditor el={el as TableEl} onPatch={onPatch} />;
+
+    case 'grid':
+      return <GridEditor el={el as Extract<Element, { type: 'card' | 'subCard' | 'group' }>} onReplace={(next) => onPatch({ grid: (next as { grid?: number[] }).grid, children: (next as { children?: Element[] }).children })} />;
   }
 }

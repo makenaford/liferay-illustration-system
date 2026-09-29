@@ -1,8 +1,9 @@
 /**
- * GENERATED — do not edit. Run `npm run colors` to regenerate.
+ * GENERATED — do not edit. Run `pnpm run colors` to regenerate.
  *
  * The illustration colour set, from `tokens/illustration/*.tokens.json`
- * (Figma variables). 32 colours per scheme, in the file's own order.
+ * (Figma variables). 32 colours per scheme, in the file's own order —
+ * with the light-scheme overrides in scripts/build-colors.ts, for contrast.
  */
 
 export interface IllustrationColor {
@@ -188,7 +189,7 @@ export const COLORS: IllustrationColor[] = [
     "key": "base-green",
     "label": "Green",
     "group": "Base Colors",
-    "light": "#80D940",
+    "light": "#46821A",
     "dark": "#80D940"
   },
   {

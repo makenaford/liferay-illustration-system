@@ -1,3 +1,4 @@
+import type { Lang } from '../src/translate.ts';
 import { useSyncExternalStore } from 'react';
 import type { Doc, Element } from '../src/document.ts';
 import { LAYOUT, type ThemeName } from '../src/tokens.ts';
@@ -60,6 +61,13 @@ export interface EditorState {
    * press to the release, snapping both ends to items — see connect.ts.
    */
   tool: 'select' | 'connector';
+  /**
+   * The language being edited. English is the illustration itself; in
+   * another, `doc` is that language's version, and `english` the English it
+   * belongs to — a save stores `doc` as that version, the English untouched.
+   */
+  editLang: Lang | 'en';
+  english: Doc | null;
 }
 
 interface Store {
@@ -107,6 +115,8 @@ export function initStore(doc: Doc, base = 0) {
       base,
       padding: prefs?.padding ?? LAYOUT.cardPadding,
       tool: 'select',
+      editLang: 'en',
+      english: null,
     },
     past: [],
     future: [],

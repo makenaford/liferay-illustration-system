@@ -8,10 +8,13 @@ import { TEMPLATES, type TemplateName } from './docs.ts';
  */
 export function NewMenu({
   onPick,
+  onFigma,
   className = 'primary',
   label = 'New illustration',
 }: {
   onPick: (template: TemplateName) => void;
+  /** Offer "From a Figma SVG…" — see editor/figmaImport.ts. */
+  onFigma?: () => void;
   /** The trigger's class, so each host styles it as its own primary button. */
   className?: string;
   label?: string;
@@ -54,6 +57,19 @@ export function NewMenu({
               <span>{TEMPLATES[t].description}</span>
             </button>
           ))}
+          {onFigma && (
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                setOpen(false);
+                onFigma();
+              }}
+            >
+              <b>From a Figma SVG…</b>
+              <span>A frame exported from Figma as SVG, with Outline text off, rebuilt as editable text, cards and images.</span>
+            </button>
+          )}
         </div>
       )}
     </div>

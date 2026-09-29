@@ -25,6 +25,7 @@ import {
 import { initStore, setUI, useEditor } from './state.ts';
 import type { Doc } from '../src/document.ts';
 import { migrateDoc } from '../src/migrate.ts';
+import { pickFigmaSvg } from './figmaImport.ts';
 import { pickFile } from './pickFile.ts';
 import { saveFile } from './save.ts';
 
@@ -124,6 +125,19 @@ export function Library() {
     // Made inside a folder, it belongs to that folder.
     if (current !== 'all' && current !== 'unfiled') await fileIn(doc.id, current);
     open(doc);
+  };
+
+  const fromFigma = async () => {
+    try {
+      const got = await pickFigmaSvg();
+      if (!got) return;
+      got.doc.id = freshId(got.doc.id, (entries ?? []).map((e) => e.id));
+      if (current !== 'all' && current !== 'unfiled') await fileIn(got.doc.id, current);
+      open(got.doc);
+      setUI({ theme: got.theme, notice: `From Figma: ${got.notes.join(' · ')}` });
+    } catch (e) {
+      setNote(`Could not read that SVG — ${(e as Error).message}`);
+    }
   };
 
   const duplicate = async (e: Entry) => {
@@ -249,7 +263,7 @@ export function Library() {
           >
             Export
           </button>
-          <NewMenu onPick={(t) => void create(t)} />
+          <NewMenu onPick={(t) => void create(t)} onFigma={() => void fromFigma()} />
         </div>
       </header>
       {kind === 'local' && (

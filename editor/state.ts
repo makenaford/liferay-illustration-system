@@ -74,6 +74,8 @@ export interface EditorState {
    * language), taken and cleared by the builder, which opens the version.
    */
   openIn: Lang | null;
+  /** A line for the builder's status bar as it opens — set by whoever opens it, shown once. */
+  notice: string | null;
 }
 
 interface Store {
@@ -123,6 +125,7 @@ export function initStore(doc: Doc, base = 0) {
       tool: 'select',
       editLang: 'en',
       openIn: null,
+      notice: null,
       english: null,
     },
     past: [],

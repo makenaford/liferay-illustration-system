@@ -134,6 +134,14 @@ export function App() {
     );
   };
 
+  // A word from whoever opened the builder — an import's summary, say.
+  const notice = useEditor((s) => s.notice);
+  useEffect(() => {
+    if (!notice) return;
+    setUI({ notice: null });
+    setFlash(notice);
+  }, [notice]);
+
   // Opened from a library viewing another language: open that version.
   const openIn = useEditor((s) => s.openIn);
   useEffect(() => {

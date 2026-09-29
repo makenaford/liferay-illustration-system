@@ -6,7 +6,7 @@ export interface PieChartProps {
   /** The box; the chart is the largest circle centred in it. */
   width: number;
   height: number;
-  /** Each segment's share, in any unit — they are summed. */
+  /** Each segment's share, in any unit — they are summed. Up to four. */
   values: number[];
   /** `full`, a whole disc (default), or `line`, a single ring. */
   style?: 'full' | 'line';
@@ -18,6 +18,16 @@ export interface PieChartProps {
 
 /** The ring's thickness, as a share of the radius, in the `line` style. */
 const LINE = 0.26;
+
+/** At most this many segments; past it the rest are not drawn. */
+export const PIE_MAX = 4;
+
+/**
+ * How much lighter each segment is than the one before: the gradient is one
+ * colour, so the segments are told apart by a step of white over it and a
+ * fine line between them, not by colours of their own.
+ */
+const STEP = 0.16;
 
 /** Where a point on the circle is, clockwise from the top. */
 const at = (cx: number, cy: number, r: number, deg: number): [number, number] => {
@@ -45,12 +55,14 @@ function arc(cx: number, cy: number, r0: number, r1: number, a0: number, a1: num
 
 /**
  * PIE CHART — shares of a whole, one way: a clean circle in the brand
- * gradient, whole or as a single ring, with one segment — the share that
- * matters — drawn as a pane of glass. No gaps, no stripes, no second
- * colour: the glass is the only thing the eye is sent to.
+ * gradient, whole or as a single ring, of up to four segments — each a step
+ * lighter than the last, a fine line between them — with one, the share
+ * that matters, drawn as a pane of glass. No gaps, no stripes, no colours
+ * of their own: the glass is where the eye is sent.
  */
 export function PieChart(ctx: Ctx, props: PieChartProps): VNode {
-  const { x, y, width, height, values } = props;
+  const { x, y, width, height } = props;
+  const values = props.values.slice(0, PIE_MAX);
   const tk = ctx.tokens;
   const r = Math.min(width, height) / 2;
   const cx = x + width / 2;
@@ -73,21 +85,37 @@ export function PieChart(ctx: Ctx, props: PieChartProps): VNode {
     ]),
   );
 
-  // The circle, whole, in the gradient — then the glass segment over it.
+  // The circle, whole, in the gradient — then each segment's step of light,
+  // the glass segment, and the lines between them.
   const nodes: VNode[] = [h('path', { d: arc(cx, cy, inner, r, 0, 360), fill: `url(#${gradId})`, 'fill-rule': 'evenodd' })];
+  const edges: number[] = [];
   let a = 0;
+  let shade = 0;
   values.forEach((v, i) => {
     const sweep = (Math.max(v, 0) / total) * 360;
     const a0 = a;
     a += sweep;
-    if (i !== glass || sweep <= 0) return;
+    if (sweep <= 0) return;
+    if (sweep < 359.99) edges.push(a0);
     const d = arc(cx, cy, inner, r, a0, a0 + sweep);
+    if (i !== glass) {
+      if (shade) nodes.push(h('path', { d, fill: '#FFFFFF', 'fill-opacity': Math.min(shade * STEP, 0.6) }));
+      shade++;
+      return;
+    }
     nodes.push(
       // Frosted: the gradient muted under it, a white sheen across it, a lit edge.
       h('path', { d, fill: tk.stage.bg, 'fill-opacity': 0.55 }),
       h('path', { d, fill: `url(#${sheenId})`, 'fill-opacity': 0.55, stroke: '#FFFFFF', 'stroke-opacity': 0.75, 'stroke-width': 1, 'stroke-linejoin': 'round' }),
     );
   });
+
+  // A fine line at every boundary, from the hole (or the centre) to the rim.
+  for (const e of edges) {
+    const [x0, y0] = at(cx, cy, inner, e);
+    const [x1, y1] = at(cx, cy, r, e);
+    nodes.push(h('line', { x1: f(x0), y1: f(y0), x2: f(x1), y2: f(y1), stroke: tk.stage.bg, 'stroke-width': 1.25, 'stroke-linecap': 'butt' }));
+  }
 
   return h('g', { 'data-el': 'pie-chart' }, nodes);
 }

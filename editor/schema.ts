@@ -267,7 +267,7 @@ export const SCHEMA: {
   pieChart: {
     label: 'Pie chart',
     fields: [
-      { key: 'values', label: 'Values', kind: 'numbers' },
+      { key: 'values', label: 'Values · up to 4', kind: 'numbers' },
       { key: 'style', label: 'Style', kind: 'select', options: ['full', 'line'], labels: { full: 'Full circle', line: 'Line' } },
       { key: 'highlight', label: 'Glass segment # · from 0', kind: 'number', min: 0 },
       ...XY,

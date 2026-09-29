@@ -3,6 +3,7 @@ import { renderDocument } from '../src/render.ts';
 import { copyText, saveFile } from '../editor/save.ts';
 import { svgToPng } from '../editor/png.ts';
 import { draftAll, renderTranslated, tableFor, tableNow, translator } from '../editor/translate.ts';
+import { makeZip, type ZipFile } from '../editor/zip.ts';
 import { LANGUAGES, localizedDoc, type Lang } from '../src/translate.ts';
 import { App as BuilderApp } from '../editor/App.tsx';
 import { TEMPLATES, type TemplateName } from '../editor/docs.ts';
@@ -186,6 +187,8 @@ export function App() {
   useEffect(() => void translator().then((t) => setCanTranslate(!!t)), []);
   /** Strings still being translated for the library, and a tick per batch landed. */
   const [drafting, setDrafting] = useState<{ remaining: number; tick: number }>({ remaining: 0, tick: 0 });
+  /** What the bulk download is doing, while it makes the zip. */
+  const [zipping, setZipping] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [illSort, setIllSort] = useState<IllustrationSort>('recent');
   const [iconPlace, setIconPlace] = useState('all');
@@ -769,6 +772,42 @@ export function App() {
     />
   );
 
+  /**
+   * The selected illustrations as one zip — every one in dark and light, as
+   * SVG or PNG @2x — in the library's language: translated, or its edited
+   * version there, as the Details download would be. One file, because a
+   * browser asks about (or blocks) every extra download a page starts.
+   */
+  const downloadSelected = async (format: 'svg' | 'png') => {
+    const rows = illustrations.filter((i) => selected.has(i.id));
+    if (!rows.length) return;
+    const lang = canTranslate && libLang !== 'en' ? libLang : null;
+    const enc = new TextEncoder();
+    const files: ZipFile[] = [];
+    try {
+      for (const [n, row] of rows.entries()) {
+        setZipping(`Preparing ${n + 1} of ${rows.length}…`);
+        const table = lang ? (await tableFor(row.doc, lang)).table : null;
+        for (const t of ['dark', 'light'] as const) {
+          const svg = lang && table ? await renderTranslated(row.doc, lang, table, t) : renderDocument(row.doc, t);
+          const base = `${row.id}${lang ? `.${lang}` : ''}.${t}`;
+          if (format === 'svg') {
+            files.push({ name: `${base}.svg`, data: enc.encode(svg) });
+          } else {
+            const png = await svgToPng(svg, row.doc.canvas.width, row.doc.canvas.height, 2);
+            files.push({ name: `${base}@2x.png`, data: new Uint8Array(await png.arrayBuffer()) });
+          }
+        }
+      }
+      setZipping('Saving…');
+      await offer(`illustrations${lang ? `-${lang}` : ''}-${format}.zip`, makeZip(files), 'application/zip', setToast);
+    } catch (e) {
+      setToast(`Could not make the download — ${(e as Error).message}`);
+    } finally {
+      setZipping(null);
+    }
+  };
+
   if (building && builderView === 'editor') return <BuilderApp />;
   if (glassing) {
     return (
@@ -855,9 +894,10 @@ export function App() {
           Tools
         </button>
       </nav>
-        {writable && tab !== 'tools' && (
+        {(writable || tab === 'illustrations') && tab !== 'tools' && (
           <div className="am-tabbar-actions">
-            {(tab === 'illustrations' || tab === 'graphics') && (
+            {/* Selecting illustrations is for everyone — to download them; graphics, to remove them. */}
+            {(tab === 'illustrations' || (writable && tab === 'graphics')) && (
               <button
                 type="button"
                 className={selecting ? 'am-on' : ''}
@@ -867,20 +907,24 @@ export function App() {
                 {selecting ? 'Done' : 'Select'}
               </button>
             )}
-            <button
-              type="button"
-              className={tab === 'illustrations' ? '' : 'am-primary'}
-              disabled={busy}
-              onClick={() => pick({ to: tab })}
-            >
-              {busy ? 'Adding…' : UPLOAD_LABEL[tab]}
-            </button>
-            {tab === 'illustrations' && <NewMenu className="am-primary" onPick={(t) => void create(t)} />}
-            {/* Beside Upload icons, where a new icon is wanted: the builder that makes one. */}
-            {tab === 'icons' && (
-              <button type="button" onClick={() => setGlassing({})}>
-                Glass Icon Builder
-              </button>
+            {writable && (
+              <>
+                <button
+                  type="button"
+                  className={tab === 'illustrations' ? '' : 'am-primary'}
+                  disabled={busy}
+                  onClick={() => pick({ to: tab })}
+                >
+                  {busy ? 'Adding…' : UPLOAD_LABEL[tab]}
+                </button>
+                {tab === 'illustrations' && <NewMenu className="am-primary" onPick={(t) => void create(t)} />}
+                {/* Beside Upload icons, where a new icon is wanted: the builder that makes one. */}
+                {tab === 'icons' && (
+                  <button type="button" onClick={() => setGlassing({})}>
+                    Glass Icon Builder
+                  </button>
+                )}
+              </>
             )}
           </div>
         )}
@@ -1001,7 +1045,7 @@ export function App() {
         )}
       </main>
 
-      {selecting && (tab === 'illustrations' || tab === 'graphics') && (
+      {selecting && (tab === 'illustrations' || tab === 'graphics') && (writable || tab === 'illustrations') && (
         <SelectionBar
           count={
             tab === 'illustrations'
@@ -1016,7 +1060,8 @@ export function App() {
           }
           removing={removing}
           onClear={() => setSelected(new Set())}
-          onRemove={async () => {
+          download={tab === 'illustrations' ? { busy: zipping, onDownload: (f) => void downloadSelected(f) } : undefined}
+          onRemove={!writable ? undefined : async () => {
             if (!st) return;
             const ids =
               tab === 'illustrations'
@@ -1784,13 +1829,17 @@ function SelectionBar({
   removing,
   onClear,
   onRemove,
+  download,
 }: {
   count: number;
   noun: string;
   hint: string;
   removing: boolean;
   onClear: () => void;
-  onRemove: () => void;
+  /** Absent for viewers who cannot remove. */
+  onRemove?: () => void;
+  /** Illustrations: the selection as one zip, of SVGs or PNGs. `busy` while it is made. */
+  download?: { busy: string | null; onDownload: (format: 'svg' | 'png') => void };
 }) {
   const [armed, setArmed] = useState(false);
   useEffect(() => {
@@ -1808,6 +1857,28 @@ function SelectionBar({
       <button type="button" disabled={!count} onClick={onClear}>
         Clear
       </button>
+      {download && (
+        <>
+          <button
+            type="button"
+            className="am-primary"
+            disabled={!count || !!download.busy}
+            onClick={() => download.onDownload('svg')}
+            title="Every selected illustration, dark and light, as SVG files in one zip"
+          >
+            {download.busy ?? `Download ${count || ''} as SVG`.replace('  ', ' ')}
+          </button>
+          <button
+            type="button"
+            disabled={!count || !!download.busy}
+            onClick={() => download.onDownload('png')}
+            title="Every selected illustration, dark and light, as PNG @2x files in one zip"
+          >
+            PNG @2x
+          </button>
+        </>
+      )}
+      {onRemove && (
       <button
         type="button"
         className={`am-danger${armed ? ' am-confirming' : ''}`}
@@ -1822,6 +1893,7 @@ function SelectionBar({
               ? `Remove ${count} ${plural}`
               : `Remove ${noun}s`}
       </button>
+      )}
     </div>
   );
 }

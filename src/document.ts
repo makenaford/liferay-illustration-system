@@ -365,6 +365,8 @@ export interface LineChartEl extends LayoutChild {
   /** Axis labels under the plot — see `LineChartProps.labels`. */
   labels?: string[];
   labelGap?: number;
+  /** Vertical labels, top to bottom, down the plot's left edge. See `valueAxisLabels`. */
+  valueLabels?: string[];
   /** `smooth` (default) through the points, or `straight` point to point. */
   curve?: 'smooth' | 'straight';
 }
@@ -389,6 +391,8 @@ export interface BarChartEl extends LayoutChild {
   /** Category labels, centred under each bar — see `axisLabels`. */
   labels?: string[];
   labelGap?: number;
+  /** Vertical labels, top to bottom, down the plot's left edge. See `valueAxisLabels`. */
+  valueLabels?: string[];
   /** A line over the bars, one value per slot, on its own scale. */
   line?: (number | null)[];
   /** The line's colour. Omitted: the text colour. */

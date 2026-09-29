@@ -1,7 +1,7 @@
 import { h, type Ctx, type VNode } from '../vsvg.ts';
 import { monotonePath } from './lineChart.ts';
 import { chartColor } from '../colors.ts';
-import { axisLabels, type AxisLabelProps } from './axisLabels.ts';
+import { axisLabels, plotBox, valueAxisLabels, type AxisLabelProps } from './axisLabels.ts';
 
 export interface BarSeries {
   /**
@@ -65,7 +65,7 @@ export interface BarRect {
 
 /** Normalised series, the scale ceiling, and where every bar is drawn. */
 export function barGeometry(props: BarChartProps): { series: BarSeries[]; max: number; bars: BarRect[] } {
-  const { x, y, width, height } = props;
+  const { x, y, width, height } = plotBox(props);
   const ratio = props.barRatio ?? 0.68;
   const series: BarSeries[] = props.series ?? [{ data: props.data ?? [] }];
   const categories = Math.max(...series.map((s) => s.data.length), 1);
@@ -98,7 +98,9 @@ export function barGeometry(props: BarChartProps): { series: BarSeries[]; max: n
  * gradient the exports use. Square corners, matching the reference.
  */
 export function BarChart(ctx: Ctx, props: BarChartProps): VNode {
-  const { x, y, width, height } = props;
+  // The plot, right of any vertical labels; the bars come from `barGeometry`, which does the same.
+  const plot = plotBox(props);
+  const { x, y, width, height } = plot;
   const tk = ctx.tokens;
   // A grouped chart is making a comparison, and the accent-to-cyan gradient
   // would make the two series harder to tell apart, not easier.
@@ -160,5 +162,11 @@ export function BarChart(ctx: Ctx, props: BarChartProps): VNode {
     );
   }
 
-  return h('g', { 'data-el': 'bar-chart' }, [...grid, ...bars, ...overlay, ...axisLabels(ctx, props, 'slots')]);
+  return h('g', { 'data-el': 'bar-chart' }, [
+    ...grid,
+    ...bars,
+    ...overlay,
+    ...axisLabels(ctx, plot, 'slots'),
+    ...valueAxisLabels(ctx, props),
+  ]);
 }

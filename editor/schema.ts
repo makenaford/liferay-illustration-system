@@ -88,6 +88,8 @@ type FieldKind<K extends string> =
   | { key: K; label: string; kind: 'list' }
   /** A colour, chosen from the design-system palette with swatches. `colorsOnly` leaves out the gradients. */
   | { key: K; label: string; kind: 'token'; colorsOnly?: boolean }
+  /** A bar chart's line overlay: on or off, and its values once on. */
+  | { key: K; label: string; kind: 'barLine' }
   /** One colour per pie segment, each a token picker, defaulting to `PIE_COLORS`. */
   | { key: K; label: string; kind: 'segmentColors' }
   /**
@@ -350,7 +352,8 @@ export const SCHEMA: {
       ...XY,
       ...WH,
       { key: 'series', label: 'Series', kind: 'series' },
-      { key: 'labels', label: 'Labels', kind: 'list' },
+      { key: 'labels', label: 'Horizontal labels · left to right', kind: 'list' },
+      { key: 'valueLabels', label: 'Vertical labels · top to bottom', kind: 'list' },
       { key: 'labelGap', label: 'Label gap', kind: 'number', min: 0, default: 4 },
       { key: 'gridLines', label: 'Grid lines', kind: 'number', min: 0 },
       { key: 'referenceLine', label: 'Reference', kind: 'number', step: 0.05 },
@@ -379,14 +382,15 @@ export const SCHEMA: {
       ...XY,
       ...WH,
       { key: 'series', label: 'Bars', kind: 'bars' },
-      { key: 'labels', label: 'Labels', kind: 'list' },
+      { key: 'labels', label: 'Horizontal labels · left to right', kind: 'list' },
+      { key: 'valueLabels', label: 'Vertical labels · top to bottom', kind: 'list' },
       { key: 'labelGap', label: 'Label gap', kind: 'number', min: 0, default: 4 },
       { key: 'max', label: 'Scale max', kind: 'number', min: 0 },
       { key: 'barRatio', label: 'Bar width', kind: 'number', step: 0.05, min: 0.05, default: 0.68 },
       { key: 'gradient', label: 'Gradient', kind: 'boolean', default: true },
       { key: 'color', label: 'Colour · single series', kind: 'token', colorsOnly: true },
-      { key: 'line', label: 'Line over bars', kind: 'numbers' },
-      { key: 'lineColor', label: 'Line colour', kind: 'token', colorsOnly: true },
+      { key: 'line', label: 'Line overlay', kind: 'barLine' },
+      { key: 'lineColor', label: 'Line colour', kind: 'token', colorsOnly: true, when: (el) => Array.isArray(el.line) && el.line.length > 0 },
     ],
   },
   progress: {

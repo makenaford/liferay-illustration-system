@@ -1,6 +1,6 @@
 import { h, type Ctx, type VNode } from '../vsvg.ts';
 import { chartColor } from '../colors.ts';
-import { axisBand, axisLabels, type AxisLabelProps } from './axisLabels.ts';
+import { axisBand, axisLabels, plotBox, valueAxisLabels, type AxisLabelProps } from './axisLabels.ts';
 
 export interface Series {
   /** Values in any unit; scaled to the plot box. */
@@ -95,7 +95,7 @@ export function lineDomain(props: Pick<LineChartProps, 'series' | 'domain'>): [n
  * drag handles sit exactly on the curve's points.
  */
 export function linePoints(props: LineChartProps): [number, number][][] {
-  const { x, y, width, height } = props;
+  const { x, y, width, height } = plotBox(props);
   const [lo, hi] = lineDomain(props);
   const span = hi - lo || 1;
   return props.series.map((s) =>
@@ -114,7 +114,9 @@ export function linePoints(props: LineChartProps): [number, number][][] {
  * the whole point of a builder.
  */
 export function LineChart(ctx: Ctx, props: LineChartProps): VNode {
-  const { x, y, width, height, series, gridLines = 8 } = props;
+  // The plot, right of any vertical labels; the points come from `linePoints`, which does the same.
+  const plot = plotBox(props);
+  const { x, y, width, height, series, gridLines = 8 } = plot;
   const tk = ctx.tokens;
   const t = tk.chart;
 
@@ -209,6 +211,7 @@ export function LineChart(ctx: Ctx, props: LineChartProps): VNode {
     ...areas,
     ...lines,
     ...dots,
-    ...axisLabels(ctx, props, 'between'),
+    ...axisLabels(ctx, plot, 'between'),
+    ...valueAxisLabels(ctx, props),
   ]);
 }

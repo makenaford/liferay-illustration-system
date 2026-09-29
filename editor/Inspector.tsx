@@ -646,6 +646,7 @@ function FieldRow({
   const wide =
     field.kind === 'token' ||
     field.kind === 'segmentColors' ||
+    field.kind === 'barLine' ||
     field.kind === 'textarea' ||
     field.kind === 'text' ||
     field.kind === 'select' ||
@@ -837,6 +838,30 @@ function Control({
           colorsOnly={field.colorsOnly}
         />
       );
+
+    case 'barLine': {
+      // On, the line starts through the bars' own values — a trend to edit from.
+      const line = Array.isArray(value) ? (value as (number | null)[]) : [];
+      const bars = el as { data?: number[]; series?: { data: (number | null)[] }[] };
+      const start = () => (bars.series?.[0]?.data ?? bars.data ?? [3, 5, 4, 6, 7]).map((v) => v ?? null);
+      return (
+        <span className="bar-line">
+          <label className="check">
+            <input type="checkbox" checked={line.length > 0} onChange={(e) => onChange(e.target.checked ? start() : undefined)} />
+            <span>Show a line over the bars</span>
+          </label>
+          {line.length > 0 && (
+            <input
+              type="text"
+              aria-label="Line values"
+              title="One value per bar, on the line's own scale; leave one empty to skip that bar"
+              value={line.map((v) => (v === null ? '' : v)).join(', ')}
+              onChange={(e) => onChange(e.target.value.split(',').map((s) => (s.trim() === '' ? null : Number(s.trim()))).map((n) => (n === null || Number.isNaN(n) ? null : n)))}
+            />
+          )}
+        </span>
+      );
+    }
 
     case 'segmentColors': {
       // One picker per segment drawn, showing its default until one is chosen.

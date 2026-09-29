@@ -11,9 +11,16 @@ import { textBox } from '../fontMetrics.generated.ts';
  * plot and the labels keep their size and gap.
  */
 export interface AxisLabelProps {
+  /** Horizontal labels, left to right, under the plot. */
   labels?: string[];
   /** Space between the plot's bottom and the labels. Defaults to 4. */
   labelGap?: number;
+  /**
+   * Vertical labels, top to bottom, down the plot's left edge — a value
+   * scale (100K … 0). Drawn inside the chart's box: the plot moves right by
+   * the widest label and its gap, so the chart's size in a layout holds.
+   */
+  valueLabels?: string[];
 }
 
 /** `micro`, regular, in the muted text colour. */
@@ -60,4 +67,44 @@ export function axisLabels(
     at += widths[i] + gap;
     return node;
   });
+}
+
+/** The width the vertical labels take from the left of the chart: 0 without them. */
+export function valueBand(props: AxisLabelProps): number {
+  const labels = (props.valueLabels ?? []).map((l) => l.trim()).filter(Boolean);
+  if (!labels.length) return 0;
+  return Math.max(...labels.map((l) => textBox(l, SIZE, 400).width)) + (props.labelGap ?? DEFAULT_GAP);
+}
+
+/**
+ * The plot inside a chart's box: the box less the vertical labels' band on
+ * the left. Everything the chart plots — and the editor's handles on it —
+ * is placed in this, so they all move together.
+ */
+export function plotBox<T extends { x: number; width: number } & AxisLabelProps>(props: T): T {
+  const band = Math.min(valueBand(props), props.width * 0.5);
+  return band ? { ...props, x: props.x + band, width: props.width - band } : props;
+}
+
+/** Draw the vertical labels, right-aligned beside the plot, spread evenly from its top to its bottom. */
+export function valueAxisLabels(
+  ctx: Ctx,
+  props: AxisLabelProps & { x: number; y: number; width: number; height: number },
+): VNode[] {
+  const labels = (props.valueLabels ?? []).map((l) => l.trim());
+  if (!labels.some(Boolean)) return [];
+  const right = plotBox(props).x - (props.labelGap ?? DEFAULT_GAP);
+  const mid = textBox('', SIZE, 400);
+  const step = labels.length > 1 ? props.height / (labels.length - 1) : 0;
+  return labels.map((l, i) =>
+    Text(ctx, {
+      x: right,
+      y: props.y + step * i - mid.height / 2 + mid.baseline,
+      role: 'micro',
+      weight: 'regular',
+      content: l,
+      anchor: 'end',
+      color: ctx.tokens.text.muted,
+    }),
+  );
 }

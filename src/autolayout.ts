@@ -1,5 +1,6 @@
 import type { Doc, Element, LayoutSpec } from './document.ts';
-import { TYPE_ROLES, measureTextEl } from './primitives/text.ts';
+import { TYPE_ROLES, measureTextEl, wrapLines, lineLead, typeStyle } from './primitives/text.ts';
+import { measureText } from './fontMetrics.generated.ts';
 import { badgeWidth } from './primitives/badge.ts';
 import { CHAT_HEIGHT } from './primitives/chatBubble.ts';
 import { CURSOR_ASPECT } from './primitives/cursor.ts';
@@ -169,10 +170,47 @@ const round = (n: number) => Math.round(n * 100) / 100;
 
 type Container = Extract<Element, { type: 'card' | 'subCard' | 'group' }>;
 
+/**
+ * A container's children, bounded by its `maxWidth`: in a column, text wraps
+ * to the width inside its padding (centred when the column centres it), a
+ * button's label breaks onto lines, and a container inside takes the same
+ * bound. Without a `maxWidth`, as they are.
+ */
+function bounded(el: Container): Element[] {
+  const kids = el.children ?? [];
+  const spec = el.layout;
+  if (!el.maxWidth || !spec || spec.direction !== 'vertical') return kids;
+  const p = pad(spec);
+  const outer = spec.hugWidth ? el.maxWidth : Math.min(el.width, el.maxWidth);
+  const inner = outer - p.left - p.right;
+  return kids.map((k) => {
+    const self = (k as { alignSelf?: LayoutSpec['align'] }).alignSelf ?? spec.align ?? 'start';
+    if (k.type === 'text') {
+      return {
+        ...k,
+        maxWidth: Math.min(k.maxWidth ?? Infinity, inner),
+        anchor: self === 'center' ? 'middle' : k.anchor,
+      } as Element;
+    }
+    if (k.type === 'button' && !k.lines) {
+      const width = self === 'stretch' ? inner : Math.min(k.width, inner);
+      const role = k.role ?? 'subheading';
+      const st = typeStyle(role);
+      const room = width - (k.padding ?? 12) * 2 - (k.icon ? Math.min(k.height * 0.5, 16) + 7 : 0);
+      const lines = wrapLines(k.label, (s) => measureText(s, st.size, st.weight), room);
+      return lines.length > 1
+        ? ({ ...k, lines, height: Math.max(k.height, lines.length * lineLead(st.size) + 12) } as Element)
+        : k;
+    }
+    if (isContainer(k)) return { ...k, maxWidth: Math.min(k.maxWidth ?? Infinity, inner) } as Element;
+    return k;
+  });
+}
+
 function containerSize(el: Container): Size {
   const spec = el.layout!;
   const p = pad(spec);
-  const kids = el.children ?? [];
+  const kids = bounded(el);
   const gap = spec.gap ?? LAYOUT.gap;
   const sizes = kids.map(measureElement);
 
@@ -186,8 +224,9 @@ function containerSize(el: Container): Size {
 
   // Rounded: hug sizes come from summed text metrics, so without this a
   // width reads as 46.59699999999 in the inspector.
+  const width = hugW ? (horizontal ? along : across) + p.left + p.right : el.width;
   return {
-    width: round(hugW ? (horizontal ? along : across) + p.left + p.right : el.width),
+    width: round(el.maxWidth ? Math.min(width, el.maxWidth) : width),
     height: round(hugH ? (horizontal ? across : along) + p.top + p.bottom : el.height),
   };
 }
@@ -294,10 +333,10 @@ function layoutContainer(el: Container): Element {
    * contents stayed behind — silently, because the box is invisible.
    * Measuring does not need resolved children, so the order is free.
    */
-  const kids = el.children ?? [];
+  const kids = bounded(el);
   if (!kids.length) return { ...el, children: [] } as Element;
 
-  const size = containerSize({ ...el, children: kids });
+  const size = containerSize(el);
   const horizontal = spec.direction === 'horizontal';
   const gap = spec.gap ?? LAYOUT.gap;
 

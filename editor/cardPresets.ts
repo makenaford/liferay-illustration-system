@@ -55,13 +55,16 @@ function listRow(width: number, label: string): Element {
 }
 
 /**
- * A phone screen, at a phone's proportions — 180 × 390 is 390 × 844 scaled
- * to sit in an illustration — so every phone in the set is the same size.
- * Its layout stretches what it holds across it: inputs and buttons meet the
- * padding on both sides whatever the phone's width, rather than being sized
- * by hand and running past its edge.
+ * A phone screen, as the Financial Services illustration draws it: 162 wide,
+ * 16 in from each edge, 12 between rows, 16 corners, as tall as what it
+ * holds. The width is the standard one, and also its `maxWidth`: its layout
+ * stretches what it holds across it, so fields and buttons meet the padding
+ * on both sides, and longer copy — a translation — wraps inside it instead
+ * of widening it.
  */
-export const PHONE = { width: 180, height: 390, padding: 16, radius: 20 } as const;
+export const PHONE = { width: 162, padding: 16, gap: 12, radius: 16 } as const;
+
+const PHONE_INNER = PHONE.width - PHONE.padding * 2;
 
 function phone(children: Element[]): Element {
   return {
@@ -69,29 +72,33 @@ function phone(children: Element[]): Element {
     x: 0,
     y: 0,
     width: PHONE.width,
-    height: PHONE.height,
+    maxWidth: PHONE.width,
+    height: 0,
     surface: 'glass-default',
     radius: PHONE.radius,
-    layout: { direction: 'vertical', gap: 10, padding: [28, PHONE.padding], align: 'stretch' },
+    layout: { direction: 'vertical', gap: PHONE.gap, padding: PHONE.padding, align: 'stretch', hugHeight: true },
     children,
   } as Element;
 }
 
-const field = (placeholder: string, icon: string, height = 30): Element =>
-  ({ type: 'input', x: 0, y: 0, width: PHONE.width - PHONE.padding * 2, height, placeholder, icon, role: 'caption' }) as Element;
+const field = (placeholder: string, icon: string): Element =>
+  ({ type: 'input', x: 0, y: 0, width: PHONE_INNER, height: 30, placeholder, icon, role: 'caption' }) as Element;
+
+const phoneButton = (label: string, variant: 'solid' | 'outline'): Element =>
+  ({ type: 'button', x: 0, y: 0, width: PHONE_INNER, height: 32, label, variant, role: 'bodySmall' }) as Element;
 
 export const CARD_PRESETS: { label: string; title: string; make: () => Element }[] = [
   {
     label: 'Phone',
-    title: `A ${PHONE.width} × ${PHONE.height} phone screen: fields and buttons run edge to edge`,
+    title: `A ${PHONE.width}-wide phone screen: fields and buttons run edge to edge, longer copy wraps`,
     make: () =>
       phone([
-        { type: 'spotIcon', x: 0, y: 0, name: 'compliance', size: 46, alignSelf: 'center' } as Element,
-        { type: 'text', x: 0, y: 0, role: 'subheading', weight: 'semibold', content: 'Enterprise SSO Login', alignSelf: 'center' } as Element,
+        { type: 'spotIcon', x: 0, y: 0, name: 'compliance', size: 48, alignSelf: 'center' } as Element,
+        { type: 'text', x: 0, y: 0, role: 'heading', weight: 'semibold', content: 'Enterprise SSO Login', alignSelf: 'center' } as Element,
         field('Email', 'mc:mail'),
         field('Password', 'mc:lock'),
-        { type: 'button', x: 0, y: 0, width: PHONE.width - PHONE.padding * 2, height: 32, label: 'Sign in with Okta', variant: 'solid', role: 'bodySmall' } as Element,
-        field('MFA Required', 'mc:fingerprint', 26),
+        phoneButton('Sign in with Okta', 'solid'),
+        phoneButton('MFA Required', 'outline'),
       ]),
   },
   {

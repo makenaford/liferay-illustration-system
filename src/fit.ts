@@ -94,7 +94,9 @@ function grow(o: Element, t: Element): Element {
   const b = need(t);
   const e = t as Element & { x: number; width: number };
   if (!a || !b || typeof e.width !== 'number') return t;
-  const extra = Math.ceil(b.width - Math.max(a.width, e.width));
+  // Never past a `maxWidth`: there, what does not fit wraps instead.
+  const cap = (t as { maxWidth?: number }).maxWidth;
+  const extra = Math.min(Math.ceil(b.width - Math.max(a.width, e.width)), cap === undefined ? Infinity : Math.max(0, cap - e.width));
   if (extra <= 0) return t;
   return { ...e, x: round(b.centred ? e.x - extra / 2 : e.x), width: e.width + extra } as Element;
 }
@@ -119,7 +121,8 @@ function fitSizes(o: Element, t: Element, stretched = false): Element {
   if (stretched) {
     const need0 = need(t);
     const e = t as Element & { width?: number };
-    if (need0 && typeof e.width === 'number' && need0.width > e.width) return { ...e, width: Math.ceil(need0.width) } as Element;
+    const cap = (t as { maxWidth?: number }).maxWidth ?? Infinity;
+    if (need0 && typeof e.width === 'number' && need0.width > e.width) return { ...e, width: Math.min(Math.ceil(need0.width), Math.max(cap, e.width)) } as Element;
   }
   return grow(o, t);
 }

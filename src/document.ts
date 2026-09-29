@@ -21,7 +21,7 @@
 import type { TypeRole, TypeWeight } from './primitives/text.ts';
 import type { MeshName, SurfaceName } from './tokens.ts';
 import type { TableColumn } from './primitives/table.ts';
-import type { Lang, Translations } from './translate.ts';
+import type { Lang, Localized, Translations } from './translate.ts';
 import type { IconStyle } from './icons.ts';
 
 export type Tone = 'accent' | 'success' | 'info' | 'neutral' | 'muted' | 'subtle';
@@ -73,6 +73,8 @@ export interface TextEl extends LayoutChild {
   strikethrough?: boolean;
   /** Small caps: capitals, semibold, letter-spaced 6%. */
   smallCaps?: boolean;
+  /** Wrap onto more lines rather than run wider than this. */
+  maxWidth?: number;
 }
 
 /**
@@ -134,6 +136,12 @@ export interface CardEl extends LayoutChild {
   surface?: SurfaceName;
   radius?: number;
   /** Turns this card into a reflowing container. */
+  /**
+   * The widest it may be. Its text wraps, and its buttons' labels, rather
+   * than widening it — and a translation never grows it past this. A phone
+   * sets its own width; see editor/cardPresets.ts.
+   */
+  maxWidth?: number;
   layout?: LayoutSpec;
   /** Clip content: children are cut to this container's shape. */
   clip?: boolean;
@@ -168,6 +176,12 @@ export interface GroupEl extends LayoutChild {
    */
   hugWidth?: boolean;
   hugHeight?: boolean;
+  /**
+   * The widest it may be. Its text wraps, and its buttons' labels, rather
+   * than widening it — and a translation never grows it past this. A phone
+   * sets its own width; see editor/cardPresets.ts.
+   */
+  maxWidth?: number;
   layout?: LayoutSpec;
   /** Clip content: children are cut to this container's shape. */
   clip?: boolean;
@@ -185,6 +199,12 @@ export interface SubCardEl extends LayoutChild {
   /** Which surface from the token set to draw. Wins over `variant`. */
   surface?: SurfaceName;
   /** Turns this card into a reflowing container. */
+  /**
+   * The widest it may be. Its text wraps, and its buttons' labels, rather
+   * than widening it — and a translation never grows it past this. A phone
+   * sets its own width; see editor/cardPresets.ts.
+   */
+  maxWidth?: number;
   layout?: LayoutSpec;
   /** Clip content: children are cut to this container's shape. */
   clip?: boolean;
@@ -749,4 +769,9 @@ export interface Doc {
   translations?: Translations;
   /** Per language, the strings whose translation is a machine draft nobody has reviewed yet. */
   machineTranslated?: Partial<Record<Lang, string[]>>;
+  /**
+   * Per language, a version edited by hand and saved for everyone, shown and
+   * downloaded in place of the automatic translation. See src/translate.ts.
+   */
+  localized?: Partial<Record<Lang, Localized>>;
 }

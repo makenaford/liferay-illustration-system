@@ -616,6 +616,13 @@ const LIGHT_GLASS_BLUR = 17.5;
  * (20.3, 2.9) of the 146 x 73 rectangle, reaching 197 x 77 px.
  */
 const LIGHT_GLASS_RADIAL = { cx: 0.139, cy: 0.039, rx: 1.35, ry: 1.05 };
+/**
+ * The light glass set's hairline. Figma draws it `#0B5FFF` at 40%; drawn
+ * that way here it read as a heavy blue rule round every card — stronger
+ * than the file shows it, over a pale stage with no frost to soften it — so
+ * it is halved. One value for all three, so the set stays one material.
+ */
+const LIGHT_GLASS_LINE = { angle: 180, stops: [{ color: '#0B5FFF', opacity: 0.2 }, { color: '#0B5FFF', opacity: 0.2 }] };
 const glassBackground = {
   light: {
     fill: { angle: 171, stops: [{ color: '#FFFFFF', opacity: 0.3 }, { color: '#FFFFFF', opacity: 0.15 }] },
@@ -901,18 +908,22 @@ export const light: Tokens = {
     /*
      * THE LIGHT GLASS SET — the named rectangles of Figma 905:19528 (the
      * light Drive Conversions board), one per surface. All three share a
-     * `#0B5FFF` 40% hairline, a 17.5px backdrop blur and a 1px-down, 8px
-     * inset glow; they differ in fill and lift:
+     * `#0B5FFF` hairline (Figma's 40%, drawn at 20% — see LIGHT_GLASS_LINE),
+     * a 17.5px backdrop blur and a 1px-down, 8px inset glow; they differ in
+     * fill and lift:
      *
      *   default      barely tinted: a `#0B5FFF` radial, 2% at the top-left
      *                corner to 5%, and a BLUE inset glow at 10%. No shadow.
      *   elevated     the same fill, a WHITE inset glow at 10%, and the
      *                faintest contact shadow, black 3%, 1px right and down.
      *   highlighted  WHITE glass: the radial white 60% to 30%, the white
-     *                inset glow, and a `#0B5FFF` 20% contact glow.
+     *                inset glow, and a crisp `#0B5FFF` 60% contact shadow,
+     *                1px right and down with a 2px blur — the glass icons'
+     *                offset blue edge (905:19981).
      *
      * Figma's `1px 1px 2px 1px` shadows have a 1px spread, which an SVG drop
-     * shadow cannot; it is folded into the blur. Figma's radial is a tilted
+     * shadow cannot; elevated folds it into the blur, highlighted into the
+     * offset (1.5px), so its edge stays crisp. Figma's radial is a tilted
      * ellipse; this is its axis-aligned extent. The rectangles' 4px corners
      * are the card's radius, not the surface's, so they are not set here.
      *
@@ -923,21 +934,21 @@ export const light: Tokens = {
      */
     'glass-default': {
       fill: { angle: 0, radial: LIGHT_GLASS_RADIAL, stops: [{ color: '#0B5FFF', opacity: 0.02 }, { color: '#0B5FFF', opacity: 0.05 }] },
-      line: { angle: 180, stops: [{ color: '#0B5FFF', opacity: 0.4 }, { color: '#0B5FFF', opacity: 0.4 }] },
+      line: LIGHT_GLASS_LINE,
       inset: [{ dy: 1, blur: 8, color: '#0B5FFF', opacity: 0.1 }],
       blur: LIGHT_GLASS_BLUR,
     },
     'glass-elevated': {
       fill: { angle: 0, radial: LIGHT_GLASS_RADIAL, stops: [{ color: '#0B5FFF', opacity: 0.02 }, { color: '#0B5FFF', opacity: 0.05 }] },
-      line: { angle: 180, stops: [{ color: '#0B5FFF', opacity: 0.4 }, { color: '#0B5FFF', opacity: 0.4 }] },
+      line: LIGHT_GLASS_LINE,
       shadow: [{ dx: 1, dy: 1, blur: 3, color: '#000000', opacity: 0.03 }],
       inset: [{ dy: 1, blur: 8, color: '#FFFFFF', opacity: 0.1 }],
       blur: LIGHT_GLASS_BLUR,
     },
     'glass-highlighted': {
       fill: { angle: 0, radial: LIGHT_GLASS_RADIAL, stops: [{ color: '#FFFFFF', opacity: 0.6 }, { color: '#FFFFFF', opacity: 0.3 }] },
-      line: { angle: 180, stops: [{ color: '#0B5FFF', opacity: 0.4 }, { color: '#0B5FFF', opacity: 0.4 }] },
-      shadow: [{ dx: 1, dy: 1, blur: 5, color: '#0B5FFF', opacity: 0.2 }],
+      line: LIGHT_GLASS_LINE,
+      shadow: [{ dx: 1.5, dy: 1.5, blur: 2, color: '#0B5FFF', opacity: 0.6 }],
       inset: [{ dy: 1, blur: 8, color: '#FFFFFF', opacity: 0.1 }],
       blur: LIGHT_GLASS_BLUR,
     },

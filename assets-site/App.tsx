@@ -15,7 +15,6 @@ import { recipeFor } from './glassLinks.ts';
 import { GLASS_FOLDERS, GLASS_ICON_FOLDERS, GLASS_WAS } from '../src/glassIconFolders.ts';
 import { migrateDoc } from '../src/migrate.ts';
 import { folderTheme, themeFor, themesOf } from '../src/themes.ts';
-import { pickFigmaSvg } from '../editor/figmaImport.ts';
 import { CUSTOM_ICONS } from '../src/customIcons.generated.ts';
 import { customIconKey, customShape } from '../src/customIconShape.ts';
 import { setLibraryCustomIcons } from '../src/icons.ts';
@@ -379,19 +378,6 @@ export function App() {
     setUI({ view: 'editor', selected: null, openIn: canTranslate && lang !== 'en' ? lang : null });
     setOpen(null);
     setBuilding(true);
-  };
-  /** "From a Figma SVG…": rebuilt as an editable illustration and opened in the builder. */
-  const fromFigma = async () => {
-    try {
-      const got = await pickFigmaSvg();
-      if (!got) return;
-      got.doc.id = freshId(got.doc.id, lib.illustrations.map((i) => i.id));
-      if (here) await file(got.doc.id, here);
-      edit({ doc: got.doc, updatedAt: 0 });
-      setUI({ theme: got.theme, notice: `From Figma: ${got.notes.join(' · ')} — save to add it to the library` });
-    } catch (e) {
-      setToast(`Could not read that SVG — ${(e as Error).message}`);
-    }
   };
   const create = async (template: TemplateName = 'simple') => {
     const doc = TEMPLATES[template].make();
@@ -944,7 +930,7 @@ export function App() {
                 >
                   {busy ? 'Adding…' : UPLOAD_LABEL[tab]}
                 </button>
-                {tab === 'illustrations' && <NewMenu className="am-primary" onPick={(t) => void create(t)} onFigma={writable ? () => void fromFigma() : undefined} />}
+                {tab === 'illustrations' && <NewMenu className="am-primary" onPick={(t) => void create(t)} />}
                 {/* Beside Upload icons, where a new icon is wanted: the builder that makes one. */}
                 {tab === 'icons' && (
                   <button type="button" onClick={() => setGlassing({})}>

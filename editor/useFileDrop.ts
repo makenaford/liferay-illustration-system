@@ -5,6 +5,7 @@ import type { Element as DocElement } from '../src/document.ts';
 import { contentWidth, insertAt, slotForDrop } from './insertion.ts';
 import { resolveLayout } from '../src/autolayout.ts';
 import { snap } from './grid.ts';
+import { isComponentDrag, takeDrag } from './paletteDrag.ts';
 
 /**
  * DRAG AND DROP — files dropped on the canvas become elements.
@@ -25,6 +26,8 @@ const hasFiles = (e: DragEvent | React.DragEvent) =>
 
 export function useFileDrop(stageRef: React.RefObject<HTMLDivElement | null>, zoom: number, snapStep: number) {
   const [dropping, setDropping] = useState(false);
+  // A Library component over the canvas, rather than a file.
+  const [placing, setPlacing] = useState(false);
   const [note, setNote] = useState<string | null>(null);
   const noteTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
@@ -50,6 +53,12 @@ export function useFileDrop(stageRef: React.RefObject<HTMLDivElement | null>, zo
   }, []);
 
   const onDragOver = (e: React.DragEvent) => {
+    if (isComponentDrag(e)) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'copy';
+      if (!placing) setPlacing(true);
+      return;
+    }
     if (!hasFiles(e)) return;
     e.preventDefault();
     e.dataTransfer.dropEffect = 'copy';
@@ -58,10 +67,29 @@ export function useFileDrop(stageRef: React.RefObject<HTMLDivElement | null>, zo
 
   const onDragLeave = (e: React.DragEvent) => {
     // Leaving for a child of the viewport is not leaving.
-    if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setDropping(false);
+    if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
+      setDropping(false);
+      setPlacing(false);
+    }
   };
 
   const onDrop = async (e: React.DragEvent) => {
+    // A component dragged from the Library: into the container it was dropped on.
+    if (isComponentDrag(e)) {
+      e.preventDefault();
+      setPlacing(false);
+      const add = takeDrag();
+      const rect = stageRef.current?.getBoundingClientRect();
+      if (!add || !rect) return;
+      const px = (e.clientX - rect.left) / zoom;
+      const py = (e.clientY - rect.top) / zoom;
+      const hit = (document.elementFromPoint(e.clientX, e.clientY) as Element | null)
+        ?.closest('[data-path]')
+        ?.getAttribute('data-path') ?? null;
+      const doc = getState().doc;
+      add(slotForDrop(doc, resolveLayout(doc), hit, { x: px, y: py }), { x: snap(px, snapStep), y: snap(py, snapStep) });
+      return;
+    }
     if (!hasFiles(e)) return;
     e.preventDefault();
     setDropping(false);
@@ -149,5 +177,5 @@ export function useFileDrop(stageRef: React.RefObject<HTMLDivElement | null>, zo
     flash(notes.join(' · '));
   };
 
-  return { dropping, note, handlers: { onDragOver, onDragLeave, onDrop: (e: React.DragEvent) => void onDrop(e) } };
+  return { dropping, placing, note, handlers: { onDragOver, onDragLeave, onDrop: (e: React.DragEvent) => void onDrop(e) } };
 }

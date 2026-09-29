@@ -1189,6 +1189,9 @@ export function Canvas() {
       {fileDrop.dropping && (
         <div className="drop-hint">Drop SVGs or images to place them here</div>
       )}
+      {fileDrop.placing && (
+        <div className="drop-hint">Drop onto a slot or card to put it there</div>
+      )}
       {fileDrop.note && <div className="drop-note">{fileDrop.note}</div>}
     </div>
   );

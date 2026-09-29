@@ -147,6 +147,43 @@ function applyOverrides(ctx: Ctx, el: { textColor?: string; accentColor?: string
   };
 }
 
+/**
+ * A DROP ZONE — what an empty card, slot or group shows in the builder: a
+ * dashed box asking for a component. Drawn only with editor paths
+ * (`RenderOptions.annotate`), so no export, PNG or library preview has it.
+ */
+function dropZone(ctx: Ctx, box: { x: number; y: number; width: number; height: number }, radius: number): VNode {
+  const inset = Math.min(4, box.width / 6, box.height / 6);
+  const w = Math.max(box.width - inset * 2, 0);
+  const hgt = Math.max(box.height - inset * 2, 0);
+  const label = w >= 64 && hgt >= 18;
+  return h('g', { 'data-el': 'dropzone' }, [
+    h('rect', {
+      x: box.x + inset,
+      y: box.y + inset,
+      width: w,
+      height: hgt,
+      rx: Math.max(radius - inset, 2),
+      fill: ctx.tokens.accent.base,
+      'fill-opacity': 0.05,
+      stroke: ctx.tokens.accent.base,
+      'stroke-opacity': 0.45,
+      'stroke-dasharray': '3 3',
+    }),
+    label
+      ? text('text', {
+          x: box.x + box.width / 2,
+          y: box.y + box.height / 2 + 2.5,
+          'text-anchor': 'middle',
+          'font-family': ctx.tokens.font.family,
+          'font-size': 7,
+          'font-weight': 600,
+          fill: ctx.tokens.text.muted,
+        }, '+ Drop a component')
+      : null,
+  ]);
+}
+
 function renderElement(ctx: Ctx, el: Element, path?: string): VNode | null {
   const restore = applyOverrides(ctx, el as { textColor?: string; accentColor?: string });
   let node: VNode | null;
@@ -180,6 +217,8 @@ function renderElementInner(ctx: Ctx, el: Element, path?: string): VNode | null 
       undo = applyOverrides(ctx, c as { textColor?: string; accentColor?: string });
     }
     try {
+      // An empty container, in the builder: somewhere to drop a component.
+      if (path !== undefined && !c.children?.length) return [dropZone(ctx, c, radius)];
       return c.clip ? [clipTo(ctx, { ...c, radius }, kid(c.children))] : kid(c.children);
     } finally {
       undo();

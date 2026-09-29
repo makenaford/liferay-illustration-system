@@ -567,10 +567,15 @@ export const DEFAULTS: Record<Element['type'], () => Element> = {
   text: () => ({ type: 'text', x: 40, y: 40, role: 'heading', content: 'New text' }),
   // Cards arrive as columns: whatever is added stacks at the card padding the
   // audit requires, instead of every addition landing on the same spot.
+  // A blank card: two empty areas, drop zones in the builder, sharing its height.
   card: () => ({
-    type: 'card', x: 40, y: 40, width: 180, height: 100, surface: 'glass-default',
-    layout: { direction: 'vertical', gap: 8, padding: LAYOUT.cardPadding, align: 'start' },
-    children: [],
+    type: 'card', x: 40, y: 40, width: 180, height: 120, surface: 'glass-default',
+    layout: { direction: 'vertical', gap: 8, padding: LAYOUT.cardPadding, align: 'stretch' },
+    children: [0, 1].map(() => ({
+      type: 'group', x: 0, y: 0, width: 10, height: 10, grow: 1,
+      layout: { direction: 'vertical', gap: 4, padding: 0, align: 'stretch' },
+      children: [],
+    })),
   }),
   group: () => ({
     type: 'group', x: 40, y: 40, width: 160, height: 80,

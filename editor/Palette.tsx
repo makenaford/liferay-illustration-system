@@ -107,7 +107,7 @@ export function Palette() {
         </div>
       </div>
 
-      {PALETTE.map(({ group, types }) => (
+      {PALETTE.map(({ group, types, extras }) => (
         <div key={group} className="palette-group">
           <div className="palette-group-title">{group}</div>
           <div className="palette-items">
@@ -133,6 +133,11 @@ export function Palette() {
                   {SCHEMA[t].label}
                 </button>
               )
+            ))}
+            {extras?.map((x) => (
+              <button key={x.label} type="button" title={x.title} onClick={() => add(x.make)}>
+                {x.label}
+              </button>
             ))}
           </div>
         </div>

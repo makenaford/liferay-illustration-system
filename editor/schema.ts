@@ -658,11 +658,27 @@ export function titled(el: Element): Element {
 }
 
 /** Palette grouping, so the "add" menu reads like a design system. */
-export const PALETTE: { group: string; types: Element['type'][] }[] = [
+export const PALETTE: {
+  group: string;
+  types: Element['type'][];
+  /** Named variants that deserve a button of their own, after the group's types. */
+  extras?: { label: string; title: string; make: () => Element }[];
+}[] = [
   { group: 'Surfaces', types: ['card', 'subCard', 'group'] },
   { group: 'Type', types: ['text', 'stat'] },
   { group: 'Controls', types: ['button', 'pill', 'badge', 'toggle', 'radio', 'input', 'field', 'chat', 'chrome'] },
   { group: 'Data', types: ['table', 'lineChart', 'barChart', 'pieChart', 'progress', 'map', 'skeleton'] },
-  { group: 'Icons & shapes', types: ['spotIcon', 'icon', 'iconGrid', 'avatar', 'line', 'connector', 'arrow', 'cursor'] },
+  {
+    group: 'Icons & shapes',
+    types: ['spotIcon', 'icon', 'iconGrid', 'avatar', 'line', 'connector', 'arrow', 'cursor'],
+    // The cursor's drag hand: the same glass over a blue back, as its own button.
+    extras: [
+      {
+        label: 'Hand drag',
+        title: 'An open hand for dragging, drawn as the cursor is — frosted glass in front, the blue gradient behind',
+        make: () => ({ type: 'cursor', x: 40, y: 40, size: 86, variant: 'hand' }) as Element,
+      },
+    ],
+  },
   { group: 'Imported', types: ['image', 'svg'] },
 ];

@@ -29,6 +29,9 @@ export const PIE_MAX = 4;
  */
 const STEP = 0.16;
 
+/** The gap between segments, as a share of the radius. */
+const GAP = 0.06;
+
 /** Where a point on the circle is, clockwise from the top. */
 const at = (cx: number, cy: number, r: number, deg: number): [number, number] => {
   const a = ((deg - 90) * Math.PI) / 180;
@@ -56,7 +59,7 @@ function arc(cx: number, cy: number, r0: number, r1: number, a0: number, a1: num
 /**
  * PIE CHART — shares of a whole, one way: a clean circle in the brand
  * gradient, whole or as a single ring, of up to four segments — each a step
- * lighter than the last, a fine line between them — with one, the share
+ * lighter than the last, a clear gap between them — with one, the share
  * that matters, drawn as a pane of glass. No gaps, no stripes, no colours
  * of their own: the glass is where the eye is sent.
  */
@@ -110,12 +113,19 @@ export function PieChart(ctx: Ctx, props: PieChartProps): VNode {
     );
   });
 
-  // A fine line at every boundary, from the hole (or the centre) to the rim.
-  for (const e of edges) {
-    const [x0, y0] = at(cx, cy, inner, e);
-    const [x1, y1] = at(cx, cy, r, e);
-    nodes.push(h('line', { x1: f(x0), y1: f(y0), x2: f(x1), y2: f(y1), stroke: tk.stage.bg, 'stroke-width': 1.25, 'stroke-linecap': 'butt' }));
-  }
-
-  return h('g', { 'data-el': 'pie-chart' }, nodes);
+  // A gap at every boundary — cut out, so what is behind shows through — of
+  // one width from the centre to the rim, so the circle stays a circle.
+  if (!edges.length) return h('g', { 'data-el': 'pie-chart' }, nodes);
+  const maskId = ctx.uid('piegaps');
+  const gap = Math.max(2, r * GAP);
+  ctx.defs.push(
+    h('mask', { id: maskId, maskUnits: 'userSpaceOnUse', x: f(cx - r - 2), y: f(cy - r - 2), width: f(r * 2 + 4), height: f(r * 2 + 4) }, [
+      h('rect', { x: f(cx - r - 2), y: f(cy - r - 2), width: f(r * 2 + 4), height: f(r * 2 + 4), fill: '#FFFFFF' }),
+      ...edges.map((e) => {
+        const [x1, y1] = at(cx, cy, r + 2, e);
+        return h('line', { x1: f(cx), y1: f(cy), x2: f(x1), y2: f(y1), stroke: '#000000', 'stroke-width': f(gap) });
+      }),
+    ]),
+  );
+  return h('g', { 'data-el': 'pie-chart', mask: `url(#${maskId})` }, nodes);
 }

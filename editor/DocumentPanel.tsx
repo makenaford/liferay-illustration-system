@@ -1,6 +1,7 @@
 import type { Doc, PanelSpec } from '../src/document.ts';
 import { commit, getState, useEditor } from './state.ts';
-import { MESH_NAMES } from '../src/tokens.ts';
+import { MESH_NAMES, type SurfaceName } from '../src/tokens.ts';
+import { SURFACES } from './schema.ts';
 import { TokenPicker } from './TokenPicker.tsx';
 
 /**
@@ -175,12 +176,19 @@ export function DocumentPanel() {
                 </label>
               ))}
             </div>
+            {/* The surface set, as cards take it. Sheen is left in the schema, but
+                has not changed a panel since surfaces became token data. */}
             <select
-              value={p.sheen ?? 'radial'}
-              onChange={(e) => setPanel(i, 'sheen', e.target.value)}
+              aria-label={`Panel ${i + 1} surface`}
+              title="Surface"
+              value={p.surface ?? 'glass-default'}
+              onChange={(e) => setPanel(i, 'surface', e.target.value as SurfaceName)}
             >
-              <option value="radial">radial sheen</option>
-              <option value="linear">linear sheen</option>
+              {SURFACES.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
             </select>
             <label className="check" title="Cut everything centred inside this panel to its shape">
               <input

@@ -76,6 +76,16 @@ function gradient(
   return `url(#${id})`;
 }
 
+/** A rounded rect as path data, for cutting holes — `rect` cannot be one. */
+function roundedRectPath(x: number, y: number, w: number, hgt: number, r: number) {
+  const rr = Math.min(r, w / 2, hgt / 2);
+  return (
+    `M${x + rr} ${y}h${w - rr * 2}a${rr} ${rr} 0 0 1 ${rr} ${rr}v${hgt - rr * 2}` +
+    `a${rr} ${rr} 0 0 1 ${-rr} ${rr}h${-(w - rr * 2)}a${rr} ${rr} 0 0 1 ${-rr} ${-rr}` +
+    `v${-(hgt - rr * 2)}a${rr} ${rr} 0 0 1 ${rr} ${-rr}Z`
+  );
+}
+
 function castShadow(
   ctx: Ctx,
   layers: ShadowLayer[],
@@ -124,7 +134,8 @@ function castShadow(
  * `GlassPanel` and `SubCard` each used to carry their own copy of the glass
  * recipe, which meant eight surfaces would have been eight branches across two
  * files. Here the recipe is data (`SurfaceSpec` in tokens.ts) and this only
- * knows how to paint one: fill, frosted pane, lit edge, hairline, shadow.
+ * knows how to paint one: fill, frosted pane, inset glow, lit edge, hairline,
+ * shadow.
  * Adding a surface is a token entry.
  *
  * ORDER, and why: CSS clips an outer `box-shadow` to outside the border box,
@@ -178,6 +189,39 @@ export function Surface(ctx: Ctx, props: SurfaceProps): VNode {
   if (spec.fill) {
     layers.push(
       h('rect', { x, y, width, height, rx: radius, fill: gradient(ctx, ctx.uid('sfill'), spec.fill, box) }),
+    );
+  }
+
+  if (spec.inset?.length) {
+    // CSS `inset` box-shadow: everything OUTSIDE the card, shifted by the
+    // offset and blurred, seen through the card's own shape — so the light
+    // falls in from the edge the offset points away from.
+    const clipId = ctx.uid('sclip');
+    ctx.defs.push(h('clipPath', { id: clipId }, [shape()]));
+    layers.push(
+      h(
+        'g',
+        { 'clip-path': `url(#${clipId})`, 'data-el': 'inset' },
+        spec.inset.map((l) => {
+          const pad = l.blur * 2 + Math.max(Math.abs(l.dx ?? 0), Math.abs(l.dy)) + 4;
+          const fid = ctx.uid('sinset');
+          ctx.defs.push(
+            h(
+              'filter',
+              { id: fid, x: x - pad, y: y - pad, width: width + pad * 2, height: height + pad * 2, filterUnits: 'userSpaceOnUse' },
+              [h('feGaussianBlur', { stdDeviation: l.blur / 2 })],
+            ),
+          );
+          const hole = roundedRectPath(x + (l.dx ?? 0), y + l.dy, width, height, radius);
+          return h('path', {
+            d: `M${x - pad} ${y - pad}h${width + pad * 2}v${height + pad * 2}h${-(width + pad * 2)}Z${hole}`,
+            'fill-rule': 'evenodd',
+            fill: l.color,
+            'fill-opacity': l.opacity,
+            filter: `url(#${fid})`,
+          });
+        }),
+      ),
     );
   }
 

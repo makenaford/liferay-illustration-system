@@ -238,6 +238,11 @@ export interface SurfaceSpec {
   shadow?: ShadowLayer[];
   /** `inset 0 1px 0` — how a raised surface catches light on a dark canvas. */
   litEdge?: { color: string; opacity: number };
+  /**
+   * Inset shadows, CSS `box-shadow: inset` — light falling inside the card
+   * from its top edge, softer and deeper than `litEdge`. Outermost first.
+   */
+  inset?: ShadowLayer[];
   /** Backdrop blur in CSS px. 0 or omitted means the surface is not glass. */
   blur?: number;
   /**
@@ -254,6 +259,7 @@ export type SurfaceName =
   | 'glass-default'
   | 'glass-elevated'
   | 'glass-highlighted'
+  | 'glass-background'
   | 'gradient'
   | 'solid'
   | 'outline'
@@ -597,6 +603,44 @@ const HIGHLIGHTED = {
 /** `Glass Step 02` — the same in both themes. */
 const STEP_02 = { color: '#8C96A9', opacity: 0.03 };
 
+/**
+ * GLASS BACKGROUND — the large pane a composition sits on, from the Marketing
+ * UI Assets Repo (Figma 905:19573), the same material as the glass icons:
+ *
+ *   - fill `linear-gradient` from white to `#6FA0FF` at 20%, the layer at
+ *     50% — white 50% to blue 10% as drawn — running from the top centre
+ *     past the bottom-right corner, which is 153° across the box
+ *   - a solid white 1px stroke, a 1.5px white inner highlight, and a soft
+ *     inset glow of white 40%, 3px down with a 5px blur
+ *   - a `#0058FF` 20% drop shadow, 1.3px right with an 8px blur
+ *   - a 4px Figma background blur — 2px in CSS: glass you can see through,
+ *     not frost
+ *
+ * Light is transcribed as drawn. Dark has no Figma version: it keeps the
+ * geometry, gradient direction and light blue glow, and takes the white down
+ * to the level dark's own glass uses, so the pane reads as lit glass on a
+ * dark stage rather than a grey slab.
+ */
+const GLASS_BACKGROUND_BLUR = 2;
+const glassBackground = {
+  light: {
+    fill: { angle: 153, stops: [{ color: '#FFFFFF', opacity: 0.5 }, { color: '#6FA0FF', opacity: 0.1 }] },
+    line: { angle: 180, stops: [{ color: '#FFFFFF', opacity: 1 }, { color: '#FFFFFF', opacity: 1 }] },
+    shadow: [{ dx: 1.3, dy: 0, blur: 8, color: '#0058FF', opacity: 0.2 }],
+    litEdge: { color: '#FFFFFF', opacity: 1 },
+    inset: [{ dy: 3, blur: 5, color: '#FFFFFF', opacity: 0.4 }],
+    blur: GLASS_BACKGROUND_BLUR,
+  },
+  dark: {
+    fill: { angle: 153, stops: [{ color: '#FFFFFF', opacity: 0.14 }, { color: '#6FA0FF', opacity: 0.05 }] },
+    line: { angle: 180, stops: [{ color: '#FFFFFF', opacity: 0.45 }, { color: '#FFFFFF', opacity: 0.2 }] },
+    shadow: [{ dx: 1.3, dy: 0, blur: 8, color: '#0058FF', opacity: 0.35 }],
+    litEdge: { color: '#FFFFFF', opacity: 0.5 },
+    inset: [{ dy: 3, blur: 5, color: '#FFFFFF', opacity: 0.1 }],
+    blur: GLASS_BACKGROUND_BLUR,
+  },
+} satisfies Record<'light' | 'dark', SurfaceSpec>;
+
 export const dark: Tokens = {
   name: 'dark',
   /**
@@ -643,6 +687,8 @@ export const dark: Tokens = {
     },
     /** Highlighted: the one card that matters more, and glass over a screenshot — see HIGHLIGHTED. */
     'glass-highlighted': HIGHLIGHTED.dark,
+    /** Glass background: the large pane a composition sits on — see GLASS BACKGROUND. */
+    'glass-background': glassBackground.dark,
     /**
      * `Blue Gradient` — sampled from the Figma style, not invented.
      *
@@ -883,6 +929,8 @@ export const light: Tokens = {
     },
     /** Highlighted: the one card that matters more, and glass over a screenshot — see HIGHLIGHTED. */
     'glass-highlighted': HIGHLIGHTED.light,
+    /** Glass background: the large pane a composition sits on — see GLASS BACKGROUND. */
+    'glass-background': glassBackground.light,
     /**
      * The same `Blue Gradient`, on the light canvas.
      *

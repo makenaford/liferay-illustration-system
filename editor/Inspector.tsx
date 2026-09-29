@@ -1,6 +1,7 @@
 import type { BarChartEl, Element, LineChartEl, TableEl } from '../src/document.ts';
 import { TableEditor } from './TableData.tsx';
 import { GridEditor } from './GridEditor.tsx';
+import { CropField } from './CropField.tsx';
 import {
   commit,
   elementAt,
@@ -627,11 +628,12 @@ function FieldRow({
     field.kind === 'iconList' ||
     field.kind === 'table' ||
     field.kind === 'grid' ||
+    field.kind === 'crop' ||
     field.kind === 'list';
 
   // A field holding several buttons is not a <label>: a click on its blank
   // space would press the first of them.
-  const Wrap = field.kind === 'iconSlots' || field.kind === 'photo' || field.kind === 'table' || field.kind === 'grid' ? 'div' : 'label';
+  const Wrap = field.kind === 'iconSlots' || field.kind === 'photo' || field.kind === 'table' || field.kind === 'grid' || field.kind === 'crop' ? 'div' : 'label';
   return (
     <Wrap className={`field${wide ? ' wide' : ''}`}>
       <span className="field-label">{field.label}</span>
@@ -843,6 +845,9 @@ function Control({
 
     case 'table':
       return <TableEditor el={el as TableEl} onPatch={onPatch} />;
+
+    case 'crop':
+      return <CropField el={el as Extract<Element, { type: 'image' }>} onPatch={onPatch} />;
 
     case 'grid':
       return <GridEditor el={el as Extract<Element, { type: 'card' | 'subCard' | 'group' }>} onReplace={(next) => onPatch({ grid: (next as { grid?: number[] }).grid, children: (next as { children?: Element[] }).children })} />;

@@ -129,7 +129,8 @@ export async function readAsset(
   const kb = Math.round(bytes / 1024);
   return {
     type: 'image',
-    patch: { href, alt: file.name },
+    // Its own size, to place it by hand in its frame; a new picture starts centred.
+    patch: { href, alt: file.name, natural: { width: dims.w, height: dims.h }, crop: undefined },
     size: { width: Math.round(dims.w * scale), height: Math.round(dims.h * scale) },
     note:
       bytes > RASTER_WARN_BYTES
@@ -144,4 +145,14 @@ export function assetElement(asset: AssetPatch, at: { x: number; y: number }): E
   return asset.type === 'svg'
     ? ({ type: 'svg', x: at.x, y: at.y, ...asset.size, ...asset.patch } as Element)
     : ({ type: 'image', x: at.x, y: at.y, ...asset.size, fit: 'cover', ...asset.patch } as Element);
+}
+
+/** A picture's own size, read by loading it — for an image uploaded before sizes were recorded. */
+export function naturalSize(href: string): Promise<{ width: number; height: number } | null> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => resolve(img.naturalWidth && img.naturalHeight ? { width: img.naturalWidth, height: img.naturalHeight } : null);
+    img.onerror = () => resolve(null);
+    img.src = href;
+  });
 }

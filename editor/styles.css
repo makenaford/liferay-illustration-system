@@ -1254,3 +1254,9 @@ button.mini.on { background: var(--accent); border-color: var(--accent); color: 
 .lang-banner { border-color: var(--accent-soft); }
 .grid-data .grid-row { display: flex; align-items: center; gap: 6px; }
 .grid-row-label { color: var(--ink-dim); min-width: 44px; }
+
+/* Repositioning a picture in its frame: the whole picture, dashed. */
+.crop-guide rect { fill: none; stroke: var(--accent-soft); pointer-events: none; }
+.crop-guide text { fill: #fff; paint-order: stroke; stroke: rgba(0, 0, 0, 0.6); stroke-width: 3px; pointer-events: none; }
+.crop-field .crop-row { display: grid; grid-template-columns: 48px 1fr 40px; align-items: center; gap: 6px; }
+.crop-value { color: var(--ink-dim); font-size: 11px; text-align: right; }

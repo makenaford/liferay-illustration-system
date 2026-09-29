@@ -1340,6 +1340,11 @@ function IllustrationDetail({
 
   const svgFor = (t: Theme) =>
     table && lang !== 'en' ? renderTranslated(row.doc, lang, table, t) : Promise.resolve(renderDocument(row.doc, t));
+  // For pasting into Figma — see `RenderOptions.figma`. Downloads stay the browser drawing.
+  const figmaSvg = (t: Theme) =>
+    table && lang !== 'en'
+      ? renderTranslated(row.doc, lang, table, t, true)
+      : Promise.resolve(renderDocument(row.doc, t, { figma: true }));
   const svg = async (t: Theme) => {
     try {
       await offer(`${stem}.${t}.svg`, await svgFor(t), 'image/svg+xml', onToast);
@@ -1437,15 +1442,16 @@ function IllustrationDetail({
             </div>
             <div className="am-dl-row">
               <button
+                title="Editable vectors, glass as native background blur and shadows — for pasting onto a Figma canvas"
                 type="button"
                 disabled={busy}
                 onClick={() =>
-                  void svgFor(theme).then(copyText).then((ok) =>
-                    onToast(ok ? `Copied the ${theme} SVG — paste into Figma.` : 'Could not reach the clipboard.'),
+                  void figmaSvg(theme).then(copyText).then((ok) =>
+                    onToast(ok ? `Copied the ${theme} illustration for Figma — paste it onto the canvas.` : 'Could not reach the clipboard.'),
                   )
                 }
               >
-                Copy {theme} SVG
+                Copy {theme} for Figma
               </button>
               <button
                 type="button"

@@ -51,10 +51,12 @@ export async function renderTranslated(
   lang: Lang,
   table: Record<string, string>,
   theme: ThemeName,
+  /** For Figma's import — see `RenderOptions.figma`. */
+  figma = false,
 ): Promise<string> {
   // Its edited version in `lang`, where it has one.
   const translated = localizedDoc(doc, lang, table);
-  const options: RenderOptions = {};
+  const options: RenderOptions = { figma };
 
   // From what the copy draws, not the whole table: a stale entry adds nothing.
   const chars = [...new Set(needsFallback(collectStrings(translated).join('')))].sort().join('');

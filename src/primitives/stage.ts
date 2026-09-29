@@ -66,6 +66,9 @@ export function Stage(ctx: Ctx, props: StageProps): VNode {
    * userSpaceOnUse radial gradient whose unit circle is scaled to (rx, ry) —
    * which is how CSS sizes an elliptical radial gradient too.
    */
+  // The bleed below only feeds `backdropPane`'s blur. Figma blurs for itself,
+  // and a stage wider than the canvas imports as oversized layers.
+  const bleed = ctx.figma ? 0 : 140;
   const meshLayers = mesh.map((b) => {
     const id = ctx.uid('mesh');
     ctx.defs.push(
@@ -90,10 +93,10 @@ export function Stage(ctx: Ctx, props: StageProps): VNode {
     // Bled like the base fill, so `backdropPane`'s blur has real pixels to
     // sample at the canvas edges — which is exactly where a mesh is strongest.
     return h('rect', {
-      x: -140,
-      y: -140,
-      width: width + 280,
-      height: height + 280,
+      x: -bleed,
+      y: -bleed,
+      width: width + bleed * 2,
+      height: height + bleed * 2,
       fill: `url(#${id})`,
     });
   });
@@ -137,7 +140,7 @@ export function Stage(ctx: Ctx, props: StageProps): VNode {
   // The base fills beyond the viewBox. Invisible when drawn (the viewport
   // clips it) but it gives `backdropPane`'s blur real pixels to sample near
   // the canvas edges, instead of transparent black that darkens card borders.
-  const bleed = 140;
+  // (`bleed`, above: none for Figma.)
 
   return h('g', { 'data-el': 'stage' }, [
     h('rect', {

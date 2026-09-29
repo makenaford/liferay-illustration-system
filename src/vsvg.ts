@@ -79,6 +79,12 @@ export interface Ctx {
    * is transparent, so nothing opaque may be hidden under it — see `Surface`.
    */
   transparent?: boolean;
+  /**
+   * Drawing for Figma's SVG import rather than for a browser — see
+   * `RenderOptions.figma`. Glass is written the way Figma's own exporter
+   * writes it, so it comes back as native effects instead of masks.
+   */
+  figma?: boolean;
 }
 
 export function createCtx(

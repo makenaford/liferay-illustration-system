@@ -157,6 +157,8 @@ export function Surface(ctx: Ctx, props: SurfaceProps): VNode {
   const box = { x, y, width, height };
   const shape = () => h('rect', { x, y, width, height, rx: radius });
 
+  if (ctx.figma) return figmaSurface(ctx, spec, box, radius, backdrop, props.surface, children);
+
   const layers: (VNode | null)[] = [];
 
   if (spec.shadow?.length) {
@@ -255,6 +257,114 @@ export function Surface(ctx: Ctx, props: SurfaceProps): VNode {
 
   return h('g', { 'data-el': 'surface', 'data-surface': typeof props.surface === 'string' ? props.surface : 'custom' }, [
     ...layers,
+    ...(children.filter(Boolean) as VNode[]),
+  ]);
+}
+
+/** A `#RRGGBB` colour as the 0–1 channels an `feColorMatrix` takes. */
+function channels(hex: string): [number, number, number] {
+  const n = parseInt(hex.replace('#', '').slice(0, 6), 16);
+  const c = (v: number) => Math.round((v / 255) * 1e6) / 1e6;
+  return [c((n >> 16) & 255), c((n >> 8) & 255), c(n & 255)];
+}
+
+/**
+ * A SURFACE FOR FIGMA — the same card, written the way Figma's own SVG
+ * exporter writes one, which is the form its SVG import turns back into
+ * native effects (see `RenderOptions.figma`):
+ *
+ *   - the blur as `data-figma-bg-blur-radius` on the group — a
+ *     BACKGROUND_BLUR (Figma's exporter also writes a `foreignObject` for
+ *     browsers; its import does not need it)
+ *   - the shadows as one filter on that group, in Figma's own chain: each
+ *     drop shadow blended over `BackgroundImageFix`, then the shape, then each
+ *     inset — a DROP_SHADOW or INNER_SHADOW per layer. `litEdge` is an inset
+ *     1px down with no blur, which is what it draws.
+ *
+ * The fill and hairline go inside that group; the card's contents after it,
+ * so the effects apply to the card, not to everything on it. Figma's blur
+ * radius is twice the CSS one the tokens hold.
+ */
+function figmaSurface(
+  ctx: Ctx,
+  spec: SurfaceSpec,
+  box: { x: number; y: number; width: number; height: number },
+  radius: number,
+  backdrop: boolean,
+  name: SurfaceProps['surface'],
+  children: (VNode | null | undefined)[],
+): VNode {
+  const { x, y, width, height } = box;
+  const drops = spec.shadow ?? [];
+  const insets: ShadowLayer[] = [
+    ...(spec.litEdge && spec.litEdge.opacity > 0 ? [{ dy: 1, blur: 0, color: spec.litEdge.color, opacity: spec.litEdge.opacity }] : []),
+    ...(spec.inset ?? []),
+  ];
+  const blur = backdrop && spec.blur && !spec.recessed ? spec.blur : 0;
+  const glass: VNode[] = [];
+  if (spec.fill) glass.push(h('rect', { x, y, width, height, rx: radius, fill: gradient(ctx, ctx.uid('sfill'), spec.fill, box) }));
+  if (spec.line) {
+    const w = spec.line.width ?? 1;
+    glass.push(
+      h('rect', {
+        x: x + w / 2,
+        y: y + w / 2,
+        width: width - w,
+        height: height - w,
+        rx: Math.max(radius - w / 2, 0),
+        stroke: gradient(ctx, ctx.uid('sline'), spec.line, box),
+        'stroke-width': w === 1 ? undefined : w,
+        fill: 'none',
+      }),
+    );
+  }
+
+  const attrs: Record<string, string | number> = { 'data-el': 'glass' };
+  if (drops.length || insets.length) {
+    const pad = Math.max(0, ...[...drops, ...insets].map((l) => l.blur + Math.max(Math.abs(l.dx ?? 0), Math.abs(l.dy)))) * 2 + 4;
+    const fid = ctx.uid('fx');
+    const alpha = () =>
+      h('feColorMatrix', { in: 'SourceAlpha', type: 'matrix', values: '0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0', result: 'hardAlpha' });
+    const tint = (l: ShadowLayer) => {
+      const [r, g, b] = channels(l.color);
+      return h('feColorMatrix', { type: 'matrix', values: `0 0 0 0 ${r} 0 0 0 0 ${g} 0 0 0 0 ${b} 0 0 0 ${l.opacity} 0` });
+    };
+    const move = (l: ShadowLayer) => [
+      h('feOffset', { dx: l.dx || undefined, dy: l.dy || undefined }),
+      l.blur > 0 ? h('feGaussianBlur', { stdDeviation: l.blur / 2 }) : null,
+    ];
+    const prims: (VNode | null)[] = [h('feFlood', { 'flood-opacity': 0, result: 'BackgroundImageFix' })];
+    let prev = 'BackgroundImageFix';
+    drops.forEach((l, i) => {
+      const result = `effect${i + 1}_dropShadow`;
+      prims.push(alpha(), ...move(l), h('feComposite', { in2: 'hardAlpha', operator: 'out' }), tint(l), h('feBlend', { mode: 'normal', in2: prev, result }));
+      prev = result;
+    });
+    prims.push(h('feBlend', { mode: 'normal', in: 'SourceGraphic', in2: prev, result: 'shape' }));
+    prev = 'shape';
+    insets.forEach((l, i) => {
+      const result = `effect${drops.length + i + 1}_innerShadow`;
+      prims.push(alpha(), ...move(l), h('feComposite', { in2: 'hardAlpha', operator: 'arithmetic', k2: -1, k3: 1 }), tint(l), h('feBlend', { mode: 'normal', in2: prev, result }));
+      prev = result;
+    });
+    ctx.defs.push(
+      h(
+        'filter',
+        { id: fid, x: x - pad, y: y - pad, width: width + pad * 2, height: height + pad * 2, filterUnits: 'userSpaceOnUse', 'color-interpolation-filters': 'sRGB' },
+        prims,
+      ),
+    );
+    attrs.filter = `url(#${fid})`;
+  }
+
+  const out: VNode[] = [];
+  // Figma's import reads the blur from this marker alone; the foreignObject
+  // its exporter writes beside it is only for a browser, which this is not for.
+  if (blur) attrs['data-figma-bg-blur-radius'] = blur * 2;
+  out.push(h('g', attrs, glass));
+
+  return h('g', { 'data-el': 'surface', 'data-surface': typeof name === 'string' ? name : 'custom' }, [
+    ...out,
     ...(children.filter(Boolean) as VNode[]),
   ]);
 }

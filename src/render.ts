@@ -32,7 +32,7 @@ import {
 import { iconArt } from './icons.ts';
 import { GLASS_ICONS } from './glassIcons.generated.ts';
 import { GRAPHICS } from './graphics.generated.ts';
-import { BACKDROP_SLOT } from './figmaGlass.ts';
+import { BACKDROP_SLOT, figmaNativeGlass } from './figmaGlass.ts';
 import { FONT_FACES } from './font.generated.ts';
 import type { Doc, Element, Ink } from './document.ts';
 import { boundingBox, resolveLayout } from './autolayout.ts';
@@ -482,7 +482,9 @@ function renderSpotIcon(
   // Substitute the generator's `__NS__` placeholder with a namespace unique to
   // this instance, so the same icon can appear twice on a page — or in two
   // documents inlined side by side — without its gradients colliding.
-  const body = art.body.replaceAll('__NS__', `${ctx.uid('gi')}-`);
+  let body = art.body.replaceAll('__NS__', `${ctx.uid('gi')}-`);
+  // For Figma, the glass as Figma's own background blur, not masks.
+  if (ctx.figma) body = figmaNativeGlass(body);
 
   return rawNode(
     'g',
@@ -556,6 +558,7 @@ function renderGraphic(ctx: Ctx, el: Extract<Element, { type: 'graphic' }>): VNo
     }
     body = body.split(BACKDROP_SLOT).join(pane);
   }
+  if (ctx.figma) body = figmaNativeGlass(body);
   return rawNode(
     'g',
     {
@@ -587,6 +590,18 @@ export interface RenderOptions {
    * the rest falls through per character. `faces` is base64 woff2 by weight.
    */
   fallbackFont?: { family: string; faces: Partial<Record<FontWeight, string>> };
+  /**
+   * For Figma's SVG import (Copy for Figma), not for a page. A browser needs
+   * frosted glass drawn as a blurred copy of everything beneath each card,
+   * clipped to it; Figma imports every such clip as a mask group round a
+   * whole copy of the illustration. This draws each thing once instead and
+   * writes glass the way Figma's own exporter does — a background blur and
+   * a filter chain of drop and inner shadows — which Figma reads back as
+   * native effects: a card is one group with its fill and hairline, not a
+   * stack of masks. It draws correctly only in Figma; a browser ignores the
+   * blur. Implies no embedded font: Figma sets the text in the installed one.
+   */
+  figma?: boolean;
 }
 
 /**
@@ -644,6 +659,7 @@ export function buildDocument(
   const { width, height } = doc.artboard ?? out;
   const fit = Math.min(out.width / width, out.height / height);
   const ctx = createCtx(themes[theme], `${doc.id}-${theme}`, { width, height });
+  ctx.figma = options.figma;
   const ns = `${doc.id}-${theme}`;
 
   const stageId = `${ns}-bd-stage`;
@@ -659,8 +675,9 @@ export function buildDocument(
     ? h('g', { 'data-el': 'stage' }, [])
     : Stage(ctx, { width, height, glow: doc.glow, mesh: doc.background === 'none' ? undefined : doc.background, accent });
 
-  // Panels blur the stage.
-  ctx.backdropId = stageId;
+  // Panels blur the stage. For Figma nothing is copied: glass takes a
+  // background blur of its own, so there is no backdrop to point at.
+  ctx.backdropId = options.figma ? undefined : stageId;
   const panels = (doc.panels ?? []).map((p) =>
     GlassPanel(ctx, {
       x: p.x,
@@ -674,7 +691,7 @@ export function buildDocument(
   );
 
   // Content blurs the stage *and* the panels.
-  ctx.backdropId = baseId;
+  ctx.backdropId = options.figma ? undefined : baseId;
 
   /*
    * Cursors and graphics float over the content, so their glass blurs it too:
@@ -745,11 +762,11 @@ export function buildDocument(
       // Glass is glass over the content: cursors, graphics and any card with
       // a glass surface blur what is really beneath them — a screenshot, a
       // photo, the cards before them — not only the stage.
-      if (el.type === 'cursor' || el.type === 'graphic' || glassBlurs(ctx, el).length) {
+      if (!options.figma && (el.type === 'cursor' || el.type === 'graphic' || glassBlurs(ctx, el).length)) {
         ctx.backdropId = beneath(i);
       }
       const node = draw(el, options.annotate ? String(i) : undefined);
-      ctx.backdropId = baseId;
+      ctx.backdropId = options.figma ? undefined : baseId;
       // Named, so what floats above it can frost it by reference (`beneath`).
       return node ? h('g', { id: elId(i) }, [node]) : node;
     }),
@@ -764,10 +781,11 @@ export function buildDocument(
   ];
 
   const round4 = (n: number) => Math.round(n * 10000) / 10000;
-  const body = [
-    h('use', { href: `#${baseId}`, 'xlink:href': `#${baseId}` }),
-    content,
-  ];
+  // For Figma, everything drawn in place, once: a `<use>` imports as a
+  // group of its own, and nothing here needs a second copy.
+  const body = options.figma
+    ? [h('g', { 'data-el': 'stage-and-panels' }, [stage, ...panels]), content]
+    : [h('use', { href: `#${baseId}`, 'xlink:href': `#${baseId}` }), content];
 
   return h(
     'svg',
@@ -782,7 +800,7 @@ export function buildDocument(
       'data-theme': theme,
     },
     [
-      h('defs', {}, [...backdrops, ...ctx.defs]),
+      h('defs', {}, options.figma ? ctx.defs : [...backdrops, ...ctx.defs]),
       // No wrapper when the artboard IS the canvas, so the seven documents
       // that never needed one keep byte-identical output.
       ...(fit === 1
@@ -807,7 +825,7 @@ export function renderDocument(
   options: RenderOptions = {},
 ): string {
   const tree = buildDocument(doc, theme, options);
-  if (options.embedFont !== false) embedFont(tree, options.fallbackFont);
+  if (options.embedFont !== false && !options.figma) embedFont(tree, options.fallbackFont);
   return toSVGString(tree);
 }
 

@@ -458,10 +458,14 @@ export function App() {
    * A download inside the viewer sandbox depends on a grant that can be
    * declined or simply unavailable; pasting SVG markup onto a Figma canvas
    * works everywhere and gives editable vectors rather than an image.
+   *
+   * Drawn for Figma (`RenderOptions.figma`): glass comes in as native
+   * background blur and shadows rather than masks round copies of the
+   * illustration. Save SVG and SVG source stay the browser drawing.
    */
   const copySvg = async () => {
-    const ok = await copyText(renderDocument(doc, theme));
-    setFlash(ok ? `Copied the ${theme} SVG — paste into Figma` : 'Could not reach the clipboard');
+    const ok = await copyText(renderDocument(doc, theme, { figma: true }));
+    setFlash(ok ? `Copied the ${theme} illustration for Figma — paste it onto the canvas` : 'Could not reach the clipboard');
   };
 
   const showSource = () =>
@@ -616,9 +620,9 @@ export function App() {
         <button
           type="button"
           onClick={() => void copySvg()}
-          title="Copy the SVG markup — paste straight into Figma as vectors"
+          title="Copy for pasting into Figma: editable vectors, glass as native background blur and shadows"
         >
-          Copy SVG
+          Copy for Figma
         </button>
         <button
           type="button"

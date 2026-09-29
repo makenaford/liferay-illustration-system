@@ -274,6 +274,60 @@ export function portableBackdropBlur(svg: string, opts: GlassOptions = {}): stri
 }
 
 /**
+ * BACKGROUND BLUR, given back to Figma — `portableBackdropBlur` undone, for
+ * an export pasted into Figma (see `RenderOptions.figma` in src/render.ts).
+ *
+ * Figma turns the portable construction into masks: the cut round what is
+ * behind the glass, and the clip round its blurred copy, each a mask group.
+ * But the glass group itself still carries Figma's own marker,
+ * `data-figma-bg-blur-radius`, which is all Figma's import needs to give it
+ * a real background blur. So the cut is unwrapped — what it held is drawn
+ * as it was — and the blurred copy (a group whose only content is a
+ * filtered group of `<use>`s, and the backdrop slot) is dropped. Masks that
+ * belong to the artwork itself, the back glyph cut from its gradient, stay.
+ */
+export function figmaNativeGlass(body: string): string {
+  const root = parse(`<g>${body}</g>`);
+  const painted = (n: XNode) => n.children.filter((c) => c.tag !== '#text');
+  const cuts = new Set<string>();
+  const findCuts = (n: XNode) => {
+    if (n.tag === 'mask') {
+      const first = painted(n)[0];
+      if (first?.tag === 'rect' && attr(first, 'x') === '-200' && attr(first, 'fill') === 'white') cuts.add(attr(n, 'id') ?? '');
+    }
+    n.children.forEach(findCuts);
+  };
+  findCuts(root);
+  const isBlurredCopy = (n: XNode) =>
+    n.tag === 'g' &&
+    painted(n).length > 0 &&
+    painted(n).every(
+      (c) =>
+        (c.tag === 'g' && attr(c, 'data-backdrop') !== undefined) ||
+        (c.tag === 'g' && !!attr(c, 'filter') && painted(c).length > 0 && painted(c).every((u) => u.tag === 'use')),
+    );
+  const visit = (n: XNode) => {
+    const out: XNode[] = [];
+    for (const c of n.children) {
+      if (c.tag === 'mask' && cuts.has(attr(c, 'id') ?? '')) continue;
+      const m = c.tag === 'g' ? attr(c, 'mask')?.match(/^url\(#(.+)\)$/)?.[1] : undefined;
+      if (m && cuts.has(m)) {
+        visit(c);
+        out.push(...c.children);
+        continue;
+      }
+      if (isBlurredCopy(c)) continue;
+      visit(c);
+      out.push(c);
+    }
+    n.children = out;
+  };
+  visit(root);
+  const g = root.children[0];
+  return g.children.map(serialise).join('');
+}
+
+/**
  * The frame clip, removed where it cuts artwork. Figma exports each icon
  * inside a `clip-path` the size of its frame, and 28 icons draw past it —
  * a coin, a handle, a pin, cut flat. Those have a measured viewBox in

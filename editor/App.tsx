@@ -128,6 +128,16 @@ export function App() {
     );
   };
 
+  // Opened from a library viewing another language: open that version.
+  const openIn = useEditor((s) => s.openIn);
+  useEffect(() => {
+    if (!openIn) return;
+    setUI({ openIn: null });
+    const st = getState();
+    if (st.editLang === 'en') void openLanguage(openIn, st.doc, st.base);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openIn]);
+
   const switchLanguage = (lang: Lang | 'en') => {
     const st = getState();
     if (lang === st.editLang) return;

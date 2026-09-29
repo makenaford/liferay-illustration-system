@@ -68,6 +68,12 @@ export interface EditorState {
    */
   editLang: Lang | 'en';
   english: Doc | null;
+  /**
+   * A request to open the document in this language as the builder starts —
+   * set by whoever opens it (the Marketing Assets library, viewing that
+   * language), taken and cleared by the builder, which opens the version.
+   */
+  openIn: Lang | null;
 }
 
 interface Store {
@@ -116,6 +122,7 @@ export function initStore(doc: Doc, base = 0) {
       padding: prefs?.padding ?? LAYOUT.cardPadding,
       tool: 'select',
       editLang: 'en',
+      openIn: null,
       english: null,
     },
     past: [],

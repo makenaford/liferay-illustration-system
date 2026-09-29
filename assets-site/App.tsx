@@ -359,11 +359,14 @@ export function App() {
   };
   const here = current !== 'all' && current !== 'unfiled' ? current : null;
 
-  /** Open an illustration in the builder, from the library's own version. */
-  const edit = (row: { doc: Doc; updatedAt: number }) => {
+  /**
+   * Open an illustration in the builder, from the library's own version — in
+   * `lang`, the language it was being looked at in, where that is not English.
+   */
+  const edit = (row: { doc: Doc; updatedAt: number }, lang: Lang | 'en' = 'en') => {
     // Brought up to date as it opens — an older mockup gains its screenshot slot.
     initStore(migrateDoc(structuredClone(row.doc)), row.updatedAt);
-    setUI({ view: 'editor', selected: null });
+    setUI({ view: 'editor', selected: null, openIn: canTranslate && lang !== 'en' ? lang : null });
     setOpen(null);
     setBuilding(true);
   };
@@ -956,7 +959,7 @@ export function App() {
                   tick={drafting.tick}
                   by={who(row.updatedBy)}
                   onOpen={() => setOpen(row.id)}
-                  onEdit={writable ? () => edit(row) : undefined}
+                  onEdit={writable ? () => edit(row, libLang) : undefined}
                   select={selecting ? { on: selected.has(row.id), toggle: () => toggleSelected(row.id) } : undefined}
                 />
               ))}
@@ -1106,7 +1109,7 @@ export function App() {
           folders={lib.folders}
           folder={folderOf(openRow.id)}
           onFile={(f) => void file(openRow.id, f)}
-          onEdit={() => edit(openRow)}
+          onEdit={(l) => edit(openRow, l)}
           writable={writable}
           store={st}
           onToast={setToast}
@@ -1295,7 +1298,8 @@ function IllustrationDetail({
   folders: Folders;
   folder: string | null;
   onFile: (folderId: string | null) => void;
-  onEdit: () => void;
+  /** Open it in the builder, in the language the details are showing. */
+  onEdit: (lang: Lang | 'en') => void;
   writable: boolean;
   store: Store | null;
   onToast: (s: string) => void;
@@ -1375,7 +1379,7 @@ function IllustrationDetail({
             </p>
           </div>
           {writable && (
-            <button type="button" className="am-primary" onClick={onEdit}>
+            <button type="button" className="am-primary" onClick={() => onEdit(lang)}>
               Edit in builder
             </button>
           )}

@@ -264,15 +264,13 @@ export const SCHEMA: {
     label: 'Pie chart',
     fields: [
       { key: 'values', label: 'Values', kind: 'numbers' },
-      { key: 'hole', label: 'Hole · 0 is a pie', kind: 'number', step: 0.05, min: 0, default: 0 },
-      { key: 'gap', label: 'Gap °', kind: 'number', min: 0 },
-      { key: 'highlight', label: 'Glass segment #', kind: 'number', min: 0 },
-      { key: 'striped', label: 'Striped segment #', kind: 'number', min: 0 },
-      { key: 'gradient', label: 'Gradient', kind: 'boolean' },
+      { key: 'style', label: 'Style', kind: 'select', options: ['full', 'line'], labels: { full: 'Full circle', line: 'Line' } },
+      { key: 'highlight', label: 'Glass segment # · from 0', kind: 'number', min: 0 },
       ...XY,
       ...WH,
     ],
   },
+
   toggle: {
     label: 'Toggle',
     fields: [...XY, ...WH, { key: 'on', label: 'On', kind: 'boolean' }],
@@ -570,7 +568,7 @@ export const DEFAULTS: Record<Element['type'], () => Element> = {
   toggle: () => ({ type: 'toggle', x: 40, y: 40, width: 42, height: 13, on: true }),
   radio: () => ({ type: 'radio', x: 40, y: 40, width: 120, height: 32, label: 'Option', checked: true }),
   field: () => ({ type: 'field', x: 40, y: 40, width: 180, height: 52, label: 'Full name', required: true, value: 'Elías Navarro' }),
-  pieChart: () => ({ type: 'pieChart', x: 40, y: 40, width: 96, height: 96, values: [48, 22, 18, 12], hole: 0.62, gradient: true, striped: 3 }),
+  pieChart: () => ({ type: 'pieChart', x: 40, y: 40, width: 96, height: 96, values: [48, 22, 18, 12], style: 'full', highlight: 3 }),
   input: () => ({ type: 'input', x: 40, y: 40, width: 138, height: 28, placeholder: 'Placeholder' }),
   chat: () => ({
     type: 'chat', x: 40, y: 40, width: 216, variant: 'receiver',
@@ -621,6 +619,35 @@ export const DEFAULTS: Record<Element['type'], () => Element> = {
     viewBox: [0, 0, 96, 96], body: '',
   }),
 };
+
+/**
+ * Data comes titled: added from the palette, a chart, table or map arrives
+ * with its title over it, in a group that hugs the two — so a visualisation
+ * is never a bare plot someone has to remember to label. Both are ordinary
+ * elements, to edit or delete like any other.
+ */
+export const DATA_TITLES: Partial<Record<Element['type'], string>> = {
+  lineChart: 'Traffic growth',
+  barChart: 'Weekly sessions',
+  pieChart: 'Orders by channel',
+  table: 'Top opportunities',
+  map: 'Sessions by region',
+};
+
+/** `el` under a title, as `DATA_TITLES` has it — or `el` alone. */
+export function titled(el: Element): Element {
+  const title = DATA_TITLES[el.type];
+  if (!title) return el;
+  return {
+    type: 'group',
+    x: 0,
+    y: 0,
+    width: 10,
+    height: 10,
+    layout: { direction: 'vertical', gap: 6, padding: 0, align: 'start', hugWidth: true, hugHeight: true },
+    children: [{ type: 'text', x: 0, y: 0, role: 'bodySmall', weight: 'semibold', content: title }, el],
+  } as Element;
+}
 
 /** Palette grouping, so the "add" menu reads like a design system. */
 export const PALETTE: { group: string; types: Element['type'][] }[] = [

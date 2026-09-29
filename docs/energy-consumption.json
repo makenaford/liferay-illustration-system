@@ -162,9 +162,8 @@
                 12,
                 18
               ],
-              "hole": 0.62,
-              "gradient": true,
-              "striped": 1
+              "style": "line",
+              "highlight": 1
             },
             {
               "type": "group",

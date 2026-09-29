@@ -1,5 +1,5 @@
 import { elementAt, getState, setUI, useEditor } from './state.ts';
-import { DEFAULTS, PALETTE, SCHEMA } from './schema.ts';
+import { DATA_TITLES, DEFAULTS, PALETTE, SCHEMA, titled } from './schema.ts';
 import { useEffect, useState } from 'react';
 import type { Element, GraphicArt } from '../src/document.ts';
 import { GRAPHICS } from '../src/graphics.generated.ts';
@@ -125,7 +125,11 @@ export function Palette() {
                   {SCHEMA[t].label}
                 </button>
               ) : (
-                <button key={t} type="button" onClick={() => add(DEFAULTS[t])}>
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => (DATA_TITLES[t] ? add(() => titled(DEFAULTS[t]()), true) : add(DEFAULTS[t]))}
+                >
                   {SCHEMA[t].label}
                 </button>
               )

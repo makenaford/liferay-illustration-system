@@ -613,15 +613,12 @@ export interface PieChartEl extends LayoutChild {
   width: number;
   height: number;
   values: number[];
-  colors?: (string | null)[];
-  /** 0 a pie; up to 0.9 a ring. */
-  hole?: number;
-  gap?: number;
-  /** The segment lifted out as glass. */
+  /** `full`, a whole disc (default), or `line`, a single ring. */
+  style?: 'full' | 'line';
+  /** The one segment drawn as glass. Defaults to the last. */
   highlight?: number;
-  /** The segment drawn in stripes. */
-  striped?: number;
-  gradient?: boolean;
+  /** Retained for older documents: a hole makes it the `line` style. */
+  hole?: number;
 }
 
 /** One option of a radio group, as a tile. */

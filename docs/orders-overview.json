@@ -212,13 +212,8 @@
                     12,
                     18
                   ],
-                  "colors": [
-                    "base-primary",
-                    "base-indigo",
-                    "base-aqua",
-                    "base-cyan"
-                  ],
-                  "highlight": 3
+                  "highlight": 3,
+                  "style": "full"
                 }
               ]
             }
@@ -324,9 +319,8 @@
                     12,
                     16
                   ],
-                  "hole": 0.62,
-                  "gradient": true,
-                  "striped": 1
+                  "style": "line",
+                  "highlight": 1
                 }
               ]
             }

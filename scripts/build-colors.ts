@@ -72,32 +72,55 @@ const light = read('Light.tokens.json');
 const dark = read('Dark.tokens.json');
 
 /*
- * ACCESSIBLE ON LIGHT — colours the Figma file uses in both schemes that are
- * too pale to read on the light canvas, given a light-scheme value of their
- * own: the same hue, darkened until it clears WCAG 4.5:1 against the light
- * page and white (so it holds as text, and as bars and dots at 3:1 with room
- * to spare). The dark scheme keeps the file's colour. Overriding here rather
- * than in the export keeps it through the next export from Figma.
+ * THE BASE COLOURS, PER SCHEME — from the `Secondary` palette in the
+ * Marketing UI Assets Repo (Figma 84:83246), each hue in nine steps from L4
+ * to D4. The Figma variables give each base colour one value for both
+ * schemes, its Default step; drawn as a line, text or a chart series it is
+ * pale-on-pale in light and heavy on dark. So each scheme takes its own step
+ * of the same hue:
  *
- *   Green   #80D940 is 1.72:1 on the light page. It was #46821A (4.58:1)
- *           until the design chose #16A700, a brighter, more saturated
- *           success green: 2.3:1 on the light page — below 4.5:1 for text
- *           and 3:1 for bars and dots. A choice of the design's, not an
- *           accessibility fix like the rest of this table.
+ *   dark   L2 — two steps lighter, so it reads on the dark stage
+ *   light  D1 — one step darker, so it holds on the pale one
+ *
+ * One exception: light Green is #16A700, the success green the design chose
+ * (Green D1, #66BF26, is paler). It is 2.3:1 on the light page — below 4.5:1
+ * for text and 3:1 for bars and dots.
+ *
+ * Lime's labels in the file sit one step off its swatches (the swatch in the
+ * Default column is labelled L1); these follow the columns, as every other
+ * hue does, so its Default stays #0FFF0F. The 10% `-light` tints are left as
+ * the file has them. Overriding here rather than in the export keeps it
+ * through the next export from Figma.
  */
+const SECONDARY: Record<string, { L2: string; D1: string }> = {
+  'base-primary': { L2: '#70A1FF', D1: '#004AD6' },
+  'base-cyan': { L2: '#94DAFF', D1: '#00A4FA' },
+  'base-indigo': { L2: '#7785FF', D1: '#0017DB' },
+  'base-purple': { L2: '#AF78FF', D1: '#5B00E0' },
+  'base-pink': { L2: '#FF73C3', D1: '#DB007D' },
+  'base-red': { L2: '#FF9494', D1: '#FA0000' },
+  'base-orange': { L2: '#FFB46E', D1: '#D66700' },
+  'base-yellow': { L2: '#FFD76E', D1: '#D69B00' },
+  'base-green': { L2: '#B8EA95', D1: '#66BF26' },
+  'base-teal': { L2: '#A2E7CC', D1: '#31BF88' },
+  'base-lime': { L2: '#75FF75', D1: '#00DA00' },
+  'base-aqua': { L2: '#7AFFFD', D1: '#00DEDA' },
+};
 const LIGHT_OVERRIDES: Record<string, string> = {
+  ...Object.fromEntries(Object.entries(SECONDARY).map(([k, v]) => [k, v.D1])),
   'base-green': '#16A700',
 };
+const DARK_OVERRIDES: Record<string, string> = Object.fromEntries(Object.entries(SECONDARY).map(([k, v]) => [k, v.L2]));
 
 const rows = [...light.values()].map(({ path, value }) => ({
   key: keyOf(path),
   label: labelOf(path),
   group: groupOf(path),
   light: LIGHT_OVERRIDES[keyOf(path)] ?? value,
-  dark: dark.get(path.join('/'))?.value ?? value,
+  dark: DARK_OVERRIDES[keyOf(path)] ?? dark.get(path.join('/'))?.value ?? value,
 }));
-for (const key of Object.keys(LIGHT_OVERRIDES)) {
-  if (!rows.some((r) => r.key === key)) throw new Error(`LIGHT_OVERRIDES names "${key}", which the export no longer has`);
+for (const key of Object.keys(SECONDARY)) {
+  if (!rows.some((r) => r.key === key)) throw new Error(`SECONDARY names "${key}", which the export no longer has`);
 }
 
 const keys = new Set<string>();

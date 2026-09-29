@@ -70,8 +70,8 @@ export const COLORS: IllustrationColor[] = [
     "key": "base-primary",
     "label": "Primary",
     "group": "Base Colors",
-    "light": "#0B5FFF",
-    "dark": "#0B5FFF"
+    "light": "#004AD6",
+    "dark": "#70A1FF"
   },
   {
     "key": "base-primary-blue-light",
@@ -91,8 +91,8 @@ export const COLORS: IllustrationColor[] = [
     "key": "base-cyan",
     "label": "Cyan",
     "group": "Base Colors",
-    "light": "#2EB7FF",
-    "dark": "#2EB7FF"
+    "light": "#00A4FA",
+    "dark": "#94DAFF"
   },
   {
     "key": "base-cyan-light",
@@ -105,8 +105,8 @@ export const COLORS: IllustrationColor[] = [
     "key": "base-indigo",
     "label": "Indigo",
     "group": "Base Colors",
-    "light": "#0F28FF",
-    "dark": "#0F28FF"
+    "light": "#0017DB",
+    "dark": "#7785FF"
   },
   {
     "key": "base-indigo-light",
@@ -119,8 +119,8 @@ export const COLORS: IllustrationColor[] = [
     "key": "base-purple",
     "label": "Purple",
     "group": "Base Colors",
-    "light": "#7414FF",
-    "dark": "#7414FF"
+    "light": "#5B00E0",
+    "dark": "#AF78FF"
   },
   {
     "key": "base-purple-light",
@@ -133,8 +133,8 @@ export const COLORS: IllustrationColor[] = [
     "key": "base-pink",
     "label": "Pink",
     "group": "Base Colors",
-    "light": "#FF0F98",
-    "dark": "#FF0F98"
+    "light": "#DB007D",
+    "dark": "#FF73C3"
   },
   {
     "key": "base-pink-light",
@@ -147,8 +147,8 @@ export const COLORS: IllustrationColor[] = [
     "key": "base-red",
     "label": "Red",
     "group": "Base Colors",
-    "light": "#FF2E2E",
-    "dark": "#FF2E2E"
+    "light": "#FA0000",
+    "dark": "#FF9494"
   },
   {
     "key": "base-red-light",
@@ -161,8 +161,8 @@ export const COLORS: IllustrationColor[] = [
     "key": "base-orange",
     "label": "Orange",
     "group": "Base Colors",
-    "light": "#FF800A",
-    "dark": "#FF800A"
+    "light": "#D66700",
+    "dark": "#FFB46E"
   },
   {
     "key": "base-orange-light",
@@ -175,8 +175,8 @@ export const COLORS: IllustrationColor[] = [
     "key": "base-yellow",
     "label": "Yellow",
     "group": "Base Colors",
-    "light": "#FFBB0A",
-    "dark": "#FFBB0A"
+    "light": "#D69B00",
+    "dark": "#FFD76E"
   },
   {
     "key": "base-yellow-light",
@@ -190,7 +190,7 @@ export const COLORS: IllustrationColor[] = [
     "label": "Green",
     "group": "Base Colors",
     "light": "#16A700",
-    "dark": "#80D940"
+    "dark": "#B8EA95"
   },
   {
     "key": "base-green-light",
@@ -203,8 +203,8 @@ export const COLORS: IllustrationColor[] = [
     "key": "base-teal",
     "label": "Teal",
     "group": "Base Colors",
-    "light": "#50D2A0",
-    "dark": "#50D2A0"
+    "light": "#31BF88",
+    "dark": "#A2E7CC"
   },
   {
     "key": "base-teal-light",
@@ -217,8 +217,8 @@ export const COLORS: IllustrationColor[] = [
     "key": "base-lime",
     "label": "Lime",
     "group": "Base Colors",
-    "light": "#0FFF0F",
-    "dark": "#0FFF0F"
+    "light": "#00DA00",
+    "dark": "#75FF75"
   },
   {
     "key": "base-lime-light",
@@ -231,8 +231,8 @@ export const COLORS: IllustrationColor[] = [
     "key": "base-aqua",
     "label": "Aqua",
     "group": "Base Colors",
-    "light": "#14FFFB",
-    "dark": "#14FFFB"
+    "light": "#00DEDA",
+    "dark": "#7AFFFD"
   },
   {
     "key": "base-aqua-light",

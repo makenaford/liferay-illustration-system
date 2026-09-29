@@ -2,7 +2,7 @@ import type { Doc, Element } from '../src/document.ts';
 import { resolveLayout } from '../src/autolayout.ts';
 import { LAYOUT } from '../src/tokens.ts';
 import { movedDeep } from './geometry.ts';
-import { dashboard } from './dashboardGrid.ts';
+import { dashboard, windowCard } from './dashboardGrid.ts';
 
 /**
  * STARTER CARDS — cards that arrive with content in them.
@@ -93,6 +93,11 @@ export const CARD_PRESETS: { label: string; title: string; make: () => Element }
     label: 'Dashboard · full page',
     title: 'A 480 × 312 dashboard: header, then rows of slots that fill it — set rows and slots under Grid',
     make: () => dashboard('full'),
+  },
+  {
+    label: 'Window',
+    title: 'A 300 × 200 window: the three dots over slots that fill it — set rows and slots under Grid',
+    make: () => windowCard(),
   },
   {
     label: 'Dashboard · widget',

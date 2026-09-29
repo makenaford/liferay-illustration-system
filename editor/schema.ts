@@ -1,4 +1,5 @@
 import { TYPE_ROLES } from '../src/primitives/text.ts';
+import { windowCard } from './dashboardGrid.ts';
 import { STATUS_TONES } from '../src/primitives/badge.ts';
 import { GLASS_ICONS } from '../src/glassIcons.generated.ts';
 import { dark as darkTokens } from '../src/tokens.ts';
@@ -668,7 +669,18 @@ export const PALETTE: {
 }[] = [
   { group: 'Surfaces', types: ['card', 'subCard', 'group'] },
   { group: 'Type', types: ['text', 'stat'] },
-  { group: 'Controls', types: ['button', 'pill', 'badge', 'toggle', 'radio', 'input', 'field', 'chat', 'chrome'] },
+  {
+    group: 'Controls',
+    types: ['button', 'pill', 'badge', 'toggle', 'radio', 'input', 'field', 'chat'],
+    // A window is a card — the three dots over a grid of slots — not the dots alone.
+    extras: [
+      {
+        label: 'Window',
+        title: 'A card with the three window dots across its top and slots under them — set rows and slots under Grid',
+        make: () => windowCard(),
+      },
+    ],
+  },
   { group: 'Data', types: ['table', 'lineChart', 'barChart', 'pieChart', 'progress', 'map', 'skeleton'] },
   {
     group: 'Icons & shapes',

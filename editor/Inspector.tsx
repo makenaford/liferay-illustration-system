@@ -28,6 +28,7 @@ import type { LayoutSpec } from '../src/document.ts';
 import { inferLayout, resolveLayout as resolveLayoutDoc } from '../src/autolayout.ts';
 import { SCHEMA, type Field } from './schema.ts';
 import { TokenPicker } from './TokenPicker.tsx';
+import { PIE_COLORS, PIE_MAX } from '../src/primitives/pieChart.ts';
 import { AlignGrid, GapPicker, PaddingPicker } from './LayoutControls.tsx';
 import { DocumentPanel } from './DocumentPanel.tsx';
 import { FileField } from './FileField.tsx';
@@ -642,6 +643,7 @@ function FieldRow({
 }) {
   const wide =
     field.kind === 'token' ||
+    field.kind === 'segmentColors' ||
     field.kind === 'textarea' ||
     field.kind === 'text' ||
     field.kind === 'select' ||
@@ -833,6 +835,31 @@ function Control({
           colorsOnly={field.colorsOnly}
         />
       );
+
+    case 'segmentColors': {
+      // One picker per segment drawn, showing its default until one is chosen.
+      const colors = (Array.isArray(value) ? value : []) as (string | null)[];
+      const count = Math.min(PIE_MAX, ((el as { values?: number[] }).values ?? []).length);
+      const set = (i: number, v: string | undefined) => {
+        const next = Array.from({ length: count }, (_, j) => (j === i ? (v ?? null) : (colors[j] ?? null)));
+        onChange(next.some((c) => c) ? next : undefined);
+      };
+      return (
+        <span className="segment-colors">
+          {Array.from({ length: count }, (_, i) => (
+            <label key={i}>
+              <span>{i + 1}</span>
+              <TokenPicker value={colors[i] ?? PIE_COLORS[i % PIE_COLORS.length]} onChange={(v) => set(i, v)} allowNone={false} />
+            </label>
+          ))}
+          {colors.some((c) => c) && (
+            <button type="button" className="mini" onClick={() => onChange(undefined)}>
+              Reset to defaults
+            </button>
+          )}
+        </span>
+      );
+    }
 
     case 'glassIcon':
       return <GlassIconField el={el} onPatch={onPatch} />;

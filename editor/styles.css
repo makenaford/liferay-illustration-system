@@ -314,6 +314,11 @@ button, input, select, textarea {
 
 .pair { display: flex; gap: 5px; }
 .series { display: flex; flex-direction: column; gap: 5px; }
+.segment-colors { display: flex; flex-direction: column; gap: 5px; }
+.segment-colors label { display: flex; align-items: center; gap: 6px; }
+.segment-colors label > span { flex: none; width: 12px; color: var(--muted, #8a93a6); font-variant-numeric: tabular-nums; }
+.segment-colors label > :last-child { flex: 1; min-width: 0; }
+.segment-colors .mini { align-self: flex-start; }
 .series-row { display: flex; gap: 5px; }
 .series-row select { flex: none; width: 92px; }
 .series-row:has(.series-color) { flex-wrap: wrap; }

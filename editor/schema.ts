@@ -82,6 +82,8 @@ export type Field<K extends string = string> =
   | { key: K; label: string; kind: 'list' }
   /** A colour, chosen from the design-system palette with swatches. `colorsOnly` leaves out the gradients. */
   | { key: K; label: string; kind: 'token'; colorsOnly?: boolean }
+  /** One colour per pie segment, each a token picker, defaulting to `PIE_COLORS`. */
+  | { key: K; label: string; kind: 'segmentColors' }
   /**
    * A file from the user's computer. Patches several props at once (markup
    * plus viewBox, or data URI plus natural size), so the Inspector handles
@@ -276,6 +278,7 @@ export const SCHEMA: {
       { key: 'values', label: 'Values · up to 4', kind: 'numbers' },
       { key: 'style', label: 'Style', kind: 'select', options: ['full', 'line'], labels: { full: 'Full circle', line: 'Line' } },
       { key: 'highlight', label: 'Glass segment # · from 0', kind: 'number', min: 0 },
+      { key: 'colors', label: 'Segment colours', kind: 'segmentColors' },
       ...XY,
       ...WH,
     ],

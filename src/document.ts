@@ -674,6 +674,11 @@ export interface PieChartEl extends LayoutChild {
   style?: 'full' | 'line';
   /** The one segment drawn as glass. Defaults to the last. */
   highlight?: number;
+  /**
+   * Each segment's fill, by position: a tone — a colour or a gradient from
+   * the illustration set. A gap, or no list, takes `PIE_COLORS`.
+   */
+  colors?: (string | null)[];
   /** Retained for older documents: a hole makes it the `line` style. */
   hole?: number;
 }

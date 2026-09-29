@@ -1,4 +1,6 @@
 import { h, type Ctx, type VNode } from '../vsvg.ts';
+import { paintOf } from '../colors.ts';
+import { cssAngleLine } from './surface.ts';
 
 export interface PieChartProps {
   x: number;
@@ -12,6 +14,8 @@ export interface PieChartProps {
   style?: 'full' | 'line';
   /** The one segment drawn as glass. Defaults to the last. */
   highlight?: number;
+  /** Each segment's tone, by position. A gap takes `PIE_COLORS`. */
+  colors?: (string | null)[];
   /** Retained for older documents: a hole makes it the `line` style. */
   hole?: number;
 }
@@ -23,11 +27,13 @@ const LINE = 0.26;
 export const PIE_MAX = 4;
 
 /**
- * How much lighter each segment is than the one before: the gradient is one
- * colour, so the segments are told apart by a step of white over it and a
- * fine line between them, not by colours of their own.
+ * Each segment's default fill, by position — the pie in the Marketing UI
+ * Assets Repo (Figma 905:19487): Blue Gradient, Primary Dark navy, Aqua, and
+ * Blue Gradient again under the glass, which is the last segment by default.
+ * All three are tokens the builder already offers, so a segment changed in
+ * the picker is still a design-system colour.
  */
-const STEP = 0.16;
+export const PIE_COLORS = ['gradient-brand', 'primary-dark', 'base-aqua', 'gradient-brand'];
 
 /** How far the lifted glass segment reaches, as a share of the radius. */
 const LIFT_REACH = 1.06 + 0.08;
@@ -84,11 +90,10 @@ function roundedSector(cx: number, cy: number, r0: number, r1: number, a0: numbe
 }
 
 /**
- * PIE CHART — shares of a whole, one way: a clean circle in the brand
- * gradient, whole or as a single ring, of up to four segments — each a step
- * lighter than the last, a clear gap between them — with one, the share
- * that matters, lifted off it as a pane of glass. No gaps, no stripes, no colours
- * of their own: the glass is where the eye is sent.
+ * PIE CHART — shares of a whole, one way: a clean circle, whole or as a
+ * single ring, of up to four segments, each in its own colour with a clear
+ * gap between them — and one, the share that matters, lifted off it as a
+ * pane of glass. The glass is where the eye is sent.
  */
 export function PieChart(ctx: Ctx, props: PieChartProps): VNode {
   const { x, y, width, height } = props;
@@ -104,25 +109,36 @@ export function PieChart(ctx: Ctx, props: PieChartProps): VNode {
   const total = values.reduce((n, v) => n + Math.max(v, 0), 0) || 1;
   const glass = props.highlight ?? values.length - 1;
 
-  const gradId = ctx.uid('piegrad');
-  const sheenId = ctx.uid('pieglass');
-  ctx.defs.push(
-    h('linearGradient', { id: gradId, x1: cx - r, y1: cy + r, x2: cx + r, y2: cy - r, gradientUnits: 'userSpaceOnUse' }, [
-      h('stop', { 'stop-color': tk.accent.base }),
-      h('stop', { offset: 1, 'stop-color': tk.status.info }),
-    ]),
-    h('linearGradient', { id: sheenId, x1: cx - r, y1: cy - r, x2: cx + r, y2: cy + r, gradientUnits: 'userSpaceOnUse' }, [
-      h('stop', { 'stop-color': '#FFFFFF', 'stop-opacity': 0.7 }),
-      h('stop', { offset: 1, 'stop-color': '#FFFFFF', 'stop-opacity': 0.2 }),
-    ]),
-  );
+  // A tone's paint across the chart's box: a colour, or a gradient laid over the whole circle.
+  const box = { x: cx - r, y: cy - r, w: r * 2, h: r * 2 };
+  const paints = new Map<string, string>();
+  const fillOf = (tone: string): string => {
+    const hit = paints.get(tone);
+    if (hit) return hit;
+    const p = paintOf(tk, tone) ?? paintOf(tk, PIE_COLORS[0])!;
+    let fill: string;
+    if ('color' in p) fill = p.color;
+    else {
+      const id = ctx.uid('piefill');
+      ctx.defs.push(
+        h(
+          'linearGradient',
+          { id, ...cssAngleLine(p.gradient.angle, box.x, box.y, box.w, box.h), gradientUnits: 'userSpaceOnUse' },
+          p.gradient.stops.map((st, i, all) =>
+            h('stop', { offset: st.offset ?? (all.length > 1 ? i / (all.length - 1) : 0), 'stop-color': st.color, 'stop-opacity': st.opacity }),
+          ),
+        ),
+      );
+      fill = `url(#${id})`;
+    }
+    paints.set(tone, fill);
+    return fill;
+  };
 
-  // The circle, whole, in the gradient — then each segment's step of light,
-  // the glass segment, and the lines between them.
-  const nodes: VNode[] = [h('path', { d: arc(cx, cy, inner, r, 0, 360), fill: `url(#${gradId})`, 'fill-rule': 'evenodd' })];
+  // Each segment in its own fill, and the lines between them.
+  const nodes: VNode[] = [];
   const edges: number[] = [];
   let a = 0;
-  let shade = 0;
   let lifted: { a0: number; a1: number } | null = null;
   for (const [i, v] of values.entries()) {
     const sweep = (Math.max(v, 0) / total) * 360;
@@ -130,10 +146,9 @@ export function PieChart(ctx: Ctx, props: PieChartProps): VNode {
     a += sweep;
     if (sweep <= 0) continue;
     if (sweep < 359.99) edges.push(a0);
-    const d = arc(cx, cy, inner, r, a0, a0 + sweep);
     if (i === glass) lifted = { a0, a1: a0 + sweep };
-    if (shade) nodes.push(h('path', { d, fill: '#FFFFFF', 'fill-opacity': Math.min(shade * STEP, 0.6) }));
-    shade++;
+    const tone = props.colors?.[i] || PIE_COLORS[i % PIE_COLORS.length];
+    nodes.push(h('path', { d: arc(cx, cy, inner, r, a0, a0 + sweep), fill: fillOf(tone), 'fill-rule': 'evenodd' }));
   }
 
   // A gap at every boundary — cut out, so what is behind shows through — of
@@ -154,40 +169,50 @@ export function PieChart(ctx: Ctx, props: PieChartProps): VNode {
   return h('g', { 'data-el': 'pie-chart' }, [h('g', { mask: `url(#${maskId})` }, nodes), ...glassNodes]);
 
   /*
-   * The glass segment, lifted off the chart: a little larger, pushed out
-   * along its middle, its corners rounded — casting a soft shadow, frosting
-   * a blurred view of the chart beneath, with a white sheen and a lit edge.
-   * The chart under it stays whole, so it reads as above it, not cut from it.
+   * The glass segment, lifted off the chart — Figma 905:19487's `pie3`: a
+   * little larger, pushed out along its middle, its corners rounded. White at
+   * 60% over a 12px blur of the chart beneath, a soft dark drop shadow (4px
+   * down), a white glow all round its inside edge and a brand-blue one
+   * falling from its top. The figures are the file's at its 144px radius,
+   * scaled with the chart. The chart under it stays whole, so it reads as
+   * above it, not cut from it.
    */
   function elevated(a0: number, a1: number): VNode[] {
+    const u = r / 144;
     const [ox, oy] = at(0, 0, r * 0.08, (a0 + a1) / 2);
     const gx = cx + ox;
     const gy = cy + oy;
     const outer = r * 1.06;
     const k = r * 0.06;
     const d = roundedSector(gx, gy, line ? inner : 0, outer, a0, a1, k);
-    const box = { x: f(gx - outer * 1.4), y: f(gy - outer * 1.4), width: f(outer * 2.8), height: f(outer * 2.8), filterUnits: 'userSpaceOnUse' };
+    const reach = outer * 1.4;
+    const fbox = { x: f(gx - reach), y: f(gy - reach), width: f(reach * 2), height: f(reach * 2), filterUnits: 'userSpaceOnUse' };
     const shadowId = ctx.uid('pieshadow');
     const frostId = ctx.uid('piefrost');
     const clipId = ctx.uid('pieclip');
     const glowId = ctx.uid('pieglow');
+    const blueId = ctx.uid('pieblue');
     ctx.defs.push(
-      h('filter', { id: shadowId, ...box }, [h('feGaussianBlur', { stdDeviation: f(r * 0.07) })]),
-      h('filter', { id: frostId, ...box }, [h('feGaussianBlur', { stdDeviation: f(r * 0.09) })]),
-      h('filter', { id: glowId, ...box }, [h('feGaussianBlur', { stdDeviation: f(r * 0.03) })]),
+      h('filter', { id: shadowId, ...fbox }, [h('feGaussianBlur', { stdDeviation: f(2 * u) })]),
+      h('filter', { id: frostId, ...fbox }, [h('feGaussianBlur', { stdDeviation: f(6 * u) })]),
+      h('filter', { id: glowId, ...fbox }, [h('feGaussianBlur', { stdDeviation: f(3 * u) })]),
+      h('filter', { id: blueId, ...fbox }, [h('feGaussianBlur', { stdDeviation: f(4 * u) })]),
       h('clipPath', { id: clipId }, [h('path', { d })]),
     );
+    // Everything outside the glass, for its inset shadows: a frame around it.
+    const frame = (dy: number) =>
+      `M${f(gx - reach)} ${f(gy - reach)}h${f(reach * 2)}v${f(reach * 2)}h${f(-reach * 2)}Z` +
+      roundedSector(gx, gy + dy, line ? inner : 0, outer, a0, a1, k);
     return [
-      h('path', { d, fill: '#000000', 'fill-opacity': 0.35, transform: `translate(${f(r * 0.02)} ${f(r * 0.06)})`, filter: `url(#${shadowId})` }),
+      h('path', { d, fill: '#000000', 'fill-opacity': 0.25, transform: `translate(0 ${f(4 * u)})`, filter: `url(#${shadowId})` }),
       h('g', { 'clip-path': `url(#${clipId})`, 'data-el': 'pie-glass' }, [
         // What is under the glass, blurred: the chart, and the stage past it.
         h('path', { d: arc(cx, cy, 0, r * 1.5, 0, 360), fill: tk.stage.bg }),
-        h('path', { d: arc(cx, cy, inner, r, 0, 360), fill: `url(#${gradId})`, 'fill-rule': 'evenodd', filter: `url(#${frostId})` }),
-        h('path', { d, fill: `url(#${sheenId})`, 'fill-opacity': 0.5 }),
-        // The lit edge's glow, inside the glass.
-        h('path', { d, fill: 'none', stroke: '#FFFFFF', 'stroke-opacity': 0.8, 'stroke-width': f(r * 0.07), filter: `url(#${glowId})` }),
+        h('g', { filter: `url(#${frostId})` }, nodes.map((n) => h(n.tag, { ...n.attrs }))),
+        h('path', { d, fill: '#FFFFFF', 'fill-opacity': 0.6 }),
+        h('path', { d: frame(2 * u), fill: '#0B5FFF', 'fill-rule': 'evenodd', filter: `url(#${blueId})` }),
+        h('path', { d: frame(0), fill: '#FFFFFF', 'fill-rule': 'evenodd', filter: `url(#${glowId})` }),
       ]),
-      h('path', { d, fill: 'none', stroke: '#FFFFFF', 'stroke-opacity': 0.9, 'stroke-width': 1.2, 'stroke-linejoin': 'round' }),
     ];
   }
 }

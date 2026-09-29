@@ -597,21 +597,17 @@ const STEP_02 = { color: '#8C96A9', opacity: 0.03 };
  *     a soft white 50% glow 3px down (4px blur) — the pane is lit from inside
  *     its top edge rather than rimmed in white
  *   - a centred `#0058FF` 20% glow, 8px
- *   - a 4px Figma background blur — 2px in CSS: glass you can see through,
- *     not frost
+ *   - Figma's 4px background blur (2px in CSS) is drawn at `GLASS_BLUR`,
+ *     like the rest of the glass — see the note on the light glass set
  *
  * DARK is its own design (Figma 905:19993, effect `Window Effect`), not the
  * light one dimmed: a white radial wash from the top-right corner, 40% to 5%
  * on a 40% layer — 16% to 2% as drawn — with a white stroke fading from 24%
  * to 12% across the same corner, a white 20% inset glow 1px down with an 8px
- * blur, a soft black 10% drop shadow 10px down with a 50px blur, and a 20px
- * Figma background blur — 10px in CSS, so it frosts more than light does.
+ * blur, and a soft black 10% drop shadow 10px down with a 50px blur. Its
+ * 20px Figma background blur (10px in CSS) is drawn at `GLASS_BLUR` too.
  * Figma's radial is a tilted ellipse; this is its axis-aligned extent.
  */
-const GLASS_BACKGROUND_BLUR = 2;
-
-/** The light glass set's blur — Figma's `backdrop-blur(17.5px)`. See the light surfaces. */
-const LIGHT_GLASS_BLUR = 17.5;
 /**
  * The light glass set's radial, from near the top-left corner: centre at
  * (20.3, 2.9) of the 146 x 73 rectangle, reaching 197 x 77 px.
@@ -633,7 +629,7 @@ const glassBackground = {
       { dy: 2, blur: 1, color: '#0B5FFF', opacity: 0.2 },
       { dy: 3, blur: 4, color: '#FFFFFF', opacity: 0.5 },
     ],
-    blur: GLASS_BACKGROUND_BLUR,
+    blur: GLASS_BLUR,
   },
   dark: {
     fill: {
@@ -644,7 +640,7 @@ const glassBackground = {
     line: { angle: 199, stops: [{ color: '#FFFFFF', opacity: 0.24 }, { color: '#FFFFFF', opacity: 0.12 }] },
     shadow: [{ dy: 10, blur: 50, color: '#000000', opacity: 0.1 }],
     inset: [{ dy: 1, blur: 8, color: '#FFFFFF', opacity: 0.2 }],
-    blur: 10,
+    blur: GLASS_BLUR,
   },
 } satisfies Record<'light' | 'dark', SurfaceSpec>;
 
@@ -919,8 +915,13 @@ export const light: Tokens = {
      * THE LIGHT GLASS SET — the named rectangles of Figma 905:19528 (the
      * light Drive Conversions board), one per surface. All three share a
      * `#0B5FFF` hairline (Figma's 40%, drawn at 20% — see LIGHT_GLASS_LINE),
-     * a 17.5px backdrop blur and a 1px-down, 8px inset glow; they differ in
-     * fill and lift:
+     * 1px-down, 8px inset glow; they differ in fill and lift.
+     *
+     * The blur is NOT the file's. Figma draws the set at 17.5px, and the
+     * glass background at 4px (light) and 20px (dark); drawn that way the
+     * cards lost the frost that makes them read as glass. They keep the
+     * blurs the set had before: `GLASS_BLUR` for default, elevated and the
+     * background, `HIGHLIGHTED_BLUR` for the highlighted pair.
      *
      *   default      barely tinted: a `#0B5FFF` radial, 2% at the top-left
      *                corner to 5%, and a BLUE inset glow at 10%. No shadow.
@@ -946,21 +947,21 @@ export const light: Tokens = {
       fill: { angle: 0, radial: LIGHT_GLASS_RADIAL, stops: [{ color: '#0B5FFF', opacity: 0.02 }, { color: '#0B5FFF', opacity: 0.05 }] },
       line: LIGHT_GLASS_LINE,
       inset: [{ dy: 1, blur: 8, color: '#0B5FFF', opacity: 0.1 }],
-      blur: LIGHT_GLASS_BLUR,
+      blur: GLASS_BLUR,
     },
     'glass-elevated': {
       fill: { angle: 0, radial: LIGHT_GLASS_RADIAL, stops: [{ color: '#0B5FFF', opacity: 0.02 }, { color: '#0B5FFF', opacity: 0.05 }] },
       line: LIGHT_GLASS_LINE,
       shadow: [{ dx: 1, dy: 1, blur: 3, color: '#000000', opacity: 0.03 }],
       inset: [{ dy: 1, blur: 8, color: '#FFFFFF', opacity: 0.1 }],
-      blur: LIGHT_GLASS_BLUR,
+      blur: GLASS_BLUR,
     },
     'glass-highlighted': {
       fill: { angle: 0, radial: LIGHT_GLASS_RADIAL, stops: [{ color: '#FFFFFF', opacity: 0.6 }, { color: '#FFFFFF', opacity: 0.3 }] },
       line: LIGHT_GLASS_LINE,
       shadow: [{ dx: 1.5, dy: 1.5, blur: 2, color: '#0B5FFF', opacity: 0.6 }],
       inset: [{ dy: 1, blur: 8, color: '#FFFFFF', opacity: 0.1 }],
-      blur: LIGHT_GLASS_BLUR,
+      blur: HIGHLIGHTED_BLUR,
     },
     /**
      * Highlighted, blue tint (Figma 905:20194): the highlighted card with its
@@ -972,7 +973,7 @@ export const light: Tokens = {
       line: LIGHT_GLASS_LINE,
       shadow: [{ dx: 1.5, dy: 1.5, blur: 2, color: '#0B5FFF', opacity: 0.6 }],
       inset: [{ dy: 1, blur: 8, color: '#FFFFFF', opacity: 0.1 }],
-      blur: LIGHT_GLASS_BLUR,
+      blur: HIGHLIGHTED_BLUR,
     },
     /** Glass background: the large pane a composition sits on — see GLASS BACKGROUND. */
     'glass-background': glassBackground.light,

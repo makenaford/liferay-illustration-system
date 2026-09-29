@@ -147,6 +147,12 @@ export interface CardEl extends LayoutChild {
    * rows are the children marked `gridRow`; see editor/dashboardGrid.ts.
    */
   grid?: number[];
+  /**
+   * Without a layout: fit the card around its children on this axis, the
+   * card padding outside them. With one, `layout.hugWidth` / `hugHeight`.
+   */
+  hugWidth?: boolean;
+  hugHeight?: boolean;
   layout?: LayoutSpec;
   /** Clip content: children are cut to this container's shape. */
   clip?: boolean;
@@ -222,6 +228,12 @@ export interface SubCardEl extends LayoutChild {
    * rows are the children marked `gridRow`; see editor/dashboardGrid.ts.
    */
   grid?: number[];
+  /**
+   * Without a layout: fit the card around its children on this axis, the
+   * card padding outside them. With one, `layout.hugWidth` / `hugHeight`.
+   */
+  hugWidth?: boolean;
+  hugHeight?: boolean;
   layout?: LayoutSpec;
   /** Clip content: children are cut to this container's shape. */
   clip?: boolean;

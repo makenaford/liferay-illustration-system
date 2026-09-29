@@ -39,6 +39,9 @@ import { boundingBox, resolveLayout } from './autolayout.ts';
 import { reattach } from './attach.ts';
 import { paintOf } from './colors.ts';
 import { cssAngleLine } from './primitives/surface.ts';
+import { coverRect } from './imageCrop.ts';
+
+const r2 = (n: number) => Math.round(n * 100) / 100;
 
 /**
  * Resolve a document `tone` to a colour.
@@ -331,6 +334,26 @@ function renderElementInner(ctx: Ctx, el: Element, path?: string): VNode | null 
       // An element with no file yet would render nothing at all — invisible
       // and unselectable. Draw the empty box so it can be found and filled.
       if (!el.href) return placeholderBox(ctx, el, 'Image');
+      // Placed by hand (src/imageCrop.ts): the picture at its own rectangle,
+      // clipped to the frame.
+      const placed = coverRect(el);
+      if (placed) {
+        const id = ctx.uid('imgclip');
+        ctx.defs.push(
+          h('clipPath', { id }, [h('rect', { x: el.x, y: el.y, width: el.width, height: el.height, rx: el.radius || undefined })]),
+        );
+        return h('g', { 'data-el': 'image' }, [
+          h('image', {
+            x: r2(placed.x),
+            y: r2(placed.y),
+            width: r2(placed.width),
+            height: r2(placed.height),
+            'xlink:href': el.href,
+            preserveAspectRatio: 'none',
+            'clip-path': `url(#${id})`,
+          }),
+        ]);
+      }
       const clipId = el.radius ? ctx.uid('imgclip') : null;
       if (clipId) {
         ctx.defs.push(

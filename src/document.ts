@@ -618,6 +618,13 @@ export interface ImageEl extends LayoutChild {
   radius?: number;
   /** Shown to a screen reader and in the layers panel. */
   alt?: string;
+  /** The picture's own size, in px — recorded on upload, needed to place it by hand. */
+  natural?: { width: number; height: number };
+  /**
+   * Which part of a `cover` picture shows: `x`, `y` 0 (its left / top edge)
+   * to 1 (right / bottom), 0.5 centred; `zoom` 1 and up. See src/imageCrop.ts.
+   */
+  crop?: { x: number; y: number; zoom?: number };
 }
 
 /**

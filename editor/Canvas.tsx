@@ -28,6 +28,8 @@ import { linePoints } from '../src/primitives/lineChart.ts';
 import { barGeometry } from '../src/primitives/barChart.ts';
 import type { BarChartEl, ConnectorEl, LineChartEl } from '../src/document.ts';
 import { newUid } from '../src/attach.ts';
+import { coverRect, dragCrop } from '../src/imageCrop.ts';
+import { naturalSize } from './pickFile.ts';
 
 type DragMode =
   | { kind: 'move' }
@@ -38,7 +40,9 @@ type DragMode =
   /** Dragging one end of the selected connector. */
   | { kind: 'conn-end'; end: 'from' | 'to'; targets: ConnTarget[] }
   /** Drawing a new connector with the connector tool. */
-  | { kind: 'conn-draw'; start: Snapped; targets: ConnTarget[]; last?: Snapped };
+  | { kind: 'conn-draw'; start: Snapped; targets: ConnTarget[]; last?: Snapped }
+  /** Sliding a picture inside its frame, from where it was. */
+  | { kind: 'crop'; from: { x: number; y: number; zoom?: number } };
 
 /** The preview's path: the connector's own route, without the rounding. */
 function elbow(a: [number, number], b: [number, number], route: 'hv' | 'vh' | 'straight'): string {
@@ -90,6 +94,36 @@ export function Canvas() {
   const viewportRef = useRef<HTMLDivElement>(null);
   /** Words being typed into on the canvas — see InlineText. */
   const [editingText, setEditingText] = useState<TextTarget | null>(null);
+  /**
+   * The image being repositioned — double-clicked — whose picture a drag
+   * slides inside its frame rather than moving the frame. Click off it or
+   * press Escape to stop.
+   */
+  const [cropping, setCropping] = useState<string | null>(null);
+  useEffect(() => {
+    if (!cropping) return;
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setCropping(null);
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [cropping]);
+  // A different selection, or the image gone, ends it.
+  useEffect(() => {
+    if (cropping && (selected !== cropping || elementAt(doc, cropping)?.type !== 'image')) setCropping(null);
+  }, [cropping, selected, doc]);
+
+  /** Start repositioning the image at `path`, learning its picture's size if it was never recorded. */
+  const beginCrop = async (path: string) => {
+    const el = elementAt(getState().doc, path);
+    if (el?.type !== 'image' || !el.href || (el.fit ?? 'cover') !== 'cover') return;
+    setUI({ selected: path });
+    const natural = el.natural ?? (await naturalSize(el.href));
+    if (!natural) return;
+    if (!el.natural || !el.crop) {
+      const now = elementAt(getState().doc, path);
+      if (now?.type === 'image') commit(replaceAt(getState().doc, path, { ...now, natural, crop: now.crop ?? { x: 0.5, y: 0.5 } }));
+    }
+    setCropping(path);
+  };
   const [box, setBox] = useState<Box | null>(null);
   const [guides, setGuides] = useState<Guide[]>([]);
   const drag = useRef<{
@@ -270,6 +304,21 @@ export function Canvas() {
     const target = e.target as HTMLElement;
     const at = toArt(e);
 
+    // Repositioning a picture: a press on its frame slides it; anywhere else stops.
+    if (cropping) {
+      const frame = elementAt(resolved, cropping);
+      const el = elementAt(getState().doc, cropping);
+      if (
+        at && frame?.type === 'image' && el?.type === 'image' &&
+        at[0] >= frame.x && at[0] <= frame.x + frame.width && at[1] >= frame.y && at[1] <= frame.y + frame.height
+      ) {
+        drag.current = { mode: { kind: 'crop', from: el.crop ?? { x: 0.5, y: 0.5 } }, startX: e.clientX, startY: e.clientY, origin: null, moved: false, targets: [] };
+        (e.target as Element).setPointerCapture?.(e.pointerId);
+        return;
+      }
+      setCropping(null);
+    }
+
     // The connector tool: this press starts a line, snapped to what it is on.
     if (tool === 'connector' && at) {
       const targets = connectTargets(resolved, docRef.current, null);
@@ -437,6 +486,15 @@ export function Canvas() {
     }
     const dx = (e.clientX - d.startX) / zoom;
     const dy = (e.clientY - d.startY) / zoom;
+
+    if (d.mode.kind === 'crop' && cropping) {
+      const st = getState();
+      const el = elementAt(st.doc, cropping);
+      if (el?.type !== 'image') return;
+      commit(replaceAt(st.doc, cropping, { ...el, crop: dragCrop(el, d.mode.from, dx, dy) }), d.moved);
+      d.moved = true;
+      return;
+    }
 
     if (d.mode.kind === 'chart') {
       const st = getState();
@@ -886,9 +944,14 @@ export function Canvas() {
       onDoubleClick={(e) => {
         // Double-click words to type into them where they are.
         const t = textTargetAt(e.target as globalThis.Element);
-        if (!t) return;
-        setUI({ selected: t.path });
-        setEditingText(t);
+        if (t) {
+          setUI({ selected: t.path });
+          setEditingText(t);
+          return;
+        }
+        // Double-click an image to reposition its picture in its frame.
+        const hit = (e.target as globalThis.Element).closest?.('[data-path]')?.getAttribute('data-path');
+        if (hit && elementAt(getState().doc, hit)?.type === 'image') void beginCrop(hit);
       }}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
@@ -968,6 +1031,24 @@ export function Canvas() {
                 <path d={`M${cx - arm} ${cy}H${cx + arm}M${cx} ${cy - arm}V${cy + arm}`} strokeWidth={1 / zoom} />
                 <text x={m.x + 8 / zoom} y={m.y + 16 / zoom} fontSize={11 / zoom}>
                   {`Screenshot · ${Math.abs(m.width / m.height - 1.5) < 0.01 ? '3:2' : 'not 3:2'} · ${Math.round(m.width)} × ${Math.round(m.height)}${fileDrop.dropping ? ' — drop to fill' : ''}`}
+                </text>
+              </g>
+            );
+          })()}
+
+          {/*
+            * Repositioning: the whole picture, dashed, beyond its frame — what
+            * a drag slides — with how to finish.
+            */}
+          {cropping && (() => {
+            const el = elementAt(resolved, cropping);
+            const r = el?.type === 'image' ? coverRect(el) : null;
+            if (!el || el.type !== 'image' || !r) return null;
+            return (
+              <g className="crop-guide">
+                <rect x={r.x} y={r.y} width={r.width} height={r.height} strokeWidth={1.5 / zoom} strokeDasharray={`${5 / zoom} ${4 / zoom}`} />
+                <text x={el.x + 8 / zoom} y={el.y + el.height - 8 / zoom} fontSize={11 / zoom}>
+                  Drag to reposition · Esc or click outside to finish
                 </text>
               </g>
             );

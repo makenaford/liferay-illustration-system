@@ -76,6 +76,7 @@ export type Field<K extends string = string> =
   /** A table's columns and cells, edited as a grid. Patches `columns` and `rows`. */
   | { key: K; label: string; kind: 'table' }
   | { key: K; label: string; kind: 'grid' }
+  | { key: K; label: string; kind: 'crop' }
   /** A comma-separated list of words, such as a chart's axis labels. */
   | { key: K; label: string; kind: 'list' }
   /** A colour, chosen from the design-system palette with swatches. `colorsOnly` leaves out the gradients. */
@@ -493,6 +494,7 @@ export const SCHEMA: {
       ...XY,
       ...WH,
       { key: 'fit', label: 'Fit', kind: 'select', options: ['cover', 'contain'] },
+      { key: 'crop', label: 'Position in frame', kind: 'crop' },
       { key: 'radius', label: 'Radius', kind: 'number', min: 0 },
     ],
   },

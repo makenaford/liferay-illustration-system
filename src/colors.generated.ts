@@ -189,7 +189,7 @@ export const COLORS: IllustrationColor[] = [
     "key": "base-green",
     "label": "Green",
     "group": "Base Colors",
-    "light": "#46821A",
+    "light": "#16A700",
     "dark": "#80D940"
   },
   {

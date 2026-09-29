@@ -79,10 +79,14 @@ const dark = read('Dark.tokens.json');
  * to spare). The dark scheme keeps the file's colour. Overriding here rather
  * than in the export keeps it through the next export from Figma.
  *
- *   Green   #80D940 is 1.72:1 on the light page; #46821A is 4.58:1.
+ *   Green   #80D940 is 1.72:1 on the light page. It was #46821A (4.58:1)
+ *           until the design chose #16A700, a brighter, more saturated
+ *           success green: 2.3:1 on the light page — below 4.5:1 for text
+ *           and 3:1 for bars and dots. A choice of the design's, not an
+ *           accessibility fix like the rest of this table.
  */
 const LIGHT_OVERRIDES: Record<string, string> = {
-  'base-green': '#46821A',
+  'base-green': '#16A700',
 };
 
 const rows = [...light.values()].map(({ path, value }) => ({

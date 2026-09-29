@@ -12,6 +12,7 @@ import { copySelected, cutSelected, duplicateSelected, paste } from './clipboard
 import { copyText, saveFile } from './save.ts';
 import { SourceModal } from './SourceModal.tsx';
 import { TranslateModal } from './TranslateModal.tsx';
+import { themesOf } from '../src/themes.ts';
 import { draftMissing, tableFor, tableNow, withTranslations } from './translate.ts';
 import { isStale, LANGUAGES, localizedDoc, withLocalized, withoutLocalized, type Lang } from '../src/translate.ts';
 import type { Doc } from '../src/document.ts';
@@ -43,6 +44,11 @@ type Tab = 'library' | 'layers';
 export function App() {
   const doc = useEditor((s) => s.doc);
   const theme = useEditor((s) => s.theme);
+  // An illustration in one theme only is edited, shown and saved in that one.
+  const themes = themesOf(doc);
+  useEffect(() => {
+    if (!themes.includes(theme)) setUI({ theme: themes[0] });
+  }, [themes.join(), theme]);
   const zoom = useEditor((s) => s.zoom);
   const outlines = useEditor((s) => s.showOutlines);
   const snapStep = useEditor((s) => s.snapStep);
@@ -378,7 +384,7 @@ export function App() {
       // C arms the connector tool; again (or Escape) puts it down.
       if (e.key === 'c' && !mod) setUI({ tool: getState().tool === 'connector' ? 'select' : 'connector' });
       // Bare `t` toggles the theme — ⌘D is now duplicate, so `d` moved off it.
-      if (e.key === 't') setUI({ theme: getState().theme === 'dark' ? 'light' : 'dark' });
+      if (e.key === 't' && themesOf(getState().doc).length > 1) setUI({ theme: getState().theme === 'dark' ? 'light' : 'dark' });
       if (e.key === 'o') setUI({ showOutlines: !getState().showOutlines });
       if (e.key === 'g') setUI({ showGrid: !getState().showGrid });
       if (e.key === 'a') setUI({ smartGuides: !getState().smartGuides });
@@ -440,8 +446,7 @@ export function App() {
   };
 
   const exportSvg = async (which: 'dark' | 'light' | 'both') => {
-    const themes = which === 'both' ? (['dark', 'light'] as const) : [which];
-    for (const t of themes) {
+    for (const t of which === 'both' ? themes : [which]) {
       // Exported without `annotate`, so no editor metadata ships.
       const name = `${doc.id}.${t}.svg`;
       report(name, await saveFile(name, renderDocument(doc, t), 'image/svg+xml'));
@@ -526,6 +531,8 @@ export function App() {
               key={t}
               type="button"
               className={theme === t ? 'on' : ''}
+              disabled={!themes.includes(t)}
+              title={themes.includes(t) ? undefined : `This illustration is ${themes[0]} only — change it under Themes`}
               onClick={() => setUI({ theme: t })}
             >
               {t}
@@ -641,14 +648,16 @@ export function App() {
         >
           Save SVG
         </button>
-        <button
-          type="button"
-          className="primary"
-          onClick={() => void exportSvg('both')}
-          title="Save both themes"
-        >
-          Save both
-        </button>
+        {themes.length > 1 && (
+          <button
+            type="button"
+            className="primary"
+            onClick={() => void exportSvg('both')}
+            title="Save both themes"
+          >
+            Save both
+          </button>
+        )}
         <span className="png-export">
           <button
             type="button"

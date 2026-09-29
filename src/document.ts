@@ -803,6 +803,11 @@ export interface Doc {
     blur?: number;
     opacity?: number;
   }[];
+  /**
+   * The themes the illustration comes in: `dark` or `light` only, or `both`.
+   * Omitted, both — unless its folder says otherwise. See src/themes.ts.
+   */
+  onlyTheme?: 'dark' | 'light' | 'both';
   /** Hero glass panels, drawn under `elements`. Empty for bare layouts. */
   panels?: PanelSpec[];
   /**

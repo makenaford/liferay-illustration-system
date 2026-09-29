@@ -44,6 +44,17 @@ export function DocumentPanel() {
             onChange={(e) => patch({ name: e.target.value })}
           />
         </label>
+        <label className="field" title="Only one theme: the library shows and downloads just that one, and the builder edits it">
+          <span className="field-label">Themes</span>
+          <select
+            value={doc.onlyTheme ?? 'both'}
+            onChange={(e) => patch({ onlyTheme: e.target.value === 'both' && !doc.onlyTheme ? undefined : (e.target.value as Doc['onlyTheme']) })}
+          >
+            <option value="both">Dark and light</option>
+            <option value="dark">Dark only</option>
+            <option value="light">Light only</option>
+          </select>
+        </label>
         <label className="field">
           <span className="field-label">Canvas W</span>
           <input

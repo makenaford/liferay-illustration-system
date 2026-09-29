@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { renderDocument } from '../src/render.ts';
 import { copyText, saveFile } from '../editor/save.ts';
 import { svgToPng } from '../editor/png.ts';
@@ -14,6 +14,7 @@ import { Sidebar, Toolbar, type NavSection } from './Browse.tsx';
 import { recipeFor } from './glassLinks.ts';
 import { GLASS_FOLDERS, GLASS_ICON_FOLDERS, GLASS_WAS } from '../src/glassIconFolders.ts';
 import { migrateDoc } from '../src/migrate.ts';
+import { folderTheme, themeFor, themesOf } from '../src/themes.ts';
 import { CUSTOM_ICONS } from '../src/customIcons.generated.ts';
 import { customIconKey, customShape } from '../src/customIconShape.ts';
 import { setLibraryCustomIcons } from '../src/icons.ts';
@@ -302,6 +303,9 @@ export function App() {
     const f = lib.folders.assign[key];
     return f && known.has(f) ? f : null;
   };
+  /** The themes an illustration comes in — its own setting, or its folder's. See src/themes.ts. */
+  const themesFor = (id: string, doc: Doc) =>
+    themesOf(doc, lib.folders.folders.find((f) => f.id === folderOf(id))?.name);
   const recentSince = Date.now() - RECENT_MS;
   const inPlace = (i: IllustrationRow) =>
     current === 'all'
@@ -365,7 +369,12 @@ export function App() {
    */
   const edit = (row: { doc: Doc; updatedAt: number }, lang: Lang | 'en' = 'en') => {
     // Brought up to date as it opens — an older mockup gains its screenshot slot.
-    initStore(migrateDoc(structuredClone(row.doc)), row.updatedAt);
+    const doc = migrateDoc(structuredClone(row.doc));
+    // Its folder's theme, written down, so the builder offers only that one
+    // and a save keeps it with the illustration.
+    const fromFolder = folderTheme(lib.folders.folders.find((f) => f.id === folderOf(doc.id))?.name);
+    if (!doc.onlyTheme && fromFolder) doc.onlyTheme = fromFolder;
+    initStore(doc, row.updatedAt);
     setUI({ view: 'editor', selected: null, openIn: canTranslate && lang !== 'en' ? lang : null });
     setOpen(null);
     setBuilding(true);
@@ -791,7 +800,8 @@ export function App() {
       for (const [n, row] of rows.entries()) {
         setZipping(`Preparing ${n + 1} of ${rows.length}…`);
         const table = lang ? (await tableFor(row.doc, lang)).table : null;
-        for (const t of ['dark', 'light'] as const) {
+        // Only the themes it comes in.
+        for (const t of themesFor(row.id, row.doc)) {
           const svg = lang && table ? await renderTranslated(row.doc, lang, table, t) : renderDocument(row.doc, t);
           const base = `${row.id}${lang ? `.${lang}` : ''}.${t}`;
           if (format === 'svg') {
@@ -954,7 +964,7 @@ export function App() {
                 <IllustrationCard
                   key={row.id}
                   row={row}
-                  theme={art}
+                  theme={themeFor(themesFor(row.id, row.doc), art)}
                   lang={libLang}
                   tick={drafting.tick}
                   by={who(row.updatedBy)}
@@ -1103,7 +1113,8 @@ export function App() {
       {openRow && (
         <IllustrationDetail
           row={openRow}
-          initialTheme={art}
+          themes={themesFor(openRow.id, openRow.doc)}
+          initialTheme={themeFor(themesFor(openRow.id, openRow.doc), art)}
           initialLang={canTranslate ? libLang : 'en'}
           by={who(openRow.updatedBy)}
           folders={lib.folders}
@@ -1278,6 +1289,7 @@ async function offer(filename: string, data: string | Blob, mime: string, onToas
 
 function IllustrationDetail({
   row,
+  themes,
   initialTheme,
   initialLang,
   by,
@@ -1298,6 +1310,8 @@ function IllustrationDetail({
   folders: Folders;
   folder: string | null;
   onFile: (folderId: string | null) => void;
+  /** The themes it comes in — see src/themes.ts. */
+  themes: Theme[];
   /** Open it in the builder, in the language the details are showing. */
   onEdit: (lang: Lang | 'en') => void;
   writable: boolean;
@@ -1395,7 +1409,7 @@ function IllustrationDetail({
         <div className="am-sheet-body">
           <div className="am-sheet-controls">
           <div className="am-seg" role="group" aria-label="Preview theme">
-            {(['dark', 'light'] as const).map((t) => (
+            {themes.map((t) => (
               <button key={t} type="button" className={theme === t ? 'am-on' : ''} onClick={() => setTheme(t)}>
                 {t === 'dark' ? 'Dark' : 'Light'}
               </button>
@@ -1437,12 +1451,13 @@ function IllustrationDetail({
               </p>
             )}
             <div className="am-dl-grid">
-              <span className="am-dl-label">Dark</span>
-              <button type="button" disabled={busy} onClick={() => void svg('dark')}>SVG</button>
-              <button type="button" disabled={busy} onClick={() => void png('dark')}>PNG @2x</button>
-              <span className="am-dl-label">Light</span>
-              <button type="button" disabled={busy} onClick={() => void svg('light')}>SVG</button>
-              <button type="button" disabled={busy} onClick={() => void png('light')}>PNG @2x</button>
+              {themes.map((t) => (
+                <Fragment key={t}>
+                  <span className="am-dl-label">{t === 'dark' ? 'Dark' : 'Light'}</span>
+                  <button type="button" disabled={busy} onClick={() => void svg(t)}>SVG</button>
+                  <button type="button" disabled={busy} onClick={() => void png(t)}>PNG @2x</button>
+                </Fragment>
+              ))}
             </div>
             <div className="am-dl-row">
               <button

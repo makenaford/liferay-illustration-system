@@ -10,6 +10,7 @@
  * marketing pages that are mostly viewed on high-density screens.
  */
 export async function svgToPng(svg: string, width: number, height: number, scale = 2): Promise<Blob> {
+  await loadEmbeddedFonts(svg);
   const img = new Image();
   img.decoding = 'async';
   // A data URI rather than a blob URL: some browsers taint the canvas for
@@ -27,4 +28,20 @@ export async function svgToPng(svg: string, width: number, height: number, scale
   return new Promise((resolve, reject) =>
     canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('could not encode the PNG'))), 'image/png'),
   );
+}
+
+/**
+ * Load every `@font-face` the SVG embeds (see `embedFont` in src/render.ts)
+ * before it is drawn. `img.decode()` resolves before an SVG image's own web
+ * fonts have loaded, and text in a face still loading is drawn invisible — so
+ * a face the page has not used yet, like the Noto Sans JP of a Japanese
+ * export, came out as blank lines. Loading the same data URIs as `FontFace`s
+ * first puts them in the browser's font cache, where the image finds them
+ * ready. Not added to `document.fonts`: the page itself does not need them.
+ */
+async function loadEmbeddedFonts(svg: string) {
+  const faces = svg.matchAll(
+    /@font-face\{font-family:'([^']+)';font-style:normal;font-weight:(\d+);src:(url\(data:[^)]+\) format\('woff2'\))\}/g,
+  );
+  await Promise.all([...faces].map(([, family, weight, src]) => new FontFace(family, src, { weight }).load()));
 }

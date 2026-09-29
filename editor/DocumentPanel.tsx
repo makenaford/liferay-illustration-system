@@ -1,6 +1,6 @@
 import type { Doc, PanelSpec } from '../src/document.ts';
 import { commit, getState, useEditor } from './state.ts';
-import { MESH_NAMES, type SurfaceName } from '../src/tokens.ts';
+import { MESH_NAMES, PANEL_SURFACE, type SurfaceName } from '../src/tokens.ts';
 import { SURFACES } from './schema.ts';
 import { TokenPicker } from './TokenPicker.tsx';
 
@@ -181,7 +181,7 @@ export function DocumentPanel() {
             <select
               aria-label={`Panel ${i + 1} surface`}
               title="Surface"
-              value={p.surface ?? 'glass-default'}
+              value={p.surface ?? PANEL_SURFACE}
               onChange={(e) => setPanel(i, 'surface', e.target.value as SurfaceName)}
             >
               {SURFACES.map((s) => (

@@ -509,5 +509,6 @@
       },
       "surface": "glass-default"
     }
-  ]
+  ],
+  "panelSurfaces": 2
 }

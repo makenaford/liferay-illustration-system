@@ -255,6 +255,9 @@ export interface SurfaceSpec {
   recessed?: boolean;
 }
 
+/** What a hero panel draws when it names no surface. */
+export const PANEL_SURFACE = 'glass-background';
+
 export type SurfaceName =
   | 'glass-default'
   | 'glass-elevated'
@@ -604,39 +607,45 @@ const HIGHLIGHTED = {
 const STEP_02 = { color: '#8C96A9', opacity: 0.03 };
 
 /**
- * GLASS BACKGROUND — the large pane a composition sits on, from the Marketing
- * UI Assets Repo (Figma 905:19573), the same material as the glass icons:
+ * GLASS BACKGROUND — the large pane a composition sits on, and every hero
+ * panel's default. From the Marketing UI Assets Repo (Figma 905:19573):
  *
- *   - fill `linear-gradient` from white to `#6FA0FF` at 20%, the layer at
- *     50% — white 50% to blue 10% as drawn — running from the top centre
- *     past the bottom-right corner, which is 153° across the box
- *   - a solid white 1px stroke, a 1.5px white inner highlight, and a soft
- *     inset glow of white 40%, 3px down with a 5px blur
- *   - a `#0058FF` 20% drop shadow, 1.3px right with an 8px blur
+ *   - fill `linear-gradient` from white to white 50%, the layer at 30% —
+ *     white 30% to 15% as drawn — from the top centre past the bottom-right
+ *     corner, which is 153° across the box
+ *   - a 1px stroke from `#0B5FFF` at the top to `#073999` at the bottom, at 20%
+ *   - two inset shadows: a crisp `#0B5FFF` 20% line 2px down (1px blur), and
+ *     a soft white 50% glow 3px down (4px blur) — the pane is lit from inside
+ *     its top edge rather than rimmed in white
+ *   - a centred `#0058FF` 20% glow, 8px
  *   - a 4px Figma background blur — 2px in CSS: glass you can see through,
  *     not frost
  *
  * Light is transcribed as drawn. Dark has no Figma version: it keeps the
- * geometry, gradient direction and light blue glow, and takes the white down
- * to the level dark's own glass uses, so the pane reads as lit glass on a
- * dark stage rather than a grey slab.
+ * geometry, gradient direction and blue glow, lifts the edge to the lighter
+ * `#6FA0FF` so it still reads on a dark stage, and takes the white down to
+ * the level dark's own glass uses.
  */
 const GLASS_BACKGROUND_BLUR = 2;
 const glassBackground = {
   light: {
-    fill: { angle: 153, stops: [{ color: '#FFFFFF', opacity: 0.5 }, { color: '#6FA0FF', opacity: 0.1 }] },
-    line: { angle: 180, stops: [{ color: '#FFFFFF', opacity: 1 }, { color: '#FFFFFF', opacity: 1 }] },
-    shadow: [{ dx: 1.3, dy: 0, blur: 8, color: '#0058FF', opacity: 0.2 }],
-    litEdge: { color: '#FFFFFF', opacity: 1 },
-    inset: [{ dy: 3, blur: 5, color: '#FFFFFF', opacity: 0.4 }],
+    fill: { angle: 153, stops: [{ color: '#FFFFFF', opacity: 0.3 }, { color: '#FFFFFF', opacity: 0.15 }] },
+    line: { angle: 180, stops: [{ color: '#0B5FFF', opacity: 0.2 }, { color: '#073999', opacity: 0.2 }] },
+    shadow: [{ dy: 0, blur: 8, color: '#0058FF', opacity: 0.2 }],
+    inset: [
+      { dy: 2, blur: 1, color: '#0B5FFF', opacity: 0.2 },
+      { dy: 3, blur: 4, color: '#FFFFFF', opacity: 0.5 },
+    ],
     blur: GLASS_BACKGROUND_BLUR,
   },
   dark: {
-    fill: { angle: 153, stops: [{ color: '#FFFFFF', opacity: 0.14 }, { color: '#6FA0FF', opacity: 0.05 }] },
-    line: { angle: 180, stops: [{ color: '#FFFFFF', opacity: 0.45 }, { color: '#FFFFFF', opacity: 0.2 }] },
-    shadow: [{ dx: 1.3, dy: 0, blur: 8, color: '#0058FF', opacity: 0.35 }],
-    litEdge: { color: '#FFFFFF', opacity: 0.5 },
-    inset: [{ dy: 3, blur: 5, color: '#FFFFFF', opacity: 0.1 }],
+    fill: { angle: 153, stops: [{ color: '#FFFFFF', opacity: 0.1 }, { color: '#FFFFFF', opacity: 0.04 }] },
+    line: { angle: 180, stops: [{ color: '#6FA0FF', opacity: 0.4 }, { color: '#0B5FFF', opacity: 0.3 }] },
+    shadow: [{ dy: 0, blur: 8, color: '#0058FF', opacity: 0.35 }],
+    inset: [
+      { dy: 2, blur: 1, color: '#6FA0FF', opacity: 0.25 },
+      { dy: 3, blur: 4, color: '#FFFFFF', opacity: 0.1 },
+    ],
     blur: GLASS_BACKGROUND_BLUR,
   },
 } satisfies Record<'light' | 'dark', SurfaceSpec>;

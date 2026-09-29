@@ -177,7 +177,7 @@ export function dashboardDoc(): Doc {
       { cx: 13, cy: 42, rx: 86, ry: 84, blur: 100 },
       { cx: 501, cy: 243, rx: 147, ry: 144, blur: 100 },
     ],
-    panels: [{ x: 40, y: 30, width: 480, height: 312, surface: 'glass-default' }],
+    panels: [{ x: 40, y: 30, width: 480, height: 312 }],
     elements: [
       // The grid itself, inside the panel: rows and slots set under Grid.
       { ...dashboard('full', 'group'), x: 52, y: 42, width: 456, height: 288 } as Element,

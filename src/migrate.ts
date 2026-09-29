@@ -90,10 +90,29 @@ function withMockupSlot(doc: Doc): Doc {
   return { ...doc, mockup: { x: first.x, y: first.y, width: first.width, height: first.height } };
 }
 
+/**
+ * Hero panels took `glass-background` as their default. Before that every
+ * panel drew `glass-default`, and most documents say so explicitly because
+ * that was the default — so a panel still on it is moved to the new default,
+ * once. `panelSurfaces` records that it happened, so a panel set back to
+ * `glass-default` afterwards keeps it. Any other surface was a choice, and
+ * stays.
+ */
+function withPanelDefault(doc: Doc): Doc {
+  if (doc.panelSurfaces === 2) return doc;
+  const panels = doc.panels?.map((p) => {
+    if (p.surface !== 'glass-default') return p;
+    const { surface: _old, ...rest } = p;
+    return rest;
+  });
+  return { ...doc, ...(panels && { panels }), panelSurfaces: 2 };
+}
+
 export function migrateDoc(doc: Doc): Doc {
   doc = withMockupSlot(doc);
   const panels = doc.panels?.map((p) =>
     p.surface && RENAMED_SURFACES[p.surface] ? { ...p, surface: RENAMED_SURFACES[p.surface] as typeof p.surface } : p,
   );
-  return { ...doc, ...(panels && { panels }), elements: doc.elements.map(migrateElement) };
+  doc = withPanelDefault({ ...doc, ...(panels && { panels }) });
+  return { ...doc, elements: doc.elements.map(migrateElement) };
 }

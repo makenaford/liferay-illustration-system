@@ -47,14 +47,8 @@ for (const file of readdirSync(DOCS).filter((f) => f.endsWith('.json'))) {
   const resolved = resolveLayout(doc);
   const lines: string[] = [];
 
-  // Panels are the hero surface.
-  for (const p of doc.panels ?? []) {
-    if (!p.surface) {
-      p.surface = 'glass-default';
-      bump('glass-default');
-      lines.push(`    panel ${p.width}x${p.height} → basic`);
-    }
-  }
+  // Panels are the hero surface, and one with none draws the panel default
+  // (`PANEL_SURFACE`), so there is nothing to fill in.
 
   /** Root boxes, in draw order, for the floating test. */
   const rootBoxes = resolved.elements.map(boundingBox);

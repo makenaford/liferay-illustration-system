@@ -27,8 +27,7 @@
       "x": 66,
       "y": 46,
       "width": 426,
-      "height": 266,
-      "surface": "glass-default"
+      "height": 266
     }
   ],
   "elements": [
@@ -784,5 +783,6 @@
       "icon": "cursor",
       "tone": "primary"
     }
-  ]
+  ],
+  "panelSurfaces": 2
 }

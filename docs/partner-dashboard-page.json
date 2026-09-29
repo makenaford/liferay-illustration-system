@@ -1,6 +1,6 @@
 {
   "id": "partner-dashboard-page",
-  "name": "Partner Performance Dashboard \u2014 page",
+  "name": "Partner Performance Dashboard — page",
   "layout": "dashboard",
   "canvas": {
     "width": 1440,
@@ -30,8 +30,7 @@
       "y": 20,
       "width": 512,
       "height": 328,
-      "radius": 8,
-      "surface": "glass-default"
+      "radius": 8
     }
   ],
   "elements": [
@@ -836,5 +835,6 @@
   "artboard": {
     "width": 560,
     "height": 372
-  }
+  },
+  "panelSurfaces": 2
 }

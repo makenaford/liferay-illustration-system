@@ -182,5 +182,6 @@
       "nodes": true,
       "rings": true
     }
-  ]
+  ],
+  "panelSurfaces": 2
 }

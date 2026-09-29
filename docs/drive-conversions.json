@@ -27,15 +27,13 @@
       "x": 72,
       "y": 108,
       "width": 204,
-      "height": 214,
-      "surface": "glass-default"
+      "height": 214
     },
     {
       "x": 286,
       "y": 108,
       "width": 204,
-      "height": 214,
-      "surface": "glass-default"
+      "height": 214
     }
   ],
   "elements": [
@@ -180,5 +178,6 @@
       "height": 14,
       "on": true
     }
-  ]
+  ],
+  "panelSurfaces": 2
 }

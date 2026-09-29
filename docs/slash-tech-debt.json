@@ -27,15 +27,13 @@
       "x": 56,
       "y": 86,
       "width": 218,
-      "height": 232,
-      "surface": "glass-default"
+      "height": 232
     },
     {
       "x": 288,
       "y": 86,
       "width": 218,
-      "height": 230,
-      "surface": "glass-default"
+      "height": 230
     }
   ],
   "elements": [
@@ -157,5 +155,6 @@
       "icon": "clock",
       "tone": "soft"
     }
-  ]
+  ],
+  "panelSurfaces": 2
 }

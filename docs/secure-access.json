@@ -28,16 +28,14 @@
       "y": 48,
       "width": 162,
       "height": 288,
-      "sheen": "linear",
-      "surface": "glass-default"
+      "sheen": "linear"
     },
     {
       "x": 274,
       "y": 46,
       "width": 180,
       "height": 290,
-      "sheen": "linear",
-      "surface": "glass-default"
+      "sheen": "linear"
     }
   ],
   "elements": [
@@ -330,5 +328,6 @@
       },
       "surface": "glass-default"
     }
-  ]
+  ],
+  "panelSurfaces": 2
 }

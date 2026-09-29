@@ -1,5 +1,5 @@
 import { h, text, rawNode, createCtx, toSVGString, type Ctx, type VNode } from './vsvg.ts';
-import { themes, type ThemeName } from './tokens.ts';
+import { PANEL_SURFACE, themes, type ThemeName } from './tokens.ts';
 import {
   Stage,
   GlassPanel,
@@ -668,7 +668,8 @@ export function buildDocument(
       width: p.width,
       height: p.height,
       radius: p.radius,
-      surface: p.surface,
+      // A hero panel is the pane the composition sits on; cards default to glass-default.
+      surface: p.surface ?? PANEL_SURFACE,
     }),
   );
 

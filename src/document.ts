@@ -41,6 +41,7 @@ export interface PanelSpec {
   width: number;
   height: number;
   sheen?: 'radial' | 'linear';
+  /** Omitted, `glass-background` — see `PANEL_SURFACE`. */
   surface?: SurfaceName;
   radius?: number;
   /**
@@ -792,6 +793,11 @@ export interface Doc {
   }[];
   /** Hero glass panels, drawn under `elements`. Empty for bare layouts. */
   panels?: PanelSpec[];
+  /**
+   * 2 once the panels have been moved to `glass-background` (see
+   * src/migrate.ts), so a panel set to `glass-default` since stays so.
+   */
+  panelSurfaces?: 2;
   elements: Element[];
   /**
    * Translations of the copy, for translated exports only — the renderer

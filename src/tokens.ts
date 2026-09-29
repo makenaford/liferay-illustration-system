@@ -588,7 +588,8 @@ const highlightedSpec = (): SurfaceSpec => ({
     radial: { cx: 1, cy: 0.015, rx: 1.16, ry: 1.5 },
     stops: [{ color: '#FFFFFF', opacity: 0.16 }, { color: '#FFFFFF', opacity: 0.03 }],
   },
-  line: { angle: 180, stops: [{ color: '#FFFFFF', opacity: 0.8 }, { color: '#FFFFFF', opacity: 0.8 }] },
+  // Figma's white 80% hairline, halved: at 80% it drew as a hard white rule.
+  line: { angle: 180, stops: [{ color: '#FFFFFF', opacity: 0.4 }, { color: '#FFFFFF', opacity: 0.4 }] },
   shadow: [{ dy: 0, blur: 10, color: '#0B5FFF', opacity: 0.55 }],
   litEdge: { color: '#FFFFFF', opacity: 0.45 },
   blur: HIGHLIGHTED_BLUR,
@@ -618,8 +619,9 @@ const STEP_02 = { color: '#8C96A9', opacity: 0.03 };
  * glass on the dark stage, the same material as the blue-tint highlighted
  * card — a radial from near the top-left corner, white 60% into `#ADC9FF` at
  * 30%; the light set's `#0B5FFF` hairline (Figma's 40%, drawn at 20%, see
- * LIGHT_GLASS_LINE); a crisp `#0B5FFF` 60% contact shadow, 1px right and down
- * with a 2px blur and its 1px spread folded into the offset; and a white 10%
+ * LIGHT_GLASS_LINE); a `#0B5FFF` 60% contact shadow, 1px right and down with
+ * its 1px spread folded into the offset, softened from the file's 2px blur to
+ * 8px — at 2px it drew a hard blue rule down two edges; and a white 10%
  * inset glow 1px down with an 8px blur. Figma's 17.5px blur is drawn at
  * `GLASS_BLUR`. Was 905:19993 (`Window Effect`), a faint white wash.
  */
@@ -649,7 +651,7 @@ const glassBackground = {
   dark: {
     fill: { angle: 0, radial: LIGHT_GLASS_RADIAL, stops: [{ color: '#FFFFFF', opacity: 0.6 }, { color: '#ADC9FF', opacity: 0.3 }] },
     line: LIGHT_GLASS_LINE,
-    shadow: [{ dx: 1.5, dy: 1.5, blur: 2, color: '#0B5FFF', opacity: 0.6 }],
+    shadow: [{ dx: 1.5, dy: 1.5, blur: 8, color: '#0B5FFF', opacity: 0.6 }],
     inset: [{ dy: 1, blur: 8, color: '#FFFFFF', opacity: 0.1 }],
     blur: GLASS_BLUR,
   },
@@ -682,16 +684,17 @@ export const dark: Tokens = {
   surfaces: {
     /** Basic: the everyday card — and a tile nested inside one. No shadow. Was glass1 (and glass2). */
     'glass-default': {
-      // DS: 0.03 / 0.02, line 0.1 / 0.07
+      // DS: 0.03 / 0.02, line 0.1 / 0.07. The line was raised to 0.14 / 0.09,
+      // then halved with the rest of the glass hairlines, which drew too strong.
       fill: { angle: 60, stops: [{ color: '#FFFFFF', opacity: 0.07 }, { color: STEP_02.color, opacity: 0.035 }] },
-      line: { angle: 225, stops: [{ color: '#FFFFFF', opacity: 0.14 }, { color: '#FFFFFF', opacity: 0.09 }] },
+      line: { angle: 225, stops: [{ color: '#FFFFFF', opacity: 0.07 }, { color: '#FFFFFF', opacity: 0.045 }] },
       blur: GLASS_BLUR,
     },
     /** Elevated: floating over the composition — an overlay, a callout, a menu. Was glass3. */
     'glass-elevated': {
-      // DS: 0.09 / 0.04, line 0.26 / 0.16
+      // DS: 0.09 / 0.04, line 0.26 / 0.16 — halved from 0.34 / 0.2, as default's.
       fill: { angle: 60, stops: [{ color: '#FFFFFF', opacity: 0.19 }, { color: STEP_02.color, opacity: 0.07 }] },
-      line: { angle: 225, stops: [{ color: '#FFFFFF', opacity: 0.34 }, { color: '#FFFFFF', opacity: 0.2 }] },
+      line: { angle: 225, stops: [{ color: '#FFFFFF', opacity: 0.17 }, { color: '#FFFFFF', opacity: 0.1 }] },
       shadow: [
         { dy: 18, blur: 40, color: '#000000', opacity: 0.4 },
         { dy: 3, blur: 8, color: '#000000', opacity: 0.28 },
@@ -939,9 +942,9 @@ export const light: Tokens = {
      *   elevated     the same fill, a WHITE inset glow at 10%, and the
      *                faintest contact shadow, black 3%, 1px right and down.
      *   highlighted  WHITE glass: the radial white 60% to 30%, the white
-     *                inset glow, and a crisp `#0B5FFF` 60% contact shadow,
-     *                1px right and down with a 2px blur — the glass icons'
-     *                offset blue edge (905:19981).
+     *                inset glow, and a `#0B5FFF` 60% contact shadow, 1px
+     *                right and down (905:19981), softened from the file's
+     *                2px blur to 8px so it glows rather than rules.
      *
      * Figma's `1px 1px 2px 1px` shadows have a 1px spread, which an SVG drop
      * shadow cannot; elevated folds it into the blur, highlighted into the
@@ -970,7 +973,7 @@ export const light: Tokens = {
     'glass-highlighted': {
       fill: { angle: 0, radial: LIGHT_GLASS_RADIAL, stops: [{ color: '#FFFFFF', opacity: 0.6 }, { color: '#FFFFFF', opacity: 0.3 }] },
       line: LIGHT_GLASS_LINE,
-      shadow: [{ dx: 1.5, dy: 1.5, blur: 2, color: '#0B5FFF', opacity: 0.6 }],
+      shadow: [{ dx: 1.5, dy: 1.5, blur: 8, color: '#0B5FFF', opacity: 0.6 }],
       inset: [{ dy: 1, blur: 8, color: '#FFFFFF', opacity: 0.1 }],
       blur: HIGHLIGHTED_BLUR,
     },
@@ -983,7 +986,7 @@ export const light: Tokens = {
     'glass-highlighted-blue': {
       fill: { angle: 0, radial: LIGHT_GLASS_RADIAL, stops: [{ color: '#FFFFFF', opacity: 0.5 }, { color: '#99BCFF', opacity: 0.65 }] },
       line: LIGHT_GLASS_LINE,
-      shadow: [{ dx: 1.5, dy: 1.5, blur: 2, color: '#0B5FFF', opacity: 0.6 }],
+      shadow: [{ dx: 1.5, dy: 1.5, blur: 8, color: '#0B5FFF', opacity: 0.6 }],
       inset: [{ dy: 1, blur: 8, color: '#FFFFFF', opacity: 0.1 }],
       blur: HIGHLIGHTED_BLUR,
     },

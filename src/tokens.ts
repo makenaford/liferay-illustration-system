@@ -614,13 +614,14 @@ const STEP_02 = { color: '#8C96A9', opacity: 0.03 };
  *   - Figma's 4px background blur (2px in CSS) is drawn at `GLASS_BLUR`,
  *     like the rest of the glass — see the note on the light glass set
  *
- * DARK is its own design (Figma 905:19993, effect `Window Effect`), not the
- * light one dimmed: a white radial wash from the top-right corner, 40% to 5%
- * on a 40% layer — 16% to 2% as drawn — with a white stroke fading from 24%
- * to 12% across the same corner, a white 20% inset glow 1px down with an 8px
- * blur, and a soft black 10% drop shadow 10px down with a 50px blur. Its
- * 20px Figma background blur (10px in CSS) is drawn at `GLASS_BLUR` too.
- * Figma's radial is a tilted ellipse; this is its axis-aligned extent.
+ * DARK is its own design (Figma 905:20194), not the light one dimmed: bright
+ * glass on the dark stage, the same material as the blue-tint highlighted
+ * card — a radial from near the top-left corner, white 60% into `#ADC9FF` at
+ * 30%; the light set's `#0B5FFF` hairline (Figma's 40%, drawn at 20%, see
+ * LIGHT_GLASS_LINE); a crisp `#0B5FFF` 60% contact shadow, 1px right and down
+ * with a 2px blur and its 1px spread folded into the offset; and a white 10%
+ * inset glow 1px down with an 8px blur. Figma's 17.5px blur is drawn at
+ * `GLASS_BLUR`. Was 905:19993 (`Window Effect`), a faint white wash.
  */
 /**
  * The light glass set's radial, from near the top-left corner: centre at
@@ -646,14 +647,10 @@ const glassBackground = {
     blur: GLASS_BLUR,
   },
   dark: {
-    fill: {
-      angle: 0,
-      radial: { cx: 1, cy: 0.016, rx: 1.31, ry: 1.51 },
-      stops: [{ color: '#FFFFFF', opacity: 0.16 }, { color: '#FFFFFF', opacity: 0.02 }],
-    },
-    line: { angle: 199, stops: [{ color: '#FFFFFF', opacity: 0.24 }, { color: '#FFFFFF', opacity: 0.12 }] },
-    shadow: [{ dy: 10, blur: 50, color: '#000000', opacity: 0.1 }],
-    inset: [{ dy: 1, blur: 8, color: '#FFFFFF', opacity: 0.2 }],
+    fill: { angle: 0, radial: LIGHT_GLASS_RADIAL, stops: [{ color: '#FFFFFF', opacity: 0.6 }, { color: '#ADC9FF', opacity: 0.3 }] },
+    line: LIGHT_GLASS_LINE,
+    shadow: [{ dx: 1.5, dy: 1.5, blur: 2, color: '#0B5FFF', opacity: 0.6 }],
+    inset: [{ dy: 1, blur: 8, color: '#FFFFFF', opacity: 0.1 }],
     blur: GLASS_BLUR,
   },
 } satisfies Record<'light' | 'dark', SurfaceSpec>;

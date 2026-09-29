@@ -1,6 +1,6 @@
 import { h, type Ctx, type VNode } from '../vsvg.ts';
 import { paintOf } from '../colors.ts';
-import { cssAngleLine } from './surface.ts';
+import { cssAngleLine, figmaEffectsFilter } from './surface.ts';
 
 export interface PieChartProps {
   x: number;
@@ -10,8 +10,10 @@ export interface PieChartProps {
   height: number;
   /** Each segment's share, in any unit — they are summed. Up to four. */
   values: number[];
-  /** `full`, a whole disc (default), or `line`, a single ring. */
-  style?: 'full' | 'line';
+  /** `full`, a whole disc (default), `line`, a single ring, or `illustrative`. */
+  style?: 'full' | 'line' | 'illustrative';
+  /** The `illustrative` arc's gradient. */
+  gradient?: PieGradientName;
   /** The one segment drawn as glass. Defaults to the last. */
   highlight?: number;
   /** Each segment's tone, by position. A gap takes `PIE_COLORS`. */
@@ -34,6 +36,18 @@ export const PIE_MAX = 4;
  * the picker is still a design-system colour.
  */
 export const PIE_COLORS = ['gradient-brand', 'primary-dark', 'base-aqua', 'gradient-brand'];
+
+/**
+ * The `illustrative` arc's gradients, one per base colour — Figma 912:13881.
+ * Each runs from its deepest stop where the arc starts, at the top, to its
+ * lightest where it ends.
+ */
+export const PIE_GRADIENTS = {
+  blue: { label: 'Blue', stops: [{ color: '#1514A4', offset: 0 }, { color: '#0B5FFF', offset: 0.606 }, { color: '#47FFFC', offset: 1 }] },
+  orange: { label: 'Orange', stops: [{ color: '#FF0016', offset: 0 }, { color: '#FFB800', offset: 0.649 }, { color: '#FFC700', offset: 1 }] },
+  purple: { label: 'Purple', stops: [{ color: '#5600DE', offset: 0 }, { color: '#A304FF', offset: 1 }] },
+} as const;
+export type PieGradientName = keyof typeof PIE_GRADIENTS;
 
 /** How far the lifted glass segment reaches, as a share of the radius. */
 const LIFT_REACH = 1.06 + 0.08;
@@ -96,6 +110,7 @@ function roundedSector(cx: number, cy: number, r0: number, r1: number, a0: numbe
  * pane of glass. The glass is where the eye is sent.
  */
 export function PieChart(ctx: Ctx, props: PieChartProps): VNode {
+  if (props.style === 'illustrative') return IllustrativePie(ctx, props);
   const { x, y, width, height } = props;
   const values = props.values.slice(0, PIE_MAX);
   const tk = ctx.tokens;
@@ -215,4 +230,102 @@ export function PieChart(ctx: Ctx, props: PieChartProps): VNode {
       ]),
     ];
   }
+}
+
+/*
+ * ILLUSTRATIVE — one share, drawn the way the Marketing UI Assets Repo draws
+ * it (Figma 912:13881): a frosted glass ring, and behind it a thick arc in a
+ * gradient that starts at the top and runs clockwise for the share. The arc
+ * reaches from inside the ring's hole to past its rim, so it shows sharp
+ * outside the ring and frosted through it.
+ *
+ * The figures are the file's, at its 44.9px ring radius, scaled with the
+ * chart: the hole is 0.586 of the ring, the arc runs from 0.525 to 1.184 of
+ * it. The ring is `#70A1FF` at 30% with a 25% black drop shadow 2.2px down,
+ * a white inner glow all round and another 1px down, over a 3.3px blur.
+ */
+const ILL_HOLE = 26.3 / 44.9;
+const ILL_ARC_IN = 23.6 / 44.9;
+const ILL_ARC_OUT = 53.15 / 44.9;
+
+function IllustrativePie(ctx: Ctx, props: PieChartProps): VNode {
+  const { x, y, width, height } = props;
+  const r = Math.min(width, height) / 2 / ILL_ARC_OUT;
+  const u = r / 44.9;
+  const cx = x + width / 2;
+  const cy = y + height / 2;
+  const vals = props.values.map((v) => Math.max(v, 0));
+  const total = vals.reduce((n, v) => n + v, 0);
+  const share = vals.length > 1 ? (total ? vals[0] / total : 0) : Math.min((vals[0] ?? 0) / 100, 1);
+  const hole = r * ILL_HOLE;
+  const ring = arc(cx, cy, hole, r, 0, 360);
+  const grad = PIE_GRADIENTS[props.gradient ?? 'blue'] ?? PIE_GRADIENTS.blue;
+
+  // The gradient from where the arc starts to where it ends.
+  const sweep = share * 360;
+  const nodes: VNode[] = [];
+  if (sweep > 0.5) {
+    const gid = ctx.uid('piearc');
+    const [x1, y1] = at(cx, cy, r * ILL_ARC_OUT, 0);
+    const [x2, y2] = at(cx, cy, r * ILL_ARC_OUT, sweep >= 180 ? Math.min(sweep, 300) : sweep);
+    ctx.defs.push(
+      h('linearGradient', { id: gid, x1: f(x1), y1: f(y1), x2: f(x2), y2: f(y2 === y1 && x2 === x1 ? y1 + 1 : y2), gradientUnits: 'userSpaceOnUse' },
+        grad.stops.map((st) => h('stop', { offset: st.offset, 'stop-color': st.color })),
+      ),
+    );
+    nodes.push(h('path', { d: arc(cx, cy, r * ILL_ARC_IN, r * ILL_ARC_OUT, 0, Math.min(sweep, 359.99)), fill: `url(#${gid})`, 'data-el': 'pie-arc' }));
+  }
+
+  const glassFill = { fill: '#70A1FF', 'fill-opacity': 0.3 };
+  const drop = { dy: 2.17 * u, blur: 2.17 * u, color: '#000000', opacity: 0.25 };
+  const insets = [
+    { dy: 0, blur: 3.25 * u, color: '#FFFFFF', opacity: 1 },
+    { dy: 1.08 * u, blur: 6.5 * u, color: '#FFFFFF', opacity: 1 },
+  ];
+  const reach = r * ILL_ARC_OUT + 12 * u;
+  const box = { x: cx - reach, y: cy - reach, width: reach * 2, height: reach * 2 };
+
+  if (ctx.figma) {
+    // One group Figma reads as native glass — see `figmaSurface`.
+    const fid = figmaEffectsFilter(ctx, [drop], insets, box);
+    nodes.push(
+      h('g', { 'data-el': 'pie-glass', filter: fid ? `url(#${fid})` : undefined, 'data-figma-bg-blur-radius': f(3.25 * u) }, [
+        h('path', { d: ring, 'fill-rule': 'evenodd', ...glassFill }),
+      ]),
+    );
+    return h('g', { 'data-el': 'pie-chart', 'data-style': 'illustrative' }, nodes);
+  }
+
+  // For a browser: the shadow outside the ring only, the arc frosted inside it,
+  // the tint, then the inner glows — each glow is everything outside the ring,
+  // shifted and blurred, seen through it (CSS `inset`).
+  const outside = `M${f(box.x)} ${f(box.y)}h${f(box.width)}v${f(box.height)}h${f(-box.width)}Z`;
+  const shadowMask = ctx.uid('pieshm');
+  const clip = ctx.uid('pierc');
+  const blurF = (sd: number) => {
+    const id = ctx.uid('pieb');
+    ctx.defs.push(h('filter', { id, ...box, filterUnits: 'userSpaceOnUse' }, [h('feGaussianBlur', { stdDeviation: f(sd) })]));
+    return `url(#${id})`;
+  };
+  ctx.defs.push(
+    h('mask', { id: shadowMask, maskUnits: 'userSpaceOnUse', ...box }, [
+      h('rect', { ...box, fill: '#FFFFFF' }),
+      h('path', { d: ring, 'fill-rule': 'evenodd', fill: '#000000' }),
+    ]),
+    h('clipPath', { id: clip }, [h('path', { d: ring, 'clip-rule': 'evenodd' })]),
+  );
+  const shifted = (dy: number) => arc(cx, cy + dy, hole, r, 0, 360);
+  nodes.push(
+    h('g', { mask: `url(#${shadowMask})` }, [
+      h('path', { d: ring, 'fill-rule': 'evenodd', fill: '#000000', 'fill-opacity': drop.opacity, transform: `translate(0 ${f(drop.dy)})`, filter: blurF(drop.blur / 2) }),
+    ]),
+    h('g', { 'clip-path': `url(#${clip})`, 'data-el': 'pie-glass' }, [
+      ...nodes.filter((n) => n.attrs['data-el'] === 'pie-arc').map((n) => h('g', { filter: blurF(1.63 * u) }, [h(n.tag, { ...n.attrs, 'data-el': undefined })])),
+      h('path', { d: ring, 'fill-rule': 'evenodd', ...glassFill }),
+      ...insets.map((l) =>
+        h('path', { d: outside + shifted(l.dy), 'fill-rule': 'evenodd', fill: l.color, 'fill-opacity': l.opacity, filter: blurF(l.blur / 2) }),
+      ),
+    ]),
+  );
+  return h('g', { 'data-el': 'pie-chart', 'data-style': 'illustrative' }, nodes);
 }

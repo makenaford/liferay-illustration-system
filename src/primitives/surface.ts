@@ -320,42 +320,8 @@ function figmaSurface(
   }
 
   const attrs: Record<string, string | number> = { 'data-el': 'glass' };
-  if (drops.length || insets.length) {
-    const pad = Math.max(0, ...[...drops, ...insets].map((l) => l.blur + Math.max(Math.abs(l.dx ?? 0), Math.abs(l.dy)))) * 2 + 4;
-    const fid = ctx.uid('fx');
-    const alpha = () =>
-      h('feColorMatrix', { in: 'SourceAlpha', type: 'matrix', values: '0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0', result: 'hardAlpha' });
-    const tint = (l: ShadowLayer) => {
-      const [r, g, b] = channels(l.color);
-      return h('feColorMatrix', { type: 'matrix', values: `0 0 0 0 ${r} 0 0 0 0 ${g} 0 0 0 0 ${b} 0 0 0 ${l.opacity} 0` });
-    };
-    const move = (l: ShadowLayer) => [
-      h('feOffset', { dx: l.dx || undefined, dy: l.dy || undefined }),
-      l.blur > 0 ? h('feGaussianBlur', { stdDeviation: l.blur / 2 }) : null,
-    ];
-    const prims: (VNode | null)[] = [h('feFlood', { 'flood-opacity': 0, result: 'BackgroundImageFix' })];
-    let prev = 'BackgroundImageFix';
-    drops.forEach((l, i) => {
-      const result = `effect${i + 1}_dropShadow`;
-      prims.push(alpha(), ...move(l), h('feComposite', { in2: 'hardAlpha', operator: 'out' }), tint(l), h('feBlend', { mode: 'normal', in2: prev, result }));
-      prev = result;
-    });
-    prims.push(h('feBlend', { mode: 'normal', in: 'SourceGraphic', in2: prev, result: 'shape' }));
-    prev = 'shape';
-    insets.forEach((l, i) => {
-      const result = `effect${drops.length + i + 1}_innerShadow`;
-      prims.push(alpha(), ...move(l), h('feComposite', { in2: 'hardAlpha', operator: 'arithmetic', k2: -1, k3: 1 }), tint(l), h('feBlend', { mode: 'normal', in2: prev, result }));
-      prev = result;
-    });
-    ctx.defs.push(
-      h(
-        'filter',
-        { id: fid, x: x - pad, y: y - pad, width: width + pad * 2, height: height + pad * 2, filterUnits: 'userSpaceOnUse', 'color-interpolation-filters': 'sRGB' },
-        prims,
-      ),
-    );
-    attrs.filter = `url(#${fid})`;
-  }
+  const fid = figmaEffectsFilter(ctx, drops, insets, box);
+  if (fid) attrs.filter = `url(#${fid})`;
 
   const out: VNode[] = [];
   // Figma's import reads the blur from this marker alone; the foreignObject
@@ -367,4 +333,54 @@ function figmaSurface(
     ...out,
     ...(children.filter(Boolean) as VNode[]),
   ]);
+}
+
+/**
+ * Drop and inner shadows as ONE filter in Figma's own chain — the form its
+ * SVG import reads back as DROP_SHADOW and INNER_SHADOW effects (see
+ * `figmaSurface`). The id, or undefined when there are no shadows. Shared
+ * by anything drawn for Figma that carries glass effects.
+ */
+export function figmaEffectsFilter(
+  ctx: Ctx,
+  drops: ShadowLayer[],
+  insets: ShadowLayer[],
+  box: { x: number; y: number; width: number; height: number },
+): string | undefined {
+  if (!drops.length && !insets.length) return undefined;
+  const { x, y, width, height } = box;
+  const pad = Math.max(0, ...[...drops, ...insets].map((l) => l.blur + Math.max(Math.abs(l.dx ?? 0), Math.abs(l.dy)))) * 2 + 4;
+  const fid = ctx.uid('fx');
+  const alpha = () =>
+    h('feColorMatrix', { in: 'SourceAlpha', type: 'matrix', values: '0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0', result: 'hardAlpha' });
+  const tint = (l: ShadowLayer) => {
+    const [r, g, b] = channels(l.color);
+    return h('feColorMatrix', { type: 'matrix', values: `0 0 0 0 ${r} 0 0 0 0 ${g} 0 0 0 0 ${b} 0 0 0 ${l.opacity} 0` });
+  };
+  const move = (l: ShadowLayer) => [
+    h('feOffset', { dx: l.dx || undefined, dy: l.dy || undefined }),
+    l.blur > 0 ? h('feGaussianBlur', { stdDeviation: l.blur / 2 }) : null,
+  ];
+  const prims: (VNode | null)[] = [h('feFlood', { 'flood-opacity': 0, result: 'BackgroundImageFix' })];
+  let prev = 'BackgroundImageFix';
+  drops.forEach((l, i) => {
+    const result = `effect${i + 1}_dropShadow`;
+    prims.push(alpha(), ...move(l), h('feComposite', { in2: 'hardAlpha', operator: 'out' }), tint(l), h('feBlend', { mode: 'normal', in2: prev, result }));
+    prev = result;
+  });
+  prims.push(h('feBlend', { mode: 'normal', in: 'SourceGraphic', in2: prev, result: 'shape' }));
+  prev = 'shape';
+  insets.forEach((l, i) => {
+    const result = `effect${drops.length + i + 1}_innerShadow`;
+    prims.push(alpha(), ...move(l), h('feComposite', { in2: 'hardAlpha', operator: 'arithmetic', k2: -1, k3: 1 }), tint(l), h('feBlend', { mode: 'normal', in2: prev, result }));
+    prev = result;
+  });
+  ctx.defs.push(
+    h(
+      'filter',
+      { id: fid, x: x - pad, y: y - pad, width: width + pad * 2, height: height + pad * 2, filterUnits: 'userSpaceOnUse', 'color-interpolation-filters': 'sRGB' },
+      prims,
+    ),
+  );
+  return fid;
 }

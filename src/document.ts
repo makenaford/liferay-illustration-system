@@ -1,3 +1,4 @@
+import type { PieGradientName } from './primitives/pieChart.ts';
 /**
  * DOCUMENT SCHEMA — what the editor saves and what the exporter reads.
  *
@@ -670,8 +671,14 @@ export interface PieChartEl extends LayoutChild {
   width: number;
   height: number;
   values: number[];
-  /** `full`, a whole disc (default), or `line`, a single ring. */
-  style?: 'full' | 'line';
+  /**
+   * `full`, a whole disc (default); `line`, a single ring; or `illustrative`,
+   * one share as a gradient arc behind a frosted glass ring — the first value,
+   * as a share of them all (or a percentage, alone). See `PieChart`.
+   */
+  style?: 'full' | 'line' | 'illustrative';
+  /** The `illustrative` arc's gradient, by base colour. See `PIE_GRADIENTS`. */
+  gradient?: PieGradientName;
   /** The one segment drawn as glass. Defaults to the last. */
   highlight?: number;
   /**

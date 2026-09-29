@@ -183,9 +183,11 @@ export function Inspector() {
           .filter((f) => !(autoPlaced && (f.key === 'x' || f.key === 'y')))
           // The grid is a dashboard's: other cards have no rows to count.
           .filter((f) => f.kind !== 'grid' || !!(el as { grid?: number[] }).grid)
+          // A setting only some styles have.
+          .filter((f) => !f.when || f.when(el as unknown as Record<string, unknown>))
           .map((f) => (
           <FieldRow
-            key={f.key}
+            key={`${f.key}:${f.label}`}
             field={f}
             el={el}
             value={(el as unknown as Record<string, unknown>)[f.key]}

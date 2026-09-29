@@ -1,6 +1,7 @@
 import { TYPE_ROLES } from '../src/primitives/text.ts';
 import { windowCard } from './dashboardGrid.ts';
 import { STATUS_TONES } from '../src/primitives/badge.ts';
+import { PIE_GRADIENTS } from '../src/primitives/pieChart.ts';
 import { GLASS_ICONS } from '../src/glassIcons.generated.ts';
 import { dark as darkTokens } from '../src/tokens.ts';
 
@@ -29,7 +30,12 @@ import { LAYOUT } from '../src/tokens.ts';
  * quietly stopped working. Binding the key to `keyof Element` turns that from
  * a silent no-op into a compile error.
  */
-export type Field<K extends string = string> =
+export type Field<K extends string = string> = FieldKind<K> & {
+  /** Shown only when this holds for the element — a setting one style has and another does not. */
+  when?: (el: Record<string, unknown>) => boolean;
+};
+
+type FieldKind<K extends string> =
   | {
       key: K;
       label: string;
@@ -275,10 +281,19 @@ export const SCHEMA: {
   pieChart: {
     label: 'Pie chart',
     fields: [
-      { key: 'values', label: 'Values · up to 4', kind: 'numbers' },
-      { key: 'style', label: 'Style', kind: 'select', options: ['full', 'line'], labels: { full: 'Full circle', line: 'Line' } },
-      { key: 'highlight', label: 'Glass segment # · from 0', kind: 'number', min: 0 },
-      { key: 'colors', label: 'Segment colours', kind: 'segmentColors' },
+      { key: 'style', label: 'Style', kind: 'select', options: ['full', 'line', 'illustrative'], labels: { full: 'Full circle', line: 'Line', illustrative: 'Illustrative' } },
+      { key: 'values', label: 'Values · up to 4', kind: 'numbers', when: (el) => el.style !== 'illustrative' },
+      { key: 'values', label: 'Share · % (or values: the first of their total)', kind: 'numbers', when: (el) => el.style === 'illustrative' },
+      {
+        key: 'gradient',
+        label: 'Gradient',
+        kind: 'select',
+        options: Object.keys(PIE_GRADIENTS),
+        labels: Object.fromEntries(Object.entries(PIE_GRADIENTS).map(([k, g]) => [k, g.label])),
+        when: (el) => el.style === 'illustrative',
+      },
+      { key: 'highlight', label: 'Glass segment # · from 0', kind: 'number', min: 0, when: (el) => el.style !== 'illustrative' },
+      { key: 'colors', label: 'Segment colours', kind: 'segmentColors', when: (el) => el.style !== 'illustrative' },
       ...XY,
       ...WH,
     ],

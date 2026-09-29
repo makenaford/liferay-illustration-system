@@ -602,18 +602,21 @@ const STEP_02 = { color: '#8C96A9', opacity: 0.03 };
 
 /**
  * GLASS BACKGROUND — the large pane a composition sits on, and every hero
- * panel's default. From the Marketing UI Assets Repo (Figma 905:19573):
+ * panel's default.
  *
- *   - fill `linear-gradient` from white to white 50%, the layer at 30% —
- *     white 30% to 15% as drawn — from the top centre to just right of the
- *     bottom centre, which is 171° across the box
- *   - a 1px stroke from `#0B5FFF` at the top to `#073999` at the bottom, at 20%
- *   - two inset shadows: a crisp `#0B5FFF` 20% line 2px down (1px blur), and
- *     a soft white 50% glow 3px down (4px blur) — the pane is lit from inside
- *     its top edge rather than rimmed in white
- *   - a centred `#0058FF` 20% glow, 8px
- *   - Figma's 4px background blur (2px in CSS) is drawn at `GLASS_BLUR`,
- *     like the rest of the glass — see the note on the light glass set
+ * LIGHT is FROSTED WHITE, chosen from the Glass Background Studies over the
+ * Figma pane (905:19573: white 30% to 15%, a 20% blue hairline, a faint blue
+ * glow), which read as a faint tint the cards sank into. Much whiter, it
+ * gives what sits on it something to stand off:
+ *
+ *   - fill white 62% to 38%, from the top centre to just right of the
+ *     bottom centre (171° across the box), as the file's runs
+ *   - a hairline from white at the top to `#0B5FFF` 25% at the bottom, and
+ *     a white lit top edge
+ *   - a soft white inset glow, 60%, 3px down with a 6px blur
+ *   - a two-layer lift: navy 10%, 14px down with a 36px blur, and a blue
+ *     10% contact shadow, 2px down with a 6px blur
+ *   - `GLASS_BLUR`, like the rest of the glass
  *
  * DARK is its own design (Figma 905:19993), not the light one dimmed: a
  * faint white wash from the top-right corner, white 20% to 5% on a 40% layer
@@ -637,13 +640,14 @@ const LIGHT_GLASS_RADIAL = { cx: 0.139, cy: 0.039, rx: 1.35, ry: 1.05 };
 const LIGHT_GLASS_LINE = { angle: 180, stops: [{ color: '#0B5FFF', opacity: 0.2 }, { color: '#0B5FFF', opacity: 0.2 }] };
 const glassBackground = {
   light: {
-    fill: { angle: 171, stops: [{ color: '#FFFFFF', opacity: 0.3 }, { color: '#FFFFFF', opacity: 0.15 }] },
-    line: { angle: 180, stops: [{ color: '#0B5FFF', opacity: 0.2 }, { color: '#073999', opacity: 0.2 }] },
-    shadow: [{ dy: 0, blur: 8, color: '#0058FF', opacity: 0.2 }],
-    inset: [
-      { dy: 2, blur: 1, color: '#0B5FFF', opacity: 0.2 },
-      { dy: 3, blur: 4, color: '#FFFFFF', opacity: 0.5 },
+    fill: { angle: 171, stops: [{ color: '#FFFFFF', opacity: 0.62 }, { color: '#FFFFFF', opacity: 0.38 }] },
+    line: { angle: 180, stops: [{ color: '#FFFFFF', opacity: 1 }, { color: '#0B5FFF', opacity: 0.25 }] },
+    litEdge: { color: '#FFFFFF', opacity: 1 },
+    shadow: [
+      { dy: 14, blur: 36, color: '#0B2E7A', opacity: 0.1 },
+      { dy: 2, blur: 6, color: '#0B5FFF', opacity: 0.1 },
     ],
+    inset: [{ dy: 3, blur: 6, color: '#FFFFFF', opacity: 0.6 }],
     blur: GLASS_BLUR,
   },
   dark: {

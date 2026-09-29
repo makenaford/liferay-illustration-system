@@ -2,6 +2,7 @@ import type { BarChartEl, Element, LineChartEl, TableEl } from '../src/document.
 import { TableEditor } from './TableData.tsx';
 import { GridEditor } from './GridEditor.tsx';
 import { CropField } from './CropField.tsx';
+import { canFillOnce, fillOnce, fills, hugs, setFill, setHug, type Axis } from './sizing.ts';
 import {
   commit,
   elementAt,
@@ -67,6 +68,12 @@ export function Inspector() {
     parentEl &&
     (parentEl.type === 'card' || parentEl.type === 'subCard' || parentEl.type === 'group') &&
     parentEl.layout
+  );
+  // Inside a card laid out by hand: filling it is a one-off resize.
+  const inFreeContainer = !!(
+    parentEl &&
+    (parentEl.type === 'card' || parentEl.type === 'subCard' || parentEl.type === 'group') &&
+    !parentEl.layout
   );
 
   const update = (key: string, value: unknown) => {
@@ -167,6 +174,7 @@ export function Inspector() {
         )}
       </div>
       {autoPlaced && <ChildLayout path={selected} />}
+      {inFreeContainer && (canFillOnce(el, 'w') || canFillOnce(el, 'h')) && <FillOnce path={selected} />}
       {isCard && <CardLayout path={selected} />}
 
       <div className="fields">
@@ -256,10 +264,28 @@ function ChildLayout({ path }: { path: string }) {
     if (cur) commit(replaceAt(st.doc, path, { ...cur, ...patch } as Element));
   };
 
+  const fill = (axis: Axis) => {
+    const st = getState();
+    commit(setFill(st.doc, path, axis, !fills(st.doc, path, axis)));
+  };
+
   return (
     <div className="section">
       <div className="section-head">
         <span>In auto layout</span>
+      </div>
+      <div className="layout-actions two" style={{ marginBottom: 8 }}>
+        {(['w', 'h'] as const).map((axis) => (
+          <button
+            key={axis}
+            type="button"
+            className={fills(doc, path, axis) ? 'on' : ''}
+            onClick={() => fill(axis)}
+            title={`Take the container's full ${axis === 'w' ? 'width' : 'height'} — and keep it as the container changes`}
+          >
+            Fill {axis.toUpperCase()}
+          </button>
+        ))}
       </div>
       <div className="fields" style={{ padding: 0 }}>
         <label className="field">
@@ -467,7 +493,10 @@ function CardLayout({ path }: { path: string }) {
           <button
             type="button"
             className={layout.hugWidth ? 'on' : ''}
-            onClick={() => setLayout({ hugWidth: !layout.hugWidth })}
+            onClick={() => {
+              const st = getState();
+              commit(setHug(st.doc, path, 'w', !layout.hugWidth));
+            }}
             title="Shrink the container's width to its content"
           >
             Hug W
@@ -475,7 +504,10 @@ function CardLayout({ path }: { path: string }) {
           <button
             type="button"
             className={layout.hugHeight ? 'on' : ''}
-            onClick={() => setLayout({ hugHeight: !layout.hugHeight })}
+            onClick={() => {
+              const st = getState();
+              commit(setHug(st.doc, path, 'h', !layout.hugHeight));
+            }}
             title="Shrink the container's height to its content"
           >
             Hug H
@@ -485,7 +517,6 @@ function CardLayout({ path }: { path: string }) {
     );
   }
 
-  const group = card?.type === 'group' ? card : null;
 
   return (
     <div className="section">
@@ -493,24 +524,22 @@ function CardLayout({ path }: { path: string }) {
         <span>Layout · {kids} child{kids === 1 ? '' : 'ren'}</span>
       </div>
 
-      {group && (
+      {card && (
         <div className="layout-actions two" style={{ marginBottom: 8 }}>
-          <button
-            type="button"
-            className={group.hugWidth ? 'on' : ''}
-            onClick={() => apply((c) => ({ ...c, hugWidth: !(c as { hugWidth?: boolean }).hugWidth || undefined }) as Element)}
-            title="Fit the group's width to its content"
-          >
-            Hug W
-          </button>
-          <button
-            type="button"
-            className={group.hugHeight ? 'on' : ''}
-            onClick={() => apply((c) => ({ ...c, hugHeight: !(c as { hugHeight?: boolean }).hugHeight || undefined }) as Element)}
-            title="Fit the group's height to its content"
-          >
-            Hug H
-          </button>
+          {(['w', 'h'] as const).map((axis) => (
+            <button
+              key={axis}
+              type="button"
+              className={hugs(doc, path, axis) ? 'on' : ''}
+              onClick={() => {
+                const st = getState();
+                commit(setHug(st.doc, path, axis, !hugs(st.doc, path, axis)));
+              }}
+              title={`Fit the ${card.type === 'group' ? 'group' : 'card'}'s ${axis === 'w' ? 'width' : 'height'} around its content${card.type === 'group' ? '' : ', the card padding outside it'}`}
+            >
+              Hug {axis.toUpperCase()}
+            </button>
+          ))}
         </div>
       )}
 
@@ -852,4 +881,37 @@ function Control({
     case 'grid':
       return <GridEditor el={el as Extract<Element, { type: 'card' | 'subCard' | 'group' }>} onReplace={(next) => onPatch({ grid: (next as { grid?: number[] }).grid, children: (next as { children?: Element[] }).children })} />;
   }
+}
+
+/**
+ * For an element in a card laid out by hand: size it to the card's content
+ * box, once. There is no layout to keep it filled — see editor/sizing.ts.
+ */
+function FillOnce({ path }: { path: string }) {
+  const doc = useEditor((s) => s.doc);
+  const padding = useEditor((s) => s.padding);
+  const el = elementAt(doc, path);
+  return (
+    <div className="section">
+      <div className="section-head">
+        <span>In card</span>
+      </div>
+      <div className="layout-actions two">
+        {(['w', 'h'] as const).map((axis) => (
+          <button
+            key={axis}
+            type="button"
+            disabled={!canFillOnce(el, axis)}
+            onClick={() => {
+              const st = getState();
+              commit(fillOnce(st.doc, path, axis, padding));
+            }}
+            title={`Size it to the card's ${axis === 'w' ? 'width' : 'height'}, inside its padding`}
+          >
+            Fill {axis.toUpperCase()}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
 }

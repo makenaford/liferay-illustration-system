@@ -120,7 +120,7 @@ export function measureElement(el: Element): Size {
     case 'subCard':
     case 'group': {
       if (!el.layout) {
-        const fit = el.type === 'group' ? hugged(el) : null;
+        const fit = hugged(el);
         return fit ? { width: fit.width, height: fit.height } : { width: el.width, height: el.height };
       }
       return containerSize(el);
@@ -267,7 +267,7 @@ function placeAt(el: Element, x: number, y: number, size: Size): Element {
   if (isContainer(el) && !el.layout && el.children?.length) {
     // A free container's children are absolute, so they move with it —
     // otherwise the flow moves the box and leaves what is in it behind.
-    const from = el.type === 'group' ? hugged(el) ?? el : el;
+    const from = hugged(el) ?? el;
     const dx = x - from.x;
     const dy = y - from.y;
     return {
@@ -449,13 +449,15 @@ function layoutContainer(el: Container): Element {
 }
 
 /**
- * A free group's box fitted to its children, on the axes it hugs — or null
- * when it hugs neither, or holds nothing measurable. A group with no layout
- * leaves its children where they are, so hugging moves the box's edge onto
- * theirs rather than moving them.
+ * A free container's box fitted to its children, on the axes it hugs — or
+ * null when it hugs neither, or holds nothing measurable. One with no
+ * layout leaves its children where they are, so hugging moves the box's
+ * edge onto theirs rather than moving them: a group's edge sits on them, a
+ * card's the card padding outside them, as a card holds its content.
  */
-function hugged(el: Extract<Element, { type: 'group' }>) {
+function hugged(el: Container) {
   if (el.layout || (!el.hugWidth && !el.hugHeight)) return null;
+  const pad = el.type === 'group' ? 0 : LAYOUT.cardPadding;
   const boxes = (el.children ?? [])
     .map(boundingBox)
     .filter((b): b is NonNullable<typeof b> => b !== null);
@@ -465,10 +467,10 @@ function hugged(el: Extract<Element, { type: 'group' }>) {
   const right = Math.max(...boxes.map((b) => b.x + b.width));
   const bottom = Math.max(...boxes.map((b) => b.y + b.height));
   return {
-    x: el.hugWidth ? round(x) : el.x,
-    y: el.hugHeight ? round(y) : el.y,
-    width: el.hugWidth ? round(right - x) : el.width,
-    height: el.hugHeight ? round(bottom - y) : el.height,
+    x: el.hugWidth ? round(x - pad) : el.x,
+    y: el.hugHeight ? round(y - pad) : el.y,
+    width: el.hugWidth ? round(right - x + pad * 2) : el.width,
+    height: el.hugHeight ? round(bottom - y + pad * 2) : el.height,
   };
 }
 
@@ -478,7 +480,7 @@ function resolveElement(el: Element): Element {
   const kids = (el as { children?: Element[] }).children;
   if (kids?.length) {
     const next = { ...el, children: kids.map(resolveElement) } as Element;
-    const fit = next.type === 'group' ? hugged(next) : null;
+    const fit = isContainer(next) ? hugged(next) : null;
     return fit ? ({ ...next, ...fit } as Element) : next;
   }
   return el;

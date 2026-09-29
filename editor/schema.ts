@@ -75,6 +75,7 @@ export type Field<K extends string = string> =
   | { key: K; label: string; kind: 'iconSlots' }
   /** A table's columns and cells, edited as a grid. Patches `columns` and `rows`. */
   | { key: K; label: string; kind: 'table' }
+  | { key: K; label: string; kind: 'grid' }
   /** A comma-separated list of words, such as a chart's axis labels. */
   | { key: K; label: string; kind: 'list' }
   /** A colour, chosen from the design-system palette with swatches. `colorsOnly` leaves out the gradients. */
@@ -154,6 +155,7 @@ export const SCHEMA: {
   card: {
     label: 'Frame',
     fields: [
+      { key: 'grid', label: 'Grid · rows and slots', kind: 'grid' },
       ...XY,
       ...WH,
       { key: 'maxWidth', label: 'Max width · text wraps', kind: 'number', min: 0 },
@@ -166,6 +168,7 @@ export const SCHEMA: {
   group: {
     label: 'Group',
     fields: [
+      { key: 'grid', label: 'Grid · rows and slots', kind: 'grid' },
       { key: 'x', label: 'X', kind: 'number' },
       { key: 'y', label: 'Y', kind: 'number' },
       { key: 'width', label: 'W', kind: 'number', min: 1 },
@@ -177,6 +180,7 @@ export const SCHEMA: {
   subCard: {
     label: 'Card',
     fields: [
+      { key: 'grid', label: 'Grid · rows and slots', kind: 'grid' },
       ...XY,
       ...WH,
       { key: 'maxWidth', label: 'Max width · text wraps', kind: 'number', min: 0 },

@@ -2,6 +2,7 @@ import type { Doc, Element } from '../src/document.ts';
 import { resolveLayout } from '../src/autolayout.ts';
 import { LAYOUT } from '../src/tokens.ts';
 import { movedDeep } from './geometry.ts';
+import { dashboard } from './dashboardGrid.ts';
 
 /**
  * STARTER CARDS — cards that arrive with content in them.
@@ -88,6 +89,16 @@ const phoneButton = (label: string, variant: 'solid' | 'outline'): Element =>
   ({ type: 'button', x: 0, y: 0, width: PHONE_INNER, height: 32, label, variant, role: 'bodySmall' }) as Element;
 
 export const CARD_PRESETS: { label: string; title: string; make: () => Element }[] = [
+  {
+    label: 'Dashboard · full page',
+    title: 'A 480 × 312 dashboard: header, then rows of slots that fill it — set rows and slots under Grid',
+    make: () => dashboard('full'),
+  },
+  {
+    label: 'Dashboard · widget',
+    title: 'A 240 × 176 glass widget to set over a photo, its slots filling it — set rows and slots under Grid',
+    make: () => dashboard('widget'),
+  },
   {
     label: 'Phone',
     title: `A ${PHONE.width}-wide phone screen: fields and buttons run edge to edge, longer copy wraps`,

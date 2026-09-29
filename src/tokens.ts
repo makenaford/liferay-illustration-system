@@ -262,6 +262,7 @@ export type SurfaceName =
   | 'glass-default'
   | 'glass-elevated'
   | 'glass-highlighted'
+  | 'glass-highlighted-blue'
   | 'glass-background'
   | 'gradient'
   | 'solid'
@@ -693,6 +694,15 @@ export const dark: Tokens = {
     },
     /** Highlighted: the one card that matters more, and glass over a screenshot — see HIGHLIGHTED. */
     'glass-highlighted': HIGHLIGHTED.dark,
+    /**
+     * Highlighted, blue tint. Figma draws only the light one (905:20194); dark
+     * takes its highlighted card and fades the white wash into `#ADC9FF`, the
+     * light one's blue, instead of white.
+     */
+    'glass-highlighted-blue': {
+      ...HIGHLIGHTED.dark,
+      fill: { ...HIGHLIGHTED.dark.fill!, stops: [{ color: '#FFFFFF', opacity: 0.16 }, { color: '#ADC9FF', opacity: 0.08 }] },
+    },
     /** Glass background: the large pane a composition sits on — see GLASS BACKGROUND. */
     'glass-background': glassBackground.dark,
     /**
@@ -947,6 +957,18 @@ export const light: Tokens = {
     },
     'glass-highlighted': {
       fill: { angle: 0, radial: LIGHT_GLASS_RADIAL, stops: [{ color: '#FFFFFF', opacity: 0.6 }, { color: '#FFFFFF', opacity: 0.3 }] },
+      line: LIGHT_GLASS_LINE,
+      shadow: [{ dx: 1.5, dy: 1.5, blur: 2, color: '#0B5FFF', opacity: 0.6 }],
+      inset: [{ dy: 1, blur: 8, color: '#FFFFFF', opacity: 0.1 }],
+      blur: LIGHT_GLASS_BLUR,
+    },
+    /**
+     * Highlighted, blue tint (Figma 905:20194): the highlighted card with its
+     * white radial fading into `#ADC9FF` (`Components/Gradient Card` blue) at
+     * 30% rather than white — the same edge, glow and blur.
+     */
+    'glass-highlighted-blue': {
+      fill: { angle: 0, radial: LIGHT_GLASS_RADIAL, stops: [{ color: '#FFFFFF', opacity: 0.6 }, { color: '#ADC9FF', opacity: 0.3 }] },
       line: LIGHT_GLASS_LINE,
       shadow: [{ dx: 1.5, dy: 1.5, blur: 2, color: '#0B5FFF', opacity: 0.6 }],
       inset: [{ dy: 1, blur: 8, color: '#FFFFFF', opacity: 0.1 }],

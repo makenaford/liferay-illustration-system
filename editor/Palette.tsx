@@ -135,7 +135,7 @@ export function Palette() {
               )
             ))}
             {extras?.map((x) => (
-              <button key={x.label} type="button" title={x.title} onClick={() => add(x.make)}>
+              <button key={x.label} type="button" title={x.title} onClick={() => add(x.make, true)}>
                 {x.label}
               </button>
             ))}

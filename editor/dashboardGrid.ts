@@ -170,3 +170,33 @@ export function dashboard(kind: 'full' | 'widget', as: 'card' | 'group' = 'card'
         : ({ type: 'card', ...base, surface: 'glass-highlighted', sheen: 'radial', radius: 10, frost: 'content' } as Element);
   return { ...el, grid: gridOf(el as Container) } as Element;
 }
+
+/**
+ * A window: a card with the three dots across its top and a grid of slots
+ * under them that fills the rest — a product screen, sketched. `grid` sets
+ * the slots, as a dashboard's (up to four rows of up to four); the title bar
+ * is not a row, so reshaping the grid leaves it as it is.
+ */
+export function windowCard(grid: number[] = [1, 2]): Element {
+  const bar = {
+    type: 'group',
+    x: 0,
+    y: 0,
+    width: 10,
+    height: 10,
+    layout: { direction: 'horizontal', gap: 8, padding: 0, align: 'center', hugHeight: true },
+    children: [{ type: 'chrome', x: 0, y: 0, radius: 4, gap: 12 } as Element],
+  } as Element;
+  const card = {
+    type: 'subCard',
+    x: 0,
+    y: 0,
+    width: 300,
+    height: 200,
+    surface: 'glass-default',
+    radius: 10,
+    layout: { direction: 'vertical', gap: 8, padding: 12, align: 'stretch' },
+    children: [bar],
+  } as Element;
+  return setGrid(card as Container, grid);
+}

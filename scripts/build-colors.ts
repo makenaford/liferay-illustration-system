@@ -71,13 +71,30 @@ function read(file: string) {
 const light = read('Light.tokens.json');
 const dark = read('Dark.tokens.json');
 
+/*
+ * ACCESSIBLE ON LIGHT — colours the Figma file uses in both schemes that are
+ * too pale to read on the light canvas, given a light-scheme value of their
+ * own: the same hue, darkened until it clears WCAG 4.5:1 against the light
+ * page and white (so it holds as text, and as bars and dots at 3:1 with room
+ * to spare). The dark scheme keeps the file's colour. Overriding here rather
+ * than in the export keeps it through the next export from Figma.
+ *
+ *   Green   #80D940 is 1.72:1 on the light page; #46821A is 4.58:1.
+ */
+const LIGHT_OVERRIDES: Record<string, string> = {
+  'base-green': '#46821A',
+};
+
 const rows = [...light.values()].map(({ path, value }) => ({
   key: keyOf(path),
   label: labelOf(path),
   group: groupOf(path),
-  light: value,
+  light: LIGHT_OVERRIDES[keyOf(path)] ?? value,
   dark: dark.get(path.join('/'))?.value ?? value,
 }));
+for (const key of Object.keys(LIGHT_OVERRIDES)) {
+  if (!rows.some((r) => r.key === key)) throw new Error(`LIGHT_OVERRIDES names "${key}", which the export no longer has`);
+}
 
 const keys = new Set<string>();
 for (const r of rows) {
@@ -86,10 +103,11 @@ for (const r of rows) {
 }
 
 const out = `/**
- * GENERATED — do not edit. Run \`npm run colors\` to regenerate.
+ * GENERATED — do not edit. Run \`pnpm run colors\` to regenerate.
  *
  * The illustration colour set, from \`tokens/illustration/*.tokens.json\`
- * (Figma variables). ${rows.length} colours per scheme, in the file's own order.
+ * (Figma variables). ${rows.length} colours per scheme, in the file's own order —
+ * with the light-scheme overrides in scripts/build-colors.ts, for contrast.
  */
 
 export interface IllustrationColor {

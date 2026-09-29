@@ -143,6 +143,20 @@ function duo(P: (key: PaletteKey) => string, t: MeshTreatment) {
 
 const LIGHT_MESHES = meshes(L, MESH_LIGHT);
 
+/**
+ * Dark's meshes as transcribed — except `corners`, whose three blooms are
+ * drawn 1.5x stronger. Spread over three corners at 22–34%, it read paler
+ * than `centered`, whose two blooms stack in the middle: measured on the
+ * dark stage, the strongest 5% of its pixels reached a chroma of 61 against
+ * centered's 87. At 1.5x they reach 85, so the two backgrounds are the same
+ * blue where each is bluest.
+ */
+const DARK_CORNERS_STRENGTH = 1.5;
+const DARK_MESHES = (() => {
+  const all = meshes(D);
+  return { ...all, corners: all.corners.map((b) => ({ ...b, opacity: b.opacity * DARK_CORNERS_STRENGTH })) };
+})();
+
 export interface ShadowLayer {
   /** Horizontal offset; omitted, straight down. */
   dx?: number;
@@ -746,7 +760,7 @@ export const dark: Tokens = {
     // Dark keeps the blurred-ellipse bloom the original artwork was drawn
     // with; the mesh is a light-canvas treatment.
     mesh: [],
-    meshes: meshes(D),
+    meshes: DARK_MESHES,
     duo: duo(D, MESH_AS_DRAWN),
     washColor: D('components-gradient-card-blue'),
     washOpacity: 0.28,

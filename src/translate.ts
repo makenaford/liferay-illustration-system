@@ -109,6 +109,72 @@ export function collectStrings(doc: Doc): string[] {
  */
 export function translateDoc(doc: Doc, table: Record<string, string>): Doc {
   const f: Visit = (s) => table[s]?.trim() || s;
-  const { translations: _, machineTranslated: __, ...rest } = doc;
+  const { translations: _, machineTranslated: __, localized: ___, ...rest } = doc;
   return fitTranslation(rest, { ...rest, elements: doc.elements.map((el) => visitElement(el, f)) });
+}
+
+/* ---- edited versions ----------------------------------------------------- */
+
+/**
+ * An illustration's own version in one language, edited by hand — to break
+ * a line differently, nudge a card, shorten a label — and saved for everyone
+ * (`Doc.localized`). Where there is one, it is what that language shows and
+ * downloads, in place of the automatic translation. The English is never
+ * touched by it. `from` is the English it was made from (`fingerprint`), so
+ * a change to the English can be flagged.
+ */
+export interface Localized {
+  elements: Element[];
+  panels?: Doc['panels'];
+  canvas: Doc['canvas'];
+  artboard?: Doc['artboard'];
+  glow?: Doc['glow'];
+  mockup?: Doc['mockup'];
+  from: string;
+  savedAt: number;
+}
+
+/** What shape the English is and what it says — changes when either does. */
+export function fingerprint(doc: Doc): string {
+  const shape = (els: Element[]): unknown[] =>
+    els.map((e) => [e.type, ...((e as { children?: Element[] }).children ? [shape((e as { children: Element[] }).children)] : [])]);
+  const text = JSON.stringify([shape(doc.elements), collectStrings(doc)]);
+  // FNV-1a: short and stable, not a secret.
+  let h = 0x811c9dc5;
+  for (let i = 0; i < text.length; i++) h = Math.imul(h ^ text.charCodeAt(i), 0x01000193);
+  return (h >>> 0).toString(36);
+}
+
+/** The document as `lang` shows it: its edited version if it has one, else translated by `table`. */
+export function localizedDoc(doc: Doc, lang: Lang, table: Record<string, string>): Doc {
+  const own = doc.localized?.[lang];
+  if (!own) return translateDoc(doc, table);
+  const { translations: _, machineTranslated: __, localized: ___, ...rest } = doc;
+  const { from: _f, savedAt: _s, ...drawing } = own;
+  return { ...rest, ...drawing };
+}
+
+/** Whether `lang`'s edited version was made from different English than the document has now. */
+export const isStale = (doc: Doc, lang: Lang) => !!doc.localized?.[lang] && doc.localized[lang]!.from !== fingerprint(doc);
+
+/** `english` with `working` saved as its `lang` version. */
+export function withLocalized(english: Doc, lang: Lang, working: Doc, savedAt: number): Doc {
+  const own: Localized = {
+    elements: working.elements,
+    panels: working.panels,
+    canvas: working.canvas,
+    artboard: working.artboard,
+    glow: working.glow,
+    mockup: working.mockup,
+    from: fingerprint(english),
+    savedAt,
+  };
+  return { ...english, localized: { ...english.localized, [lang]: own } };
+}
+
+/** `english` without its `lang` version — back to the automatic translation. */
+export function withoutLocalized(english: Doc, lang: Lang): Doc {
+  const { [lang]: _, ...others } = english.localized ?? {};
+  const { localized: __, ...rest } = english;
+  return Object.keys(others).length ? { ...rest, localized: others } : rest;
 }

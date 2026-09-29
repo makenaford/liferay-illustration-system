@@ -3,7 +3,7 @@ import { renderDocument } from '../src/render.ts';
 import { copyText, saveFile } from '../editor/save.ts';
 import { svgToPng } from '../editor/png.ts';
 import { draftAll, renderTranslated, tableFor, tableNow, translator } from '../editor/translate.ts';
-import { LANGUAGES, translateDoc, type Lang } from '../src/translate.ts';
+import { LANGUAGES, localizedDoc, type Lang } from '../src/translate.ts';
 import { App as BuilderApp } from '../editor/App.tsx';
 import { TEMPLATES, type TemplateName } from '../editor/docs.ts';
 import { NewMenu } from '../editor/NewMenu.tsx';
@@ -1173,7 +1173,7 @@ function IllustrationCard({
   select?: { on: boolean; toggle: () => void };
 }) {
   const svg = useMemo(() => {
-    const doc = lang === 'en' ? row.doc : translateDoc(row.doc, tableNow(row.doc, lang).table);
+    const doc = lang === 'en' ? row.doc : localizedDoc(row.doc, lang, tableNow(row.doc, lang).table);
     return renderDocument(doc, theme, { embedFont: false });
     // `tick` stands for the drafts, which live outside React.
   }, [row.doc, theme, lang, tick]);
@@ -1282,7 +1282,7 @@ function IllustrationDetail({
     };
   }, [row.doc, lang]);
   const table = lang !== 'en' && translation?.lang === lang ? translation.table : null;
-  const shown = useMemo(() => (table ? translateDoc(row.doc, table) : row.doc), [row.doc, table]);
+  const shown = useMemo(() => (table && lang !== 'en' ? localizedDoc(row.doc, lang, table) : row.doc), [row.doc, lang, table]);
   const preview = useMemo(() => renderDocument(shown, theme, { embedFont: false }), [shown, theme]);
   const { width, height } = row.doc.canvas;
   const stem = table ? `${row.id}.${lang}` : row.id;
@@ -1374,7 +1374,9 @@ function IllustrationDetail({
               <p className="am-hint">
                 {translating
                   ? 'Translating…'
-                  : translation?.drafted
+                  : row.doc.localized?.[lang]
+                    ? `This is the ${LANGUAGES[lang].name} version edited in the builder.`
+                    : translation?.drafted
                     ? `${translation.drafted} string${translation.drafted === 1 ? ' is' : 's are'} machine-translated and unreviewed — use Translate… in the builder to check ${translation.drafted === 1 ? 'it' : 'them'}.`
                     : 'Every string has a reviewed translation.'}{' '}
                 The illustration itself stays in English.

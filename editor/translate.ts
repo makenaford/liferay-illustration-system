@@ -1,7 +1,7 @@
 import type { Doc } from '../src/document.ts';
 import { fontWeights, renderDocument, type RenderOptions } from '../src/render.ts';
 import type { ThemeName } from '../src/tokens.ts';
-import { collectStrings, LANGUAGES, translateDoc, type Lang, type Translations } from '../src/translate.ts';
+import { collectStrings, LANGUAGES, localizedDoc, type Lang, type Translations } from '../src/translate.ts';
 
 /**
  * The translated export, on the page's side — see src/translate.ts for the
@@ -52,7 +52,8 @@ export async function renderTranslated(
   table: Record<string, string>,
   theme: ThemeName,
 ): Promise<string> {
-  const translated = translateDoc(doc, table);
+  // Its edited version in `lang`, where it has one.
+  const translated = localizedDoc(doc, lang, table);
   const options: RenderOptions = {};
 
   // From what the copy draws, not the whole table: a stale entry adds nothing.

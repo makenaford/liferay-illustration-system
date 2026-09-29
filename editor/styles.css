@@ -1247,3 +1247,8 @@ button.mini.on { background: var(--accent); border-color: var(--accent); color: 
   letter-spacing: 0.02em;
 }
 button.mini.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+/* The language being edited, and the banner that says so. */
+.edit-lang { display: inline-flex; align-items: center; gap: 6px; color: var(--ink-dim); font-size: 12px; }
+.edit-lang select { width: auto; }
+.lang-banner { border-color: var(--accent-soft); }

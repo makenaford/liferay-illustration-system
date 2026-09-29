@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { renderDocument } from '../src/render.ts';
-import { collectStrings, LANGUAGES, translateDoc, type Lang } from '../src/translate.ts';
+import { collectStrings, LANGUAGES, localizedDoc, type Lang } from '../src/translate.ts';
 import { commit, getState, useEditor } from './state.ts';
 import { svgToPng } from './png.ts';
 import { saveFile, type SaveOutcome } from './save.ts';
@@ -51,8 +51,8 @@ export function TranslateModal({
 
   // On screen the page's own fonts draw it; the file embeds its faces.
   const preview = useMemo(
-    () => renderDocument(translateDoc(doc, table), theme, { embedFont: false }),
-    [doc, table, theme],
+    () => renderDocument(localizedDoc(doc, lang, table), theme, { embedFont: false }),
+    [doc, lang, table, theme],
   );
 
   /**

@@ -12,7 +12,9 @@ import { copySelected, cutSelected, duplicateSelected, paste } from './clipboard
 import { copyText, saveFile } from './save.ts';
 import { SourceModal } from './SourceModal.tsx';
 import { TranslateModal } from './TranslateModal.tsx';
-import { draftMissing, withTranslations } from './translate.ts';
+import { draftMissing, tableFor, tableNow, withTranslations } from './translate.ts';
+import { isStale, LANGUAGES, localizedDoc, withLocalized, withoutLocalized, type Lang } from '../src/translate.ts';
+import type { Doc } from '../src/document.ts';
 import { LAYOUT } from '../src/tokens.ts';
 import { reorderSibling, reorderToEdge } from './state.ts';
 import {
@@ -50,6 +52,11 @@ export function App() {
   const selected = useEditor((s) => s.selected);
   const view = useEditor((s) => s.view);
   const dirty = useEditor((s) => s.dirty);
+  const editLang = useEditor((s) => s.editLang);
+  const english = useEditor((s) => s.english);
+  // Going back to the automatic translation drops an edit everyone shares,
+  // so it asks once more.
+  const [resetArmed, setResetArmed] = useState(false);
   const [store_, setStore_] = useState<'shared' | 'local' | 'none' | null>(null);
   const [tab, setTab] = useState<Tab>('layers');
   const [source, setSource] = useState<{ filename: string; text: string } | null>(null);
@@ -96,12 +103,72 @@ export function App() {
   const saverName = async (s: Saved) =>
     (s.updatedBy && (await namesOf([s.updatedBy]))[s.updatedBy]) || 'A teammate';
 
-  /** Take the library's version, dropping the open edits. */
+  /**
+   * Open `english` in `lang`: English as it is; another language as its
+   * edited version, or — with none yet — translated, drafting what has no
+   * translation. The name stays the English one: it is not part of a version.
+   */
+  const openLanguage = async (lang: Lang | 'en', english: Doc, base: number) => {
+    if (lang === 'en') {
+      initStore(english, base);
+      setUI({ view: 'editor' });
+      return;
+    }
+    let table = tableNow(english, lang).table;
+    if (!english.localized?.[lang] && tableNow(english, lang).missing) {
+      setFlash(`Translating into ${LANGUAGES[lang].name}…`);
+      table = (await tableFor(english, lang)).table;
+    }
+    initStore({ ...localizedDoc(english, lang, table), id: english.id, name: english.name }, base);
+    setUI({ view: 'editor', editLang: lang, english });
+    setFlash(
+      english.localized?.[lang]
+        ? `Editing the ${LANGUAGES[lang].name} version`
+        : `Editing ${LANGUAGES[lang].name} — saving makes this its own version`,
+    );
+  };
+
+  const switchLanguage = (lang: Lang | 'en') => {
+    const st = getState();
+    if (lang === st.editLang) return;
+    if (st.dirty) {
+      setFlash('Save or undo your changes before switching language');
+      return;
+    }
+    setResetArmed(false);
+    void openLanguage(lang, st.editLang === 'en' ? st.doc : st.english!, st.base);
+  };
+
+  /** Drop the open language's edited version, for everyone: back to the automatic translation. */
+  const resetLanguage = async () => {
+    const st = getState();
+    if (st.editLang === 'en' || !st.english) return;
+    if (!resetArmed) {
+      setResetArmed(true);
+      setFlash('Click again to drop this version for everyone and use the automatic translation');
+      return;
+    }
+    setResetArmed(false);
+    const lang = st.editLang;
+    const at = Date.now();
+    const back = withoutLocalized(st.english, lang);
+    setUI({ base: at });
+    await saveToLibrary(back, at);
+    await openLanguage(lang, back, at);
+    setFlash(`${LANGUAGES[lang].name} is back to the automatic translation`);
+  };
+
+  /** Take the library's version, dropping the open edits — in the language being edited. */
   const loadTheirs = (theirs: Saved) => {
-    initStore(theirs.doc, theirs.updatedAt);
-    setUI({ view: 'editor' });
+    const lang = getState().editLang;
     setConflict(null);
     setIncoming(null);
+    if (lang !== 'en') {
+      void openLanguage(lang, theirs.doc, theirs.updatedAt);
+      return;
+    }
+    initStore(theirs.doc, theirs.updatedAt);
+    setUI({ view: 'editor' });
   };
 
   const saveDoc = async (overwrite = false) => {
@@ -122,13 +189,22 @@ export function App() {
       // Claimed before the write lands, so the live echo of this very save
       // is not mistaken for someone else's.
       setUI({ base: at });
+      // In another language, the document is that language's version: it is
+      // saved into the English, which is otherwise left as it is.
+      const now = getState();
+      const saving = now.editLang === 'en' ? now.doc : withLocalized(now.english!, now.editLang, now.doc, at);
       try {
-        await saveToLibrary(getState().doc, at);
+        await saveToLibrary(saving, at);
       } catch (e) {
         setUI({ base: st.base });
         throw e;
       }
       markSaved(at);
+      if (now.editLang !== 'en') {
+        setUI({ english: saving });
+        setFlash(`Saved the ${LANGUAGES[now.editLang].name} version for everyone`);
+        return;
+      }
       setFlash(
         store_ === 'shared'
           ? 'Saved to the shared library'
@@ -159,7 +235,7 @@ export function App() {
       const additions = await draftMissing(saved);
       if (!additions || !Object.keys(additions).length) return;
       const now = getState();
-      if (now.view === 'editor' && now.doc.id === saved.id) {
+      if (now.view === 'editor' && now.doc.id === saved.id && now.editLang === 'en') {
         const { doc, added } = withTranslations(now.doc, additions);
         if (!added) return;
         amendDoc(doc);
@@ -578,8 +654,20 @@ export function App() {
             <option value={3}>3×</option>
           </select>
         </span>
+        <label className="edit-lang" title="Edit the illustration in another language — a save there is that language's own version, for everyone">
+          <span>Editing</span>
+          <select aria-label="Language being edited" value={editLang} onChange={(e) => switchLanguage(e.target.value as Lang | 'en')}>
+            <option value="en">English</option>
+            {(Object.keys(LANGUAGES) as Lang[]).map((l) => (
+              <option key={l} value={l}>
+                {LANGUAGES[l].native}
+              </option>
+            ))}
+          </select>
+        </label>
         <button
           type="button"
+          disabled={editLang !== 'en'}
           onClick={() => setTranslating(true)}
           title="Download the illustration with its text in Japanese or Spanish — the original stays as it is"
         >
@@ -618,6 +706,23 @@ export function App() {
         </aside>
 
         <main className="center">
+          {editLang !== 'en' && english && (
+            <div className="sync-banner lang-banner" role="status">
+              <span>
+                Editing the <b>{LANGUAGES[editLang].name}</b> version. Saving changes only {LANGUAGES[editLang].name}, for
+                everyone; the English stays as it is.
+                {isStale(english, editLang) && ' The English has changed since this version was edited.'}
+              </span>
+              {english.localized?.[editLang] && (
+                <button type="button" onClick={() => void resetLanguage()}>
+                  {resetArmed ? 'Click again to confirm' : isStale(english, editLang) ? 'Rebuild from English' : 'Use the automatic translation'}
+                </button>
+              )}
+              <button type="button" onClick={() => switchLanguage('en')}>
+                Back to English
+              </button>
+            </div>
+          )}
           {incoming && (
             <div className="sync-banner" role="status">
               <span>

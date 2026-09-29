@@ -141,6 +141,7 @@ export const SCHEMA: {
     fields: [
       { key: 'content', label: 'Content', kind: 'textarea' },
       ...XY,
+      { key: 'maxWidth', label: 'Max width · wraps', kind: 'number', min: 0 },
       { key: 'role', label: 'Size', kind: 'select', options: ROLES },
       { key: 'weight', label: 'Weight', kind: 'select', options: ['', ...WEIGHTS] },
       { key: 'anchor', label: 'Align', kind: 'select', options: ['start', 'middle', 'end'] },
@@ -155,6 +156,7 @@ export const SCHEMA: {
     fields: [
       ...XY,
       ...WH,
+      { key: 'maxWidth', label: 'Max width · text wraps', kind: 'number', min: 0 },
       { key: 'surface', label: 'Surface', kind: 'select', options: ['', ...SURFACES] },
       { key: 'radius', label: 'Radius', kind: 'number', min: 0, default: 8 },
       { key: 'clip', label: 'Clip content', kind: 'boolean' },
@@ -168,6 +170,7 @@ export const SCHEMA: {
       { key: 'y', label: 'Y', kind: 'number' },
       { key: 'width', label: 'W', kind: 'number', min: 1 },
       { key: 'height', label: 'H', kind: 'number', min: 1 },
+      { key: 'maxWidth', label: 'Max width · text wraps', kind: 'number', min: 0 },
       { key: 'clip', label: 'Clip content', kind: 'boolean' },
     ],
   },
@@ -176,6 +179,7 @@ export const SCHEMA: {
     fields: [
       ...XY,
       ...WH,
+      { key: 'maxWidth', label: 'Max width · text wraps', kind: 'number', min: 0 },
       { key: 'surface', label: 'Surface', kind: 'select', options: ['', ...SURFACES] },
       { key: 'radius', label: 'Radius', kind: 'number', min: 0, default: 4 },
       { key: 'clip', label: 'Clip content', kind: 'boolean' },

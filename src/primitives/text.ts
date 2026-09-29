@@ -108,7 +108,7 @@ export function typeStyle(role: TypeRole, weight?: TypeWeight) {
  */
 const SMALL_CAPS_TRACKING = 0.06;
 
-type Styled = { role: TypeRole; weight?: TypeWeight; smallCaps?: boolean };
+type Styled = { role: TypeRole; weight?: TypeWeight; smallCaps?: boolean; maxWidth?: number };
 
 /** `typeStyle`, with small caps applied: semibold unless the weight is set, and tracked. */
 export function textStyle(t: Styled) {
@@ -129,8 +129,53 @@ export function shownText(t: { content: string; smallCaps?: boolean }): string {
 export function measureTextEl(t: Styled & { content: string }) {
   const style = textStyle(t);
   const content = shownText(t);
+  const tracked = (s: string) =>
+    measureText(s, style.size, style.weight) + (t.smallCaps ? style.tracking * [...s].length : 0);
+  const lines = t.maxWidth ? wrapLines(content, tracked, t.maxWidth) : [content];
   const box = textBox(content, style.size, style.weight);
-  return { ...box, width: box.width + (t.smallCaps ? style.tracking * [...content].length : 0), style, content };
+  const width = Math.max(...lines.map(tracked));
+  const height = box.height + (lines.length - 1) * lineLead(style.size);
+  return { ...box, width, height, style, content, lines };
+}
+
+/** From one line's baseline to the next. */
+export const lineLead = (size: number) => size * 1.25;
+
+/*
+ * Characters a line may not start with (Japanese line-breaking, kinsoku):
+ * closing brackets, the small kana and the stops. A break that would put one
+ * at the head of a line moves back a character, so it ends the line before.
+ */
+const NO_START = /[、。，．・：；？！ー）」』】〉》〕ぁぃぅぇぉっゃゅょゎァィゥェォッャュョヮヵヶ,.;:!?)\]}%]/u;
+const CJK = /[\u3000-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff00-\uffef]/u;
+
+/**
+ * `text` in lines no wider than `max`, as `width` measures them. Latin text
+ * breaks at spaces; Japanese, which has none, between any two characters —
+ * except before a mark that may not start a line. A word longer than the
+ * line breaks where it must. One line when it fits.
+ */
+export function wrapLines(text: string, width: (s: string) => number, max: number): string[] {
+  if (width(text) <= max) return [text];
+  const chars = [...text];
+  const lines: string[] = [];
+  let start = 0;
+  while (start < chars.length) {
+    // The longest run from `start` that fits.
+    let end = start + 1;
+    while (end < chars.length && width(chars.slice(start, end + 1).join('')) <= max) end++;
+    if (end < chars.length) {
+      // Back to a break the script allows: after a space, or between CJK characters.
+      let brk = end;
+      while (brk > start + 1 && !(chars[brk - 1] === ' ' || (CJK.test(chars[brk - 1]) || CJK.test(chars[brk])) && !NO_START.test(chars[brk]))) brk--;
+      if (brk > start + 1) end = brk;
+    }
+    const line = chars.slice(start, end).join('').trim();
+    if (line) lines.push(line);
+    start = end;
+    while (chars[start] === ' ') start++;
+  }
+  return lines.length ? lines : [text];
 }
 
 export const TYPE_ROLES = Object.fromEntries(
@@ -154,6 +199,8 @@ export interface TextProps {
   strikethrough?: boolean;
   /** Capitals, semibold, tracked — see `textStyle`. */
   smallCaps?: boolean;
+  /** Wrap onto more lines rather than run wider than this — see `wrapLines`. */
+  maxWidth?: number;
 }
 
 /**
@@ -171,6 +218,19 @@ const DECORATION = { underline: 0.09, strike: -0.243, thickness: 0.05 } as const
  * illustration drops from 739 paths to a couple of dozen nodes.
  */
 export function Text(ctx: Ctx, props: TextProps): VNode {
+  // Wrapped: each line a text of its own, a lead apart, from the first baseline.
+  if (props.maxWidth) {
+    const { lines, style } = measureTextEl(props);
+    if (lines.length > 1) {
+      return h(
+        'g',
+        { 'data-el': 'text-wrapped' },
+        lines.map((line, i) =>
+          Text(ctx, { ...props, maxWidth: undefined, content: line, y: props.y + i * lineLead(style.size) }),
+        ),
+      );
+    }
+  }
   const role = textStyle(props);
   const content = shownText(props);
   const f = ctx.tokens.font;

@@ -28,24 +28,24 @@
   ],
   "panels": [
     {
-      "x": 48,
-      "y": 24,
-      "width": 464,
-      "height": 318
+      "x": 30,
+      "y": 32,
+      "width": 518,
+      "height": 324
     }
   ],
   "elements": [
     {
       "type": "subCard",
-      "x": 60,
-      "y": 36,
-      "width": 142,
-      "height": 62,
+      "x": 44,
+      "y": 44,
+      "width": 158,
+      "height": 64,
       "children": [
         {
           "type": "group",
-          "x": 0,
-          "y": 0,
+          "x": -16,
+          "y": 8,
           "width": 118,
           "height": 14,
           "layout": {
@@ -59,15 +59,15 @@
           "children": [
             {
               "type": "text",
-              "x": 68,
-              "y": 47.92,
+              "x": 52,
+              "y": 55.92,
               "role": "label",
               "content": "AI Visibility Score"
             },
             {
               "type": "badge",
-              "x": 0,
-              "y": 0,
+              "x": -16,
+              "y": 8,
               "label": "+12 pts",
               "tone": "info",
               "dot": false
@@ -76,8 +76,8 @@
         },
         {
           "type": "group",
-          "x": 0,
-          "y": 0,
+          "x": -16,
+          "y": 8,
           "width": 118,
           "height": 16,
           "layout": {
@@ -91,16 +91,16 @@
           "children": [
             {
               "type": "text",
-              "x": 68,
-              "y": 60.3,
+              "x": 52,
+              "y": 68.3,
               "role": "heading",
               "content": "82",
               "weight": "bold"
             },
             {
               "type": "lineChart",
-              "x": 0,
-              "y": 0,
+              "x": -16,
+              "y": 8,
               "width": 44,
               "height": 12,
               "gridLines": 0,
@@ -129,8 +129,8 @@
         },
         {
           "type": "text",
-          "x": 68,
-          "y": 68.24,
+          "x": 52,
+          "y": 76.24,
           "role": "micro",
           "content": "Up from 70 last quarter",
           "weight": "semibold",
@@ -148,14 +148,14 @@
     {
       "type": "subCard",
       "x": 210,
-      "y": 36,
-      "width": 142,
-      "height": 62,
+      "y": 44,
+      "width": 160,
+      "height": 64,
       "children": [
         {
           "type": "group",
           "x": 0,
-          "y": 0,
+          "y": 8,
           "width": 118,
           "height": 14,
           "layout": {
@@ -170,14 +170,14 @@
             {
               "type": "text",
               "x": 218,
-              "y": 47.92,
+              "y": 55.92,
               "role": "label",
               "content": "AI Citations"
             },
             {
               "type": "badge",
               "x": 0,
-              "y": 0,
+              "y": 8,
               "label": "Live",
               "tone": "success"
             }
@@ -186,7 +186,7 @@
         {
           "type": "group",
           "x": 0,
-          "y": 0,
+          "y": 8,
           "width": 118,
           "height": 16,
           "layout": {
@@ -201,7 +201,7 @@
             {
               "type": "text",
               "x": 218,
-              "y": 60.3,
+              "y": 68.3,
               "role": "heading",
               "content": "1,284",
               "weight": "bold"
@@ -209,7 +209,7 @@
             {
               "type": "lineChart",
               "x": 0,
-              "y": 0,
+              "y": 8,
               "width": 44,
               "height": 12,
               "gridLines": 0,
@@ -239,7 +239,7 @@
         {
           "type": "text",
           "x": 218,
-          "y": 68.24,
+          "y": 76.24,
           "role": "micro",
           "content": "Across 4 AI engines",
           "weight": "semibold",
@@ -256,15 +256,15 @@
     },
     {
       "type": "subCard",
-      "x": 358,
-      "y": 36,
-      "width": 142,
-      "height": 62,
+      "x": 376,
+      "y": 44,
+      "width": 158,
+      "height": 64,
       "children": [
         {
           "type": "group",
-          "x": 0,
-          "y": 0,
+          "x": 18,
+          "y": 8,
           "width": 118,
           "height": 14,
           "layout": {
@@ -278,15 +278,15 @@
           "children": [
             {
               "type": "text",
-              "x": 366,
-              "y": 47.92,
+              "x": 384,
+              "y": 55.92,
               "role": "label",
               "content": "Share of Voice"
             },
             {
               "type": "badge",
-              "x": 0,
-              "y": 0,
+              "x": 18,
+              "y": 8,
               "label": "+6.7%",
               "tone": "info",
               "dot": false
@@ -295,8 +295,8 @@
         },
         {
           "type": "group",
-          "x": 0,
-          "y": 0,
+          "x": 18,
+          "y": 8,
           "width": 118,
           "height": 16,
           "layout": {
@@ -310,16 +310,16 @@
           "children": [
             {
               "type": "text",
-              "x": 366,
-              "y": 60.3,
+              "x": 384,
+              "y": 68.3,
               "role": "heading",
               "content": "34%",
               "weight": "bold"
             },
             {
               "type": "lineChart",
-              "x": 0,
-              "y": 0,
+              "x": 18,
+              "y": 8,
               "width": 44,
               "height": 12,
               "gridLines": 0,
@@ -348,8 +348,8 @@
         },
         {
           "type": "text",
-          "x": 366,
-          "y": 68.24,
+          "x": 384,
+          "y": 76.24,
           "role": "micro",
           "content": "vs. top 5 competitors",
           "weight": "semibold",
@@ -366,22 +366,22 @@
     },
     {
       "type": "subCard",
-      "x": 60,
-      "y": 104,
-      "width": 216,
-      "height": 124,
+      "x": 44,
+      "y": 114,
+      "width": 240,
+      "height": 126,
       "children": [
         {
           "type": "text",
-          "x": 72,
-          "y": 121.7,
+          "x": 56,
+          "y": 131.7,
           "role": "bodySmall",
           "content": "Engagement / Category"
         },
         {
           "type": "group",
-          "x": 0,
-          "y": 0,
+          "x": -16,
+          "y": 10,
           "width": 192,
           "height": 14,
           "layout": {
@@ -394,8 +394,8 @@
           "children": [
             {
               "type": "progress",
-              "x": 72,
-              "y": 139.61,
+              "x": 56,
+              "y": 149.61,
               "width": 162,
               "value": 0.615,
               "label": "Homepage",
@@ -403,8 +403,8 @@
             },
             {
               "type": "text",
-              "x": 0,
-              "y": 0,
+              "x": -16,
+              "y": 10,
               "role": "micro",
               "content": "62%",
               "tone": "muted"
@@ -413,8 +413,8 @@
         },
         {
           "type": "group",
-          "x": 0,
-          "y": 0,
+          "x": -16,
+          "y": 10,
           "width": 192,
           "height": 14,
           "layout": {
@@ -427,8 +427,8 @@
           "children": [
             {
               "type": "progress",
-              "x": 72,
-              "y": 158.89,
+              "x": 56,
+              "y": 168.89,
               "width": 162,
               "value": 0.448,
               "label": "Products",
@@ -436,8 +436,8 @@
             },
             {
               "type": "text",
-              "x": 0,
-              "y": 0,
+              "x": -16,
+              "y": 10,
               "role": "micro",
               "content": "45%",
               "tone": "muted"
@@ -446,8 +446,8 @@
         },
         {
           "type": "group",
-          "x": 0,
-          "y": 0,
+          "x": -16,
+          "y": 10,
           "width": 192,
           "height": 14,
           "layout": {
@@ -460,8 +460,8 @@
           "children": [
             {
               "type": "progress",
-              "x": 72,
-              "y": 178.16,
+              "x": 56,
+              "y": 188.16,
               "width": 162,
               "value": 0.055,
               "label": "Blog",
@@ -469,8 +469,8 @@
             },
             {
               "type": "text",
-              "x": 0,
-              "y": 0,
+              "x": -16,
+              "y": 10,
               "role": "micro",
               "content": "6%",
               "tone": "muted"
@@ -479,8 +479,8 @@
         },
         {
           "type": "group",
-          "x": 0,
-          "y": 0,
+          "x": -16,
+          "y": 10,
           "width": 192,
           "height": 14,
           "layout": {
@@ -493,8 +493,8 @@
           "children": [
             {
               "type": "progress",
-              "x": 72,
-              "y": 197.44,
+              "x": 56,
+              "y": 207.44,
               "width": 162,
               "value": 0.318,
               "label": "Docs",
@@ -502,8 +502,8 @@
             },
             {
               "type": "text",
-              "x": 0,
-              "y": 0,
+              "x": -16,
+              "y": 10,
               "role": "micro",
               "content": "32%",
               "tone": "muted"
@@ -521,15 +521,15 @@
     },
     {
       "type": "subCard",
-      "x": 284,
-      "y": 104,
-      "width": 216,
-      "height": 124,
+      "x": 294,
+      "y": 114,
+      "width": 240,
+      "height": 126,
       "children": [
         {
           "type": "group",
-          "x": 0,
-          "y": 0,
+          "x": 10,
+          "y": 10,
           "width": 192,
           "height": 10,
           "layout": {
@@ -542,15 +542,15 @@
           "children": [
             {
               "type": "text",
-              "x": 296,
-              "y": 121.7,
+              "x": 306,
+              "y": 131.7,
               "role": "bodySmall",
               "content": "Organic traffic growth"
             },
             {
               "type": "text",
-              "x": 0,
-              "y": 0,
+              "x": 10,
+              "y": 10,
               "role": "caption",
               "content": "+38.4%",
               "tone": "success",
@@ -560,8 +560,8 @@
         },
         {
           "type": "lineChart",
-          "x": 296,
-          "y": 127.34,
+          "x": 306,
+          "y": 137.34,
           "width": 192,
           "height": 66,
           "gridLines": 8,
@@ -606,15 +606,15 @@
     },
     {
       "type": "subCard",
-      "x": 60,
-      "y": 234,
-      "width": 216,
-      "height": 96,
+      "x": 44,
+      "y": 246,
+      "width": 240,
+      "height": 98,
       "children": [
         {
           "type": "group",
-          "x": 0,
-          "y": 0,
+          "x": -16,
+          "y": 12,
           "width": 192,
           "height": 10,
           "layout": {
@@ -627,15 +627,15 @@
           "children": [
             {
               "type": "text",
-              "x": 72,
-              "y": 251.7,
+              "x": 56,
+              "y": 263.7,
               "role": "bodySmall",
               "content": "AI Visibility Score growth"
             },
             {
               "type": "text",
-              "x": 0,
-              "y": 0,
+              "x": -16,
+              "y": 12,
               "role": "caption",
               "content": "82 / 100",
               "tone": "success",
@@ -645,8 +645,8 @@
         },
         {
           "type": "lineChart",
-          "x": 72,
-          "y": 257.34,
+          "x": 56,
+          "y": 269.34,
           "width": 192,
           "height": 56,
           "gridLines": 8,
@@ -681,22 +681,22 @@
     },
     {
       "type": "subCard",
-      "x": 284,
-      "y": 234,
-      "width": 216,
-      "height": 96,
+      "x": 294,
+      "y": 246,
+      "width": 240,
+      "height": 98,
       "children": [
         {
           "type": "text",
-          "x": 0,
-          "y": 0,
+          "x": 10,
+          "y": 12,
           "role": "bodySmall",
           "content": "Citations by source"
         },
         {
           "type": "group",
-          "x": 0,
-          "y": 0,
+          "x": 10,
+          "y": 12,
           "width": 192,
           "height": 10,
           "layout": {
@@ -709,16 +709,16 @@
           "children": [
             {
               "type": "icon",
-              "x": 296,
-              "y": 259.34,
+              "x": 306,
+              "y": 271.34,
               "size": 10,
               "icon": "search",
               "tone": "subtle"
             },
             {
               "type": "text",
-              "x": 0,
-              "y": 0,
+              "x": 10,
+              "y": 12,
               "role": "micro",
               "content": "1.2K",
               "tone": "muted"
@@ -727,8 +727,8 @@
         },
         {
           "type": "group",
-          "x": 0,
-          "y": 0,
+          "x": 10,
+          "y": 12,
           "width": 192,
           "height": 10,
           "layout": {
@@ -741,16 +741,16 @@
           "children": [
             {
               "type": "icon",
-              "x": 296,
-              "y": 277.34,
+              "x": 306,
+              "y": 289.34,
               "size": 10,
               "icon": "bolt",
               "tone": "subtle"
             },
             {
               "type": "text",
-              "x": 0,
-              "y": 0,
+              "x": 10,
+              "y": 12,
               "role": "micro",
               "content": "860",
               "tone": "muted"
@@ -759,8 +759,8 @@
         },
         {
           "type": "group",
-          "x": 0,
-          "y": 0,
+          "x": 10,
+          "y": 12,
           "width": 192,
           "height": 10,
           "layout": {
@@ -773,16 +773,16 @@
           "children": [
             {
               "type": "icon",
-              "x": 296,
-              "y": 295.34,
+              "x": 306,
+              "y": 307.34,
               "size": 10,
               "icon": "chat",
               "tone": "subtle"
             },
             {
               "type": "text",
-              "x": 0,
-              "y": 0,
+              "x": 10,
+              "y": 12,
               "role": "micro",
               "content": "410",
               "tone": "muted"
@@ -800,22 +800,22 @@
     },
     {
       "type": "subCard",
-      "x": 338,
-      "y": 254,
+      "x": 344,
+      "y": 246,
       "width": 216,
-      "height": 106,
+      "height": 114,
       "children": [
         {
           "type": "text",
-          "x": 350,
-          "y": 273.7,
+          "x": 356,
+          "y": 265.7,
           "role": "bodySmall",
           "content": "AI Source Breakdown"
         },
         {
           "type": "text",
-          "x": 350,
-          "y": 286.61,
+          "x": 356,
+          "y": 278.61,
           "role": "micro",
           "content": "Growth contribution from top AI sources",
           "weight": "semibold",
@@ -823,8 +823,8 @@
         },
         {
           "type": "group",
-          "x": 350,
-          "y": 303.83,
+          "x": 356,
+          "y": 295.83,
           "width": 192,
           "height": 14,
           "layout": {
@@ -837,8 +837,8 @@
           "children": [
             {
               "type": "progress",
-              "x": 350,
-              "y": 303.83,
+              "x": 356,
+              "y": 295.83,
               "width": 140,
               "value": 0.5,
               "label": "AI Search (Google SGE, Bing AI)",
@@ -846,8 +846,8 @@
             },
             {
               "type": "text",
-              "x": 350,
-              "y": 303.83,
+              "x": 356,
+              "y": 295.83,
               "role": "micro",
               "content": "50%",
               "tone": "muted"
@@ -856,8 +856,8 @@
         },
         {
           "type": "group",
-          "x": 350,
-          "y": 323.1,
+          "x": 356,
+          "y": 315.1,
           "width": 192,
           "height": 14,
           "layout": {
@@ -870,8 +870,8 @@
           "children": [
             {
               "type": "progress",
-              "x": 350,
-              "y": 323.1,
+              "x": 356,
+              "y": 315.1,
               "width": 140,
               "value": 0.3,
               "label": "AI Chatbots (ChatGPT, Claude, Gemini)",
@@ -879,8 +879,8 @@
             },
             {
               "type": "text",
-              "x": 350,
-              "y": 323.1,
+              "x": 356,
+              "y": 315.1,
               "role": "micro",
               "content": "30%",
               "tone": "muted"
@@ -889,8 +889,8 @@
         },
         {
           "type": "group",
-          "x": 350,
-          "y": 342.38,
+          "x": 356,
+          "y": 334.38,
           "width": 192,
           "height": 14,
           "layout": {
@@ -903,8 +903,8 @@
           "children": [
             {
               "type": "progress",
-              "x": 350,
-              "y": 342.38,
+              "x": 356,
+              "y": 334.38,
               "width": 140,
               "value": 0.15,
               "label": "AI Assistants & Other Sources",
@@ -912,8 +912,8 @@
             },
             {
               "type": "text",
-              "x": 350,
-              "y": 342.38,
+              "x": 356,
+              "y": 334.38,
               "role": "micro",
               "content": "15%",
               "tone": "muted"
@@ -930,5 +930,11 @@
       "surface": "glass-highlighted"
     }
   ],
-  "panelSurfaces": 2
+  "panelSurfaces": 2,
+  "cardArea": {
+    "x": 20,
+    "y": 20,
+    "width": 540,
+    "height": 344
+  }
 }

@@ -8,16 +8,16 @@
   },
   "glow": [
     {
-      "cx": 120,
-      "cy": 62,
+      "cx": 134,
+      "cy": 74,
       "rx": 150,
       "ry": 140,
       "blur": 100,
       "opacity": 0.4
     },
     {
-      "cx": 470,
-      "cy": 322,
+      "cx": 484,
+      "cy": 334,
       "rx": 160,
       "ry": 150,
       "blur": 100,
@@ -26,8 +26,8 @@
   ],
   "panels": [
     {
-      "x": 24,
-      "y": 20,
+      "x": 38,
+      "y": 32,
       "width": 512,
       "height": 328,
       "radius": 8
@@ -36,39 +36,39 @@
   "elements": [
     {
       "type": "subCard",
-      "x": 36,
-      "y": 32,
+      "x": 50,
+      "y": 44,
       "width": 156,
       "height": 60,
       "surface": "glass-default",
       "children": [
         {
           "type": "text",
-          "x": 48,
-          "y": 50,
+          "x": 62,
+          "y": 62,
           "role": "label",
           "content": "Registered",
           "tone": "muted"
         },
         {
           "type": "text",
-          "x": 48,
-          "y": 68,
+          "x": 62,
+          "y": 80,
           "role": "title",
           "content": "120"
         },
         {
           "type": "progress",
-          "x": 48,
-          "y": 76,
+          "x": 62,
+          "y": 88,
           "width": 132,
           "value": 0.12,
           "tone": "accent"
         },
         {
           "type": "badge",
-          "x": 146,
-          "y": 44,
+          "x": 160,
+          "y": 56,
           "label": "+18%",
           "tone": "success",
           "dot": false
@@ -77,39 +77,39 @@
     },
     {
       "type": "subCard",
-      "x": 202,
-      "y": 32,
+      "x": 216,
+      "y": 44,
       "width": 156,
       "height": 60,
       "surface": "glass-default",
       "children": [
         {
           "type": "text",
-          "x": 214,
-          "y": 50,
+          "x": 228,
+          "y": 62,
           "role": "label",
           "content": "Co-Sell",
           "tone": "muted"
         },
         {
           "type": "text",
-          "x": 214,
-          "y": 68,
+          "x": 228,
+          "y": 80,
           "role": "title",
           "content": "45"
         },
         {
           "type": "progress",
-          "x": 214,
-          "y": 76,
+          "x": 228,
+          "y": 88,
           "width": 132,
           "value": 0.55,
           "tone": "accent"
         },
         {
           "type": "badge",
-          "x": 316,
-          "y": 44,
+          "x": 330,
+          "y": 56,
           "label": "+9%",
           "tone": "success",
           "dot": false
@@ -118,39 +118,39 @@
     },
     {
       "type": "subCard",
-      "x": 368,
-      "y": 32,
+      "x": 382,
+      "y": 44,
       "width": 156,
       "height": 60,
       "surface": "glass-default",
       "children": [
         {
           "type": "text",
-          "x": 380,
-          "y": 50,
+          "x": 394,
+          "y": 62,
           "role": "label",
           "content": "Close Won",
           "tone": "muted"
         },
         {
           "type": "text",
-          "x": 380,
-          "y": 68,
+          "x": 394,
+          "y": 80,
           "role": "title",
           "content": "30"
         },
         {
           "type": "progress",
-          "x": 380,
-          "y": 76,
+          "x": 394,
+          "y": 88,
           "width": 132,
           "value": 0.08,
           "tone": "accent"
         },
         {
           "type": "badge",
-          "x": 482,
-          "y": 44,
+          "x": 496,
+          "y": 56,
           "label": "+4%",
           "tone": "success",
           "dot": false
@@ -159,23 +159,23 @@
     },
     {
       "type": "subCard",
-      "x": 36,
-      "y": 100,
+      "x": 50,
+      "y": 112,
       "width": 238,
       "height": 114,
       "surface": "glass-default",
       "children": [
         {
           "type": "text",
-          "x": 48,
-          "y": 122,
+          "x": 62,
+          "y": 134,
           "role": "subheading",
           "content": "Revenue Breakdown"
         },
         {
           "type": "text",
-          "x": 66,
-          "y": 136,
+          "x": 80,
+          "y": 148,
           "role": "micro",
           "content": "100K",
           "tone": "muted",
@@ -183,8 +183,8 @@
         },
         {
           "type": "text",
-          "x": 66,
-          "y": 146,
+          "x": 80,
+          "y": 158,
           "role": "micro",
           "content": "80K",
           "tone": "muted",
@@ -192,8 +192,8 @@
         },
         {
           "type": "text",
-          "x": 66,
-          "y": 156,
+          "x": 80,
+          "y": 168,
           "role": "micro",
           "content": "60K",
           "tone": "muted",
@@ -201,8 +201,8 @@
         },
         {
           "type": "text",
-          "x": 66,
-          "y": 166,
+          "x": 80,
+          "y": 178,
           "role": "micro",
           "content": "40K",
           "tone": "muted",
@@ -210,8 +210,8 @@
         },
         {
           "type": "text",
-          "x": 66,
-          "y": 176,
+          "x": 80,
+          "y": 188,
           "role": "micro",
           "content": "20K",
           "tone": "muted",
@@ -219,8 +219,8 @@
         },
         {
           "type": "text",
-          "x": 66,
-          "y": 186,
+          "x": 80,
+          "y": 198,
           "role": "micro",
           "content": "0",
           "tone": "muted",
@@ -228,8 +228,8 @@
         },
         {
           "type": "barChart",
-          "x": 72,
-          "y": 134,
+          "x": 86,
+          "y": 146,
           "width": 186,
           "height": 50,
           "gridLines": 5,
@@ -254,8 +254,8 @@
         },
         {
           "type": "text",
-          "x": 118,
-          "y": 198,
+          "x": 132,
+          "y": 210,
           "role": "micro",
           "content": "Liferay",
           "tone": "muted",
@@ -263,8 +263,8 @@
         },
         {
           "type": "text",
-          "x": 212,
-          "y": 198,
+          "x": 226,
+          "y": 210,
           "role": "micro",
           "content": "Partner",
           "tone": "muted",
@@ -272,8 +272,8 @@
         },
         {
           "type": "text",
-          "x": 98,
-          "y": 166,
+          "x": 112,
+          "y": 178,
           "role": "micro",
           "content": "$32K",
           "anchor": "middle",
@@ -281,8 +281,8 @@
         },
         {
           "type": "text",
-          "x": 232,
-          "y": 138,
+          "x": 246,
+          "y": 150,
           "role": "micro",
           "content": "$88K",
           "anchor": "middle",
@@ -292,23 +292,23 @@
     },
     {
       "type": "subCard",
-      "x": 286,
-      "y": 100,
+      "x": 300,
+      "y": 112,
       "width": 238,
       "height": 114,
       "surface": "glass-default",
       "children": [
         {
           "type": "text",
-          "x": 298,
-          "y": 122,
+          "x": 312,
+          "y": 134,
           "role": "subheading",
           "content": "Quarterly Revenue"
         },
         {
           "type": "text",
-          "x": 316,
-          "y": 136,
+          "x": 330,
+          "y": 148,
           "role": "micro",
           "content": "100K",
           "tone": "muted",
@@ -316,8 +316,8 @@
         },
         {
           "type": "text",
-          "x": 316,
-          "y": 146,
+          "x": 330,
+          "y": 158,
           "role": "micro",
           "content": "80K",
           "tone": "muted",
@@ -325,8 +325,8 @@
         },
         {
           "type": "text",
-          "x": 316,
-          "y": 156,
+          "x": 330,
+          "y": 168,
           "role": "micro",
           "content": "60K",
           "tone": "muted",
@@ -334,8 +334,8 @@
         },
         {
           "type": "text",
-          "x": 316,
-          "y": 166,
+          "x": 330,
+          "y": 178,
           "role": "micro",
           "content": "40K",
           "tone": "muted",
@@ -343,8 +343,8 @@
         },
         {
           "type": "text",
-          "x": 316,
-          "y": 176,
+          "x": 330,
+          "y": 188,
           "role": "micro",
           "content": "20K",
           "tone": "muted",
@@ -352,8 +352,8 @@
         },
         {
           "type": "text",
-          "x": 316,
-          "y": 186,
+          "x": 330,
+          "y": 198,
           "role": "micro",
           "content": "0",
           "tone": "muted",
@@ -361,8 +361,8 @@
         },
         {
           "type": "barChart",
-          "x": 322,
-          "y": 134,
+          "x": 336,
+          "y": 146,
           "width": 186,
           "height": 50,
           "gridLines": 5,
@@ -393,8 +393,8 @@
         },
         {
           "type": "text",
-          "x": 340,
-          "y": 198,
+          "x": 354,
+          "y": 210,
           "role": "micro",
           "content": "Jan",
           "anchor": "middle",
@@ -402,8 +402,8 @@
         },
         {
           "type": "text",
-          "x": 378,
-          "y": 198,
+          "x": 392,
+          "y": 210,
           "role": "micro",
           "content": "Feb",
           "anchor": "middle",
@@ -411,8 +411,8 @@
         },
         {
           "type": "text",
-          "x": 416,
-          "y": 198,
+          "x": 430,
+          "y": 210,
           "role": "micro",
           "content": "Mar",
           "anchor": "middle",
@@ -420,8 +420,8 @@
         },
         {
           "type": "text",
-          "x": 452,
-          "y": 198,
+          "x": 466,
+          "y": 210,
           "role": "micro",
           "content": "Apr",
           "anchor": "middle",
@@ -429,8 +429,8 @@
         },
         {
           "type": "text",
-          "x": 490,
-          "y": 198,
+          "x": 504,
+          "y": 210,
           "role": "micro",
           "content": "May",
           "anchor": "middle",
@@ -438,8 +438,8 @@
         },
         {
           "type": "line",
-          "x": 434,
-          "y": 118,
+          "x": 448,
+          "y": 130,
           "width": 6,
           "height": 0,
           "tone": "accent",
@@ -447,16 +447,16 @@
         },
         {
           "type": "text",
-          "x": 444,
-          "y": 122,
+          "x": 458,
+          "y": 134,
           "role": "micro",
           "content": "Liferay",
           "tone": "muted"
         },
         {
           "type": "line",
-          "x": 476,
-          "y": 118,
+          "x": 490,
+          "y": 130,
           "width": 6,
           "height": 0,
           "tone": "base-purple",
@@ -464,8 +464,8 @@
         },
         {
           "type": "text",
-          "x": 486,
-          "y": 122,
+          "x": 500,
+          "y": 134,
           "role": "micro",
           "content": "Partner",
           "tone": "muted"
@@ -474,23 +474,23 @@
     },
     {
       "type": "subCard",
-      "x": 36,
-      "y": 222,
+      "x": 50,
+      "y": 234,
       "width": 238,
       "height": 114,
       "surface": "glass-default",
       "children": [
         {
           "type": "text",
-          "x": 48,
-          "y": 244,
+          "x": 62,
+          "y": 256,
           "role": "subheading",
           "content": "Annual Growth"
         },
         {
           "type": "text",
-          "x": 66,
-          "y": 258,
+          "x": 80,
+          "y": 270,
           "role": "micro",
           "content": "100%",
           "tone": "muted",
@@ -498,8 +498,8 @@
         },
         {
           "type": "text",
-          "x": 66,
-          "y": 270,
+          "x": 80,
+          "y": 282,
           "role": "micro",
           "content": "75%",
           "tone": "muted",
@@ -507,8 +507,8 @@
         },
         {
           "type": "text",
-          "x": 66,
-          "y": 282,
+          "x": 80,
+          "y": 294,
           "role": "micro",
           "content": "50%",
           "tone": "muted",
@@ -516,8 +516,8 @@
         },
         {
           "type": "text",
-          "x": 66,
-          "y": 294,
+          "x": 80,
+          "y": 306,
           "role": "micro",
           "content": "25%",
           "tone": "muted",
@@ -525,8 +525,8 @@
         },
         {
           "type": "text",
-          "x": 66,
-          "y": 306,
+          "x": 80,
+          "y": 318,
           "role": "micro",
           "content": "0",
           "tone": "muted",
@@ -534,8 +534,8 @@
         },
         {
           "type": "lineChart",
-          "x": 72,
-          "y": 256,
+          "x": 86,
+          "y": 268,
           "width": 186,
           "height": 48,
           "gridLines": 4,
@@ -562,8 +562,8 @@
         },
         {
           "type": "text",
-          "x": 262,
-          "y": 244,
+          "x": 276,
+          "y": 256,
           "role": "caption",
           "content": "+92%",
           "anchor": "end",
@@ -572,8 +572,8 @@
         },
         {
           "type": "text",
-          "x": 72,
-          "y": 318,
+          "x": 86,
+          "y": 330,
           "role": "micro",
           "content": "2019",
           "anchor": "start",
@@ -581,8 +581,8 @@
         },
         {
           "type": "text",
-          "x": 134,
-          "y": 318,
+          "x": 148,
+          "y": 330,
           "role": "micro",
           "content": "2021",
           "anchor": "middle",
@@ -590,8 +590,8 @@
         },
         {
           "type": "text",
-          "x": 196,
-          "y": 318,
+          "x": 210,
+          "y": 330,
           "role": "micro",
           "content": "2023",
           "anchor": "middle",
@@ -599,8 +599,8 @@
         },
         {
           "type": "text",
-          "x": 258,
-          "y": 318,
+          "x": 272,
+          "y": 330,
           "role": "micro",
           "content": "2025",
           "anchor": "end",
@@ -610,52 +610,52 @@
     },
     {
       "type": "subCard",
-      "x": 286,
-      "y": 222,
+      "x": 300,
+      "y": 234,
       "width": 238,
       "height": 114,
       "surface": "glass-highlighted",
       "children": [
         {
           "type": "text",
-          "x": 298,
-          "y": 244,
+          "x": 312,
+          "y": 256,
           "role": "subheading",
           "content": "Top opportunities"
         },
         {
           "type": "text",
-          "x": 298,
-          "y": 258,
+          "x": 312,
+          "y": 270,
           "role": "label",
           "content": "Name",
           "tone": "muted"
         },
         {
           "type": "text",
-          "x": 298,
-          "y": 280,
+          "x": 312,
+          "y": 292,
           "role": "caption",
           "content": "Partner Service 1"
         },
         {
           "type": "text",
-          "x": 298,
-          "y": 300,
+          "x": 312,
+          "y": 312,
           "role": "caption",
           "content": "Co-Sell Service 2"
         },
         {
           "type": "text",
-          "x": 298,
-          "y": 320,
+          "x": 312,
+          "y": 332,
           "role": "caption",
           "content": "Partner Service 3"
         },
         {
           "type": "text",
-          "x": 512,
-          "y": 258,
+          "x": 526,
+          "y": 270,
           "role": "label",
           "content": "Value",
           "anchor": "end",
@@ -663,8 +663,8 @@
         },
         {
           "type": "text",
-          "x": 512,
-          "y": 280,
+          "x": 526,
+          "y": 292,
           "role": "caption",
           "content": "$48K",
           "anchor": "end",
@@ -672,8 +672,8 @@
         },
         {
           "type": "text",
-          "x": 512,
-          "y": 300,
+          "x": 526,
+          "y": 312,
           "role": "caption",
           "content": "$36K",
           "anchor": "end",
@@ -681,8 +681,8 @@
         },
         {
           "type": "text",
-          "x": 512,
-          "y": 320,
+          "x": 526,
+          "y": 332,
           "role": "caption",
           "content": "$22K",
           "anchor": "end",
@@ -690,8 +690,8 @@
         },
         {
           "type": "line",
-          "x": 298,
-          "y": 266,
+          "x": 312,
+          "y": 278,
           "width": 214,
           "height": 0,
           "tone": "neutral-02",
@@ -699,8 +699,8 @@
         },
         {
           "type": "line",
-          "x": 298,
-          "y": 288,
+          "x": 312,
+          "y": 300,
           "width": 214,
           "height": 0,
           "tone": "neutral-02",
@@ -708,8 +708,8 @@
         },
         {
           "type": "line",
-          "x": 298,
-          "y": 308,
+          "x": 312,
+          "y": 320,
           "width": 214,
           "height": 0,
           "tone": "neutral-02",
@@ -718,5 +718,15 @@
       ]
     }
   ],
-  "panelSurfaces": 2
+  "panelSurfaces": 2,
+  "artboard": {
+    "width": 588,
+    "height": 392
+  },
+  "cardArea": {
+    "x": 20,
+    "y": 22,
+    "width": 548,
+    "height": 350
+  }
 }

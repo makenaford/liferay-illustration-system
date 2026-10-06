@@ -60,7 +60,11 @@ function walk(doc: Doc, el: Element, path: string, parent: Element | null, inFlo
   // Only AUTHORED coordinates. Auto-layout derives positions and hug sizes
   // from font metrics, which are fractional by nature — snapping those would
   // mean rounding the type, not the layout.
-  {
+  // The screenshot slot is set by the guide — 30px in from a 533px-tall
+  // canvas leaves 473 — not snapped, so its image is not held to the grid.
+  const m = doc.mockup;
+  const isSlot = !!m && el.type === 'image' && any.x === m.x && any.y === m.y && any.width === m.width && any.height === m.height;
+  if (!isSlot) {
     // A child of an auto-layout container does not own its x/y.
     const keys = inFlow ? (['width', 'height'] as const) : (['x', 'y', 'width', 'height'] as const);
     for (const k of keys) {

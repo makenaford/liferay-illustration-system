@@ -168,6 +168,7 @@ export const SCHEMA: {
     label: 'Frame',
     fields: [
       { key: 'grid', label: 'Grid · rows and slots', kind: 'grid' },
+      { key: 'density', label: 'Density', kind: 'select', options: ['regular', 'condensed'], labels: { regular: 'Regular', condensed: 'Condensed' }, when: (el) => !!(el as { grid?: number[] }).grid },
       ...XY,
       ...WH,
       { key: 'maxWidth', label: 'Max width · text wraps', kind: 'number', min: 0 },
@@ -181,6 +182,7 @@ export const SCHEMA: {
     label: 'Group',
     fields: [
       { key: 'grid', label: 'Grid · rows and slots', kind: 'grid' },
+      { key: 'density', label: 'Density', kind: 'select', options: ['regular', 'condensed'], labels: { regular: 'Regular', condensed: 'Condensed' }, when: (el) => !!(el as { grid?: number[] }).grid },
       { key: 'x', label: 'X', kind: 'number' },
       { key: 'y', label: 'Y', kind: 'number' },
       { key: 'width', label: 'W', kind: 'number', min: 1 },
@@ -193,6 +195,7 @@ export const SCHEMA: {
     label: 'Card',
     fields: [
       { key: 'grid', label: 'Grid · rows and slots', kind: 'grid' },
+      { key: 'density', label: 'Density', kind: 'select', options: ['regular', 'condensed'], labels: { regular: 'Regular', condensed: 'Condensed' }, when: (el) => !!(el as { grid?: number[] }).grid },
       ...XY,
       ...WH,
       { key: 'maxWidth', label: 'Max width · text wraps', kind: 'number', min: 0 },
@@ -255,6 +258,8 @@ export const SCHEMA: {
       { key: 'icon', label: 'Icon', kind: 'icon' },
       { key: 'iconStyle', label: 'Icon style', kind: 'select', options: ICON_STYLES, labels: ICON_STYLE_LABELS },
       { key: 'role', label: 'Type style', kind: 'select', options: ROLES },
+      { key: 'surface', label: 'Surface · as cards, over the variant', kind: 'select', options: ['', ...SURFACES] },
+      { key: 'fit', label: 'Fit width to label', kind: 'boolean' },
       { key: 'radius', label: 'Radius', kind: 'number', min: 0, default: 4 },
       { key: 'padding', label: 'Padding', kind: 'number', min: 0, default: 12 },
     ],
@@ -601,7 +606,7 @@ export const DEFAULTS: Record<Element['type'], () => Element> = {
   button: () => ({
     type: 'button',
     x: 40, y: 40, width: 120, height: 32,
-    label: 'Button', variant: 'solid', radius: 4, role: 'bodySmall',
+    label: 'Button', variant: 'solid', radius: 4, role: 'bodySmall', fit: true,
   }),
   toggle: () => ({ type: 'toggle', x: 40, y: 40, width: 42, height: 13, on: true }),
   radio: () => ({ type: 'radio', x: 40, y: 40, width: 120, height: 32, label: 'Option', checked: true }),

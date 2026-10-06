@@ -152,25 +152,13 @@ export function windowCard(grid: number[] = [1, 2]): Element {
  * hero images draw it (Figma yC6i3M1Iq1zPKxrZPB0vuO, 29:17498): four metric
  * tiles, then a breakdown beside a trend, then an area chart beside bars.
  *
- * The same grid as any dashboard, drawn at the type scale's floor: tile
- * labels, tags and axis labels at `micro`, figures at `subheading`, card
- * titles at `caption`, with 8px around the panel and 6px between slots and
- * inside them. It arrives filled, every slot an ordinary element to edit;
- * Grid reshapes it like any other, and new slots keep its tighter shape.
+ * An ordinary dashboard — the same rows and slots, its content at regular
+ * sizes — set to `density: 'condensed'`, which draws it at the type scale's
+ * floor with 60% spacing (src/density.ts). Switched to Regular under
+ * Density, it is the same dashboard at full size. It arrives filled, every
+ * slot an ordinary element to edit, and Grid reshapes it like any other.
  */
-const CONDENSED = { width: 400, height: 300, padding: 8, gap: 6, slotPadding: 6, slotGap: 4, radius: 10, slotRadius: 6 } as const;
-
-function condensedSlot(children: Element[]): Element {
-  return {
-    ...(gridSlot(children) as object),
-    radius: CONDENSED.slotRadius,
-    layout: { direction: 'vertical', gap: CONDENSED.slotGap, padding: CONDENSED.slotPadding, align: 'stretch' },
-  } as Element;
-}
-
-function condensedRow(slots: Element[]): Element {
-  return { ...(gridRow(slots) as { layout: object }), layout: { direction: 'horizontal', gap: CONDENSED.gap, padding: 0, align: 'stretch' } } as Element;
-}
+const CONDENSED = { width: 400, height: 300 } as const;
 
 /** A metric tile: label and change tag on one line, the figure, a caption, a bar. */
 function metric(label: string, value: string, caption: string, progress: number, change?: string): Element[] {
@@ -180,21 +168,21 @@ function metric(label: string, value: string, caption: string, progress: number,
     y: 0,
     width: 10,
     height: 10,
-    layout: { direction: 'horizontal', gap: 3, padding: 0, align: 'center', justify: 'between', hugHeight: true },
+    layout: { direction: 'horizontal', gap: 4, padding: 0, align: 'center', justify: 'between', hugHeight: true },
     children: [
-      t(label, 'micro', { weight: 'bold' }),
-      ...(change ? [{ type: 'badge', x: 0, y: 0, height: 9, label: change, tone: 'info', dot: false } as Element] : []),
+      t(label, 'caption', { weight: 'bold' }),
+      ...(change ? [{ type: 'badge', x: 0, y: 0, label: change, tone: 'info', dot: false } as Element] : []),
     ],
   } as Element;
   return [
     head,
-    t(value, 'subheading', { weight: 'semibold' }),
-    t(caption, 'micro', { tone: 'muted' }),
-    { type: 'progress', x: 0, y: 0, width: 10, height: 2, value: progress, tone: 'info' } as Element,
+    t(value, 'display', { weight: 'semibold' }),
+    t(caption, 'caption', { tone: 'muted' }),
+    { type: 'progress', x: 0, y: 0, width: 10, height: 3, value: progress, tone: 'info' } as Element,
   ];
 }
 
-const cardTitle = (s: string) => t(s, 'caption', { weight: 'semibold' });
+const cardTitle = (s: string) => t(s, 'subheading', { weight: 'semibold' });
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
 
 function condensedDashboard(): Element {
@@ -207,7 +195,7 @@ function condensedDashboard(): Element {
   const breakdown = [
     cardTitle('Incident location'),
     ...[['Office', 0.7], ['Warehouse', 0.51], ['Vacations/PTO', 0.06], ['Offsite', 0.36]].map(
-      ([label, value]) => ({ type: 'progress', x: 0, y: 0, width: 10, height: 3, value, label, labelGap: 3 }) as Element,
+      ([label, value]) => ({ type: 'progress', x: 0, y: 0, width: 10, height: 5, value, label }) as Element,
     ),
   ];
   const trend = [
@@ -241,15 +229,16 @@ function condensedDashboard(): Element {
     y: 0,
     width: CONDENSED.width,
     height: CONDENSED.height,
+    density: 'condensed',
     surface: 'glass-highlighted',
     sheen: 'radial',
-    radius: CONDENSED.radius,
+    radius: 10,
     frost: 'content',
-    layout: { direction: 'vertical', gap: CONDENSED.gap, padding: CONDENSED.padding, align: 'stretch' },
+    layout: { direction: 'vertical', gap: 8, padding: 10, align: 'stretch' },
     children: [
-      condensedRow(tiles.map(condensedSlot)),
-      condensedRow([condensedSlot(breakdown), condensedSlot(trend)]),
-      condensedRow([condensedSlot(progress), condensedSlot(recovery)]),
+      gridRow(tiles.map((c) => gridSlot(c))),
+      gridRow([gridSlot(breakdown), gridSlot(trend)]),
+      gridRow([gridSlot(progress), gridSlot(recovery)]),
     ],
   } as Element;
   return { ...card, grid: gridOf(card as Container) } as Element;

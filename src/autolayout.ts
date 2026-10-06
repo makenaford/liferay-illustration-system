@@ -9,6 +9,8 @@ import { tableLayout } from './primitives/table.ts';
 import { statLayout } from './primitives/statBlock.ts';
 import { textBox, VERTICAL } from './fontMetrics.generated.ts';
 import { LAYOUT, SPACE } from './tokens.ts';
+import { applyDensity, hasDensity } from './density.ts';
+import { buttonFitWidth } from './primitives/button.ts';
 
 /**
  * AUTO LAYOUT — containers that reflow.
@@ -529,12 +531,25 @@ function growSizes(kids: Element[], measured: number[], grows: number[], space: 
     }
     return out;
   }
-  const total = grows.reduce((a, b) => a + b, 0);
+  // Spare height goes to the children that can use it — a chart, an empty
+  // drop zone — so a row of stat tiles stays at its tiles' height. Only when
+  // none can does it fall back to all of them.
+  const fill = kids.map((k, i) => (grows[i] > 0 && fillsSpace(k) ? grows[i] : 0));
+  const weights = fill.some((w) => w > 0) ? fill : grows;
+  const total = weights.reduce((a, b) => a + b, 0);
   const spare = free - mins.reduce((a, b) => a + b, 0);
   kids.forEach((_, i) => {
-    if (grows[i] > 0) out[i] = mins[i] + Math.max(spare, 0) * (grows[i] / total);
+    if (grows[i] > 0) out[i] = mins[i] + (total ? Math.max(spare, 0) * (weights[i] / total) : 0);
   });
   return out;
+}
+
+/** Whether `el` has a use for extra height: an empty zone, or a growing chart somewhere inside. */
+function fillsSpace(el: Element): boolean {
+  if (el.type === 'lineChart' || el.type === 'barChart' || el.type === 'pieChart') return ((el as { grow?: number }).grow ?? 0) > 0;
+  if (!isContainer(el)) return false;
+  const kids = el.children ?? [];
+  return !kids.length || kids.some(fillsSpace);
 }
 
 /**
@@ -677,9 +692,33 @@ export function boundingBox(el: Element): { x: number; y: number; width: number;
 
 /** Apply auto-layout across a whole document. */
 export function resolveLayout(doc: Doc): Doc {
-  const needed = hasLayout(doc.elements);
-  if (!needed) return doc;
-  return { ...doc, elements: doc.elements.map(resolveElement) };
+  // Density first: a condensed dashboard is laid out at its condensed sizes.
+  // Then fitted buttons, whose width their label sets, at those sizes.
+  const elements = fitButtons(hasDensity(doc.elements) ? applyDensity(doc.elements) : doc.elements);
+  if (!hasLayout(elements)) return elements === doc.elements ? doc : { ...doc, elements };
+  return { ...doc, elements: elements.map(resolveElement) };
+}
+
+/** Every `fit` button its label's width — `els` itself when there are none. */
+function fitButtons(els: Element[]): Element[] {
+  let changed = false;
+  const next = els.map((el) => {
+    if (el.type === 'button' && el.fit) {
+      const width = buttonFitWidth(el);
+      if (width !== el.width) {
+        changed = true;
+        return { ...el, width };
+      }
+      return el;
+    }
+    const kids = (el as { children?: Element[] }).children;
+    if (!kids?.length) return el;
+    const fitted = fitButtons(kids);
+    if (fitted === kids) return el;
+    changed = true;
+    return { ...el, children: fitted } as Element;
+  });
+  return changed ? next : els;
 }
 
 function hasLayout(els: Element[]): boolean {

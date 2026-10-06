@@ -179,6 +179,10 @@ export const CARD_PRESETS: { label: string; title: string; make: () => Element }
  */
 export function placePreset(el: Element, at: { x: number; y: number }): Element {
   const moved = movedDeep(el, at.x, at.y);
-  const scratch: Doc = { id: 'preset', name: '', layout: 'bare', canvas: { width: 0, height: 0 }, elements: [moved] };
-  return resolveLayout(scratch).elements[0];
+  // Resolved at regular density and stored that way, its density put back,
+  // so a condensed dashboard is condensed as it is drawn — not baked in.
+  const { density, ...regular } = moved as Element & { density?: string };
+  const scratch: Doc = { id: 'preset', name: '', layout: 'bare', canvas: { width: 0, height: 0 }, elements: [regular as Element] };
+  const placed = resolveLayout(scratch).elements[0];
+  return density ? ({ ...placed, density } as Element) : placed;
 }

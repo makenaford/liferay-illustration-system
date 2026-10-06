@@ -1,6 +1,8 @@
-import { cssAngleLine } from './surface.ts';
+import { cssAngleLine, Surface } from './surface.ts';
 import { h, type Ctx, type VNode } from '../vsvg.ts';
-import { Text, TYPE_ROLES, type TypeRole } from './text.ts';
+import { Text, TYPE_ROLES, typeStyle, type TypeRole } from './text.ts';
+import { measureText } from '../fontMetrics.generated.ts';
+import type { SurfaceName } from '../tokens.ts';
 import { iconArt, type IconStyle } from '../icons.ts';
 import { IconTile } from './iconTile.ts';
 
@@ -30,9 +32,31 @@ export interface ButtonProps {
    * they'd have had to be two different primitives.
    */
   align?: 'center' | 'left';
-  /** Left padding when `align` is `left`. */
+  /** Left padding when `align` is `left`, and either side of a fitted label. */
   padding?: number;
+  /** Any surface in the card set, drawn as a card draws it. Wins over `variant`. */
+  surface?: SurfaceName;
 }
+
+/** The icon's size and the space it takes before the label. */
+const iconBox = (height: number, hasIcon: boolean) => {
+  const size = Math.min(height * 0.5, 16);
+  return { size, pad: hasIcon ? size + 7 : 0 };
+};
+
+/**
+ * The width a button needs for its label: the padding either side, the icon
+ * and the widest line of text — what `fit` sets it to (see `resolveLayout`).
+ */
+export function buttonFitWidth(p: Pick<ButtonProps, 'label' | 'lines' | 'role' | 'padding' | 'height' | 'icon' | 'iconStyle'>): number {
+  const st = typeStyle(p.role ?? 'subheading');
+  const text = Math.max(...(p.lines ?? [p.label]).map((l) => measureText(l, st.size, st.weight)));
+  const icon = iconBox(p.height, Boolean(iconArt(p.icon, p.iconStyle))).pad;
+  return Math.round((text + icon + (p.padding ?? 12) * 2) * 2) / 2;
+}
+
+/** Surfaces a label reads on in white. Every other surface takes the primary text colour. */
+const ON_ACCENT: ReadonlySet<SurfaceName> = new Set(['solid', 'gradient']);
 
 /**
  * BUTTON — solid, outline, glass, and gradient variants.
@@ -134,10 +158,10 @@ export function Button(ctx: Ctx, props: ButtonProps): VNode {
     );
   }
 
-  const iconSize = Math.min(height * 0.5, 16);
   const art = iconArt(icon, props.iconStyle);
   const hasIcon = Boolean(art);
-  const iconPad = hasIcon ? iconSize + 7 : 0;
+  const { size: iconSize, pad: iconPad } = iconBox(height, hasIcon);
+  if (props.surface) labelColor = ON_ACCENT.has(props.surface) ? tk.text.onAccent : tk.text.primary;
 
   const lines = props.lines ?? [label];
   const lineHeight = size * 1.18;
@@ -149,9 +173,48 @@ export function Button(ctx: Ctx, props: ButtonProps): VNode {
   const iconX =
     align === 'left'
       ? x + pad
-      : x + (width - iconPad - measure(lines[0], size)) / 2;
+      : x + (width - iconPad - measureText(lines[0], size, TYPE_ROLES[role].weight)) / 2;
   const labelX = align === 'left' ? x + pad + iconPad : x + width / 2 + iconPad / 2;
   const labelAnchor = align === 'left' ? 'start' : 'middle';
+
+  const content = [
+    hasIcon
+      ? IconTile(ctx, {
+          x: iconX,
+          y: y + (height - iconSize) / 2,
+          size: iconSize,
+          icon: art,
+          // On a filled button the icon reads on the fill; on an outline
+          // button it takes Brand/Primary, the colour of the outline's glow.
+          tone: props.surface
+            ? ON_ACCENT.has(props.surface)
+              ? 'onAccent'
+              : 'primary'
+            : variant === 'solid' || variant === 'gradient'
+              ? 'onAccent'
+              : variant === 'outline'
+                ? 'accent'
+                : 'primary',
+        })
+      : null,
+    ...lines.map((line, i) =>
+      Text(ctx, {
+        x: labelX,
+        y: firstBaseline + i * lineHeight,
+        role,
+        content: line,
+        anchor: labelAnchor,
+        color: labelColor,
+      }),
+    ),
+  ];
+
+  // A surface from the card set: drawn by the same primitive a card is.
+  if (props.surface) {
+    return h('g', { 'data-el': `button-${props.surface}` }, [
+      Surface(ctx, { x, y, width, height, radius, surface: props.surface, children: content }),
+    ]);
+  }
 
   return h('g', { 'data-el': `button-${variant}` }, [
     glowId
@@ -180,36 +243,6 @@ export function Button(ctx: Ctx, props: ButtonProps): VNode {
           fill: 'none',
         })
       : null,
-    hasIcon
-      ? IconTile(ctx, {
-          x: iconX,
-          y: y + (height - iconSize) / 2,
-          size: iconSize,
-          icon: art,
-          // On a filled button the icon reads on the fill; on an outline
-          // button it takes Brand/Primary, the colour of the outline's glow.
-          tone:
-            variant === 'solid' || variant === 'gradient'
-              ? 'onAccent'
-              : variant === 'outline'
-                ? 'accent'
-                : 'primary',
-        })
-      : null,
-    ...lines.map((line, i) =>
-      Text(ctx, {
-        x: labelX,
-        y: firstBaseline + i * lineHeight,
-        role,
-        content: line,
-        anchor: labelAnchor,
-        color: labelColor,
-      }),
-    ),
+    ...content,
   ]);
-}
-
-/** Rough advance width — good enough to centre an icon + label pair. */
-function measure(s: string, size: number): number {
-  return s.length * size * 0.52;
 }

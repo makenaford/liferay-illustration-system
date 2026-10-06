@@ -149,6 +149,8 @@ export interface CardEl extends LayoutChild {
    * rows are the children marked `gridRow`; see editor/dashboardGrid.ts.
    */
   grid?: number[];
+  /** A dashboard drawn regular (the default) or condensed — see src/density.ts. */
+  density?: import('./density.ts').Density;
   /**
    * Without a layout: fit the card around its children on this axis, the
    * card padding outside them. With one, `layout.hugWidth` / `hugHeight`.
@@ -200,6 +202,8 @@ export interface GroupEl extends LayoutChild {
    * rows are the children marked `gridRow`; see editor/dashboardGrid.ts.
    */
   grid?: number[];
+  /** A dashboard drawn regular (the default) or condensed — see src/density.ts. */
+  density?: import('./density.ts').Density;
   /** A row of a dashboard's grid. */
   gridRow?: boolean;
   layout?: LayoutSpec;
@@ -230,6 +234,8 @@ export interface SubCardEl extends LayoutChild {
    * rows are the children marked `gridRow`; see editor/dashboardGrid.ts.
    */
   grid?: number[];
+  /** A dashboard drawn regular (the default) or condensed — see src/density.ts. */
+  density?: import('./density.ts').Density;
   /**
    * Without a layout: fit the card around its children on this axis, the
    * card padding outside them. With one, `layout.hugWidth` / `hugHeight`.
@@ -283,6 +289,10 @@ export interface ButtonEl extends LayoutChild {
   lines?: string[];
   align?: 'center' | 'left';
   padding?: number;
+  /** Width set by the label: the padding either side, the icon and the text. */
+  fit?: boolean;
+  /** Any surface in the card set, drawn as a card draws it. Wins over `variant`. */
+  surface?: SurfaceName;
 }
 
 export interface ToggleEl extends LayoutChild {

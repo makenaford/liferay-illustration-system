@@ -11,6 +11,9 @@ import {
   isShipped,
   list,
   mergeFolders,
+  descendantsOf,
+  folderPath,
+  folderTree,
   namesOf,
   removeFolder,
   SHARED_LIBRARY_URL,
@@ -102,11 +105,11 @@ export function Library() {
     const f = folders.assign[id];
     return f && folders.folders.some((x) => x.id === f) ? f : null;
   };
-  const shown = (entries ?? []).filter((e) =>
-    current === 'all' ? true : current === 'unfiled' ? !folderOf(e.id) : folderOf(e.id) === current,
-  );
-  const countIn = (v: View) =>
-    (entries ?? []).filter((e) => (v === 'unfiled' ? !folderOf(e.id) : folderOf(e.id) === v)).length;
+  // A folder shows — and counts — what its subfolders hold too.
+  const inView = (v: View, id: string) =>
+    v === 'all' ? true : v === 'unfiled' ? !folderOf(id) : descendantsOf(folders, v).has(folderOf(id) ?? '');
+  const shown = (entries ?? []).filter((e) => inView(current, e.id));
+  const countIn = (v: View) => (entries ?? []).filter((e) => inView(v, e.id)).length;
 
   const file = async (id: string, folderId: string | null) => {
     await fileIn(id, folderId);
@@ -319,7 +322,7 @@ export function Library() {
               onDuplicate={() => void duplicate(e)}
               onRevert={() => void revert(e)}
               savedBy={e.updatedBy ? names[e.updatedBy] || 'a teammate' : undefined}
-              folders={folders.folders}
+              folders={folderTree(folders).map(({ folder }) => ({ ...folder, name: folderPath(folders, folder.id).join(' / ') }))}
               folder={folderOf(e.id)}
               onFile={(f) => void file(e.id, f)}
             />
@@ -390,7 +393,7 @@ function FolderBar({
       >
         Unfiled <span>{countIn('unfiled')}</span>
       </button>
-      {folders.folders.map((f) =>
+      {folderTree(folders).map(({ folder: f }) =>
         renaming === f.id ? (
           <NameInput
             key={f.id}
@@ -412,15 +415,15 @@ function FolderBar({
               onDoubleClick={() => setRenaming(f.id)}
               title="Double-click to rename"
             >
-              {f.name} <span>{countIn(f.id)}</span>
+              {folderPath(folders, f.id).join(' / ')} <span>{countIn(f.id)}</span>
             </button>
             <button
               type="button"
               className="lib-folder-x"
               aria-label={`Remove the ${f.name} folder`}
-              title="Remove folder — its illustrations become Unfiled"
+              title="Remove folder — what is in it moves up a level"
               onClick={() => {
-                if (window.confirm(`Remove the “${f.name}” folder? Its illustrations stay in the library, unfiled.`)) {
+                if (window.confirm(`Remove the “${f.name}” folder? What is in it moves up a level; no illustration is deleted.`)) {
                   void onRemove(f.id);
                 }
               }}

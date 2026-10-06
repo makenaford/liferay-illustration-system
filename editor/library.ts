@@ -86,12 +86,17 @@ interface Backend {
  * a folder must not create a saved copy, because a saved copy shadows the
  * shipped one and it would stop picking up updates from the repo.
  *
- * An illustration in no folder is Unfiled. Deleting a folder unfiles what
- * was in it; it never deletes an illustration.
+ * An illustration in no folder is Unfiled. Folders nest: a folder with a
+ * `parent` sits inside it, and showing a folder shows what its subfolders
+ * hold too. Deleting a folder moves what was in it — illustrations and
+ * subfolders — up into its parent, or to Unfiled and the top level when it
+ * had none; it never deletes an illustration.
  */
 export interface Folder {
   id: string;
   name: string;
+  /** The folder this one sits in. Absent — or naming a folder that is gone — is the top level. */
+  parent?: string;
 }
 export interface Folders {
   folders: Folder[];
@@ -381,14 +386,35 @@ export async function folders(): Promise<Folders> {
   return (await backend()).folders();
 }
 
-/** Create a folder; returns it. */
-export async function addFolder(name: string): Promise<Folder> {
+/** Create a folder, inside `parent` when given; returns it. */
+export async function addFolder(name: string, parent?: string | null): Promise<Folder> {
   const b = await backend();
   const f = await b.folders();
   const id = freshId(name, f.folders.map((x) => x.id));
-  const folder = { id, name: name.trim() || 'Untitled project' };
+  const inside = parent && f.folders.some((x) => x.id === parent) ? parent : undefined;
+  const folder: Folder = { id, name: name.trim() || 'Untitled project', ...(inside ? { parent: inside } : {}) };
   await b.putFolders({ ...f, folders: [...f.folders, folder] });
   return folder;
+}
+
+/**
+ * Move a folder inside `parent`, or to the top level with `null`. Refused —
+ * left where it is — when `parent` is the folder itself or one of its own
+ * subfolders, which would cut the branch off the tree.
+ */
+export async function moveFolder(id: string, parent: string | null): Promise<boolean> {
+  const b = await backend();
+  const f = await b.folders();
+  if (parent && (parent === id || descendantsOf(f, id).has(parent) || !f.folders.some((x) => x.id === parent))) return false;
+  await b.putFolders({
+    ...f,
+    folders: f.folders.map((x) => {
+      if (x.id !== id) return x;
+      const { parent: _was, ...rest } = x;
+      return parent ? { ...rest, parent } : rest;
+    }),
+  });
+  return true;
 }
 
 export async function renameFolder(id: string, name: string): Promise<void> {
@@ -397,12 +423,87 @@ export async function renameFolder(id: string, name: string): Promise<void> {
   await b.putFolders({ ...f, folders: f.folders.map((x) => (x.id === id ? { ...x, name: name.trim() || x.name } : x)) });
 }
 
-/** Remove a folder. Its illustrations become Unfiled; none is deleted. */
+/**
+ * Remove a folder. What was in it moves up a level: its illustrations and
+ * subfolders into its parent, or to Unfiled and the top level when it had
+ * none. No illustration is deleted.
+ */
 export async function removeFolder(id: string): Promise<void> {
   const b = await backend();
   const f = await b.folders();
-  const assign = Object.fromEntries(Object.entries(f.assign).filter(([, v]) => v !== id));
-  await b.putFolders({ folders: f.folders.filter((x) => x.id !== id), assign });
+  const gone = f.folders.find((x) => x.id === id);
+  const up = gone ? parentOf(f, gone) : undefined;
+  const assign: Record<string, string> = {};
+  for (const [doc, folder] of Object.entries(f.assign)) {
+    if (folder !== id) assign[doc] = folder;
+    else if (up) assign[doc] = up;
+  }
+  const folders = f.folders
+    .filter((x) => x.id !== id)
+    .map((x) => {
+      if (x.parent !== id) return x;
+      const { parent: _was, ...rest } = x;
+      return up ? { ...rest, parent: up } : rest;
+    });
+  await b.putFolders({ folders, assign });
+}
+
+/** A folder's parent, when that parent still exists. */
+function parentOf(f: Folders, folder: Folder): string | undefined {
+  return folder.parent && folder.parent !== folder.id && f.folders.some((x) => x.id === folder.parent) ? folder.parent : undefined;
+}
+
+/** `id` and every folder inside it, however deep. */
+export function descendantsOf(f: Folders, id: string): Set<string> {
+  const out = new Set([id]);
+  for (let grew = true; grew; ) {
+    grew = false;
+    for (const x of f.folders) {
+      const p = parentOf(f, x);
+      if (p && out.has(p) && !out.has(x.id)) {
+        out.add(x.id);
+        grew = true;
+      }
+    }
+  }
+  return out;
+}
+
+/** The folders in tree order — each followed by its subfolders — with how deep each sits. */
+export function folderTree(f: Folders): { folder: Folder; depth: number }[] {
+  const kids = new Map<string | undefined, Folder[]>();
+  for (const x of f.folders) {
+    const p = parentOf(f, x);
+    kids.set(p, [...(kids.get(p) ?? []), x]);
+  }
+  const out: { folder: Folder; depth: number }[] = [];
+  const seen = new Set<string>();
+  const walk = (parent: string | undefined, depth: number) => {
+    for (const x of kids.get(parent) ?? []) {
+      if (seen.has(x.id)) continue;
+      seen.add(x.id);
+      out.push({ folder: x, depth });
+      walk(x.id, depth + 1);
+    }
+  };
+  walk(undefined, 0);
+  // A loop in stored data (A in B, B in A) would hide both — list them at the top.
+  for (const x of f.folders) if (!seen.has(x.id)) out.push({ folder: x, depth: 0 });
+  return out;
+}
+
+/** A folder's names from the top level down to it: ["Industries", "Healthcare"]. */
+export function folderPath(f: Folders, id: string): string[] {
+  const names: string[] = [];
+  const seen = new Set<string>();
+  for (let at: string | undefined = id; at && !seen.has(at); ) {
+    seen.add(at);
+    const x = f.folders.find((y) => y.id === at);
+    if (!x) break;
+    names.unshift(x.name);
+    at = parentOf(f, x);
+  }
+  return names;
 }
 
 /** File an illustration in a folder, or unfile it with `null`. */
@@ -423,6 +524,7 @@ export async function mergeFolders(incoming: Folders, docIds: string[]): Promise
   const b = await backend();
   const f = await b.folders();
   const known = new Set(f.folders.map((x) => x.id));
+  // Brought in with their parents; a parent this library lacks leaves one at the top.
   const folders = [...f.folders, ...incoming.folders.filter((x) => !known.has(x.id))];
   const assign = { ...f.assign };
   for (const id of docIds) {

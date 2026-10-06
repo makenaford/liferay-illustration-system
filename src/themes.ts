@@ -15,12 +15,21 @@ const FOLDER_DEFAULTS: { match: RegExp; only: ThemeName }[] = [{ match: /^indust
 
 export const BOTH: ThemeName[] = ['dark', 'light'];
 
-/** The folder default for a folder named `name`, if it has one. */
-export function folderTheme(name: string | null | undefined): ThemeName | undefined {
-  return name ? FOLDER_DEFAULTS.find((d) => d.match.test(name.trim()))?.only : undefined;
+/**
+ * The folder default for a folder named `name`, if it has one. Given a path
+ * — the folder's names from the top level down — the nearest folder that has
+ * one decides, so a subfolder of Industries is dark-only too.
+ */
+export function folderTheme(name: string | readonly string[] | null | undefined): ThemeName | undefined {
+  if (!name) return undefined;
+  for (const n of typeof name === 'string' ? [name] : [...name].reverse()) {
+    const only = FOLDER_DEFAULTS.find((d) => d.match.test(n.trim()))?.only;
+    if (only) return only;
+  }
+  return undefined;
 }
 
-export function themesOf(doc: Pick<Doc, 'onlyTheme'>, folderName?: string | null): ThemeName[] {
+export function themesOf(doc: Pick<Doc, 'onlyTheme'>, folderName?: string | readonly string[] | null): ThemeName[] {
   const only = doc.onlyTheme ?? folderTheme(folderName);
   return only === 'dark' || only === 'light' ? [only] : BOTH;
 }

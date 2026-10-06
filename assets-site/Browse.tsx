@@ -28,6 +28,16 @@ export interface NavItem {
   onDelete?: () => Promise<void>;
   /** What the folder holds, one and many — named when deleting a folder that isn't empty. */
   holds?: [string, string];
+  /** How many levels down a nested folder sits: indented one step per level. */
+  depth?: number;
+  /** Offered behind the ⋯ as New subfolder: a folder made inside this one. */
+  onCreateChild?: (name: string) => Promise<void>;
+  /** More actions behind the ⋯ — Move to top level, say. */
+  actions?: { label: string; run: () => Promise<void> }[];
+  /** Where what the folder holds goes when it is deleted. Defaults to Unfiled. */
+  movesTo?: string;
+  /** The row can be dragged, carrying this data: a folder dragged onto another to nest it. */
+  drag?: { type: string; value: string };
 }
 
 export interface NavSection {
@@ -129,11 +139,14 @@ export function Sidebar({
             },
           }
         : {};
-    const manageable = writable && (item.onRename || item.onDelete);
+    const manageable = writable && (item.onRename || item.onDelete || item.onCreateChild || item.actions?.length);
+    const depth = item.depth ?? 0;
+    const namingChild = naming === `child:${item.key}` && item.onCreateChild;
     return (
+      <div key={item.key}>
       <div
-        key={item.key}
         className={`am-nav-row${item.nested ? ' am-nested' : ''}${item.quiet ? ' am-quiet' : ''}`}
+        style={depth ? { paddingInlineStart: depth * 14 } : undefined}
         {...drop}
       >
         <button
@@ -141,6 +154,15 @@ export function Sidebar({
           className={`am-nav-item${current === item.key ? ' am-on' : ''}${over === item.key ? ' am-over' : ''}`}
           aria-current={current === item.key ? 'true' : undefined}
           onClick={() => onPick(item.key)}
+          draggable={writable && !!item.drag}
+          onDragStart={
+            item.drag
+              ? (e) => {
+                  e.dataTransfer.setData(item.drag!.type, item.drag!.value);
+                  e.dataTransfer.effectAllowed = 'move';
+                }
+              : undefined
+          }
         >
           <span className="am-nav-label">{item.label}</span>
           {item.count !== undefined && <span className="am-count">{item.count}</span>}
@@ -161,6 +183,32 @@ export function Sidebar({
         )}
         {menu === item.key && (
           <div className="am-nav-menu" role="menu">
+            {item.onCreateChild && (
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  setMenu(null);
+                  setDraft('');
+                  setNaming(`child:${item.key}`);
+                }}
+              >
+                New subfolder
+              </button>
+            )}
+            {item.actions?.map((a) => (
+              <button
+                key={a.label}
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  setMenu(null);
+                  void a.run().catch((e) => onToast(`Could not move the folder — ${(e as Error).message}`));
+                }}
+              >
+                {a.label}
+              </button>
+            ))}
             {item.onRename && (
               <button
                 type="button"
@@ -180,7 +228,7 @@ export function Sidebar({
                 <div className="am-nav-confirm" role="alertdialog" aria-label={`Delete ${item.label}?`}>
                   <p>
                     Delete <b>{item.label}</b>? Its {item.count}{' '}
-                    {(item.holds ?? ['item', 'items'])[item.count === 1 ? 0 : 1]} will move to Unfiled.
+                    {(item.holds ?? ['item', 'items'])[item.count === 1 ? 0 : 1]} will move to {item.movesTo ?? 'Unfiled'}.
                   </p>
                   <div>
                     <button type="button" onClick={() => setConfirming(null)}>
@@ -203,6 +251,10 @@ export function Sidebar({
               ))}
           </div>
         )}
+      </div>
+      {namingChild && (
+        <div style={{ paddingInlineStart: (depth + 1) * 14 }}>{nameInput(`child:${item.key}`, item.onCreateChild!, 'Subfolder name')}</div>
+      )}
       </div>
     );
   };

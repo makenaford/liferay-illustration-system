@@ -9,7 +9,7 @@ import { App as BuilderApp } from '../editor/App.tsx';
 import { TEMPLATES, type TemplateName } from '../editor/docs.ts';
 import { NewMenu } from '../editor/NewMenu.tsx';
 import { initStore, setUI, useEditor } from '../editor/state.ts';
-import { addFolder, fileIn, freshId, removeFolder, renameFolder } from '../editor/library.ts';
+import { addFolder, descendantsOf, fileIn, folderPath, folderTree, freshId, moveFolder, removeFolder, renameFolder } from '../editor/library.ts';
 import { Sidebar, Toolbar, type NavSection } from './Browse.tsx';
 import { recipeFor } from './glassLinks.ts';
 import { GLASS_FOLDERS, GLASS_ICON_FOLDERS, GLASS_WAS } from '../src/glassIconFolders.ts';
@@ -303,9 +303,15 @@ export function App() {
     const f = lib.folders.assign[key];
     return f && known.has(f) ? f : null;
   };
-  /** The themes an illustration comes in — its own setting, or its folder's. See src/themes.ts. */
-  const themesFor = (id: string, doc: Doc) =>
-    themesOf(doc, lib.folders.folders.find((f) => f.id === folderOf(id))?.name);
+  /** A folder's names from the top level down — what a nested folder is called in full. */
+  const pathOf = (id: string | null) => (id ? folderPath(lib.folders, id) : []);
+  /** The themes an illustration comes in — its own setting, or the nearest folder's up the tree. See src/themes.ts. */
+  const themesFor = (id: string, doc: Doc) => themesOf(doc, pathOf(folderOf(id)));
+  /** A folder shows what its subfolders hold too. */
+  const shown = useMemo(
+    () => (current === 'all' || current === 'recent' || current === 'unfiled' ? null : descendantsOf(lib.folders, current)),
+    [lib.folders, current],
+  );
   const recentSince = Date.now() - RECENT_MS;
   const inPlace = (i: IllustrationRow) =>
     current === 'all'
@@ -314,7 +320,7 @@ export function App() {
         ? i.updatedAt >= recentSince
         : current === 'unfiled'
           ? !folderOf(i.id)
-          : folderOf(i.id) === current;
+          : !!shown?.has(folderOf(i.id) ?? '');
 
   const needle = query.trim().toLowerCase();
   // A search looks through everything, wherever the sidebar is — and matches
@@ -324,8 +330,7 @@ export function App() {
       [...lib.illustrations]
         .filter((i) => {
           if (!needle) return inPlace(i);
-          const f = folderOf(i.id);
-          const folderName = f ? (lib.folders.folders.find((x) => x.id === f)?.name ?? '') : '';
+          const folderName = pathOf(folderOf(i.id)).join(' / ');
           return i.name.toLowerCase().includes(needle) || folderName.toLowerCase().includes(needle);
         })
         .sort((a, b) => (illSort === 'az' ? a.name.localeCompare(b.name) : b.updatedAt - a.updatedAt)),
@@ -372,7 +377,7 @@ export function App() {
     const doc = migrateDoc(structuredClone(row.doc));
     // Its folder's theme, written down, so the builder offers only that one
     // and a save keeps it with the illustration.
-    const fromFolder = folderTheme(lib.folders.folders.find((f) => f.id === folderOf(doc.id))?.name);
+    const fromFolder = folderTheme(pathOf(folderOf(doc.id)));
     if (!doc.onlyTheme && fromFolder) doc.onlyTheme = fromFolder;
     initStore(doc, row.updatedAt);
     setUI({ view: 'editor', selected: null, openIn: canTranslate && lang !== 'en' ? lang : null });
@@ -582,7 +587,12 @@ export function App() {
   // The builder, in place of the library, until its "‹ Library" button.
   /* ---------- Browse: the sidebar and toolbar for each tab ---------- */
 
-  const folderName = (id: string) => lib.folders.folders.find((f) => f.id === id)?.name ?? '';
+  const folderName = (id: string) => pathOf(id).join(' / ');
+  /** Illustrations in a folder and its subfolders. */
+  const heldIn = (id: string) => {
+    const inside = descendantsOf(lib.folders, id);
+    return lib.illustrations.filter((i) => inside.has(folderOf(i.id) ?? '')).length;
+  };
   const illustrationNav = (
     <Sidebar
       label="Illustration folders"
@@ -605,23 +615,52 @@ export function App() {
           key: 'folders',
           title: 'Folders',
           items: [
-            ...lib.folders.folders.map((f) => ({
+            ...folderTree(lib.folders).map(({ folder: f, depth }) => ({
               key: f.id,
               label: f.name,
               nested: true,
-              count: lib.illustrations.filter((i) => folderOf(i.id) === f.id).length,
-              accepts: (t: readonly string[]) => t.includes(DRAG),
-              onDrop: (d: DataTransfer) => void file(d.getData(DRAG), f.id),
+              depth,
+              count: heldIn(f.id),
+              // An illustration is filed here; a folder dragged here is nested inside this one.
+              drag: { type: FOLDER_DRAG, value: f.id },
+              accepts: (t: readonly string[]) => t.includes(DRAG) || t.includes(FOLDER_DRAG),
+              onDrop: (d: DataTransfer) => {
+                const moving = d.getData(FOLDER_DRAG);
+                if (!moving) return void file(d.getData(DRAG), f.id);
+                if (moving === f.id) return;
+                void moveFolder(moving, f.id).then(async (ok) => {
+                  await st?.refresh();
+                  setToast(ok ? `Moved ${folderName(moving)} into ${f.name}.` : `A folder can't go inside one of its own subfolders.`);
+                });
+              },
+              onCreateChild: async (name: string) => {
+                const child = await addFolder(name, f.id);
+                await st?.refresh();
+                setPlace(child.id);
+              },
+              actions: f.parent
+                ? [
+                    {
+                      label: 'Move to top level',
+                      run: async () => {
+                        await moveFolder(f.id, null);
+                        await st?.refresh();
+                      },
+                    },
+                  ]
+                : [],
+              movesTo: f.parent ? (lib.folders.folders.find((x) => x.id === f.parent)?.name ?? 'Unfiled') : 'Unfiled',
               onRename: async (name: string) => {
                 await renameFolder(f.id, name);
                 await st?.refresh();
               },
               onDelete: async () => {
-                await removeFolder(f.id);
-                if (current === f.id) setPlace('all');
-                await st?.refresh();
                 const n = lib.illustrations.filter((i) => folderOf(i.id) === f.id).length;
-                setToast(`Deleted the ${f.name} folder.${n ? ` ${n === 1 ? 'Its illustration is' : `Its ${n} illustrations are`} now Unfiled.` : ''}`);
+                const up = f.parent ? lib.folders.folders.find((x) => x.id === f.parent) : undefined;
+                await removeFolder(f.id);
+                if (current === f.id) setPlace(up ? up.id : 'all');
+                await st?.refresh();
+                setToast(`Deleted the ${f.name} folder.${n ? ` ${n === 1 ? 'Its illustration is' : `Its ${n} illustrations are`} now ${up ? `in ${up.name}` : 'Unfiled'}.` : ''}`);
               },
               holds: ['illustration', 'illustrations'] as [string, string],
             })),
@@ -1182,6 +1221,8 @@ function Empty({ ready, searching, title, body }: { ready: boolean; searching: b
 
 /** Drag payload for filing a card or set into a folder. */
 const DRAG = 'application/x-marketing-asset';
+/** A folder being dragged onto another, to nest it there. */
+const FOLDER_DRAG = 'application/x-marketing-folder';
 /** Drag payload for filing an icon into one of its set's folders. */
 const DRAG_ICON = 'application/x-glass-icon';
 
@@ -2108,9 +2149,9 @@ function FolderSelect({
       <span className="am-sr">Folder</span>
       <select id={id} value={value ?? ''} onChange={(e) => onChange(e.target.value || null)}>
         <option value="">Unfiled</option>
-        {folders.folders.map((f) => (
+        {folderTree(folders).map(({ folder: f }) => (
           <option key={f.id} value={f.id}>
-            {f.name}
+            {folderPath(folders, f.id).join(' / ')}
           </option>
         ))}
       </select>

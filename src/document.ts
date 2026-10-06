@@ -785,9 +785,9 @@ export interface Doc {
   mockup?: { x: number; y: number; width: number; height: number };
   /**
    * Where cards may go, when it is not the canvas less `LAYOUT.canvasInset`:
-   * the builder's safe-area guide, which top-level cards snap to. The Image
-   * base template sets it 10px outside its screenshot. See editor/docs.ts
-   * `MOCKUP`.
+   * the builder's safe-area guide, which top-level cards snap to, and what
+   * the audit checks them against. The Image base template sets it 20px in
+   * from the canvas edge. See editor/docs.ts `MOCKUP`.
    */
   cardArea?: { x: number; y: number; width: number; height: number };
   /**

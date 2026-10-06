@@ -69,12 +69,15 @@ export function blankDoc(): Doc {
  * security, anywhere", "Turn your site into a B2B revenue engine"):
  *
  *   canvas   800 × 533, 3:2
- *   mockup   720 × 460, centred, 10px corners. It is the document's
- *            screenshot slot (`Doc.mockup`): the builder shows it as a
- *            guide, and a screenshot dropped in it fills it.
- *   cards    740 × 480, centred — 10px outside the mockup all round. The
- *            card guide (`Doc.cardArea`): the builder's safe area, which
- *            top-level cards snap to in place of the canvas inset.
+ *   mockup   740 × 473, 30px in from every edge, 10px corners. It is the
+ *            document's screenshot slot (`Doc.mockup`): the builder shows
+ *            it as a guide, and a screenshot dropped in it fills it.
+ *   cards    760 × 493, 20px in from every edge — room for any card's drop
+ *            shadow, which reaches at most `SHADOW_REACH` (20px), before
+ *            the canvas clips it. The card guide
+ *            (`Doc.cardArea`): the builder's safe area, which top-level
+ *            cards snap to, and what the audit checks them against, in
+ *            place of the 20px canvas inset.
  *   panels   glass, overlapping the mockup's edge and meeting the card
  *            guide; each holds a screenshot inset 12px
  *
@@ -87,8 +90,8 @@ export const MOCKUP = {
   canvas: { width: 800, height: 533 },
   /** Space between a panel and its screenshot. */
   pad: 12,
-  image: { x: 40, y: 36, width: 720, height: 460, radius: 10 },
-  cards: { x: 30, y: 26, width: 740, height: 480 },
+  image: { x: 30, y: 30, width: 740, height: 473, radius: 10 },
+  cards: { x: 20, y: 20, width: 760, height: 493 },
 } as const;
 
 /** A labelled placeholder image, so the slot's size and purpose read at a glance. */

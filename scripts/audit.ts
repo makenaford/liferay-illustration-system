@@ -9,7 +9,7 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Doc, Element } from '../src/document.ts';
-import { LAYOUT, SPACE, dark as tokens } from '../src/tokens.ts';
+import { LAYOUT, SHADOW_REACH, SPACE, dark as tokens, light } from '../src/tokens.ts';
 import { measureTextEl } from '../src/primitives/text.ts';
 import { resolveLayout } from '../src/autolayout.ts';
 import { badgeWidth } from '../src/primitives/badge.ts';
@@ -312,6 +312,8 @@ function extent(el: Element): Box | null {
  * fitted into the canvas, since that is the edge the page sees.
  */
 function canvasInset(doc: Doc) {
+  // A card guide replaces the inset: everything stays inside it instead.
+  if (doc.cardArea) return insideCardArea(doc, doc.cardArea);
   const art = doc.artboard ?? doc.canvas;
   const fit = Math.min(doc.canvas.width / art.width, doc.canvas.height / art.height);
   const ox = (doc.canvas.width - art.width * fit) / 2;
@@ -336,6 +338,27 @@ function canvasInset(doc: Doc) {
     }
   };
 
+  (doc.panels ?? []).forEach((p, i) => check(p, `panel.${i}`, 'panel'));
+  doc.elements.forEach((el, i) => {
+    const b = extent(el);
+    if (b) check(b, String(i), el.type);
+  });
+}
+
+/** Everything inside the document's card guide — see `Doc.cardArea`. */
+function insideCardArea(doc: Doc, area: Box) {
+  const check = (b: Box, path: string, what: string) => {
+    const sides = {
+      left: b.x - area.x,
+      top: b.y - area.y,
+      right: area.x + area.width - (b.x + b.width),
+      bottom: area.y + area.height - (b.y + b.height),
+    };
+    const out = Object.entries(sides).filter(([, v]) => v < -0.01);
+    if (out.length) {
+      add(doc.name, path, 'canvas-inset', `${what} runs ${out.map(([k, v]) => `${round(-v)}px past the card guide's ${k}`).join(', ')} edge`);
+    }
+  };
   (doc.panels ?? []).forEach((p, i) => check(p, `panel.${i}`, 'panel'));
   doc.elements.forEach((el, i) => {
     const b = extent(el);
@@ -375,6 +398,19 @@ function cardPadding(doc: Doc, el: Element, path: string) {
     });
   }
   kids.forEach((c, i) => cardPadding(doc, c, `${path}.${i}`));
+}
+
+/**
+ * Every surface's cast shadow stays within `SHADOW_REACH` of its card, so a
+ * card on the card guide never has its shadow clipped by the canvas edge.
+ */
+for (const t of [tokens, light]) {
+  for (const [name, spec] of Object.entries(t.surfaces)) {
+    for (const l of spec.shadow ?? []) {
+      const reach = Math.max(Math.abs(l.dx ?? 0), Math.abs(l.dy)) + l.blur;
+      if (reach > SHADOW_REACH) add(`${t.name} tokens`, `surfaces.${name}`, 'shadow-reach', `shadow reaches ${reach}px — maximum is ${SHADOW_REACH}`);
+    }
+  }
 }
 
 const files = readdirSync(DOCS).filter((f) => f.endsWith('.json')).sort();

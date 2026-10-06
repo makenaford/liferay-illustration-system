@@ -571,6 +571,13 @@ const radius = { panel: 8, card: 8, pill: 999 };
 const GLASS_BLUR = 28;
 
 /**
+ * How far any cast shadow may reach past its card: offset plus blur, in px.
+ * Matches the 20px a card keeps from the canvas edge (the Image base card
+ * guide), so no shadow is clipped there. Every `shadow` below stays within it.
+ */
+export const SHADOW_REACH = 20;
+
+/**
  * GLASS HIGHLIGHTED — the one card that matters more, and glass over a
  * screenshot: the Mockup template's panels. Two of them, named for what they
  * sit over, from the `surface test` section of the Marketing UI Assets Repo.
@@ -658,8 +665,9 @@ const glassBackground = {
     fill: { angle: 171, stops: [{ color: '#FFFFFF', opacity: 0.62 }, { color: '#FFFFFF', opacity: 0.38 }] },
     line: { angle: 180, stops: [{ color: '#FFFFFF', opacity: 1 }, { color: '#0B5FFF', opacity: 0.25 }] },
     litEdge: { color: '#FFFFFF', opacity: 1 },
+    // Was 14px down / 36px blur — cut to reach no further than SHADOW_REACH.
     shadow: [
-      { dy: 14, blur: 36, color: '#0B2E7A', opacity: 0.1 },
+      { dy: 6, blur: 14, color: '#0B2E7A', opacity: 0.1 },
       { dy: 2, blur: 6, color: '#0B5FFF', opacity: 0.1 },
     ],
     inset: [{ dy: 3, blur: 6, color: '#FFFFFF', opacity: 0.6 }],
@@ -714,9 +722,10 @@ export const dark: Tokens = {
       // DS: 0.09 / 0.04, line 0.26 / 0.16 — halved from 0.34 / 0.2, as default's.
       fill: { angle: 60, stops: [{ color: '#FFFFFF', opacity: 0.19 }, { color: STEP_02.color, opacity: 0.07 }] },
       line: { angle: 225, stops: [{ color: '#FFFFFF', opacity: 0.17 }, { color: '#FFFFFF', opacity: 0.1 }] },
+      // Was 18px down / 40px blur over 3 / 8 — cut to SHADOW_REACH.
       shadow: [
-        { dy: 18, blur: 40, color: '#000000', opacity: 0.4 },
-        { dy: 3, blur: 8, color: '#000000', opacity: 0.28 },
+        { dy: 6, blur: 14, color: '#000000', opacity: 0.4 },
+        { dy: 2, blur: 6, color: '#000000', opacity: 0.28 },
       ],
       litEdge: { color: '#FFFFFF', opacity: 0.18 },
       blur: GLASS_BLUR,
@@ -749,12 +758,12 @@ export const dark: Tokens = {
           { color: D('accent-cyan'), offset: 1 },
         ],
       },
-      shadow: [{ dy: 8, blur: 22, color: D('brand-primary-primary'), opacity: 0.3 }],
+      shadow: [{ dy: 5, blur: 15, color: D('brand-primary-primary'), opacity: 0.3 }],
     },
     /** Opaque brand blue — a callout that is an action, not a container. */
     solid: {
       fill: { angle: 180, stops: [{ color: '#0B5FFF' }, { color: '#0B5FFF' }] },
-      shadow: [{ dy: 8, blur: 22, color: '#0B5FFF', opacity: 0.35 }],
+      shadow: [{ dy: 5, blur: 15, color: '#0B5FFF', opacity: 0.35 }],
     },
     /** No fill at all — structure without weight. */
     outline: {
@@ -792,7 +801,7 @@ export const dark: Tokens = {
     litEdge: '#FFFFFF',
     litEdgeOpacity: 0.1,
     shadow: [
-      { dy: 8, blur: 20, color: '#000000', opacity: 0.28 },
+      { dy: 6, blur: 14, color: '#000000', opacity: 0.28 },
       { dy: 1, blur: 3, color: '#000000', opacity: 0.22 },
     ],
     backdropBlur: GLASS_BLUR,
@@ -1003,12 +1012,12 @@ export const light: Tokens = {
           { color: L('accent-cyan'), offset: 1 },
         ],
       },
-      shadow: [{ dy: 8, blur: 22, color: L('brand-primary-primary'), opacity: 0.22 }],
+      shadow: [{ dy: 5, blur: 15, color: L('brand-primary-primary'), opacity: 0.22 }],
     },
     /** Opaque brand blue — a callout that is an action, not a container. */
     solid: {
       fill: { angle: 180, stops: [{ color: '#0B5FFF' }, { color: '#0B5FFF' }] },
-      shadow: [{ dy: 8, blur: 22, color: '#0B5FFF', opacity: 0.24 }],
+      shadow: [{ dy: 5, blur: 15, color: '#0B5FFF', opacity: 0.24 }],
     },
     /** No fill at all — structure without weight. */
     outline: {
@@ -1055,7 +1064,7 @@ export const light: Tokens = {
     litEdge: '#FFFFFF',
     litEdgeOpacity: 0,
     shadow: [
-      { dy: 8, blur: 20, color: INK, opacity: 0.08 },
+      { dy: 6, blur: 14, color: INK, opacity: 0.08 },
       { dy: 1, blur: 3, color: INK, opacity: 0.06 },
     ],
     backdropBlur: GLASS_BLUR,

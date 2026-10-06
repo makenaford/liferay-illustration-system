@@ -713,6 +713,10 @@ export interface RadioEl extends LayoutChild {
   height: number;
   label: string;
   checked?: boolean;
+  /** The round button of a choice, or the square of a checkbox. Defaults to `radio`. */
+  control?: 'radio' | 'checkbox';
+  /** Any surface in the card set, drawn as a card draws it, in place of the default tile. */
+  surface?: SurfaceName;
 }
 
 /** A labelled input, filled in or waiting — `height` takes in the label. */

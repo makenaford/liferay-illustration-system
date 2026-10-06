@@ -265,10 +265,12 @@ export const SCHEMA: {
     ],
   },
   radio: {
-    label: 'Radio option',
+    label: 'Radio or checkbox',
     fields: [
       { key: 'label', label: 'Label', kind: 'text' },
       { key: 'checked', label: 'Checked', kind: 'boolean' },
+      { key: 'control', label: 'Control', kind: 'select', options: ['radio', 'checkbox'], labels: { radio: 'Radio', checkbox: 'Checkbox' } },
+      { key: 'surface', label: 'Surface · as cards', kind: 'select', options: ['', ...SURFACES] },
       ...XY,
       ...WH,
     ],
@@ -706,6 +708,11 @@ export const PALETTE: {
     types: ['button', 'pill', 'badge', 'toggle', 'radio', 'input', 'field', 'chat'],
     // A window is a card — the three dots over a grid of slots — not the dots alone.
     extras: [
+      {
+        label: 'Checkbox',
+        title: 'An option with a square that ticks — set Control to Radio for a round one',
+        make: () => ({ ...DEFAULTS.radio(), label: 'Option', control: 'checkbox' }) as Element,
+      },
       {
         label: 'Window',
         title: 'A card with the three window dots across its top and slots under them — set rows and slots under Grid',

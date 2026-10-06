@@ -11,6 +11,7 @@ import { textBox, VERTICAL } from './fontMetrics.generated.ts';
 import { LAYOUT, SPACE } from './tokens.ts';
 import { applyDensity, hasDensity } from './density.ts';
 import { buttonFitWidth } from './primitives/button.ts';
+import { formFieldLayout } from './primitives/formField.ts';
 
 /**
  * AUTO LAYOUT — containers that reflow.
@@ -115,6 +116,9 @@ export function measureElement(el: Element): Size {
       return { width: el.width, height: el.height + axisBand(el) };
     case 'chat':
       return { width: el.width, height: el.height ?? CHAT_HEIGHT };
+    case 'field':
+      // Taller than set when its wrapped label or text needs the room.
+      return { width: el.width, height: formFieldLayout(el).height };
     case 'image':
     case 'svg':
       return { width: el.width, height: el.height };

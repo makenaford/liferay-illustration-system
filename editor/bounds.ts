@@ -3,6 +3,7 @@ import { LAYOUT } from '../src/tokens.ts';
 import { CURSOR_ASPECT } from '../src/primitives/cursor.ts';
 import { axisBand } from '../src/primitives/axisLabels.ts';
 import { tableLayout } from '../src/primitives/table.ts';
+import { formFieldLayout } from '../src/primitives/formField.ts';
 
 export interface Box {
   x: number;
@@ -38,6 +39,9 @@ export function boundsOf(el: Element, node: SVGGraphicsElement | null): Box | nu
         height: Math.abs(y1 - y0) + reach * 2,
       };
     }
+    case 'field':
+      // Taller than set when its wrapped label or text needs the room.
+      return { x: el.x, y: el.y, width: el.width, height: formFieldLayout(el).height };
     case 'table':
       // No height of its own: it is as tall as its rows.
       return { x: el.x, y: el.y, width: el.width, height: tableLayout(el).height };

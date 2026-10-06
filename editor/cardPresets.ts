@@ -105,6 +105,11 @@ export const CARD_PRESETS: { label: string; title: string; make: () => Element }
     make: () => dashboard('widget'),
   },
   {
+    label: 'Dashboard · condensed',
+    title: 'A 400 × 300 dashboard to lay over an image — metric tiles, a breakdown and three charts at the smallest type steps; reshape under Grid',
+    make: () => dashboard('condensed'),
+  },
+  {
     label: 'Phone',
     title: `A ${PHONE.width}-wide phone screen: fields and buttons run edge to edge, longer copy wraps`,
     make: () =>

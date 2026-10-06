@@ -357,6 +357,7 @@ function layoutContainer(el: Container): Element {
   const grows = kids.map((k) => (k as { grow?: number }).grow ?? 0);
   const growTotal = grows.reduce((a, b) => a + b, 0);
   const slack = mainSpace - used - gap * (kids.length - 1);
+  const mains = growTotal > 0 ? growSizes(kids, sizes.map(mainOf), grows, mainSpace - gap * (kids.length - 1), horizontal) : null;
 
   // `between` only spreads when there is slack and nothing is growing.
   const justify = spec.justify ?? 'start';
@@ -396,10 +397,9 @@ function layoutContainer(el: Container): Element {
 
   const placed = kids.map((kid, i) => {
     const s = { ...sizes[i] };
-    if (growTotal > 0 && grows[i] > 0 && slack > 0) {
-      const extra = (slack * grows[i]) / growTotal;
-      if (horizontal) s.width += extra;
-      else s.height += extra;
+    if (mains && grows[i] > 0) {
+      if (horizontal) s.width = mains[i];
+      else s.height = mains[i];
     }
 
     const self = (kid as { alignSelf?: LayoutSpec['align'] }).alignSelf ?? align;
@@ -446,6 +446,95 @@ function layoutContainer(el: Container): Element {
     height: round(size.height),
     children: placed,
   } as Element;
+}
+
+/** The smallest plot a growing chart is squeezed to, in px. */
+const MIN_PLOT = 24;
+/** Drawn across whatever width they are given, so they have no width of their own to keep. */
+const ELASTIC = new Set<Element['type']>(['lineChart', 'barChart', 'progress', 'skeleton', 'line']);
+
+/**
+ * The least an element can be along one axis: its content, with every part
+ * that grows at its smallest — a growing chart at `MIN_PLOT`, a growing
+ * container at its own content. What a growing child is never squeezed below.
+ */
+function minAlong(el: Element, horizontal: boolean): number {
+  const grows = ((el as { grow?: number }).grow ?? 0) > 0;
+  if (el.type === 'lineChart' || el.type === 'barChart') {
+    if (horizontal) return MIN_PLOT * 2;
+    if (grows) return MIN_PLOT + axisBand(el);
+  }
+  if (horizontal && ELASTIC.has(el.type)) return MIN_PLOT * 2;
+  if (isContainer(el) && el.layout) {
+    const spec = el.layout;
+    const p = pad(spec);
+    const kids = bounded(el);
+    const gap = spec.gap ?? LAYOUT.gap;
+    const along = spec.direction === 'horizontal' === horizontal;
+    const mins = kids.map((k) => minAlong(k, horizontal));
+    const content = along
+      ? mins.reduce((a, b) => a + b, 0) + Math.max(kids.length - 1, 0) * gap
+      : Math.max(0, ...mins);
+    // A set size holds unless the container is one that grows to its share.
+    const own = measureElement(el);
+    const edges = horizontal ? p.left + p.right : p.top + p.bottom;
+    return grows || (horizontal ? spec.hugWidth : spec.hugHeight) ? content + edges : horizontal ? own.width : own.height;
+  }
+  const s = measureElement(el);
+  return horizontal ? s.width : s.height;
+}
+
+/**
+ * Main-axis sizes for a container's growing children.
+ *
+ * Along a ROW they share the space equally — `flex: 1 1 0`, so the slots of
+ * a dashboard row are the same width whatever is in them — except that none
+ * is squeezed below its content: one that would be takes its content's width
+ * and the rest share what is left.
+ *
+ * Down a COLUMN each starts at its content, with charts at their smallest,
+ * and the space left over is shared — so a row of stat tiles stays as tall
+ * as its tiles and the chart rows take the rest, instead of every row being
+ * the same height and the charts spilling out of theirs.
+ *
+ * Children that do not grow keep their own size, as before.
+ */
+function growSizes(kids: Element[], measured: number[], grows: number[], space: number, horizontal: boolean): number[] {
+  const out = [...measured];
+  const fixed = kids.reduce((n, _, i) => n + (grows[i] > 0 ? 0 : measured[i]), 0);
+  const free = space - fixed;
+  const mins = kids.map((k, i) => (grows[i] > 0 ? minAlong(k, horizontal) : 0));
+  if (horizontal) {
+    let pool = kids.map((_, i) => i).filter((i) => grows[i] > 0);
+    // Content wider than the row: squeeze all of them alike, so the row stays
+    // inside its card, rather than pushing the last one out past its edge.
+    const need = pool.reduce((n, i) => n + mins[i], 0);
+    if (need > free) {
+      for (const i of pool) out[i] = Math.max((mins[i] * free) / need, 0);
+      return out;
+    }
+    let left = free;
+    // Clamp whoever falls below their content, then re-share among the rest.
+    for (;;) {
+      const total = pool.reduce((n, i) => n + grows[i], 0);
+      const under = pool.filter((i) => (left * grows[i]) / total < mins[i]);
+      if (!under.length) {
+        for (const i of pool) out[i] = Math.max((left * grows[i]) / total, 0);
+        break;
+      }
+      for (const i of under) out[i] = mins[i];
+      left -= under.reduce((n, i) => n + mins[i], 0);
+      pool = pool.filter((i) => !under.includes(i));
+      if (!pool.length) break;
+    }
+    return out;
+  }
+  const total = grows.reduce((a, b) => a + b, 0);
+  const spare = free - mins.reduce((a, b) => a + b, 0);
+  kids.forEach((_, i) => {
+    if (grows[i] > 0) out[i] = mins[i] + Math.max(spare, 0) * (grows[i] / total);
+  });
+  return out;
 }
 
 /**

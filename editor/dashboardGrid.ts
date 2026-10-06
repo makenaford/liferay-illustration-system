@@ -73,11 +73,17 @@ export function setGrid<T extends Container>(el: T, grid: number[]): T {
   const kids = el.children ?? [];
   const rows = kids.filter(isRow) as Container[];
   const others = kids.filter((k) => !isRow(k));
+  // New rows and slots take the shape of those already there — a condensed
+  // dashboard's padding, gaps and corners — rather than the default one's.
+  const rowLike = rows[0];
+  const slotLike = rows.flatMap((r) => r.children ?? [])[0] as Container | undefined;
+  const emptySlot = (): Element => (slotLike ? ({ ...slotLike, children: [] } as Element) : gridSlot());
   const next = counts.map((n, r) => {
     const row = rows[r];
     const slots = (row?.children ?? []).slice(0, n);
-    while (slots.length < n) slots.push(gridSlot());
-    return row ? ({ ...row, children: slots } as Element) : gridRow(slots);
+    while (slots.length < n) slots.push(emptySlot());
+    if (row) return { ...row, children: slots } as Element;
+    return rowLike ? ({ ...rowLike, children: slots } as Element) : gridRow(slots);
   });
   return { ...el, grid: counts, children: [...others, ...next] };
 }
@@ -89,7 +95,8 @@ export function setGrid<T extends Container>(el: T, grid: number[]): T {
  * page is the whole panel of a dashboard illustration; widget is the small
  * glass one set over a photo, frosting what is under it.
  */
-export function dashboard(kind: 'full' | 'widget', as: 'card' | 'group' = 'card'): Element {
+export function dashboard(kind: 'full' | 'widget' | 'condensed', as: 'card' | 'group' = 'card'): Element {
+  if (kind === 'condensed') return condensedDashboard();
   const full = kind === 'full';
   const title = t(full ? 'Performance overview' : 'This week', full ? 'subheading' : 'bodySmall', { weight: 'semibold' });
   const rows = [0, 1, 2].map(() => gridRow([gridSlot(), gridSlot()]));
@@ -138,4 +145,112 @@ export function windowCard(grid: number[] = [1, 2]): Element {
     children: [bar],
   } as Element;
   return setGrid(card as Container, grid);
+}
+
+/**
+ * CONDENSED — a dashboard small enough to lay over a photo, as the Japan site
+ * hero images draw it (Figma yC6i3M1Iq1zPKxrZPB0vuO, 29:17498): four metric
+ * tiles, then a breakdown beside a trend, then an area chart beside bars.
+ *
+ * The same grid as any dashboard, drawn at the type scale's floor: tile
+ * labels, tags and axis labels at `micro`, figures at `subheading`, card
+ * titles at `caption`, with 8px around the panel and 6px between slots and
+ * inside them. It arrives filled, every slot an ordinary element to edit;
+ * Grid reshapes it like any other, and new slots keep its tighter shape.
+ */
+const CONDENSED = { width: 400, height: 300, padding: 8, gap: 6, slotPadding: 6, slotGap: 4, radius: 10, slotRadius: 6 } as const;
+
+function condensedSlot(children: Element[]): Element {
+  return {
+    ...(gridSlot(children) as object),
+    radius: CONDENSED.slotRadius,
+    layout: { direction: 'vertical', gap: CONDENSED.slotGap, padding: CONDENSED.slotPadding, align: 'stretch' },
+  } as Element;
+}
+
+function condensedRow(slots: Element[]): Element {
+  return { ...(gridRow(slots) as { layout: object }), layout: { direction: 'horizontal', gap: CONDENSED.gap, padding: 0, align: 'stretch' } } as Element;
+}
+
+/** A metric tile: label and change tag on one line, the figure, a caption, a bar. */
+function metric(label: string, value: string, caption: string, progress: number, change?: string): Element[] {
+  const head: Element = {
+    type: 'group',
+    x: 0,
+    y: 0,
+    width: 10,
+    height: 10,
+    layout: { direction: 'horizontal', gap: 3, padding: 0, align: 'center', justify: 'between', hugHeight: true },
+    children: [
+      t(label, 'micro', { weight: 'bold' }),
+      ...(change ? [{ type: 'badge', x: 0, y: 0, height: 9, label: change, tone: 'info', dot: false } as Element] : []),
+    ],
+  } as Element;
+  return [
+    head,
+    t(value, 'subheading', { weight: 'semibold' }),
+    t(caption, 'micro', { tone: 'muted' }),
+    { type: 'progress', x: 0, y: 0, width: 10, height: 2, value: progress, tone: 'info' } as Element,
+  ];
+}
+
+const cardTitle = (s: string) => t(s, 'caption', { weight: 'semibold' });
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+
+function condensedDashboard(): Element {
+  const tiles = [
+    metric('Total patients', '10,250', 'Patients admitted', 0.12, '+14.2%'),
+    metric('New patients', '2,500', 'This month', 0.82),
+    metric('Number of beds', '800', 'Available now', 0.1, '+15%'),
+    metric('Operational cost', '$15,250', 'Avg cost per patient', 0.12, '+8.7%'),
+  ];
+  const breakdown = [
+    cardTitle('Incident location'),
+    ...[['Office', 0.7], ['Warehouse', 0.51], ['Vacations/PTO', 0.06], ['Offsite', 0.36]].map(
+      ([label, value]) => ({ type: 'progress', x: 0, y: 0, width: 10, height: 3, value, label, labelGap: 3 }) as Element,
+    ),
+  ];
+  const trend = [
+    cardTitle('Incidents by month'),
+    {
+      type: 'lineChart', x: 0, y: 0, width: 10, height: 40, grow: 1, gridLines: 4, domain: [0, 1], curve: 'straight',
+      series: [{ role: 'success', data: [0.12, 0.3, 0.3, 0.55, 0.68, 0.95] }],
+      labels: MONTHS,
+    } as Element,
+  ];
+  const progress = [
+    cardTitle('Health progress'),
+    {
+      type: 'lineChart', x: 0, y: 0, width: 10, height: 30, grow: 1, gridLines: 0, domain: [0, 1], markers: true,
+      series: [
+        { role: 'secondary', data: [0.15, 0.35, 0.28, 0.6, 0.45, 0.8], area: true },
+        { role: 'primary', data: [0.05, 0.25, 0.4, 0.5, 0.7, 0.9] },
+      ],
+    } as Element,
+  ];
+  const recovery = [
+    cardTitle('Recovery time'),
+    {
+      type: 'barChart', x: 0, y: 0, width: 10, height: 30, grow: 1, gridLines: 4,
+      data: [70, 38, 48, 20, 32, 60], line: [20, 35, 30, 48, 55, 82], max: 100,
+    } as Element,
+  ];
+  const card = {
+    type: 'card',
+    x: 0,
+    y: 0,
+    width: CONDENSED.width,
+    height: CONDENSED.height,
+    surface: 'glass-highlighted',
+    sheen: 'radial',
+    radius: CONDENSED.radius,
+    frost: 'content',
+    layout: { direction: 'vertical', gap: CONDENSED.gap, padding: CONDENSED.padding, align: 'stretch' },
+    children: [
+      condensedRow(tiles.map(condensedSlot)),
+      condensedRow([condensedSlot(breakdown), condensedSlot(trend)]),
+      condensedRow([condensedSlot(progress), condensedSlot(recovery)]),
+    ],
+  } as Element;
+  return { ...card, grid: gridOf(card as Container) } as Element;
 }

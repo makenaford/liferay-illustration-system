@@ -1,6 +1,6 @@
 import type { Ctx, VNode } from '../vsvg.ts';
 import { Surface } from './surface.ts';
-import type { SurfaceName } from '../tokens.ts';
+import type { SurfaceName, SurfaceSpec } from '../tokens.ts';
 
 /**
  * The original four variant names, mapped onto the surface set.
@@ -9,7 +9,7 @@ import type { SurfaceName } from '../tokens.ts';
  * card IS where the surface names say what it looks like. New work should use
  * `surface` directly.
  */
-const ALIAS: Record<string, SurfaceName> = {
+export const ALIAS: Record<string, SurfaceName> = {
   sheen: 'glass-default',
   flat: 'glass-default',
   sunken: 'sunken',
@@ -24,8 +24,8 @@ export interface SubCardProps {
   radius?: number;
   /** Legacy alias — see `ALIAS`. */
   variant?: 'sheen' | 'flat' | 'sunken' | 'accent';
-  /** Any surface in the set. Wins over `variant`. */
-  surface?: SurfaceName;
+  /** Any surface in the set, or a recipe already chosen for it. Wins over `variant`. */
+  surface?: SurfaceName | SurfaceSpec;
   backdrop?: boolean;
   children?: (VNode | null | undefined)[];
 }

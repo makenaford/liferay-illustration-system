@@ -77,7 +77,7 @@ for (const file of readdirSync(DOCS).filter((f) => f.endsWith('.json'))) {
             siblingBoxes.slice(0, i).some((b) => b && overlap(box, b) > 0.25)
           ) {
             // Drawn after something it covers: it is floating over the scene.
-            pick = 'glass-elevated';
+            pick = 'glass-highlighted';
           } else {
             pick = 'glass-default';
           }

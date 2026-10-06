@@ -22,16 +22,16 @@ const PAD = 28;
 const rows = Math.ceil(NAMES.length / COLS);
 
 const DESCRIPTION: Record<SurfaceName, string> = {
-  'glass-default': 'the everyday card, no shadow',
-  'glass-elevated': 'floating overlay',
-  'glass-highlighted': 'the one that matters; over dark in dark, over light in light',
-  'glass-highlighted-over-light': 'highlighted, for a card over something light',
-  'glass-highlighted-over-dark': 'highlighted, for a card over something dark',
-  'glass-background': 'the pane a composition sits on',
-  gradient: 'Figma Blue Gradient',
-  solid: 'opaque action',
-  outline: 'structure, no weight',
-  sunken: 'cut into its parent',
+  'glass-background': 'Background — the pane a composition sits on',
+  'glass-default': 'Flat — the everyday card',
+  'glass-blue': 'Blue tinted — washed in brand blue',
+  sunken: 'Sunken — inputs, rows, wells',
+  'glass-highlighted': 'Highlighted — the one that matters, raised',
+  'glass-highlighted-over-dark': 'Highlighted over dark — as Figma 985:15154, always',
+  'glass-highlighted-over-light': 'Highlighted over light — as Figma 985:14729, always',
+  gradient: 'buttons only: Figma Blue Gradient',
+  solid: 'buttons only: opaque action',
+  outline: 'buttons only: structure, no weight',
 };
 
 const elements: Element[] = NAMES.flatMap((name, i) => {

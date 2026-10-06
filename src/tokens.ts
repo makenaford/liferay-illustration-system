@@ -273,16 +273,43 @@ export interface SurfaceSpec {
 export const PANEL_SURFACE = 'glass-background';
 
 export type SurfaceName =
-  | 'glass-default'
-  | 'glass-elevated'
-  | 'glass-highlighted'
-  | 'glass-highlighted-over-light'
-  | 'glass-highlighted-over-dark'
   | 'glass-background'
+  | 'glass-default'
+  | 'glass-blue'
+  | 'sunken'
+  | 'glass-highlighted'
+  | 'glass-highlighted-over-dark'
+  | 'glass-highlighted-over-light'
   | 'gradient'
   | 'solid'
-  | 'outline'
-  | 'sunken';
+  | 'outline';
+
+/**
+ * THE GLASS SET — the five surfaces a card can take, every one of them glass
+ * (a frosted pane over what is behind). `gradient`, `solid` and `outline` are
+ * not glass and are for buttons and controls only.
+ */
+export const GLASS_SURFACES = ['glass-background', 'glass-default', 'glass-blue', 'sunken', 'glass-highlighted'] as const;
+export type GlassSurface = (typeof GLASS_SURFACES)[number];
+/**
+ * The Figma highlighted pair, kept as they are drawn there (985:15154 and
+ * 985:14729): each draws its own recipe in either theme and with either
+ * text, where Highlighted follows what the card sits over.
+ */
+export const FIXED_SURFACES = ['glass-highlighted-over-dark', 'glass-highlighted-over-light'] as const;
+/** What the builder calls each one. */
+export const SURFACE_LABELS: Record<SurfaceName, string> = {
+  'glass-background': 'Background',
+  'glass-default': 'Flat',
+  'glass-blue': 'Blue tinted',
+  sunken: 'Sunken',
+  'glass-highlighted': 'Highlighted',
+  'glass-highlighted-over-dark': 'Highlighted over dark',
+  'glass-highlighted-over-light': 'Highlighted over light',
+  gradient: 'Gradient',
+  solid: 'Solid',
+  outline: 'Outline',
+};
 
 export interface Tokens {
   name: 'dark' | 'light';
@@ -577,6 +604,9 @@ const GLASS_BLUR = 28;
  */
 export const SHADOW_REACH = 20;
 
+/** The most any cast shadow is blurred, in px — kept tight so a shadow reads as a contact glow, not a haze. */
+export const SHADOW_BLUR_MAX = 10;
+
 /**
  * GLASS HIGHLIGHTED — the one card that matters more, and glass over a
  * screenshot: the Mockup template's panels. Two of them, named for what they
@@ -669,9 +699,9 @@ const glassBackground = {
     fill: { angle: 171, stops: [{ color: '#FFFFFF', opacity: 0.62 }, { color: '#FFFFFF', opacity: 0.38 }] },
     line: { angle: 180, stops: [{ color: '#FFFFFF', opacity: 1 }, { color: '#0B5FFF', opacity: 0.25 }] },
     litEdge: { color: '#FFFFFF', opacity: 1 },
-    // Was 14px down / 36px blur — cut to reach no further than SHADOW_REACH.
+    // Was 14px down / 36px blur — cut to SHADOW_REACH, then to SHADOW_BLUR_MAX.
     shadow: [
-      { dy: 6, blur: 14, color: '#0B2E7A', opacity: 0.1 },
+      { dy: 4, blur: 10, color: '#0B2E7A', opacity: 0.1 },
       { dy: 2, blur: 6, color: '#0B5FFF', opacity: 0.1 },
     ],
     inset: [{ dy: 3, blur: 6, color: '#FFFFFF', opacity: 0.6 }],
@@ -721,23 +751,16 @@ export const dark: Tokens = {
       line: { angle: 225, stops: [{ color: '#FFFFFF', opacity: 0.07 }, { color: '#FFFFFF', opacity: 0.045 }] },
       blur: GLASS_BLUR,
     },
-    /** Elevated: floating over the composition — an overlay, a callout, a menu. Was glass3. */
-    'glass-elevated': {
-      // DS: 0.09 / 0.04, line 0.26 / 0.16 — halved from 0.34 / 0.2, as default's.
-      fill: { angle: 60, stops: [{ color: '#FFFFFF', opacity: 0.19 }, { color: STEP_02.color, opacity: 0.07 }] },
-      line: { angle: 225, stops: [{ color: '#FFFFFF', opacity: 0.17 }, { color: '#FFFFFF', opacity: 0.1 }] },
-      // Was 18px down / 40px blur over 3 / 8 — cut to SHADOW_REACH.
-      shadow: [
-        { dy: 6, blur: 14, color: '#000000', opacity: 0.4 },
-        { dy: 2, blur: 6, color: '#000000', opacity: 0.28 },
-      ],
-      litEdge: { color: '#FFFFFF', opacity: 0.18 },
+    /** Blue tinted: the flat card washed in brand blue, white text on it. */
+    'glass-blue': {
+      fill: { angle: 60, stops: [{ color: '#3B7BFF', opacity: 0.28 }, { color: '#0B5FFF', opacity: 0.14 }] },
+      line: { angle: 225, stops: [{ color: '#9EC0FF', opacity: 0.3 }, { color: '#FFFFFF', opacity: 0.08 }] },
       blur: GLASS_BLUR,
     },
-    /** Highlighted — over dark, this theme's default. See HIGHLIGHTED. */
+    /** Highlighted: the one card that matters more, raised. See HIGHLIGHTED. */
     'glass-highlighted': HIGHLIGHTED.overDark,
-    'glass-highlighted-over-light': HIGHLIGHTED.overLight,
     'glass-highlighted-over-dark': HIGHLIGHTED.overDark,
+    'glass-highlighted-over-light': HIGHLIGHTED.overLight,
     /** Glass background: the large pane a composition sits on — see GLASS BACKGROUND. */
     'glass-background': glassBackground.dark,
     /**
@@ -762,22 +785,23 @@ export const dark: Tokens = {
           { color: D('accent-cyan'), offset: 1 },
         ],
       },
-      shadow: [{ dy: 5, blur: 15, color: D('brand-primary-primary'), opacity: 0.3 }],
+      shadow: [{ dy: 4, blur: 10, color: D('brand-primary-primary'), opacity: 0.3 }],
     },
     /** Opaque brand blue — a callout that is an action, not a container. */
     solid: {
       fill: { angle: 180, stops: [{ color: '#0B5FFF' }, { color: '#0B5FFF' }] },
-      shadow: [{ dy: 5, blur: 15, color: '#0B5FFF', opacity: 0.35 }],
+      shadow: [{ dy: 4, blur: 10, color: '#0B5FFF', opacity: 0.35 }],
     },
     /** No fill at all — structure without weight. */
     outline: {
       line: { angle: 225, stops: [{ color: '#FFFFFF', opacity: 0.7 }, { color: '#70A2FF', opacity: 0.7 }] },
     },
-    /** Cut INTO its parent: inputs, log rows, wells. */
+    /** Sunken: cut INTO its parent — inputs, log rows, wells. Glass too: it frosts what is behind it. */
     sunken: {
-      fill: { angle: 180, stops: [{ color: '#000000', opacity: 0.16 }, { color: '#000000', opacity: 0.16 }] },
+      fill: { angle: 180, stops: [{ color: '#000000', opacity: 0.22 }, { color: '#000000', opacity: 0.18 }] },
       line: { angle: 225, stops: [{ color: '#FFFFFF', opacity: 0.07 }, { color: '#FFFFFF', opacity: 0.04 }] },
-      recessed: true,
+      inset: [{ dy: 1, blur: 3, color: '#000000', opacity: 0.35 }],
+      blur: GLASS_BLUR,
     },
   },
   stage: {
@@ -805,7 +829,7 @@ export const dark: Tokens = {
     litEdge: '#FFFFFF',
     litEdgeOpacity: 0.1,
     shadow: [
-      { dy: 6, blur: 14, color: '#000000', opacity: 0.28 },
+      { dy: 4, blur: 10, color: '#000000', opacity: 0.28 },
       { dy: 1, blur: 3, color: '#000000', opacity: 0.22 },
     ],
     backdropBlur: GLASS_BLUR,
@@ -988,17 +1012,17 @@ export const light: Tokens = {
       inset: [{ dy: 1, blur: 8, color: '#0B5FFF', opacity: 0.1 }],
       blur: GLASS_BLUR,
     },
-    'glass-elevated': {
-      fill: { angle: 0, radial: LIGHT_GLASS_RADIAL, stops: [{ color: '#0B5FFF', opacity: 0.02 }, { color: '#0B5FFF', opacity: 0.05 }] },
+    /** Blue tinted: white glass fading into blue — Figma 905:20194, the old highlighted-blue. */
+    'glass-blue': {
+      fill: { angle: 0, radial: LIGHT_GLASS_RADIAL, stops: [{ color: '#FFFFFF', opacity: 0.5 }, { color: '#99BCFF', opacity: 0.65 }] },
       line: LIGHT_GLASS_LINE,
-      shadow: [{ dx: 1, dy: 1, blur: 3, color: '#000000', opacity: 0.03 }],
       inset: [{ dy: 1, blur: 8, color: '#FFFFFF', opacity: 0.1 }],
       blur: GLASS_BLUR,
     },
-    /** Highlighted — over light, this theme's default. See HIGHLIGHTED. */
+    /** Highlighted: over light, as the light theme draws it. See HIGHLIGHTED. */
     'glass-highlighted': HIGHLIGHTED.overLight,
-    'glass-highlighted-over-light': HIGHLIGHTED.overLight,
     'glass-highlighted-over-dark': HIGHLIGHTED.overDark,
+    'glass-highlighted-over-light': HIGHLIGHTED.overLight,
     /** Glass background: the large pane a composition sits on — see GLASS BACKGROUND. */
     'glass-background': glassBackground.light,
     /**
@@ -1016,22 +1040,23 @@ export const light: Tokens = {
           { color: L('accent-cyan'), offset: 1 },
         ],
       },
-      shadow: [{ dy: 5, blur: 15, color: L('brand-primary-primary'), opacity: 0.22 }],
+      shadow: [{ dy: 4, blur: 10, color: L('brand-primary-primary'), opacity: 0.22 }],
     },
     /** Opaque brand blue — a callout that is an action, not a container. */
     solid: {
       fill: { angle: 180, stops: [{ color: '#0B5FFF' }, { color: '#0B5FFF' }] },
-      shadow: [{ dy: 5, blur: 15, color: '#0B5FFF', opacity: 0.24 }],
+      shadow: [{ dy: 4, blur: 10, color: '#0B5FFF', opacity: 0.24 }],
     },
     /** No fill at all — structure without weight. */
     outline: {
       line: { angle: 225, stops: [{ color: '#0B5FFF', opacity: 0.7 }, { color: '#0B5FFF', opacity: 0.45 }] },
     },
-    /** Cut INTO its parent: inputs, log rows, wells. */
+    /** Sunken: cut INTO its parent — inputs, log rows, wells. Glass too: it frosts what is behind it. */
     sunken: {
-      fill: { angle: 180, stops: [{ color: INK, opacity: 0.04 }, { color: INK, opacity: 0.04 }] },
+      fill: { angle: 180, stops: [{ color: INK, opacity: 0.06 }, { color: INK, opacity: 0.04 }] },
       line: { angle: 225, stops: [{ color: INK, opacity: 0.1 }, { color: INK, opacity: 0.06 }] },
-      recessed: true,
+      inset: [{ dy: 1, blur: 3, color: INK, opacity: 0.12 }],
+      blur: GLASS_BLUR,
     },
   },
   stage: {
@@ -1068,7 +1093,7 @@ export const light: Tokens = {
     litEdge: '#FFFFFF',
     litEdgeOpacity: 0,
     shadow: [
-      { dy: 6, blur: 14, color: INK, opacity: 0.08 },
+      { dy: 4, blur: 10, color: INK, opacity: 0.08 },
       { dy: 1, blur: 3, color: INK, opacity: 0.06 },
     ],
     backdropBlur: GLASS_BLUR,
@@ -1240,4 +1265,83 @@ export function nearestSpace(n: number): number {
   return SPACE.reduce((best, v) =>
     Math.abs(v - n) < Math.abs(best - n) ? v : best,
   );
+}
+
+/*
+ * WHICH RECIPE A CARD DRAWS — by the ground it sits on and the colour of its
+ * text. Each theme's `surfaces` are its own default pairing: dark draws white
+ * text over a dark ground, light dark text over a light one. A card that
+ * switches its text (`ink`), or says what it sits over (`over`) — a white
+ * screenshot in a dark illustration — takes one of the other two:
+ *
+ *                 white text                    dark text
+ *   dark ground   dark.surfaces                 GLASS_BRIGHT (white glass)
+ *   light ground  GLASS_ON_LIGHT (dark glass)   light.surfaces
+ *
+ * GLASS_ON_LIGHT is tinted until white text on it reads at 4.5:1 over a near-
+ * white ground: about 56% of near-black, 65% of navy. Brand blue alone needs
+ * 92%, which is a solid block rather than glass, so its blue is navy-blue.
+ */
+const ON_LIGHT_LINE = { angle: 225, stops: [{ color: '#FFFFFF', opacity: 0.35 }, { color: '#FFFFFF', opacity: 0.1 }] };
+export const GLASS_ON_LIGHT: Record<GlassSurface, SurfaceSpec> = {
+  'glass-background': {
+    fill: { angle: 0, radial: { cx: 1, cy: 0.02, rx: 1.31, ry: 1.51 }, stops: [{ color: '#0A1633', opacity: 0.66 }, { color: '#0A1633', opacity: 0.6 }] },
+    line: { angle: 199, stops: [{ color: '#FFFFFF', opacity: 0.4 }, { color: '#FFFFFF', opacity: 0.12 }] },
+    shadow: [{ dy: 4, blur: 10, color: '#0B2E7A', opacity: 0.16 }],
+    blur: GLASS_BLUR,
+  },
+  'glass-default': {
+    fill: { angle: 60, stops: [{ color: '#0A1633', opacity: 0.66 }, { color: '#070B13', opacity: 0.62 }] },
+    line: ON_LIGHT_LINE,
+    blur: GLASS_BLUR,
+  },
+  'glass-blue': {
+    fill: { angle: 60, stops: [{ color: '#0B3A9A', opacity: 0.74 }, { color: '#0B2E7A', opacity: 0.7 }] },
+    line: { angle: 225, stops: [{ color: '#9EC0FF', opacity: 0.5 }, { color: '#FFFFFF', opacity: 0.12 }] },
+    blur: GLASS_BLUR,
+  },
+  sunken: {
+    fill: { angle: 180, stops: [{ color: '#070B13', opacity: 0.74 }, { color: '#070B13', opacity: 0.7 }] },
+    line: { angle: 225, stops: [{ color: '#FFFFFF', opacity: 0.12 }, { color: '#FFFFFF', opacity: 0.06 }] },
+    inset: [{ dy: 1, blur: 3, color: '#000000', opacity: 0.4 }],
+    blur: GLASS_BLUR,
+  },
+  // The over-light card, its darkening wash strong enough to carry white text.
+  'glass-highlighted': {
+    ...HIGHLIGHTED.overLight,
+    fill: { ...HIGHLIGHTED.overLight.fill!, stops: [{ color: '#070B13', opacity: 0.62 }, { color: '#0B2E7A', opacity: 0.68 }] },
+  },
+};
+
+const BRIGHT_LINE = { angle: 180, stops: [{ color: '#FFFFFF', opacity: 0.9 }, { color: '#0B5FFF', opacity: 0.25 }] };
+/** White glass for dark text over a dark ground. */
+export const GLASS_BRIGHT: Record<GlassSurface, SurfaceSpec> = {
+  'glass-background': { ...glassBackground.light, fill: { angle: 171, stops: [{ color: '#FFFFFF', opacity: 0.88 }, { color: '#FFFFFF', opacity: 0.8 }] } },
+  'glass-default': { fill: { angle: 171, stops: [{ color: '#FFFFFF', opacity: 0.86 }, { color: '#F4F7FD', opacity: 0.8 }] }, line: BRIGHT_LINE, blur: GLASS_BLUR },
+  'glass-blue': { fill: { angle: 171, stops: [{ color: '#FFFFFF', opacity: 0.86 }, { color: '#C7DAFF', opacity: 0.84 }] }, line: BRIGHT_LINE, blur: GLASS_BLUR },
+  sunken: {
+    fill: { angle: 180, stops: [{ color: '#E9EEF7', opacity: 0.86 }, { color: '#E9EEF7', opacity: 0.82 }] },
+    line: { angle: 225, stops: [{ color: INK, opacity: 0.12 }, { color: INK, opacity: 0.06 }] },
+    inset: [{ dy: 1, blur: 3, color: INK, opacity: 0.14 }],
+    blur: GLASS_BLUR,
+  },
+  'glass-highlighted': {
+    ...HIGHLIGHTED.overDark,
+    fill: { ...HIGHLIGHTED.overDark.fill!, stops: [{ color: '#FFFFFF', opacity: 0.9 }, { color: '#DCE8FF', opacity: 0.84 }] },
+  },
+};
+
+const isGlass = (s: SurfaceName): s is GlassSurface => (GLASS_SURFACES as readonly string[]).includes(s);
+
+/**
+ * The recipe a surface draws with, for a card over `ground` with `ink` text.
+ * The theme's own pairing returns its `surfaces` entry, so nothing changes
+ * for a card that sets neither. The non-glass surfaces, and the fixed
+ * highlighted pair, have one recipe a theme.
+ */
+export function surfaceRecipe(tokens: Tokens, name: SurfaceName, ground: 'dark' | 'light', ink: 'dark' | 'light'): SurfaceSpec {
+  const own = tokens.surfaces[name] ?? tokens.surfaces['glass-default'];
+  if (!isGlass(name)) return own;
+  if (ground === 'dark') return ink === 'light' ? dark.surfaces[name] : GLASS_BRIGHT[name];
+  return ink === 'dark' ? light.surfaces[name] : GLASS_ON_LIGHT[name];
 }

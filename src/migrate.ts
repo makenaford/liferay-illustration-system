@@ -66,7 +66,10 @@ const RENAMED_SURFACES: Record<string, string> = {
   highlighted: 'glass-highlighted',
   // Replaced by the over-light / over-dark pair; the theme's default is closest.
   'glass-highlighted-blue': 'glass-highlighted',
+  // Folded into the five glass surfaces: elevated is the raised card.
+  'glass-elevated': 'glass-highlighted',
 };
+
 
 /**
  * A glass icon pasted in from the library as a copy of a built icon draws the

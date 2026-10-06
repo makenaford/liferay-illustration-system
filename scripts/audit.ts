@@ -9,7 +9,7 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Doc, Element } from '../src/document.ts';
-import { LAYOUT, SHADOW_REACH, SPACE, dark as tokens, light } from '../src/tokens.ts';
+import { GLASS_BRIGHT, GLASS_ON_LIGHT, LAYOUT, SHADOW_BLUR_MAX, SHADOW_REACH, SPACE, dark as tokens, light } from '../src/tokens.ts';
 import { measureTextEl } from '../src/primitives/text.ts';
 import { resolveLayout } from '../src/autolayout.ts';
 import { badgeWidth } from '../src/primitives/badge.ts';
@@ -404,11 +404,18 @@ function cardPadding(doc: Doc, el: Element, path: string) {
  * Every surface's cast shadow stays within `SHADOW_REACH` of its card, so a
  * card on the card guide never has its shadow clipped by the canvas edge.
  */
-for (const t of [tokens, light]) {
-  for (const [name, spec] of Object.entries(t.surfaces)) {
+const RECIPES: [string, Record<string, { shadow?: { dx?: number; dy: number; blur: number }[] }>][] = [
+  ['dark tokens', tokens.surfaces],
+  ['light tokens', light.surfaces],
+  ['white text over light', GLASS_ON_LIGHT],
+  ['dark text over dark', GLASS_BRIGHT],
+];
+for (const [where, set] of RECIPES) {
+  for (const [name, spec] of Object.entries(set)) {
     for (const l of spec.shadow ?? []) {
       const reach = Math.max(Math.abs(l.dx ?? 0), Math.abs(l.dy)) + l.blur;
-      if (reach > SHADOW_REACH) add(`${t.name} tokens`, `surfaces.${name}`, 'shadow-reach', `shadow reaches ${reach}px — maximum is ${SHADOW_REACH}`);
+      if (reach > SHADOW_REACH) add(where, `surfaces.${name}`, 'shadow-reach', `shadow reaches ${reach}px — maximum is ${SHADOW_REACH}`);
+      if (l.blur > SHADOW_BLUR_MAX) add(where, `surfaces.${name}`, 'shadow-blur', `shadow blurs ${l.blur}px — maximum is ${SHADOW_BLUR_MAX}`);
     }
   }
 }

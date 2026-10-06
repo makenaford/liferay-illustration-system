@@ -1,7 +1,7 @@
 import type { Doc, PanelSpec } from '../src/document.ts';
 import { commit, getState, useEditor } from './state.ts';
-import { MESH_NAMES, PANEL_SURFACE, type SurfaceName } from '../src/tokens.ts';
-import { SURFACES } from './schema.ts';
+import { MESH_NAMES, PANEL_SURFACE, SURFACE_LABELS, type SurfaceName } from '../src/tokens.ts';
+import { CARD_SURFACES } from './schema.ts';
 import { TokenPicker } from './TokenPicker.tsx';
 
 /**
@@ -195,9 +195,9 @@ export function DocumentPanel() {
               value={p.surface ?? PANEL_SURFACE}
               onChange={(e) => setPanel(i, 'surface', e.target.value as SurfaceName)}
             >
-              {SURFACES.map((s) => (
+              {CARD_SURFACES.map((s) => (
                 <option key={s} value={s}>
-                  {s}
+                  {SURFACE_LABELS[s as SurfaceName]}
                 </option>
               ))}
             </select>

@@ -3,9 +3,15 @@ import { windowCard } from './dashboardGrid.ts';
 import { STATUS_TONES } from '../src/primitives/badge.ts';
 import { PIE_GRADIENTS } from '../src/primitives/pieChart.ts';
 import { GLASS_ICONS } from '../src/glassIcons.generated.ts';
-import { dark as darkTokens } from '../src/tokens.ts';
+import { dark as darkTokens, FIXED_SURFACES, GLASS_SURFACES, SURFACE_LABELS } from '../src/tokens.ts';
 
 export const SURFACES = Object.keys(darkTokens.surfaces);
+/**
+ * What a card can take: the five glass surfaces, then the fixed highlighted
+ * pair. Gradient, solid and outline are for buttons and controls.
+ */
+export const CARD_SURFACES: string[] = [...GLASS_SURFACES, ...FIXED_SURFACES];
+const SURFACE_OPTION_LABELS: Record<string, string> = { '': 'Default', ...SURFACE_LABELS };
 import type { Element } from '../src/document.ts';
 import { LAYOUT } from '../src/tokens.ts';
 
@@ -172,10 +178,11 @@ export const SCHEMA: {
       ...XY,
       ...WH,
       { key: 'maxWidth', label: 'Max width · text wraps', kind: 'number', min: 0 },
-      { key: 'surface', label: 'Surface', kind: 'select', options: ['', ...SURFACES] },
+      { key: 'surface', label: 'Surface', kind: 'select', options: ['', ...CARD_SURFACES], labels: SURFACE_OPTION_LABELS },
+      { key: 'over', label: 'Over · what it sits on', kind: 'select', options: ['', 'dark', 'light'], labels: { '': 'The theme', dark: 'Something dark', light: 'Something light' } },
       { key: 'radius', label: 'Radius', kind: 'number', min: 0, default: 8 },
       { key: 'clip', label: 'Clip content', kind: 'boolean' },
-      { key: 'ink', label: 'Text', kind: 'select', options: ['', 'dark', 'light'] },
+      { key: 'ink', label: 'Text', kind: 'select', options: ['', 'light', 'dark'], labels: { '': 'The theme’s', light: 'White', dark: 'Dark' } },
     ],
   },
   group: {
@@ -199,10 +206,11 @@ export const SCHEMA: {
       ...XY,
       ...WH,
       { key: 'maxWidth', label: 'Max width · text wraps', kind: 'number', min: 0 },
-      { key: 'surface', label: 'Surface', kind: 'select', options: ['', ...SURFACES] },
+      { key: 'surface', label: 'Surface', kind: 'select', options: ['', ...CARD_SURFACES], labels: SURFACE_OPTION_LABELS },
+      { key: 'over', label: 'Over · what it sits on', kind: 'select', options: ['', 'dark', 'light'], labels: { '': 'The theme', dark: 'Something dark', light: 'Something light' } },
       { key: 'radius', label: 'Radius', kind: 'number', min: 0, default: 4 },
       { key: 'clip', label: 'Clip content', kind: 'boolean' },
-      { key: 'ink', label: 'Text', kind: 'select', options: ['', 'dark', 'light'] },
+      { key: 'ink', label: 'Text', kind: 'select', options: ['', 'light', 'dark'], labels: { '': 'The theme’s', light: 'White', dark: 'Dark' } },
     ],
   },
   pill: {
@@ -258,7 +266,7 @@ export const SCHEMA: {
       { key: 'icon', label: 'Icon', kind: 'icon' },
       { key: 'iconStyle', label: 'Icon style', kind: 'select', options: ICON_STYLES, labels: ICON_STYLE_LABELS },
       { key: 'role', label: 'Type style', kind: 'select', options: ROLES },
-      { key: 'surface', label: 'Surface · as cards, over the variant', kind: 'select', options: ['', ...SURFACES] },
+      { key: 'surface', label: 'Surface · as cards, over the variant', kind: 'select', options: ['', ...SURFACES], labels: SURFACE_OPTION_LABELS },
       { key: 'fit', label: 'Fit width to label', kind: 'boolean' },
       { key: 'radius', label: 'Radius', kind: 'number', min: 0, default: 4 },
       { key: 'padding', label: 'Padding', kind: 'number', min: 0, default: 12 },
@@ -270,7 +278,7 @@ export const SCHEMA: {
       { key: 'label', label: 'Label', kind: 'text' },
       { key: 'checked', label: 'Checked', kind: 'boolean' },
       { key: 'control', label: 'Control', kind: 'select', options: ['radio', 'checkbox'], labels: { radio: 'Radio', checkbox: 'Checkbox' } },
-      { key: 'surface', label: 'Surface · as cards', kind: 'select', options: ['', ...SURFACES] },
+      { key: 'surface', label: 'Surface · as cards', kind: 'select', options: ['', ...SURFACES], labels: SURFACE_OPTION_LABELS },
       ...XY,
       ...WH,
     ],
@@ -377,7 +385,7 @@ export const SCHEMA: {
       { key: 'header', label: 'Header row', kind: 'boolean', default: true },
       { key: 'dividers', label: 'Dividers', kind: 'boolean', default: (el) => !(el as { compact?: boolean }).compact },
       { key: 'rowHeight', label: 'Row height', kind: 'number', min: 8 },
-      { key: 'surface', label: 'Background', kind: 'select', options: ['', ...SURFACES] },
+      { key: 'surface', label: 'Background', kind: 'select', options: ['', ...SURFACES], labels: SURFACE_OPTION_LABELS },
       { key: 'padding', label: 'Padding', kind: 'number', min: 0, default: 8 },
       { key: 'radius', label: 'Radius', kind: 'number', min: 0, default: 4 },
     ],

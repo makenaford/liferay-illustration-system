@@ -1,6 +1,6 @@
 import type { Ctx, VNode } from '../vsvg.ts';
 import { Surface, cssAngleLine } from './surface.ts';
-import type { SurfaceName } from '../tokens.ts';
+import type { SurfaceName, SurfaceSpec } from '../tokens.ts';
 
 export interface GlassPanelProps {
   x: number;
@@ -11,7 +11,7 @@ export interface GlassPanelProps {
   /** Retained for the document schema; neither changes the surface. */
   sheen?: 'radial' | 'linear';
   /** Which surface to draw. Defaults to the standard card. */
-  surface?: SurfaceName;
+  surface?: SurfaceName | SurfaceSpec;
   backdrop?: boolean;
   /** `nested` drops to the lowest glass step, which casts no shadow. */
   elevation?: 'card' | 'nested';

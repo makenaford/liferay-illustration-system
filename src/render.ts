@@ -1,5 +1,6 @@
 import { h, text, rawNode, createCtx, toSVGString, type Ctx, type VNode } from './vsvg.ts';
-import { PANEL_SURFACE, themes, type ThemeName } from './tokens.ts';
+import { PANEL_SURFACE, surfaceRecipe, themes, type SurfaceName, type ThemeName } from './tokens.ts';
+import { ALIAS as SUBCARD_ALIAS } from './primitives/subCard.ts';
 import {
   Stage,
   GlassPanel,
@@ -198,6 +199,20 @@ function renderElement(ctx: Ctx, el: Element, path?: string): VNode | null {
   return h('g', { 'data-path': path, style: 'pointer-events:all' }, [node]);
 }
 
+/**
+ * A card's surface recipe: by what it sits over — the theme's ground, or the
+ * ground inside the card it is in, which is what `ctx.tokens` says — unless
+ * it says otherwise (`over`), and by the colour of its text (`ink`). A card
+ * that sets neither draws the theme's own recipe. See `surfaceRecipe`.
+ */
+function recipeFor(ctx: Ctx, name: SurfaceName, el: { ink?: Ink; over?: 'dark' | 'light' }) {
+  const ground = el.over ?? ctx.tokens.name;
+  const ink = el.ink ?? (ctx.tokens.name === 'dark' ? 'light' : 'dark');
+  const recipe = surfaceRecipe(ctx.tokens, name, ground, ink);
+  // The theme's own recipe goes by its name, as it always has.
+  return recipe === ctx.tokens.surfaces[name] ? name : recipe;
+}
+
 function renderElementInner(ctx: Ctx, el: Element, path?: string): VNode | null {
   const kid = (children: Element[] | undefined) =>
     (children ?? []).map((c, i) =>
@@ -237,7 +252,7 @@ function renderElementInner(ctx: Ctx, el: Element, path?: string): VNode | null 
         width: el.width,
         height: el.height,
         radius: el.radius,
-        surface: el.surface,
+        surface: recipeFor(ctx, el.surface ?? 'glass-default', el),
         children: contents(el, el.radius ?? ctx.tokens.radius.panel),
       });
 
@@ -253,7 +268,7 @@ function renderElementInner(ctx: Ctx, el: Element, path?: string): VNode | null 
         height: el.height,
         radius: el.radius,
         variant: el.variant,
-        surface: el.surface,
+        surface: recipeFor(ctx, el.surface ?? SUBCARD_ALIAS[el.variant ?? 'sheen'] ?? 'glass-default', el),
         children: contents(el, el.radius ?? 4),
       });
 

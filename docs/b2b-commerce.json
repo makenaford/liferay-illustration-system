@@ -479,7 +479,7 @@
         "padding": 12,
         "align": "start"
       },
-      "surface": "glass-elevated"
+      "surface": "glass-highlighted"
     }
   ],
   "panelSurfaces": 2

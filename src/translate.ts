@@ -130,6 +130,7 @@ export interface Localized {
   artboard?: Doc['artboard'];
   glow?: Doc['glow'];
   mockup?: Doc['mockup'];
+  cardArea?: Doc['cardArea'];
   from: string;
   savedAt: number;
 }
@@ -166,6 +167,7 @@ export function withLocalized(english: Doc, lang: Lang, working: Doc, savedAt: n
     artboard: working.artboard,
     glow: working.glow,
     mockup: working.mockup,
+    cardArea: working.cardArea,
     from: fingerprint(english),
     savedAt,
   };

@@ -451,5 +451,6 @@ function fitCanvas(original: Doc, translated: Doc): Doc {
     panels: translated.panels?.map((p) => ({ ...p, x: round(p.x + dx), y: round(p.y + dy) })),
     glow: translated.glow?.map((g) => ({ ...g, cx: round(g.cx + dx), cy: round(g.cy + dy) })),
     mockup: translated.mockup && { ...translated.mockup, x: round(translated.mockup.x + dx), y: round(translated.mockup.y + dy) },
+    cardArea: translated.cardArea && { ...translated.cardArea, x: round(translated.cardArea.x + dx), y: round(translated.cardArea.y + dy) },
   };
 }

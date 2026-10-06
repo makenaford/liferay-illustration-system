@@ -2154,7 +2154,7 @@ function Tools({
           <p>
             Compose marketing illustrations from the Liferay component library — frames, charts, badges,
             chat bubbles, glass icons — in dark and light from one document. Start from a <b>Simple illustration</b>,
-            an <b>Image base</b> (a 3:2 product screenshot with frames meeting its edges) or a <b>Dashboard</b> (a
+            an <b>Image base</b> (a product screenshot with frames meeting its edges) or a <b>Dashboard</b> (a
             grid of stat tiles and charts). It opens right here: saving an illustration
             puts it in this library for everyone, and <b>Edit in builder</b> on any illustration opens it again.
           </p>

@@ -94,6 +94,7 @@ function measure(node: SVGGraphicsElement | null): Box | null {
  * in artboard units, so the inset is converted back through that fit.
  */
 export function safeArea(doc: Doc): Box {
+  if (doc.cardArea) return { ...doc.cardArea };
   const art = doc.artboard ?? doc.canvas;
   const fit = Math.min(doc.canvas.width / art.width, doc.canvas.height / art.height);
   const ox = (doc.canvas.width - art.width * fit) / 2;

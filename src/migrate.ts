@@ -81,7 +81,7 @@ function migrateElement(el: Element): Element {
  * template's (and the rebuilt mockups') first element is the screenshot, a
  * bare canvas's image covering most of it. Its own box becomes the slot, so
  * the builder shows the guide and a dropped screenshot fills it — nothing on
- * it moves. A box that isn't 3:2 keeps its size; the guide says so.
+ * it moves, and the box keeps its size.
  */
 function withMockupSlot(doc: Doc): Doc {
   if (doc.mockup || doc.layout !== 'bare') return doc;

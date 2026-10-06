@@ -9,3 +9,6 @@ reference/
 
 # Local-only Cloudflare state (alchemy dev).
 .alchemy/
+
+# Personal Claude Code settings.
+.claude/settings.local.json

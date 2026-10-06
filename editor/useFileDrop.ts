@@ -117,7 +117,7 @@ export function useFileDrop(stageRef: React.RefObject<HTMLDivElement | null>, zo
     /*
      * The mockup's screenshot slot (`Doc.mockup`): a raster dropped inside it
      * — not onto a frame over it — fills it. It replaces the screenshot there,
-     * cropped to fill from the centre, and the slot keeps its 3:2 size
+     * cropped to fill from the centre, and the slot keeps its size
      * whatever the image's own; with no screenshot left, one is put back.
      */
     const m = doc.mockup;

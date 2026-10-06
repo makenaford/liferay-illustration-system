@@ -69,22 +69,26 @@ export function blankDoc(): Doc {
  * security, anywhere", "Turn your site into a B2B revenue engine"):
  *
  *   canvas   800 × 533, 3:2
- *   mockup   720 × 480 — 3:2 — centred, 10px corners: the same size in every
- *            mockup illustration, so they line up side by side. It is the
- *            document's screenshot slot (`Doc.mockup`): the builder shows it
- *            as a guide, and a screenshot dropped in it fills it.
- *   panels   glass, overlapping the mockup's edge and meeting the canvas
- *            edge with 12px to spare; each holds a screenshot inset 12px
+ *   mockup   720 × 460, centred, 10px corners. It is the document's
+ *            screenshot slot (`Doc.mockup`): the builder shows it as a
+ *            guide, and a screenshot dropped in it fills it.
+ *   cards    740 × 480, centred — 10px outside the mockup all round. The
+ *            card guide (`Doc.cardArea`): the builder's safe area, which
+ *            top-level cards snap to in place of the canvas inset.
+ *   panels   glass, overlapping the mockup's edge and meeting the card
+ *            guide; each holds a screenshot inset 12px
  *
- * It was drawn at 1440 × 960 first; this is that layout scaled to 800 wide.
+ * It was drawn at 1440 × 960 first and scaled to 800 wide; the illustrations
+ * made from that keep its 720 × 480 slot.
  *
  * The images are placeholders to replace, not artwork.
  */
 export const MOCKUP = {
   canvas: { width: 800, height: 533 },
-  /** Space between a panel and the canvas edge, and between a panel and its screenshot. */
+  /** Space between a panel and its screenshot. */
   pad: 12,
-  image: { x: 40, y: 28, width: 720, height: 480, radius: 10 },
+  image: { x: 40, y: 36, width: 720, height: 460, radius: 10 },
+  cards: { x: 30, y: 26, width: 740, height: 480 },
 } as const;
 
 /** A labelled placeholder image, so the slot's size and purpose read at a glance. */
@@ -131,7 +135,7 @@ function panel(x: number, y: number, width: number, height: number, label: strin
 
 /** A new mockup illustration: the mockup image, and two frames at its edges. */
 export function mockupDoc(): Doc {
-  const { canvas, pad, image } = MOCKUP;
+  const { canvas, image, cards } = MOCKUP;
   const left = { width: 290, height: 155 };
   const right = { width: 246, height: 140 };
   return {
@@ -140,6 +144,7 @@ export function mockupDoc(): Doc {
     layout: 'bare',
     canvas: { ...canvas },
     mockup: { x: image.x, y: image.y, width: image.width, height: image.height },
+    cardArea: { ...cards },
     panels: [],
     elements: [
       {
@@ -149,10 +154,10 @@ export function mockupDoc(): Doc {
         href: placeholder(image.width, image.height, 'Screenshot'),
         alt: 'Screenshot — replace with a product screenshot',
       },
-      // Left: meets the canvas's left edge with the pad to spare.
-      panel(pad, 161, left.width, left.height, 'Detail'),
-      // Right: meets the canvas's right edge the same way.
-      panel(canvas.width - pad - right.width, 94, right.width, right.height, 'Detail'),
+      // Left: meets the card guide's left edge.
+      panel(cards.x, 169, left.width, left.height, 'Detail'),
+      // Right: meets its right edge the same way.
+      panel(cards.x + cards.width - right.width, 102, right.width, right.height, 'Detail'),
     ],
   };
 }

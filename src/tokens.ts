@@ -417,6 +417,9 @@ export interface Tokens {
     secondary: string;
     gridLine: string;
     gridLineOpacity: number;
+    /** The line chart's own rules — see `lineChart`. The bar chart keeps `gridLine`. */
+    lineGridLine: string;
+    lineGridLineOpacity: number;
   };
 
   /**
@@ -842,6 +845,10 @@ export const dark: Tokens = {
     // rules sit behind the data rather than competing with a white series.
     gridLine: D('neutral-02'),
     gridLineOpacity: 1,
+    // White at 30%: lighter than the bar chart's rules, so a line chart's
+    // grid reads through the glass it sits on.
+    lineGridLine: '#FFFFFF',
+    lineGridLineOpacity: 0.3,
   },
   brandGradient: {
     angle: 218,
@@ -1098,6 +1105,9 @@ export const light: Tokens = {
     compare: L('brand-primary-lighten-3'),
     gridLine: L('neutral-02'),
     gridLineOpacity: 1,
+    // Unchanged from the bar chart's: white rules would vanish on a pale card.
+    lineGridLine: L('neutral-02'),
+    lineGridLineOpacity: 1,
   },
   brandGradient: {
     angle: 218,

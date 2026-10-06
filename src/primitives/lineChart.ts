@@ -133,8 +133,8 @@ export function LineChart(ctx: Ctx, props: LineChartProps): VNode {
         y1: gy,
         x2: x + width,
         y2: gy,
-        stroke: t.gridLine,
-        'stroke-opacity': t.gridLineOpacity,
+        stroke: t.lineGridLine,
+        'stroke-opacity': t.lineGridLineOpacity,
         'stroke-width': 0.5,
       }),
     );

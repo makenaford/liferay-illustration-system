@@ -1,3 +1,4 @@
+import { builtinGlassKey } from './glassBuiltin.ts';
 import type { Doc, Element } from './document.ts';
 import { LAYOUT } from './tokens.ts';
 
@@ -67,9 +68,24 @@ const RENAMED_SURFACES: Record<string, string> = {
   'glass-highlighted-blue': 'glass-highlighted',
 };
 
+/**
+ * A glass icon pasted in from the library as a copy of a built icon draws the
+ * built icon again, so an icon updated in the build is updated here too —
+ * the copy's artwork, frozen when it was placed, would otherwise win over it
+ * for good. See src/glassBuiltin.ts.
+ */
+function withBuiltGlass(el: Extract<Element, { type: 'spotIcon' }>): Element {
+  const art = el.art!;
+  const key = builtinGlassKey({ id: art.id, category: art.category, name: art.label });
+  if (!key) return el;
+  const { art: _copy, ...rest } = el;
+  return { ...rest, name: key } as Element;
+}
+
 function migrateElement(el: Element): Element {
   const s = (el as { surface?: string }).surface;
   if (s && RENAMED_SURFACES[s]) el = { ...el, surface: RENAMED_SURFACES[s] } as Element;
+  if (el.type === 'spotIcon' && el.art) el = withBuiltGlass(el);
   const c = el as WithKids;
   if (!c.children) return el;
   const gap = c.layout ? (c.layout.gap ?? LAYOUT.gap) : 4;

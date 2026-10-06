@@ -1,4 +1,5 @@
 import type { Doc, GraphicArt } from '../src/document.ts';
+import { builtinGlassKey, builtinGlassSvg } from '../src/glassBuiltin.ts';
 import type { GlassRecipe } from '../src/glassRecipe.ts';
 import {
   backend,
@@ -170,6 +171,27 @@ interface Db {
 
 /** Drop `undefined` fields, which a JSON document store rejects. */
 const clean = <T extends object>(o: T) => JSON.parse(JSON.stringify(o)) as Record<string, unknown>;
+
+/**
+ * The Glass icons set with every copy of a built icon showing the built
+ * artwork — in memory only; what is stored is left as it is. A copy keeps the
+ * art it was uploaded with, so without this an icon updated in the build
+ * (`pnpm run icons`) still showed, and downloaded, as its old upload. See
+ * src/glassBuiltin.ts for how a copy is recognised.
+ */
+function withBuiltGlass(set: IconSetRow): IconSetRow {
+  if (set.id !== 'glass-icons') return set;
+  return {
+    ...set,
+    icons: set.icons.map((icon) => {
+      const parts = iconParts(icon);
+      const key = builtinGlassKey({ id: icon.id, category: parts.category, name: parts.name });
+      const dark = key && builtinGlassSvg(key, 'dark');
+      const light = key && builtinGlassSvg(key, 'light');
+      return dark && light ? { ...icon, svg: dark, svgLight: light } : icon;
+    }),
+  };
+}
 
 function sharedIcons(db: Db): IconStore {
   const sets = () => db.collection('iconSets');
@@ -387,7 +409,7 @@ export function store(): Promise<Store> {
           void load();
           const offLib = subscribe(() => void load());
           const offIcons = iconStore.watch((next) => {
-            sets = next;
+            sets = next.map(withBuiltGlass);
             gotSets = true;
             emit();
           });

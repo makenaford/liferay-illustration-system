@@ -1,5 +1,5 @@
 import type { GraphicArt } from '../src/document.ts';
-import { GLASS_ICONS } from '../src/glassIcons.generated.ts';
+import { builtinGlassKey } from '../src/glassBuiltin.ts';
 import { normaliseFigmaSvg } from '../src/figmaGlass.ts';
 
 /**
@@ -39,11 +39,6 @@ interface DbLike {
     get(): Promise<{ docs: { data(): Record<string, unknown> | undefined }[] }>;
   };
 }
-
-const SHIPPED = new Map(Object.entries(GLASS_ICONS).map(([key, g]) => [g.source, key]));
-/** The same, by library id — the Figma name slugged, as the site files uploads — which survives a move or rename. */
-const slugOf = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 80);
-const SHIPPED_BY_ID = new Map(Object.entries(GLASS_ICONS).map(([key, g]) => [slugOf(g.source), key]));
 
 function parts(r: Row): { category: string; name: string } {
   if (r.category) return { category: r.category, name: r.name ?? '' };
@@ -86,7 +81,7 @@ export function libraryGlassIcons(refresh = false): Promise<LibraryGlass> {
             category: p.category,
             dark: normaliseFigmaSvg(r.svg!, `lg-${r.id}-d-`),
             light: normaliseFigmaSvg(r.svgLight!, `lg-${r.id}-l-`),
-            builtin: SHIPPED_BY_ID.get(r.id!) ?? SHIPPED.get(`${p.category} - ${p.name}`),
+            builtin: builtinGlassKey({ id: r.id, category: p.category, name: p.name }),
             raw: { dark: r.svg!, light: r.svgLight! },
           };
         })
@@ -103,7 +98,8 @@ export function libraryGlassIcons(refresh = false): Promise<LibraryGlass> {
  * as a flat SVG of whichever variant was downloaded.
  */
 export async function glassIconForSvg(svg: string): Promise<LibraryGlassIcon | null> {
-  const icons = await libraryGlassIcons();
+  // Fresh: a cached list misses icons uploaded since, and matches stale art.
+  const icons = await libraryGlassIcons(true);
   const text = svg.trim();
   return icons?.find((g) => g.raw.dark.trim() === text || g.raw.light.trim() === text) ?? null;
 }

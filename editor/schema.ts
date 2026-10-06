@@ -586,15 +586,12 @@ export const DEFAULTS: Record<Element['type'], () => Element> = {
   text: () => ({ type: 'text', x: 40, y: 40, role: 'heading', content: 'New text' }),
   // Cards arrive as columns: whatever is added stacks at the card padding the
   // audit requires, instead of every addition landing on the same spot.
-  // A blank card: two empty areas, drop zones in the builder, sharing its height.
+  // A frame arrives as a card does: the card padding and the Flat surface,
+  // empty — one drop zone in the builder — so what goes in stacks inside it.
   card: () => ({
-    type: 'card', x: 40, y: 40, width: 180, height: 120, surface: 'glass-default',
+    type: 'card', x: 40, y: 40, width: 180, height: 120, surface: 'glass-default', radius: 8,
     layout: { direction: 'vertical', gap: 8, padding: LAYOUT.cardPadding, align: 'stretch' },
-    children: [0, 1].map(() => ({
-      type: 'group', x: 0, y: 0, width: 10, height: 10, grow: 1,
-      layout: { direction: 'vertical', gap: 4, padding: 0, align: 'stretch' },
-      children: [],
-    })),
+    children: [],
   }),
   group: () => ({
     type: 'group', x: 40, y: 40, width: 160, height: 80,
@@ -709,7 +706,9 @@ export const PALETTE: {
   /** Named variants that deserve a button of their own, after the group's types. */
   extras?: { label: string; title: string; make: () => Element }[];
 }[] = [
-  { group: 'Surfaces', types: ['card', 'subCard', 'group'] },
+  // Group is not offered: a frame does the same with padding and a surface,
+  // and groups still come from ⌘G and from documents that have them.
+  { group: 'Surfaces', types: ['card', 'subCard'] },
   { group: 'Type', types: ['text', 'stat'] },
   {
     group: 'Controls',

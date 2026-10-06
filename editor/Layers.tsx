@@ -1,7 +1,7 @@
 import type { Element } from '../src/document.ts';
 import { SCHEMA } from './schema.ts';
 import { commit, elementAt, getState, reorderSibling, setUI, useEditor } from './state.ts';
-import { toggleSelect } from './grouping.ts';
+import { selectRange, toggleSelect } from './grouping.ts';
 
 /**
  * LAYERS — the element tree, and the only place z-order can be changed.
@@ -68,7 +68,8 @@ function Row({
       <div
         className={`layer${isSel ? ' sel' : ''}`}
         style={{ paddingLeft: 8 + depth * 12 }}
-        onClick={(e) => (e.shiftKey ? toggleSelect(path) : setUI({ selected: path }))}
+        onClick={(e) => (e.metaKey || e.ctrlKey ? toggleSelect(path) : e.shiftKey ? selectRange(path) : setUI({ selected: path }))}
+        title="Shift-click selects a range, ⌘-click adds or removes one"
       >
         <span className="layer-type">{SCHEMA[el.type].label}</span>
         {(el.type === 'card' || el.type === 'subCard' || el.type === 'group') && el.layout && (

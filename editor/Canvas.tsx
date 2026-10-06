@@ -17,7 +17,7 @@ import { alignmentSnap, edgeSnap, type Guide, type Target } from './guides.ts';
 import { isContainer as isContainerEl, resolveLayout } from '../src/autolayout.ts';
 import { parentOf } from './state.ts';
 import { useFileDrop } from './useFileDrop.ts';
-import { toggleSelect } from './grouping.ts';
+import { selectMany, toggleSelect } from './grouping.ts';
 import { InlineText, textTargetAt, type TextTarget } from './InlineText.tsx';
 import { moveTo, planDrop, type DropPlan } from './reparent.ts';
 import { anchors, connectTargets, facing, routeFor, snapEnd, targetAt, type Snapped, type Target as ConnTarget } from './connect.ts';
@@ -42,7 +42,9 @@ type DragMode =
   /** Drawing a new connector with the connector tool. */
   | { kind: 'conn-draw'; start: Snapped; targets: ConnTarget[]; last?: Snapped }
   /** Sliding a picture inside its frame, from where it was. */
-  | { kind: 'crop'; from: { x: number; y: number; zoom?: number } };
+  | { kind: 'crop'; from: { x: number; y: number; zoom?: number } }
+  /** A selection box dragged on empty canvas, from this artboard point; ⇧ adds to the selection. */
+  | { kind: 'marquee'; from: [number, number]; add: boolean };
 
 /** The preview's path: the connector's own route, without the rounding. */
 function elbow(a: [number, number], b: [number, number], route: 'hv' | 'vh' | 'straight'): string {
@@ -160,6 +162,8 @@ export function Canvas() {
   const [dropPlan, setDropPlan] = useState<DropPlan | null>(null);
   const planRef = useRef<DropPlan | null>(null);
   const [ghost, setGhost] = useState<Box | null>(null);
+  /** The selection box being dragged, in artboard units. */
+  const [marquee, setMarquee] = useState<Box | null>(null);
 
   /*
    * Auto-layout containers compute their children's coordinates, so the
@@ -396,6 +400,14 @@ export function Canvas() {
       toggleSelect(path);
       return;
     }
+    // A press on empty canvas drags a selection box — what it touches at the
+    // top level is selected, frames and groups whole. ⇧ adds to what is selected.
+    if (!path && at && tool === 'select') {
+      if (!e.shiftKey) setUI({ selected: null });
+      drag.current = { mode: { kind: 'marquee', from: at, add: e.shiftKey }, startX: e.clientX, startY: e.clientY, origin: null, moved: false, targets: [] };
+      (e.target as Element).setPointerCapture?.(e.pointerId);
+      return;
+    }
     // An icon inside an icon grid picks out its row in the Inspector.
     const slotEl = target.closest<SVGElement>('[data-slot]');
     setUI({ selected: path, slot: slotEl ? Number(slotEl.dataset.slot) : null });
@@ -486,6 +498,14 @@ export function Canvas() {
     }
     const dx = (e.clientX - d.startX) / zoom;
     const dy = (e.clientY - d.startY) / zoom;
+
+    if (d.mode.kind === 'marquee') {
+      if (!at) return;
+      const [x0, y0] = d.mode.from;
+      setMarquee({ x: Math.min(x0, at[0]), y: Math.min(y0, at[1]), width: Math.abs(at[0] - x0), height: Math.abs(at[1] - y0) });
+      d.moved = true;
+      return;
+    }
 
     if (d.mode.kind === 'crop' && cropping) {
       const st = getState();
@@ -696,6 +716,27 @@ export function Canvas() {
   const onPointerUp = () => {
     const d = drag.current;
     if (d?.dive && !d.moved) setUI({ selected: d.dive });
+
+    // The selection box: every top-level element it touches.
+    if (d?.mode.kind === 'marquee') {
+      const box = marquee;
+      setMarquee(null);
+      if (box && d.moved && box.width > 2 && box.height > 2) {
+        const hits = resolved.elements
+          .map((el, i) => {
+            const node = docRef.current?.querySelector<SVGGraphicsElement>(`[data-path="${i}"]`) ?? null;
+            const b = boundsOf(el, node);
+            const touches = b && b.x < box.x + box.width && b.x + b.width > box.x && b.y < box.y + box.height && b.y + b.height > box.y;
+            return touches ? String(i) : null;
+          })
+          .filter((p): p is string => p !== null);
+        const st = getState();
+        const kept = d.mode.add && st.selected && !st.selected.includes('.') ? [st.selected, ...st.also] : [];
+        selectMany([...kept, ...hits.filter((p) => !kept.includes(p))]);
+      }
+      endDrag();
+      return;
+    }
 
     // A drawn connector: create it, select it, and put the tool down.
     if (d?.mode.kind === 'conn-draw' && connPreview) {
@@ -1063,6 +1104,17 @@ export function Canvas() {
               className="pad-guide"
               strokeWidth={1 / zoom}
               strokeDasharray={`${3 / zoom} ${3 / zoom}`}
+            />
+          )}
+
+          {marquee && (
+            <rect
+              className="marquee"
+              x={marquee.x}
+              y={marquee.y}
+              width={marquee.width}
+              height={marquee.height}
+              strokeWidth={1 / zoom}
             />
           )}
 

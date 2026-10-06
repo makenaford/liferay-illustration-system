@@ -31,6 +31,9 @@ const lastIndex = (path: string) => Number(path.slice(path.lastIndexOf('.') + 1)
 export function toggleSelect(path: string) {
   const st = getState();
   const all = selection();
+  // A click inside a frame next to the selection means that frame: walk up
+  // to the ancestor that is a sibling of what is selected.
+  if (st.selected && parentOf(path) !== parentOf(st.selected)) path = siblingAncestor(path, st.selected) ?? path;
   if (!st.selected || parentOf(path) !== parentOf(st.selected)) {
     setUI({ selected: path });
     return;
@@ -41,6 +44,40 @@ export function toggleSelect(path: string) {
   } else {
     setUI({ selected: st.selected, also: [...st.also, path] });
   }
+}
+
+/** `path` or the ancestor of it that shares `other`'s parent, or null. */
+function siblingAncestor(path: string, other: string): string | null {
+  const want = parentOf(other);
+  for (let p: string | null = path; p; p = parentOf(p)) if (parentOf(p) === want) return p;
+  return null;
+}
+
+/** Select these paths together — siblings — the first as the primary. */
+export function selectMany(paths: string[]) {
+  setUI({ selected: paths[0] ?? null, also: paths.slice(1) });
+}
+
+/**
+ * Shift-click in Layers: every sibling from the selection to `path`, as
+ * a range — the way a list selects. Not a sibling, it selects `path` alone.
+ */
+export function selectRange(path: string) {
+  const st = getState();
+  if (!st.selected || parentOf(path) !== parentOf(st.selected)) return setUI({ selected: path });
+  const parent = parentOf(path);
+  const [a, b] = [lastIndex(st.selected), lastIndex(path)].sort((x, y) => x - y);
+  const range = Array.from({ length: b - a + 1 }, (_, k) => pathOf(parent, a + k));
+  // The anchor stays primary, so the range grows and shrinks from it.
+  selectMany([st.selected, ...range.filter((p) => p !== st.selected)]);
+}
+
+/** ⌘A: every sibling of the selection, or everything at the top level. */
+export function selectAll() {
+  const st = getState();
+  const parent = st.selected ? parentOf(st.selected) : null;
+  const list = parent ? ((elementAt(st.doc, parent) as { children?: Element[] } | null)?.children ?? []) : st.doc.elements;
+  selectMany(list.map((_, i) => pathOf(parent, i)));
 }
 
 /** Replace the sibling list at `parent` (null for the root). */

@@ -644,6 +644,12 @@ button.mini:hover { border-color: var(--accent); color: var(--ink); }
   fill-opacity: 0.06;
   pointer-events: none;
 }
+.marquee {
+  fill: #0b5fff;
+  fill-opacity: 0.08;
+  stroke: #0b5fff;
+  pointer-events: none;
+}
 .safe-area {
   fill: none;
   stroke: #ff4d6d;

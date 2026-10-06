@@ -34,7 +34,7 @@ import {
   undo,
   useEditor,
 } from './state.ts';
-import { deleteSelection, groupSelection, ungroupSelected } from './grouping.ts';
+import { deleteSelection, groupSelection, selectAll, ungroupSelected } from './grouping.ts';
 import { svgToPng } from './png.ts';
 
 initStore(DOCS[0]);
@@ -345,6 +345,13 @@ export function App() {
         for (const p of texts) doc = replaceAt(doc, p, { ...elementAt(doc, p)!, [deco]: on || undefined } as never);
         commit(doc);
         setFlash(`${deco === 'underline' ? 'Underline' : 'Strikethrough'} ${on ? 'on' : 'off'}`);
+        return;
+      }
+
+      // ⌘A: everything at the selection's level, or the whole top level.
+      if (mod && !typing && e.key.toLowerCase() === 'a') {
+        e.preventDefault();
+        selectAll();
         return;
       }
 
@@ -770,7 +777,7 @@ export function App() {
             <span>{selected ? `selected ${selected}` : 'nothing selected'}</span>
             {flash && <span className="flash">{flash}</span>}
             <span className="hint">
-              drag move (into and out of cards, ⌘ to skip) · double-click text to edit · ⇧click multi · ⌘G/⇧⌘G group · c connector · arrows nudge · ⌘C/⌘V/⌘D · [ ] z-order · g grid · a guides · r ratio · t theme
+              drag move (into and out of cards, ⌘ to skip) · double-click text to edit · ⇧click multi · drag empty canvas to box-select · ⌘A all · ⌘G/⇧⌘G group · c connector · arrows nudge · ⌘C/⌘V/⌘D · [ ] z-order · g grid · a guides · r ratio · t theme
             </span>
           </footer>
         </main>

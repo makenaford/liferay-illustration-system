@@ -276,7 +276,8 @@ export type SurfaceName =
   | 'glass-default'
   | 'glass-elevated'
   | 'glass-highlighted'
-  | 'glass-highlighted-blue'
+  | 'glass-highlighted-over-light'
+  | 'glass-highlighted-over-dark'
   | 'glass-background'
   | 'gradient'
   | 'solid'
@@ -567,35 +568,46 @@ const radius = { panel: 8, card: 8, pill: 999 };
 const GLASS_BLUR = 28;
 
 /**
- * HIGHLIGHTED — the one card that matters more, and glass over a
- * screenshot: the Mockup template's panels. The Marketing UI Assets
- * card (Figma 665:13337, style `Highlighted Card- Light`):
+ * GLASS HIGHLIGHTED — the one card that matters more, and glass over a
+ * screenshot: the Mockup template's panels. Two of them, named for what they
+ * sit over, from the `surface test` section of the Marketing UI Assets Repo.
+ * Both are `Blank Card`s drawn at 1.694x; the values here are at 1x (the
+ * file's 84.7px blur is 50, its 3px inner shadow 1.8).
  *
- *   - a WHITE wash: `radial-gradient` from the top-right corner, white 40%
- *     to 5%, on a layer at 40% — 16% to 2% as drawn — over Figma's 50px blur
- *   - a white 80% hairline, a 45% lit edge, and a blue glow, softened here
- *     to 55% so the card reads as lit rather than as blue
+ *   over light  985:14729 — a DARKENING wash: a radial from near the
+ *               top-left, black 20% to `#0B5FFF` 20%
+ *   over dark   985:15154 — a LIGHTENING wash: the same radial, white 20%
+ *               to `#ADC9FF` 20%
  *
- * It frosts whatever is really beneath it — see `buildDocument` — so over a
- * white page it reads as pale frosted glass, over a photo as the photo
- * softened. An earlier version tinted it blue and let the stage through,
- * which is why it went grey over white.
+ * Shared: a white hairline that fades out a third of the way along its
+ * 159° axis and back in (100% → 0 → 100%), so it catches light at two
+ * opposite corners; a white 45% inner shadow 1.8px down with a 1.8px blur;
+ * and a 50px backdrop blur. The file's blue glow is switched off in both, so
+ * neither casts a shadow.
+ *
+ * Each draws the same in either theme — a card over a white screenshot on
+ * a dark stage still wants `over-light`. `glass-highlighted` is whichever
+ * suits the theme: over dark in dark, over light in light.
+ *
+ * Figma's radial is a tilted ellipse; this is its axis-aligned extent.
  */
 const HIGHLIGHTED_BLUR = 50;
-const highlightedSpec = (): SurfaceSpec => ({
-  fill: {
-    angle: 0,
-    radial: { cx: 1, cy: 0.015, rx: 1.16, ry: 1.5 },
-    stops: [{ color: '#FFFFFF', opacity: 0.16 }, { color: '#FFFFFF', opacity: 0.03 }],
+const highlightedSpec = (from: { color: string; opacity: number }, to: { color: string; opacity: number }): SurfaceSpec => ({
+  fill: { angle: 0, radial: { cx: 0.219, cy: 0.175, rx: 1.163, ry: 0.846 }, stops: [from, to] },
+  line: {
+    angle: 159,
+    stops: [
+      { color: '#FFFFFF', opacity: 1, offset: 0 },
+      { color: '#FFFFFF', opacity: 0, offset: 0.33 },
+      { color: '#FFFFFF', opacity: 1, offset: 1 },
+    ],
   },
-  // Figma's white 80% hairline, halved: at 80% it drew as a hard white rule.
-  line: { angle: 180, stops: [{ color: '#FFFFFF', opacity: 0.4 }, { color: '#FFFFFF', opacity: 0.4 }] },
-  shadow: [{ dy: 0, blur: 10, color: '#0B5FFF', opacity: 0.55 }],
-  litEdge: { color: '#FFFFFF', opacity: 0.45 },
+  inset: [{ dy: 1.8, blur: 1.8, color: '#FFFFFF', opacity: 0.45 }],
   blur: HIGHLIGHTED_BLUR,
 });
 const HIGHLIGHTED = {
-  dark: highlightedSpec(),
+  overLight: highlightedSpec({ color: '#000000', opacity: 0.2 }, { color: '#0B5FFF', opacity: 0.2 }),
+  overDark: highlightedSpec({ color: '#FFFFFF', opacity: 0.2 }, { color: '#ADC9FF', opacity: 0.2 }),
 };
 /** `Glass Step 02` — the same in both themes. */
 const STEP_02 = { color: '#8C96A9', opacity: 0.03 };
@@ -706,17 +718,10 @@ export const dark: Tokens = {
       litEdge: { color: '#FFFFFF', opacity: 0.18 },
       blur: GLASS_BLUR,
     },
-    /** Highlighted: the one card that matters more, and glass over a screenshot — see HIGHLIGHTED. */
-    'glass-highlighted': HIGHLIGHTED.dark,
-    /**
-     * Highlighted, blue tint. Figma draws only the light one (905:20194); dark
-     * takes its highlighted card and fades the white wash into `#6FA0FF` at
-     * 20% instead of white — a lighter blue than light's, so it reads on dark.
-     */
-    'glass-highlighted-blue': {
-      ...HIGHLIGHTED.dark,
-      fill: { ...HIGHLIGHTED.dark.fill!, stops: [{ color: '#FFFFFF', opacity: 0.16 }, { color: '#6FA0FF', opacity: 0.2 }] },
-    },
+    /** Highlighted — over dark, this theme's default. See HIGHLIGHTED. */
+    'glass-highlighted': HIGHLIGHTED.overDark,
+    'glass-highlighted-over-light': HIGHLIGHTED.overLight,
+    'glass-highlighted-over-dark': HIGHLIGHTED.overDark,
     /** Glass background: the large pane a composition sits on — see GLASS BACKGROUND. */
     'glass-background': glassBackground.dark,
     /**
@@ -931,35 +936,31 @@ export const light: Tokens = {
     /** Basic: the everyday card — and a tile nested inside one. No shadow. Was glass1 (and glass2). */
     /*
      * THE LIGHT GLASS SET — the named rectangles of Figma 905:19528 (the
-     * light Drive Conversions board), one per surface. All three share a
-     * `#0B5FFF` hairline (Figma's 40%, drawn at 20% — see LIGHT_GLASS_LINE),
-     * 1px-down, 8px inset glow; they differ in fill and lift.
+     * light Drive Conversions board), one per surface. Default and elevated
+     * share a `#0B5FFF` hairline (Figma's 40%, drawn at 20% — see LIGHT_GLASS_LINE),
+     * 1px-down, 8px inset glow; they differ in fill and lift. Highlighted is
+     * no longer from this board — see HIGHLIGHTED.
      *
      * The blur is NOT the file's. Figma draws the set at 17.5px, and the
      * glass background at 4px (light) and 20px (dark); drawn that way the
      * cards lost the frost that makes them read as glass. They keep the
      * blurs the set had before: `GLASS_BLUR` for default, elevated and the
-     * background, `HIGHLIGHTED_BLUR` for the highlighted pair.
+     * background.
      *
      *   default      barely tinted: a `#0B5FFF` radial, 2% at the top-left
      *                corner to 5%, and a BLUE inset glow at 10%. No shadow.
      *   elevated     the same fill, a WHITE inset glow at 10%, and the
      *                faintest contact shadow, black 3%, 1px right and down.
-     *   highlighted  WHITE glass: the radial white 60% to 30%, the white
-     *                inset glow, and a `#0B5FFF` 60% contact shadow, 1px
-     *                right and down (905:19981), softened from the file's
-     *                2px blur to 8px so it glows rather than rules.
      *
      * Figma's `1px 1px 2px 1px` shadows have a 1px spread, which an SVG drop
-     * shadow cannot; elevated folds it into the blur, highlighted into the
-     * offset (1.5px), so its edge stays crisp. Figma's radial is a tilted
+     * shadow cannot; elevated folds it into the blur. Figma's radial is a tilted
      * ellipse; this is its axis-aligned extent. The rectangles' 4px corners
      * are the card's radius, not the surface's, so they are not set here.
      *
      * Was: default `#99BCFF` 21% flat behind a `#0053F0` 10% hairline;
-     * elevated white 92% into `#BFD5FF`; highlighted `Glass Card- Light`
-     * (Figma 665:26612), a `#0B5FFF` 4% to 14% radial behind a white 80%
-     * hairline.
+     * elevated white 92% into `#BFD5FF`; highlighted white glass from this
+     * board (905:19981, a white 60% to 30% radial and a blue contact
+     * shadow), and before that `Glass Card- Light` (665:26612).
      */
     'glass-default': {
       fill: { angle: 0, radial: LIGHT_GLASS_RADIAL, stops: [{ color: '#0B5FFF', opacity: 0.02 }, { color: '#0B5FFF', opacity: 0.05 }] },
@@ -974,26 +975,10 @@ export const light: Tokens = {
       inset: [{ dy: 1, blur: 8, color: '#FFFFFF', opacity: 0.1 }],
       blur: GLASS_BLUR,
     },
-    'glass-highlighted': {
-      fill: { angle: 0, radial: LIGHT_GLASS_RADIAL, stops: [{ color: '#FFFFFF', opacity: 0.6 }, { color: '#FFFFFF', opacity: 0.3 }] },
-      line: LIGHT_GLASS_LINE,
-      shadow: [{ dx: 1.5, dy: 1.5, blur: 8, color: '#0B5FFF', opacity: 0.6 }],
-      inset: [{ dy: 1, blur: 8, color: '#FFFFFF', opacity: 0.1 }],
-      blur: HIGHLIGHTED_BLUR,
-    },
-    /**
-     * Highlighted, blue tint (Figma 905:20194): the highlighted card with its
-     * white radial fading into blue rather than white — the same edge, glow
-     * and blur. Figma fades white 60% into `#ADC9FF` at 30%; that read as
-     * barely tinted, so it runs white 50% into the deeper `#99BCFF` at 65%.
-     */
-    'glass-highlighted-blue': {
-      fill: { angle: 0, radial: LIGHT_GLASS_RADIAL, stops: [{ color: '#FFFFFF', opacity: 0.5 }, { color: '#99BCFF', opacity: 0.65 }] },
-      line: LIGHT_GLASS_LINE,
-      shadow: [{ dx: 1.5, dy: 1.5, blur: 8, color: '#0B5FFF', opacity: 0.6 }],
-      inset: [{ dy: 1, blur: 8, color: '#FFFFFF', opacity: 0.1 }],
-      blur: HIGHLIGHTED_BLUR,
-    },
+    /** Highlighted — over light, this theme's default. See HIGHLIGHTED. */
+    'glass-highlighted': HIGHLIGHTED.overLight,
+    'glass-highlighted-over-light': HIGHLIGHTED.overLight,
+    'glass-highlighted-over-dark': HIGHLIGHTED.overDark,
     /** Glass background: the large pane a composition sits on — see GLASS BACKGROUND. */
     'glass-background': glassBackground.light,
     /**

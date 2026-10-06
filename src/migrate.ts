@@ -63,6 +63,8 @@ const RENAMED_SURFACES: Record<string, string> = {
   basic: 'glass-default',
   elevated: 'glass-elevated',
   highlighted: 'glass-highlighted',
+  // Replaced by the over-light / over-dark pair; the theme's default is closest.
+  'glass-highlighted-blue': 'glass-highlighted',
 };
 
 function migrateElement(el: Element): Element {

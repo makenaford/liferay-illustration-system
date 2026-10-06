@@ -24,8 +24,9 @@ const rows = Math.ceil(NAMES.length / COLS);
 const DESCRIPTION: Record<SurfaceName, string> = {
   'glass-default': 'the everyday card, no shadow',
   'glass-elevated': 'floating overlay',
-  'glass-highlighted': 'the one that matters; glass over a screenshot',
-  'glass-highlighted-blue': 'highlighted, tinted blue',
+  'glass-highlighted': 'the one that matters; over dark in dark, over light in light',
+  'glass-highlighted-over-light': 'highlighted, for a card over something light',
+  'glass-highlighted-over-dark': 'highlighted, for a card over something dark',
   'glass-background': 'the pane a composition sits on',
   gradient: 'Figma Blue Gradient',
   solid: 'opaque action',

@@ -171,7 +171,16 @@ export function withLocalized(english: Doc, lang: Lang, working: Doc, savedAt: n
     from: fingerprint(english),
     savedAt,
   };
-  return { ...english, localized: { ...english.localized, [lang]: own } };
+  // What is the document's own and no one language's — its name, its themes,
+  // its background — is the document's whichever language it was changed
+  // in. Kept only in the working copy, a rename made while editing Japanese
+  // was dropped on save.
+  const {
+    elements: _e, panels: _p, canvas: _c, artboard: _a, glow: _g, mockup: _m, cardArea: _ca,
+    id: _id, translations: _t, machineTranslated: _mt, localized: _l,
+    ...document
+  } = working;
+  return { ...english, ...document, localized: { ...english.localized, [lang]: own } };
 }
 
 /** `english` without its `lang` version — back to the automatic translation. */

@@ -52,8 +52,6 @@ export type PieGradientName = keyof typeof PIE_GRADIENTS;
 /** How far the lifted glass segment reaches, as a share of the radius. */
 const LIFT_REACH = 1.06 + 0.08;
 
-/** The gap between segments, as a share of the radius. */
-const GAP = 0.06;
 
 /** Where a point on the circle is, clockwise from the top. */
 const at = (cx: number, cy: number, r: number, deg: number): [number, number] => {
@@ -105,8 +103,8 @@ function roundedSector(cx: number, cy: number, r0: number, r1: number, a0: numbe
 
 /**
  * PIE CHART — shares of a whole, one way: a clean circle, whole or as a
- * single ring, of up to four segments, each in its own colour with a clear
- * gap between them — and one, the share that matters, lifted off it as a
+ * single ring, of up to four segments, each in its own colour, meeting edge
+ * to edge with no gap between them — and one, the share that matters, lifted off it as a
  * pane of glass. The glass is where the eye is sent.
  */
 export function PieChart(ctx: Ctx, props: PieChartProps): VNode {
@@ -150,9 +148,8 @@ export function PieChart(ctx: Ctx, props: PieChartProps): VNode {
     return fill;
   };
 
-  // Each segment in its own fill, and the lines between them.
+  // Each segment in its own fill, meeting the next with no gap.
   const nodes: VNode[] = [];
-  const edges: number[] = [];
   let a = 0;
   let lifted: { a0: number; a1: number } | null = null;
   for (const [i, v] of values.entries()) {
@@ -160,28 +157,13 @@ export function PieChart(ctx: Ctx, props: PieChartProps): VNode {
     const a0 = a;
     a += sweep;
     if (sweep <= 0) continue;
-    if (sweep < 359.99) edges.push(a0);
     if (i === glass) lifted = { a0, a1: a0 + sweep };
     const tone = props.colors?.[i] || PIE_COLORS[i % PIE_COLORS.length];
     nodes.push(h('path', { d: arc(cx, cy, inner, r, a0, a0 + sweep), fill: fillOf(tone), 'fill-rule': 'evenodd' }));
   }
 
-  // A gap at every boundary — cut out, so what is behind shows through — of
-  // one width from the centre to the rim, so the circle stays a circle.
   const glassNodes = lifted ? elevated(lifted.a0, lifted.a1) : [];
-  if (!edges.length) return h('g', { 'data-el': 'pie-chart' }, [...nodes, ...glassNodes]);
-  const maskId = ctx.uid('piegaps');
-  const gap = Math.max(2, r * GAP);
-  ctx.defs.push(
-    h('mask', { id: maskId, maskUnits: 'userSpaceOnUse', x: f(cx - r - 2), y: f(cy - r - 2), width: f(r * 2 + 4), height: f(r * 2 + 4) }, [
-      h('rect', { x: f(cx - r - 2), y: f(cy - r - 2), width: f(r * 2 + 4), height: f(r * 2 + 4), fill: '#FFFFFF' }),
-      ...edges.map((e) => {
-        const [x1, y1] = at(cx, cy, r + 2, e);
-        return h('line', { x1: f(cx), y1: f(cy), x2: f(x1), y2: f(y1), stroke: '#000000', 'stroke-width': f(gap) });
-      }),
-    ]),
-  );
-  return h('g', { 'data-el': 'pie-chart' }, [h('g', { mask: `url(#${maskId})` }, nodes), ...glassNodes]);
+  return h('g', { 'data-el': 'pie-chart' }, [...nodes, ...glassNodes]);
 
   /*
    * The glass segment, lifted off the chart — Figma 905:19487's `pie3`: a

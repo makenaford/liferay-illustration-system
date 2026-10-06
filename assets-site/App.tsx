@@ -386,6 +386,26 @@ export function App() {
     if (here) await file(doc.id, here);
     edit({ doc, updatedAt: 0 });
   };
+  /**
+   * Save a copy of an illustration under a fresh id, in the folder its
+   * original is in. Returns the copy's id, or null if it could not be saved.
+   */
+  const duplicate = async (row: IllustrationRow): Promise<string | null> => {
+    if (!st) return null;
+    const copy = migrateDoc(structuredClone(row.doc));
+    copy.id = freshId(`${row.id}-copy`, lib.illustrations.map((i) => i.id));
+    copy.name = `${row.name} copy`;
+    try {
+      await st.putIllustration(copy);
+      const f = folderOf(row.id);
+      if (f) await file(copy.id, f);
+      setToast(`Duplicated ${row.name} as ${copy.name}.`);
+      return copy.id;
+    } catch (e) {
+      setToast(`Could not duplicate it — ${(e as Error).message}`);
+      return null;
+    }
+  };
   // The builder's own "‹ Library" button comes back here.
   useEffect(() => {
     if (building && builderView === 'library') {
@@ -970,6 +990,7 @@ export function App() {
                   by={who(row.updatedBy)}
                   onOpen={() => setOpen(row.id)}
                   onEdit={writable ? () => edit(row, libLang) : undefined}
+                  onDuplicate={writable ? () => void duplicate(row) : undefined}
                   select={selecting ? { on: selected.has(row.id), toggle: () => toggleSelected(row.id) } : undefined}
                 />
               ))}
@@ -1121,6 +1142,10 @@ export function App() {
           folder={folderOf(openRow.id)}
           onFile={(f) => void file(openRow.id, f)}
           onEdit={(l) => edit(openRow, l)}
+          onDuplicate={async () => {
+            const id = await duplicate(openRow);
+            if (id) setOpen(id);
+          }}
           writable={writable}
           store={st}
           onToast={setToast}
@@ -1216,6 +1241,7 @@ function IllustrationCard({
   by,
   onOpen,
   onEdit,
+  onDuplicate,
   select,
 }: {
   row: IllustrationRow;
@@ -1228,6 +1254,8 @@ function IllustrationCard({
   onOpen: () => void;
   /** Absent for viewers who cannot save. */
   onEdit?: () => void;
+  /** Absent for viewers who cannot save. */
+  onDuplicate?: () => void;
   /** In select mode: whether it is picked, and how to toggle it. */
   select?: { on: boolean; toggle: () => void };
 }) {
@@ -1268,6 +1296,11 @@ function IllustrationCard({
           <button type="button" onClick={onOpen}>
             Details
           </button>
+          {onDuplicate && (
+            <button type="button" onClick={onDuplicate}>
+              Duplicate
+            </button>
+          )}
           {onEdit && (
             <button type="button" className="am-primary" onClick={onEdit}>
               Edit in builder
@@ -1297,6 +1330,7 @@ function IllustrationDetail({
   folder,
   onFile,
   onEdit,
+  onDuplicate,
   writable,
   store: st,
   onToast,
@@ -1314,6 +1348,8 @@ function IllustrationDetail({
   themes: Theme[];
   /** Open it in the builder, in the language the details are showing. */
   onEdit: (lang: Lang | 'en') => void;
+  /** Save a copy and show it in place of this one. */
+  onDuplicate: () => void;
   writable: boolean;
   store: Store | null;
   onToast: (s: string) => void;
@@ -1392,6 +1428,11 @@ function IllustrationDetail({
               {by ? ` by ${by}` : ''}
             </p>
           </div>
+          {writable && (
+            <button type="button" onClick={onDuplicate}>
+              Duplicate
+            </button>
+          )}
           {writable && (
             <button type="button" className="am-primary" onClick={() => onEdit(lang)}>
               Edit in builder

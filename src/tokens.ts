@@ -592,8 +592,9 @@ export const SHADOW_REACH = 20;
  * Shared: a white hairline that fades out a third of the way along its
  * 159° axis and back in (100% → 0 → 100%), so it catches light at two
  * opposite corners; a white 45% inner shadow 1.8px down with a 1.8px blur;
- * and a 50px backdrop blur. The file's blue glow is switched off in both, so
- * neither casts a shadow.
+ * a 50px backdrop blur; and a blue glow cast 2px down and right, 10px blur,
+ * `#0B5FFF` at 50% — set on both by the design team in place of the file's
+ * original glow, which was switched off.
  *
  * Each draws the same in either theme — a card over a white screenshot on
  * a dark stage still wants `over-light`. `glass-highlighted` is whichever
@@ -612,6 +613,9 @@ const highlightedSpec = (from: { color: string; opacity: number }, to: { color: 
       { color: '#FFFFFF', opacity: 1, offset: 1 },
     ],
   },
+  // A blue glow, down and right: 2px / 2px, 10px blur, `#0B5FFF` at 50%.
+  // Figma's spread is off on the card, and an SVG drop shadow has none.
+  shadow: [{ dx: 2, dy: 2, blur: 10, color: '#0B5FFF', opacity: 0.5 }],
   inset: [{ dy: 1.8, blur: 1.8, color: '#FFFFFF', opacity: 0.45 }],
   blur: HIGHLIGHTED_BLUR,
 });

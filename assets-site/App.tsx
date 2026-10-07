@@ -37,26 +37,30 @@ import {
   type IconRow,
   type IconSetRow,
   type IllustrationRow,
+  type KitRow,
   type Library,
   type Store,
 } from './store.ts';
 import { iconSrc, parseFiles, slug, svgSrc, type ParsedIcon } from './uploads.ts';
 import { GlassIconBuilder } from './GlassIconBuilder.tsx';
+import { blankKit, KitEditor, KitsPage } from './Kits.tsx';
 
 type Theme = 'dark' | 'light';
-type Tab = 'illustrations' | 'icons' | 'graphics' | 'tools';
+type Tab = 'illustrations' | 'kits' | 'icons' | 'graphics' | 'tools';
+/** The tabs things are uploaded to. */
+type UploadTab = Exclude<Tab, 'tools' | 'kits'>;
 
 /** Where an upload goes: a tab, and for icons perhaps one set. */
 interface Upload {
-  to: Exclude<Tab, 'tools'>;
+  to: UploadTab;
   set?: IconSetRow;
 }
-const UPLOAD_LABEL: Record<Exclude<Tab, 'tools'>, string> = {
+const UPLOAD_LABEL: Record<UploadTab, string> = {
   illustrations: 'Upload illustrations',
   icons: 'Upload icons',
   graphics: 'Upload graphics',
 };
-const ACCEPT: Record<Exclude<Tab, 'tools'>, string> = {
+const ACCEPT: Record<UploadTab, string> = {
   illustrations: '.json,application/json',
   icons: '.svg,image/svg+xml',
   graphics: '.svg,image/svg+xml',
@@ -134,6 +138,16 @@ function when(ms: number) {
 /** The address parameter a shared link opens an illustration by. */
 const LINK_PARAM = 'illustration';
 
+/** The address parameter a shared link opens a kit by. */
+const KIT_PARAM = 'kit';
+
+/** A link to this site that opens kit `id`. */
+function kitLink(id: string): string {
+  const url = new URL(location.origin + location.pathname);
+  url.searchParams.set(KIT_PARAM, id);
+  return url.href;
+}
+
 /** A link to this site that opens illustration `id`. */
 function illustrationLink(id: string): string {
   const url = new URL(location.origin + location.pathname);
@@ -143,10 +157,12 @@ function illustrationLink(id: string): string {
 
 export function App() {
   const [st, setSt] = useState<Store | null>(null);
-  const [lib, setLib] = useState<Library>({ illustrations: [], sets: [], graphics: [], folders: { folders: [], assign: {} }, ready: false });
+  const [lib, setLib] = useState<Library>({ illustrations: [], sets: [], graphics: [], kits: [], folders: { folders: [], assign: {} }, ready: false });
   const [writable, setWritable] = useState(true);
   const [tab, setTab] = useState<Tab>(() =>
-    location.hash === '#icons'
+    location.hash === '#kits' || new URLSearchParams(location.search).has(KIT_PARAM)
+      ? 'kits'
+      : location.hash === '#icons'
       ? 'icons'
       : location.hash === '#graphics'
         ? 'graphics'
@@ -202,6 +218,12 @@ export function App() {
   const [drafting, setDrafting] = useState<{ remaining: number; tick: number }>({ remaining: 0, tick: 0 });
   /** What the bulk download is doing, while it makes the zip. */
   const [zipping, setZipping] = useState<string | null>(null);
+  /** The kit being made or edited, in its sheet. */
+  const [kitEdit, setKitEdit] = useState<{ kit: KitRow; isNew: boolean } | null>(null);
+  /** The kit being zipped. */
+  const [kitBusy, setKitBusy] = useState<{ id: string; label: string } | null>(null);
+  /** A kit a link opened, picked out on the Kits tab. */
+  const [kitFocus] = useState<string | null>(() => new URLSearchParams(location.search).get(KIT_PARAM));
   const [query, setQuery] = useState('');
   const [illSort, setIllSort] = useState<IllustrationSort>('recent');
   const [iconPlace, setIconPlace] = useState('all');
@@ -885,15 +907,18 @@ export function App() {
   );
 
   /**
-   * The selected illustrations as one zip — every one in dark and light, as
-   * SVG or PNG @2x — in the library's language: translated, or its edited
+   * Illustrations as one zip — each in the themes asked for that it comes
+   * in, as SVG or PNG at a scale — in a language: translated, or its edited
    * version there, as the Details download would be. One file, because a
    * browser asks about (or blocks) every extra download a page starts.
    */
-  const downloadSelected = async (format: 'svg' | 'png') => {
-    const rows = illustrations.filter((i) => selected.has(i.id));
-    if (!rows.length) return;
-    const lang = canTranslate && libLang !== 'en' ? libLang : null;
+  const zipIllustrations = async (
+    rows: IllustrationRow[],
+    opts: { format: 'svg' | 'png'; scale?: number; themes?: Theme[]; lang: Lang | null; name: string },
+    status: (s: string) => void,
+  ) => {
+    const { format, lang } = opts;
+    const scale = opts.scale ?? 2;
     const enc = new TextEncoder();
     const files: ZipFile[] = [];
     // Two illustrations of the same name get "(2)", so neither overwrites the other in the zip.
@@ -905,30 +930,80 @@ export function App() {
       seen.set(stem, n);
       stems.set(row.id, n > 1 ? `${stem} (${n})` : stem);
     }
-    try {
-      for (const [n, row] of rows.entries()) {
-        setZipping(`Preparing ${n + 1} of ${rows.length}…`);
-        const table = lang ? (await tableFor(row.doc, lang)).table : null;
-        // Only the themes it comes in.
-        for (const t of themesFor(row.id, row.doc)) {
-          const svg = lang && table ? await renderTranslated(row.doc, lang, table, t) : renderDocument(row.doc, t);
-          const base = `${stems.get(row.id)}${lang ? `.${lang}` : ''}.${t}`;
-          if (format === 'svg') {
-            files.push({ name: `${base}.svg`, data: enc.encode(svg) });
-          } else {
-            const png = await svgToPng(svg, row.doc.canvas.width, row.doc.canvas.height, 2);
-            files.push({ name: `${base}@2x.png`, data: new Uint8Array(await png.arrayBuffer()) });
-          }
+    for (const [n, row] of rows.entries()) {
+      status(`Preparing ${n + 1} of ${rows.length}…`);
+      const table = lang ? (await tableFor(row.doc, lang)).table : null;
+      // The themes asked for that it comes in — or, made in only others, what it has.
+      const own = themesFor(row.id, row.doc);
+      const wanted = opts.themes ? own.filter((t) => opts.themes!.includes(t)) : own;
+      for (const t of wanted.length ? wanted : own) {
+        const svg = lang && table ? await renderTranslated(row.doc, lang, table, t) : renderDocument(row.doc, t);
+        const base = `${stems.get(row.id)}${lang ? `.${lang}` : ''}.${t}`;
+        if (format === 'svg') {
+          files.push({ name: `${base}.svg`, data: enc.encode(svg) });
+        } else {
+          const png = await svgToPng(svg, row.doc.canvas.width, row.doc.canvas.height, scale);
+          files.push({ name: `${base}@${scale}x.png`, data: new Uint8Array(await png.arrayBuffer()) });
         }
       }
-      setZipping('Saving…');
-      await offer(`illustrations${lang ? `-${lang}` : ''}-${format}.zip`, makeZip(files), 'application/zip', setToast);
+    }
+    status('Saving…');
+    await offer(`${opts.name}.zip`, makeZip(files), 'application/zip', setToast);
+  };
+
+  /** The selected illustrations, every theme they come in, in the library's language. */
+  const downloadSelected = async (format: 'svg' | 'png') => {
+    const rows = illustrations.filter((i) => selected.has(i.id));
+    if (!rows.length) return;
+    const lang = canTranslate && libLang !== 'en' ? libLang : null;
+    try {
+      await zipIllustrations(rows, { format, lang, name: `illustrations${lang ? `-${lang}` : ''}-${format}` }, setZipping);
     } catch (e) {
       setToast(`Could not make the download — ${(e as Error).message}`);
     } finally {
       setZipping(null);
     }
   };
+
+  /** A kit, as it was set up: its illustrations, format, themes and language, named for the kit. */
+  const downloadKit = async (kit: KitRow) => {
+    const byId = new Map(lib.illustrations.map((r) => [r.id, r]));
+    const rows = kit.items.map((id) => byId.get(id)).filter((r): r is IllustrationRow => !!r);
+    if (!rows.length) return;
+    const wantsLang = kit.lang !== 'en';
+    if (wantsLang && !canTranslate) setToast(`Translation is not available here, so this kit downloads in English.`);
+    const lang = wantsLang && canTranslate ? (kit.lang as Lang) : null;
+    try {
+      await zipIllustrations(
+        rows,
+        { format: kit.format, scale: kit.scale, themes: kit.themes, lang, name: fileStem({ id: kit.id, name: kit.name }) },
+        (label) => setKitBusy({ id: kit.id, label }),
+      );
+    } catch (e) {
+      setToast(`Could not make the download — ${(e as Error).message}`);
+    } finally {
+      setKitBusy(null);
+    }
+  };
+
+  const saveKit = async (kit: KitRow, isNew: boolean) => {
+    if (!st) return;
+    // A new kit is named in its link: ?kit=japan-industry-pages.
+    if (isNew) kit = { ...kit, id: freshId(slug(kit.name) || 'kit', lib.kits.map((k) => k.id)) };
+    try {
+      const by = (await viewerId()) ?? undefined;
+      await st.putKit({ ...kit, updatedAt: Date.now(), ...(by ? { updatedBy: by } : {}) });
+      setToast(`Saved the ${kit.name} kit.`);
+      setKitEdit(null);
+      // Made from a selection, the selection's work is done.
+      if (selecting) stopSelecting();
+      setTab('kits');
+    } catch (e) {
+      setToast(`Could not save the kit — ${(e as Error).message}`);
+    }
+  };
+  const newKit = (items: string[] = []) =>
+    setKitEdit({ kit: blankKit(freshId('kit', lib.kits.map((k) => k.id)), items), isNew: true });
 
   if (building && builderView === 'editor') return <BuilderApp />;
   if (glassing) {
@@ -1003,6 +1078,9 @@ export function App() {
         <button type="button" className={tab === 'illustrations' ? 'am-on' : ''} onClick={() => setTab('illustrations')}>
           Illustrations <span className="am-count">{lib.illustrations.length}</span>
         </button>
+        <button type="button" className={tab === 'kits' ? 'am-on' : ''} onClick={() => setTab('kits')}>
+          Kits <span className="am-count">{lib.kits.length}</span>
+        </button>
         <button type="button" className={tab === 'icons' ? 'am-on' : ''} onClick={() => setTab('icons')}>
           Icon sets <span className="am-count">{iconCount}</span>
         </button>
@@ -1013,7 +1091,7 @@ export function App() {
           Tools
         </button>
       </nav>
-        {(writable || tab === 'illustrations') && tab !== 'tools' && (
+        {(writable || tab === 'illustrations') && tab !== 'tools' && !(tab === 'kits' && !writable) && (
           <div className="am-tabbar-actions">
             {/* Selecting illustrations is for everyone — to download them; graphics, to remove them. */}
             {(tab === 'illustrations' || (writable && tab === 'graphics')) && (
@@ -1026,7 +1104,12 @@ export function App() {
                 {selecting ? 'Done' : 'Select'}
               </button>
             )}
-            {writable && (
+            {writable && tab === 'kits' && (
+              <button type="button" className="am-primary" onClick={() => newKit()}>
+                New kit
+              </button>
+            )}
+            {writable && tab !== 'kits' && (
               <>
                 <button
                   type="button"
@@ -1099,6 +1182,32 @@ export function App() {
             />
           )}
             </div>
+          </div>
+        ) : tab === 'kits' ? (
+          <div className="am-browse-main am-solo">
+            <KitsPage
+              kits={lib.kits}
+              rows={lib.illustrations}
+              writable={writable}
+              busy={kitBusy}
+              focus={kitFocus}
+              onDownload={(k) => void downloadKit(k)}
+              onCopyLink={(k) => {
+                const url = kitLink(k.id);
+                navigator.clipboard
+                  .writeText(url)
+                  .then(() => setToast(`Link copied — it opens the ${k.name} kit for anyone signed in to the site`))
+                  .catch(() => setToast(`Copy this link: ${url}`));
+              }}
+              onEdit={(k) => (k ? setKitEdit({ kit: k, isNew: false }) : newKit())}
+              onDelete={(k) => {
+                void st?.deleteKit(k.id).then(
+                  () => setToast(`Deleted the ${k.name} kit. Its illustrations are still in the library.`),
+                  (e: Error) => setToast(`Could not delete the kit — ${e.message}`),
+                );
+              }}
+              onOpen={(id) => setOpen(id)}
+            />
           </div>
         ) : tab === 'tools' ? (
           <Tools writable={writable} onNew={(t) => void create(t)} onGlass={() => setGlassing({})} />
@@ -1181,6 +1290,11 @@ export function App() {
           removing={removing}
           onClear={() => setSelected(new Set())}
           download={tab === 'illustrations' ? { busy: zipping, onDownload: (f) => void downloadSelected(f) } : undefined}
+          onMakeKit={
+            writable && tab === 'illustrations'
+              ? () => newKit(illustrations.filter((i) => selected.has(i.id)).map((i) => i.id))
+              : undefined
+          }
           onRemove={!writable ? undefined : async () => {
             if (!st) return;
             const ids =
@@ -1208,6 +1322,18 @@ export function App() {
               st.refresh();
             }
           }}
+        />
+      )}
+
+      {kitEdit && (
+        <KitEditor
+          kit={kitEdit.kit}
+          isNew={kitEdit.isNew}
+          rows={lib.illustrations}
+          folders={lib.folders}
+          canTranslate={canTranslate}
+          onSave={(k) => void saveKit(k, kitEdit.isNew)}
+          onCancel={() => setKitEdit(null)}
         />
       )}
 
@@ -1991,6 +2117,7 @@ function SelectionBar({
   onClear,
   onRemove,
   download,
+  onMakeKit,
 }: {
   count: number;
   noun: string;
@@ -2001,6 +2128,8 @@ function SelectionBar({
   onRemove?: () => void;
   /** Illustrations: the selection as one zip, of SVGs or PNGs. `busy` while it is made. */
   download?: { busy: string | null; onDownload: (format: 'svg' | 'png') => void };
+  /** Editors, on illustrations: a kit made of the selection. */
+  onMakeKit?: () => void;
 }) {
   const [armed, setArmed] = useState(false);
   useEffect(() => {
@@ -2038,6 +2167,11 @@ function SelectionBar({
             PNG @2x
           </button>
         </>
+      )}
+      {onMakeKit && (
+        <button type="button" disabled={!count} onClick={onMakeKit} title="A ready-made kit of these illustrations, for anyone to download in one go">
+          Make a kit
+        </button>
       )}
       {onRemove && (
       <button

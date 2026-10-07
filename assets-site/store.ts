@@ -109,10 +109,36 @@ export function foldersOf(set: Pick<IconSetRow, 'folders' | 'icons'>): string[] 
   return [...own, ...named];
 }
 
+/**
+ * A KIT — a ready-made set of illustrations, put together by an editor, and
+ * how they download: the format, the themes and the language. Anyone opens
+ * one (from the Kits tab, or a link to it) and gets the lot as one zip, with
+ * nothing to choose. Holds the illustrations by id, so a kit always gives
+ * their latest versions, and one deleted since is left out.
+ */
+export interface KitRow {
+  id: string;
+  name: string;
+  /** What it is for, in a line — "Hero images for the Japan industry pages". */
+  description?: string;
+  /** Illustration ids, in the kit's order. */
+  items: string[];
+  format: 'svg' | 'png';
+  /** A PNG's scale: 1x, 2x or 3x the canvas. Defaults to 2. */
+  scale?: 1 | 2 | 3;
+  /** The themes it comes in; an illustration made in only one gives just that one. */
+  themes: ('dark' | 'light')[];
+  /** The language its copy downloads in. */
+  lang: 'en' | 'ja' | 'es';
+  updatedAt: number;
+  updatedBy?: string;
+}
+
 export interface Library {
   illustrations: IllustrationRow[];
   sets: IconSetRow[];
   graphics: GraphicRow[];
+  kits: KitRow[];
   folders: Folders;
   /** False until the store has answered once — the page shows "Loading". */
   ready: boolean;
@@ -148,6 +174,8 @@ export interface Store {
   deleteIcon(setId: string, iconId: string): Promise<void>;
   putGraphic(row: GraphicRow): Promise<void>;
   deleteGraphic(id: string): Promise<void>;
+  putKit(row: KitRow): Promise<void>;
+  deleteKit(id: string): Promise<void>;
   /** Re-read illustrations and folders — after a write the store cannot hear. */
   refresh(): void;
 }
@@ -289,6 +317,65 @@ function sharedGraphics(db: Db): GraphicStore {
   };
 }
 
+interface KitStore {
+  watch(onChange: (rows: KitRow[]) => void): () => void;
+  put(row: KitRow): Promise<void>;
+  remove(id: string): Promise<void>;
+}
+
+function sharedKits(db: Db): KitStore {
+  const col = () => db.collection('kits');
+  return {
+    watch: (onChange) =>
+      col().onSnapshot(
+        (snap) =>
+          onChange(
+            snap.docs
+              .map((d) => d.data() as unknown as KitRow | undefined)
+              .filter((r): r is KitRow => !!r && Array.isArray(r.items)),
+          ),
+        () => onChange([]),
+      ),
+    put: (row) => col().doc(row.id).set(clean(row)),
+    remove: (id) => col().doc(id).delete(),
+  };
+}
+
+const KITS_KEY = 'marketing-assets-kits';
+
+function localKits(): KitStore {
+  const listeners = new Set<(rows: KitRow[]) => void>();
+  const read = (): KitRow[] => {
+    try {
+      const v = JSON.parse(localStorage.getItem(KITS_KEY) ?? '[]');
+      return Array.isArray(v) ? v : [];
+    } catch {
+      return [];
+    }
+  };
+  const write = (next: KitRow[]) => {
+    try {
+      localStorage.setItem(KITS_KEY, JSON.stringify(next));
+    } catch {
+      throw new Error('This browser is out of local storage.');
+    }
+    for (const l of listeners) l(next);
+  };
+  return {
+    watch(onChange) {
+      listeners.add(onChange);
+      onChange(read());
+      return () => listeners.delete(onChange);
+    },
+    async put(row) {
+      write([...read().filter((k) => k.id !== row.id), row]);
+    },
+    async remove(id) {
+      write(read().filter((k) => k.id !== id));
+    },
+  };
+}
+
 const GRAPHICS_KEY = 'marketing-assets-graphics';
 
 function localGraphics(): GraphicStore {
@@ -387,6 +474,7 @@ export function store(): Promise<Store> {
       const db = kind === 'shared' && c?.use ? ((await c.use('db')) as Db | null) : null;
       const iconStore = db ? sharedIcons(db) : localIcons();
       const graphicStore = db ? sharedGraphics(db) : localGraphics();
+      const kitStore = db ? sharedKits(db) : localKits();
 
       const listeners = new Set<() => Promise<void>>();
       const refresh = () => {
@@ -400,9 +488,10 @@ export function store(): Promise<Store> {
           let folders: Folders = { folders: [], assign: {} };
           let sets: IconSetRow[] = [];
           let graphics: GraphicRow[] = [];
+          let kits: KitRow[] = [];
           let gotIllos = false;
           let gotSets = false;
-          const emit = () => onChange({ illustrations, sets, graphics, folders, ready: gotIllos && gotSets });
+          const emit = () => onChange({ illustrations, sets, graphics, kits, folders, ready: gotIllos && gotSets });
           const load = async () => {
             const [saved, f] = await Promise.all([savedAll(), readFolders()]);
             illustrations = Object.entries(saved).map(([id, s]) => ({
@@ -428,11 +517,16 @@ export function store(): Promise<Store> {
             graphics = next;
             emit();
           });
+          const offKits = kitStore.watch((next) => {
+            kits = next;
+            emit();
+          });
           return () => {
             listeners.delete(load);
             offLib();
             offIcons();
             offGraphics();
+            offKits();
           };
         },
         async putIllustration(doc) {
@@ -449,6 +543,8 @@ export function store(): Promise<Store> {
         deleteIcon: iconStore.deleteIcon,
         putGraphic: graphicStore.put,
         deleteGraphic: graphicStore.remove,
+        putKit: kitStore.put,
+        deleteKit: kitStore.remove,
         refresh,
       } satisfies Store;
     })();

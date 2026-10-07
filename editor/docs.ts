@@ -166,6 +166,59 @@ export function mockupDoc(): Doc {
 }
 
 /**
+ * PREBUILT MOCKUP — a mockup made elsewhere, brought in whole: the canvas is
+ * one image and nothing else. Its screenshot slot (`Doc.mockup`) is the whole
+ * canvas, so dropping an image on it, or choosing one in the Inspector, puts
+ * it there — and the canvas takes the image's shape (`fitCanvasToImage`), so
+ * a prebuilt mockup is never cropped or letterboxed.
+ */
+export function prebuiltMockupDoc(): Doc {
+  const { canvas } = MOCKUP;
+  const slot = { x: 0, y: 0, width: canvas.width, height: canvas.height };
+  return {
+    id: 'untitled-mockup',
+    name: 'Untitled mockup',
+    layout: 'bare',
+    canvas: { ...canvas },
+    mockup: { ...slot },
+    panels: [],
+    elements: [
+      {
+        type: 'image',
+        ...slot,
+        fit: 'cover',
+        href: placeholder(slot.width, slot.height, 'Mockup — drop an image here'),
+        alt: 'Mockup — replace with a prebuilt mockup image',
+      },
+    ],
+  };
+}
+
+/** Whether the document's screenshot slot is its whole canvas — a prebuilt mockup. */
+export const isWholeCanvasSlot = (doc: Doc) =>
+  !!doc.mockup && doc.mockup.x === 0 && doc.mockup.y === 0 && doc.mockup.width === doc.canvas.width && doc.mockup.height === doc.canvas.height;
+
+/**
+ * A prebuilt mockup's canvas reshaped to its image, at the canvas's width —
+ * the height to the nearest even pixel, so it stays on the grid — with the
+ * slot and every image filling it moved along.
+ */
+export function fitCanvasToImage(doc: Doc, natural: { width: number; height: number }): Doc {
+  const m = doc.mockup;
+  if (!m || !natural.width || !natural.height) return doc;
+  const width = doc.canvas.width;
+  const height = Math.max(2, Math.round((width * natural.height) / natural.width / 2) * 2);
+  const fills = (el: Doc['elements'][number]) =>
+    el.type === 'image' && el.x === m.x && el.y === m.y && el.width === m.width && el.height === m.height;
+  return {
+    ...doc,
+    canvas: { ...doc.canvas, width, height },
+    mockup: { x: 0, y: 0, width, height },
+    elements: doc.elements.map((el) => (fills(el) ? { ...el, x: 0, y: 0, width, height } : el)),
+  };
+}
+
+/**
  * DASHBOARD — a hero panel holding a grid of cards, as the set's dashboards
  * ("Turn analytics into action", "AI visibility") are drawn: a header, a row
  * of three stat tiles, and a chart beside a breakdown.
@@ -207,6 +260,11 @@ export const TEMPLATES = {
     label: 'Image base',
     description: 'An 800 × 533 product screenshot with frames meeting the edges.',
     make: mockupDoc,
+  },
+  mockup: {
+    label: 'Mockup',
+    description: 'A prebuilt mockup: one image upload that fills the canvas.',
+    make: prebuiltMockupDoc,
   },
   dashboard: {
     label: 'Dashboard',

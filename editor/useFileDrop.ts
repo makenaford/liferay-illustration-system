@@ -6,6 +6,7 @@ import { contentWidth, insertAt, slotForDrop } from './insertion.ts';
 import { resolveLayout } from '../src/autolayout.ts';
 import { snap } from './grid.ts';
 import { isComponentDrag, takeDrag } from './paletteDrag.ts';
+import { fitCanvasToImage, isWholeCanvasSlot } from './docs.ts';
 
 /**
  * DRAG AND DROP — files dropped on the canvas become elements.
@@ -135,9 +136,17 @@ export function useFileDrop(stageRef: React.RefObject<HTMLDivElement | null>, zo
         );
         const shot = { ...(at >= 0 ? doc.elements[at] : {}), type: 'image', ...m, fit: 'cover', ...asset.patch } as DocElement;
         const elements = at >= 0 ? doc.elements.map((el, i) => (i === at ? shot : el)) : [shot, ...doc.elements];
-        commit({ ...doc, elements });
+        // A prebuilt mockup: the canvas takes the image's shape, so nothing is cropped.
+        const whole = isWholeCanvasSlot(doc);
+        const natural = (asset.patch as { natural?: { width: number; height: number } }).natural;
+        const next = whole && natural ? fitCanvasToImage({ ...doc, elements }, natural) : { ...doc, elements };
+        commit(next);
         setUI({ selected: String(at >= 0 ? at : 0) });
-        flash(`Screenshot placed in the ${m.width} × ${m.height} slot, cropped to fill · ${asset.note}`);
+        flash(
+          whole
+            ? `Mockup placed — the canvas is now ${next.canvas.width} × ${next.canvas.height}, the image's shape · ${asset.note}`
+            : `Screenshot placed in the ${m.width} × ${m.height} slot, cropped to fill · ${asset.note}`,
+        );
       } catch (err) {
         flash(`Could not read that file — ${(err as Error).message}`);
       }

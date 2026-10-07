@@ -184,12 +184,6 @@ export interface CardEl extends LayoutChild {
   frost?: 'content';
   /** Text on the card — see `Ink`. */
   ink?: Ink;
-  /**
-   * What the card sits over, when it is not what the theme says — a card
-   * over a white screenshot in a dark illustration. With `ink`, it picks
-   * which recipe of its surface it draws (see `surfaceRecipe` in tokens.ts).
-   */
-  over?: 'dark' | 'light';
   children?: Element[];
 }
 
@@ -271,12 +265,6 @@ export interface SubCardEl extends LayoutChild {
   clip?: boolean;
   /** Text on the card — see `Ink`. */
   ink?: Ink;
-  /**
-   * What the card sits over, when it is not what the theme says — a card
-   * over a white screenshot in a dark illustration. With `ink`, it picks
-   * which recipe of its surface it draws (see `surfaceRecipe` in tokens.ts).
-   */
-  over?: 'dark' | 'light';
   children?: Element[];
 }
 

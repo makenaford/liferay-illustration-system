@@ -213,12 +213,13 @@ function renderElement(ctx: Ctx, el: Element, path?: string): VNode | null {
 
 /**
  * A card's surface recipe: by what it sits over — the theme's ground, or the
- * ground inside the card it is in, which is what `ctx.tokens` says — unless
- * it says otherwise (`over`), and by the colour of its text (`ink`). A card
- * that sets neither draws the theme's own recipe. See `surfaceRecipe`.
+ * ground inside the card it is in, which is what `ctx.tokens` says — and by
+ * the colour of its text (`ink`). A card that sets no ink draws the theme's
+ * own recipe. See `surfaceRecipe`. (An `over` an older document set, to
+ * name the ground by hand, is no longer read.)
  */
-function recipeFor(ctx: Ctx, name: SurfaceName, el: { ink?: Ink; over?: 'dark' | 'light' }) {
-  const ground = el.over ?? ctx.tokens.name;
+function recipeFor(ctx: Ctx, name: SurfaceName, el: { ink?: Ink }) {
+  const ground = ctx.tokens.name;
   const ink = el.ink ?? (ctx.tokens.name === 'dark' ? 'light' : 'dark');
   const recipe = surfaceRecipe(ctx.tokens, name, ground, ink);
   // The theme's own recipe goes by its name, as it always has.

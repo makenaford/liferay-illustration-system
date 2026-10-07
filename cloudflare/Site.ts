@@ -47,8 +47,13 @@ const ACCESS_TEAM = "liferaydesign.cloudflareaccess.com";
  */
 const ACCESS_AUD = "7ab3e375b0b53c2a91cc4ffa04165ca2d099ca6d152b9e163d3ceffae2407309";
 
-/** Larger than the page's own limit (MAX_DOC_BYTES, 250KB), so it never bites first. */
-const MAX_BODY = 900 * 1024;
+/**
+ * A request body at most, in UTF-8 bytes: larger than the page's own limit
+ * (MAX_DOC_BYTES, 1.75 MB), so it never bites first, and under the 2 MB a
+ * row of the library's database holds.
+ */
+const MAX_BODY = 1.9 * 1024 * 1024;
+const bytes = (s: string) => new TextEncoder().encode(s).length;
 /** Collection paths: `name`, or `name/<id>/name` for a subcollection. */
 const COL = /^[\w-]+(\/[\w.:-]+\/[\w-]+)*$/;
 const ID = /^[\w.:-]{1,200}$/;
@@ -121,7 +126,7 @@ export default class Site extends Cloudflare.Worker<Site>()(
 
         if (route === "translate" && request.method === "POST") {
           const raw = yield* request.text;
-          if (raw.length > MAX_BODY) return yield* fail(413, "Too large.");
+          if (bytes(raw) > MAX_BODY) return yield* fail(413, "Too large.");
           const body = yield* Effect.try(() => JSON.parse(raw) as unknown).pipe(
             Effect.flatMap(decodeTranslateRequest),
             Effect.option,
@@ -162,7 +167,7 @@ export default class Site extends Cloudflare.Worker<Site>()(
             return yield* HttpServerResponse.json({ body: yield* library.get(col, id) });
           case "PUT": {
             const raw = yield* request.text;
-            if (raw.length > MAX_BODY) return yield* fail(413, "Too large.");
+            if (bytes(raw) > MAX_BODY) return yield* fail(413, "Too large.");
             const body = yield* Effect.try(() => JSON.parse(raw) as unknown).pipe(
               Effect.flatMap(decodeDocument),
               Effect.option,

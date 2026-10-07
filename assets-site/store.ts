@@ -123,8 +123,19 @@ export const setKey = (id: string) => `iconset:${id}`;
 /** A graphic's key in `Folders.assign`; built-in ones are keyed the same way. */
 export const graphicKey = (id: string) => `graphic:${id}`;
 
-/** The largest document body the shared store accepts, less some headroom. */
-export const MAX_DOC_BYTES = 250 * 1024;
+/**
+ * The largest document the shared store accepts: 1.75 MB, under the 2 MB a
+ * row of the library's database can hold, with room for the request around
+ * it (the Worker's own limit, cloudflare/Site.ts, is 1.9 MB). Measured in
+ * UTF-8 bytes, as the database counts — `docBytes`.
+ */
+export const MAX_DOC_BYTES = 1.75 * 1024 * 1024;
+/** The same limit, as a person reads it. */
+export const MAX_DOC_LABEL = '1.75 MB';
+/** A document's size as the store counts it: its JSON, in UTF-8 bytes. */
+export const docBytes = (doc: unknown) => new TextEncoder().encode(JSON.stringify(doc)).length;
+/** An uploaded icon's SVG, at most — icons are small; this catches a photo by mistake. */
+export const MAX_ICON_BYTES = 125 * 1024;
 
 export interface Store {
   readonly kind: 'shared' | 'local';

@@ -1,7 +1,7 @@
 import type { Doc } from '../src/document.ts';
 import { migrateDoc } from '../src/migrate.ts';
 import { normaliseFigmaSvg } from '../src/figmaGlass.ts';
-import { MAX_DOC_BYTES } from './store.ts';
+import { docBytes, MAX_DOC_BYTES, MAX_DOC_LABEL, MAX_ICON_BYTES } from './store.ts';
 
 /**
  * UPLOADS — what a dropped or picked file becomes.
@@ -69,8 +69,8 @@ export async function parseFiles(files: File[]): Promise<Parsed> {
         }
         for (const d of docs) {
           const doc = migrateDoc(d);
-          if (JSON.stringify(doc).length > MAX_DOC_BYTES) {
-            out.skipped.push(`${doc.name}: over 250 KB — usually a large embedded photo; shrink it in the builder`);
+          if (docBytes(doc) > MAX_DOC_BYTES) {
+            out.skipped.push(`${doc.name}: over ${MAX_DOC_LABEL} — usually large embedded photos; use fewer or smaller ones`);
             continue;
           }
           out.illustrations.push(doc);
@@ -81,7 +81,7 @@ export async function parseFiles(files: File[]): Promise<Parsed> {
           out.skipped.push(`${file.name}: not an SVG file`);
           continue;
         }
-        if (svg.length > MAX_DOC_BYTES / 2) {
+        if (svg.length > MAX_ICON_BYTES) {
           out.skipped.push(`${file.name}: over 125 KB, too large for an icon`);
           continue;
         }

@@ -28,7 +28,7 @@ export function ImportButton() {
       // Into the card being worked in, sized to fit it — see `slotForSelection`.
       const slot = slotForSelection(st.doc, st.selected);
       const cw = contentWidth(st.doc, slot);
-      const asset = await readAsset(file, cw ? Math.min(160, cw) : 160, undefined, true);
+      const asset = await readAsset(file, cw ? Math.min(160, cw) : 160, true);
 
       const c = slot.parent ? (elementAt(st.doc, slot.parent) as { x: number; y: number }) : null;
       const art = st.doc.artboard ?? st.doc.canvas;

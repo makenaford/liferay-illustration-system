@@ -129,7 +129,7 @@ export function useFileDrop(stageRef: React.RefObject<HTMLDivElement | null>, zo
     const raster = usable.find((f) => f.type !== 'image/svg+xml' && !/\.svg$/i.test(f.name));
     if (m && raster && !onFrame && px >= m.x && px <= m.x + m.width && py >= m.y && py <= m.y + m.height) {
       try {
-        const asset = await readAsset(raster, 160, { width: m.width, height: m.height });
+        const asset = await readAsset(raster, 160);
         const near = (a: number, b: number) => Math.abs(a - b) < 1;
         const at = doc.elements.findIndex(
           (el) => el.type === 'image' && near(el.x, m.x) && near(el.y, m.y) && near(el.width, m.width) && near(el.height, m.height),
@@ -160,7 +160,7 @@ export function useFileDrop(stageRef: React.RefObject<HTMLDivElement | null>, zo
 
     try {
       for (const [i, file] of usable.entries()) {
-        const asset = await readAsset(file, cw ? Math.min(160, cw) : 160, undefined, true);
+        const asset = await readAsset(file, cw ? Math.min(160, cw) : 160, true);
         // Several files fan out a little, so they do not land exactly stacked.
         const at = {
           x: snap(px - asset.size.width / 2 + i * 12, snapStep),

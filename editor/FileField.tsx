@@ -34,8 +34,7 @@ export function FileField({
       const file = await pickFile();
       if (!file) return;
       const box = el as Element & { width?: number; height?: number };
-      // Compressed for the box it fills, when it has one.
-      const asset = await readAsset(file, 160, filled && box.width && box.height ? { width: box.width, height: box.height } : undefined);
+      const asset = await readAsset(file, 160);
       // Keep the box the designer already sized. A cover image keeps it whole —
       // it crops to fill, as the Mockup template's fixed-size images need; any
       // other re-derives its height from the new artwork, so it isn't stretched.

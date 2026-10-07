@@ -67,12 +67,11 @@ export interface AssetPatch {
  * Read a picked file into element props: SVGs are parsed and inlined, rasters
  * become data URIs. Both are embedded rather than linked so an exported
  * illustration is one self-contained file. A raster is compressed on the way
- * in (compressImage.ts) for `slot`, the size it will be shown at.
+ * in (compressImage.ts), at up to its MAX_EDGE whatever size it is shown at.
  */
 export async function readAsset(
   file: File,
   cap = 160,
-  slot?: { width: number; height: number },
   /** Placing a new element: a library glass icon comes in as one. */
   glass = false,
 ): Promise<AssetPatch> {
@@ -120,8 +119,8 @@ export async function readAsset(
     img.onerror = () => resolve({ w: 120, h: 80 });
     img.src = raw;
   });
-  // For its slot, or for as big as it could be shown when it has none yet.
-  const small = await compressImage(raw, dims.w, dims.h, slot ?? { width: dims.w / 2, height: dims.h / 2 });
+  // At up to MAX_EDGE whatever box it lands in, so enlarging it later stays sharp.
+  const small = await compressImage(raw, dims.w, dims.h);
   const href = small.href;
   const scale = Math.min(1, (cap * 1.25) / Math.max(dims.w, dims.h));
 

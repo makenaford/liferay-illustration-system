@@ -27,6 +27,8 @@ import {
   foldersOf,
   UNFILED,
   MAX_DOC_BYTES,
+  MAX_DOC_LABEL,
+  docBytes,
   names as namesOf,
   store,
   viewerId,
@@ -570,8 +572,8 @@ export function App() {
         const dark = normaliseFigmaSvg(item.svg, `g-${id}-d-`, undefined, opts);
         const light = normaliseFigmaSvg(item.svgLight ?? item.svg, `g-${id}-l-`, undefined, opts);
         const row: GraphicRow = { id, name: item.name, dark, light, uploadedAt: now, uploadedBy: by };
-        if (JSON.stringify(row).length > MAX_DOC_BYTES) {
-          skipped.push(`${item.name} (over 250 KB)`);
+        if (docBytes(row) > MAX_DOC_BYTES) {
+          skipped.push(`${item.name} (over ${MAX_DOC_LABEL})`);
           continue;
         }
         await st.putGraphic(row);

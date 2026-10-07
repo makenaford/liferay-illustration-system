@@ -90,6 +90,8 @@ type FieldKind<K extends string> =
   | { key: K; label: string; kind: 'table' }
   | { key: K; label: string; kind: 'grid' }
   | { key: K; label: string; kind: 'crop' }
+  /** A dropdown's items, each with its label, what leads it, and its state. */
+  | { key: K; label: string; kind: 'menuItems' }
   /** A comma-separated list of words, such as a chart's axis labels. */
   | { key: K; label: string; kind: 'list' }
   /** A colour, chosen from the design-system palette with swatches. `colorsOnly` leaves out the gradients. */
@@ -288,6 +290,19 @@ export const SCHEMA: {
       { key: 'surface', label: 'Surface · as cards', kind: 'select', options: ['', ...SURFACES], labels: SURFACE_OPTION_LABELS },
       ...XY,
       ...WH,
+    ],
+  },
+  dropdown: {
+    label: 'Dropdown',
+    fields: [
+      { key: 'label', label: 'Header · leave empty for none', kind: 'text' },
+      { key: 'items', label: 'Items', kind: 'menuItems' },
+      { key: 'open', label: 'Open', kind: 'boolean', default: true },
+      { key: 'surface', label: 'Surface', kind: 'select', options: ['white', ...GLASS_SURFACES, ...FIXED_SURFACES], labels: { white: 'White', ...SURFACE_LABELS } },
+      { key: 'role', label: 'Type style', kind: 'select', options: ROLES, labels: ROLE_LABELS },
+      { key: 'radius', label: 'Radius', kind: 'number', min: 0, default: 6 },
+      ...XY,
+      { key: 'width', label: 'W', kind: 'number', min: 0 },
     ],
   },
   field: {
@@ -623,6 +638,19 @@ export const DEFAULTS: Record<Element['type'], () => Element> = {
     label: 'Button', variant: 'solid', radius: 4, role: 'bodySmall', fit: true,
   }),
   toggle: () => ({ type: 'toggle', x: 40, y: 40, width: 42, height: 13, on: true }),
+  dropdown: () => ({
+    type: 'dropdown',
+    x: 40,
+    y: 40,
+    width: 190,
+    label: 'Spaces',
+    surface: 'white',
+    items: [
+      { label: 'Marketing', lead: 'profile', color: 'purple', selected: true },
+      { label: 'HR', lead: 'profile', color: 'yellow' },
+      { label: 'All Spaces', lead: 'icon', icon: 'mc:dashboard_3' },
+    ],
+  }),
   radio: () => ({ type: 'radio', x: 40, y: 40, width: 120, height: 32, label: 'Option', checked: true }),
   field: () => ({ type: 'field', x: 40, y: 40, width: 180, height: 52, label: 'Full name', required: true, value: 'Elías Navarro' }),
   pieChart: () => ({ type: 'pieChart', x: 40, y: 40, width: 96, height: 96, values: [48, 22, 18, 12], style: 'full', highlight: 3 }),
@@ -719,7 +747,7 @@ export const PALETTE: {
   { group: 'Type', types: ['text', 'stat'] },
   {
     group: 'Controls',
-    types: ['button', 'pill', 'badge', 'toggle', 'radio', 'input', 'field', 'chat'],
+    types: ['button', 'pill', 'badge', 'toggle', 'radio', 'dropdown', 'input', 'field', 'chat'],
     // A window is a card — the three dots over a grid of slots — not the dots alone.
     extras: [
       {

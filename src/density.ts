@@ -85,6 +85,10 @@ function condense(el: Element, own = false): Element {
       num('width');
       if ('role' in el && el.role) e.role = down(el.role as TypeRole, 'body');
       break;
+    case 'dropdown':
+      e.role = down(el.role, 'bodySmall');
+      num('width');
+      break;
     case 'progress':
       e.height = Math.max(1.5, half(el.height ?? 3));
       num('labelGap', 5);

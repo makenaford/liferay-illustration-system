@@ -22,6 +22,7 @@ import type { PieGradientName } from './primitives/pieChart.ts';
 import type { TypeRole, TypeWeight } from './primitives/text.ts';
 import type { MeshName, SurfaceName } from './tokens.ts';
 import type { TableColumn } from './primitives/table.ts';
+import type { DropdownItem, DropdownSurface } from './primitives/dropdown.ts';
 import type { Lang, Localized, Translations } from './translate.ts';
 import type { IconStyle } from './icons.ts';
 
@@ -731,6 +732,25 @@ export interface RadioEl extends LayoutChild {
   surface?: SurfaceName;
 }
 
+/**
+ * A dropdown menu: a header with a chevron, and its items below while open,
+ * each led by a checkbox, a radio, a small profile tile, an icon or nothing.
+ * Its height follows its rows.
+ */
+export interface DropdownEl extends LayoutChild {
+  type: 'dropdown';
+  x: number;
+  y: number;
+  width: number;
+  label?: string;
+  items: DropdownItem[];
+  open?: boolean;
+  /** Any card surface, or `white` (the default). */
+  surface?: DropdownSurface;
+  role?: TypeRole;
+  radius?: number;
+}
+
 /** A labelled input, filled in or waiting — `height` takes in the label. */
 export interface FieldEl extends LayoutChild {
   type: 'field';
@@ -749,6 +769,7 @@ export interface FieldEl extends LayoutChild {
 
 export type Element =
   | TextEl
+  | DropdownEl
   | CardEl
   | SubCardEl
   | GroupEl

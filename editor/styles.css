@@ -328,6 +328,11 @@ button, input, select, textarea {
 .series-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; }
 .series-count { display: inline-flex; align-items: center; gap: 4px; margin-right: auto; font-size: 11px; opacity: 0.8; }
 .series-hint { font-size: 11px; opacity: 0.55; }
+.menu-items { gap: 8px; }
+.menu-item { display: flex; flex-direction: column; gap: 4px; padding: 6px; border: 1px solid var(--line); border-radius: 6px; }
+.menu-item-flags { display: flex; align-items: center; gap: 10px; font-size: 11px; }
+.menu-item-flags label { display: inline-flex; align-items: center; gap: 4px; }
+.menu-item-move { display: inline-flex; gap: 3px; margin-left: auto; }
 .table-grid { display: grid; gap: 4px; }
 .table-grid input, .table-head select { min-width: 0; width: 100%; }
 .table-head { display: flex; flex-direction: column; gap: 3px; }

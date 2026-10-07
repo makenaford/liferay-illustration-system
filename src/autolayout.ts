@@ -1,4 +1,5 @@
 import type { Doc, Element, LayoutSpec } from './document.ts';
+import { dropdownLayout } from './primitives/dropdown.ts';
 import { TYPE_ROLES, measureTextEl, wrapLines, lineLead, typeStyle } from './primitives/text.ts';
 import { measureText } from './fontMetrics.generated.ts';
 import { badgeWidth } from './primitives/badge.ts';
@@ -106,6 +107,8 @@ export function measureElement(el: Element): Size {
       return { width: el.width, height: tableLayout(el).height };
     case 'input':
       return { width: el.width, height: el.height ?? 28 };
+    case 'dropdown':
+      return { width: el.width, height: dropdownLayout(el).height };
     case 'cursor': {
       const w = el.size ?? 85.5953;
       return { width: w, height: w * CURSOR_ASPECT };

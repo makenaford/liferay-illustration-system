@@ -54,6 +54,8 @@ function visitElement(el: Element, f: Visit): Element {
       return { ...el, placeholder: f(el.placeholder) };
     case 'radio':
       return { ...el, label: f(el.label) };
+    case 'dropdown':
+      return { ...el, label: el.label === undefined ? undefined : f(el.label), items: el.items.map((i) => ({ ...i, label: f(i.label) })) };
     case 'field':
       return {
         ...el,

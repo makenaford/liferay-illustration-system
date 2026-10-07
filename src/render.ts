@@ -28,6 +28,7 @@ import {
   MapDots,
   PieChart,
   Radio,
+  Dropdown,
   FormField,
 } from './primitives/index.ts';
 import { iconArt } from './icons.ts';
@@ -289,6 +290,9 @@ function renderElementInner(ctx: Ctx, el: Element, path?: string): VNode | null 
 
     case 'radio':
       return Radio(ctx, el);
+
+    case 'dropdown':
+      return Dropdown(ctx, el);
 
     case 'field':
       return FormField(ctx, el);

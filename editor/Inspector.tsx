@@ -35,6 +35,8 @@ import { FileField } from './FileField.tsx';
 import { AvatarPhotoField } from './AvatarPhotoField.tsx';
 import { GraphicField } from './GraphicField.tsx';
 import { IconPicker } from './IconPicker.tsx';
+import { MenuItemsEditor } from './MenuItems.tsx';
+import type { DropdownItem } from '../src/primitives/dropdown.ts';
 import { IconSlots } from './IconSlots.tsx';
 import { GlassIconField } from './GlassIconField.tsx';
 import { BarSeriesEditor, LineSeriesEditor } from './ChartData.tsx';
@@ -661,13 +663,14 @@ function FieldRow({
     field.kind === 'glassIcon' ||
     field.kind === 'iconList' ||
     field.kind === 'table' ||
+    field.kind === 'menuItems' ||
     field.kind === 'grid' ||
     field.kind === 'crop' ||
     field.kind === 'list';
 
   // A field holding several buttons is not a <label>: a click on its blank
   // space would press the first of them.
-  const Wrap = field.kind === 'iconSlots' || field.kind === 'photo' || field.kind === 'table' || field.kind === 'grid' || field.kind === 'crop' ? 'div' : 'label';
+  const Wrap = field.kind === 'menuItems' || field.kind === 'iconSlots' || field.kind === 'photo' || field.kind === 'table' || field.kind === 'grid' || field.kind === 'crop' ? 'div' : 'label';
   return (
     <Wrap className={`field${wide ? ' wide' : ''}`}>
       <span className="field-label">{field.label}</span>
@@ -925,6 +928,9 @@ function Control({
 
     case 'bars':
       return <BarSeriesEditor el={el as BarChartEl} onPatch={onPatch} />;
+
+    case 'menuItems':
+      return <MenuItemsEditor items={(value as DropdownItem[] | undefined) ?? []} onChange={(items) => onChange(items)} />;
 
     case 'table':
       return <TableEditor el={el as TableEl} onPatch={onPatch} />;

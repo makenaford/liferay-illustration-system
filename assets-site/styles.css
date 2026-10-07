@@ -249,14 +249,6 @@ h1 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -0.4px; line-
 .am-err { color: var(--am-danger); font-style: normal; font-size: 12.5px; }
 .am-actions { display: flex; gap: 8px; justify-content: flex-end; width: 100%; }
 
-/* Drop */
-.am-drop {
-  position: fixed; inset: 10px; z-index: 40; pointer-events: none;
-  border: 2px dashed var(--am-accent); border-radius: 14px;
-  background: color-mix(in srgb, var(--am-ground) 80%, transparent);
-  display: grid; place-items: center;
-}
-.am-drop p { background: var(--am-surface); padding: 10px 16px; border-radius: var(--am-radius); box-shadow: var(--am-shadow); font-weight: 600; }
 
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 

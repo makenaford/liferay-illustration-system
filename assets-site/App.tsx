@@ -196,7 +196,6 @@ export function App() {
   const [open, setOpen] = useState<string | null>(null);
   const [pendingIcons, setPendingIcons] = useState<ParsedIcon[] | null>(null);
   const [toast, setToast] = useState<string | null>(null);
-  const [dragging, setDragging] = useState(false);
   const [busy, setBusy] = useState(false);
   const pickRef = useRef<HTMLInputElement>(null);
   /** Select mode on Illustrations or Graphics: ids picked for removal. */
@@ -919,18 +918,15 @@ export function App() {
     <div className="am-root">
     <div
       className="am-page"
+      // Files are added with the Upload buttons, not by dropping them on the
+      // page — a page-wide drop target could stick on "Drop to add". A file
+      // dropped anyway is ignored, rather than opened by the browser in place
+      // of the site.
       onDragOver={(e) => {
-        if (![...e.dataTransfer.types].includes('Files')) return;
-        e.preventDefault();
-        setDragging(true);
-      }}
-      onDragLeave={(e) => {
-        if (e.currentTarget === e.target) setDragging(false);
+        if ([...e.dataTransfer.types].includes('Files')) e.preventDefault();
       }}
       onDrop={(e) => {
-        e.preventDefault();
-        setDragging(false);
-        void take([...e.dataTransfer.files]);
+        if ([...e.dataTransfer.types].includes('Files')) e.preventDefault();
       }}
     >
       <header className="am-top">
@@ -1055,7 +1051,7 @@ export function App() {
                   <button type="button" className="am-linkish" onClick={() => void create()}>
                     New illustration
                   </button>{' '}
-                  — it opens the builder, and saving puts it here — or drop a builder <b>.json</b> on the page.
+                  — it opens the builder, and saving puts it here — or add a builder <b>.json</b> with Upload illustrations.
                 </>
               }
             />
@@ -1083,7 +1079,7 @@ export function App() {
               ready={lib.ready}
               searching={!!needle}
               title="No graphics in this folder"
-              body={<>Drop <b>.svg</b> files here and choose Graphics. “… - Dark” and “… - Light” pair into one graphic.</>}
+              body={<>Add <b>.svg</b> files with Upload graphics. “… - Dark” and “… - Light” pair into one graphic.</>}
             />
           )}
           </div>
@@ -1116,7 +1112,7 @@ export function App() {
             title="No icon sets yet"
             body={
               <>
-                Drop <b>.svg</b> files here to start a set. Files named “… - Dark” and “… - Light” become one icon
+                Add <b>.svg</b> files with Upload icons to start a set. Files named “… - Dark” and “… - Light” become one icon
                 with both variants.
               </>
             }
@@ -1171,12 +1167,6 @@ export function App() {
             }
           }}
         />
-      )}
-
-      {dragging && writable && (
-        <div className="am-drop" aria-hidden>
-          <p>Drop to add — builder .json files and .svg icons</p>
-        </div>
       )}
 
       {openRow && (

@@ -138,6 +138,8 @@ export interface CardEl extends LayoutChild {
   /** Which surface from the token set to draw. */
   surface?: SurfaceName;
   radius?: number;
+  /** Corners at half the shorter side — 100%, a pill — whatever its size. Wins over `radius`. */
+  rounded?: boolean;
   /** Turns this card into a reflowing container. */
   /**
    * The widest it may be. Its text wraps, and its buttons' labels, rather
@@ -226,6 +228,8 @@ export interface SubCardEl extends LayoutChild {
   width: number;
   height: number;
   radius?: number;
+  /** Corners at half the shorter side — 100%, a pill — whatever its size. Wins over `radius`. */
+  rounded?: boolean;
   variant?: 'sheen' | 'flat' | 'sunken' | 'accent';
   /** Which surface from the token set to draw. Wins over `variant`. */
   surface?: SurfaceName;
@@ -295,6 +299,8 @@ export interface ButtonEl extends LayoutChild {
   label: string;
   variant?: 'solid' | 'outline' | 'glass' | 'gradient' | 'muted';
   radius?: number;
+  /** Corners at half the shorter side — 100%, a pill — whatever its size. Wins over `radius`. */
+  rounded?: boolean;
   icon?: string;
   /** Outline or filled, for a MingCute icon. Defaults to outline. */
   iconStyle?: IconStyle;
@@ -328,6 +334,8 @@ export interface InputEl extends LayoutChild {
   /** Outline or filled, for a MingCute icon. Defaults to outline. */
   iconStyle?: IconStyle;
   radius?: number;
+  /** Corners at half the shorter side — 100%, a pill — whatever its size. Wins over `radius`. */
+  rounded?: boolean;
   role?: TypeRole;
 }
 
@@ -749,6 +757,8 @@ export interface DropdownEl extends LayoutChild {
   surface?: DropdownSurface;
   role?: TypeRole;
   radius?: number;
+  /** Corners at half the shorter side — 100%, a pill — whatever its size. Wins over `radius`. */
+  rounded?: boolean;
 }
 
 /** A labelled input, filled in or waiting — `height` takes in the label. */

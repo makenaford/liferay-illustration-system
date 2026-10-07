@@ -180,7 +180,8 @@ export function Dropdown(ctx: Ctx, props: DropdownProps): VNode {
             y: rowTop,
             width: width + OVERHANG * 2,
             height: row,
-            radius: 4,
+            // A pill in a fully rounded menu; otherwise its own small corners.
+            radius: radius >= row / 2 ? row / 2 : 4,
             // The Highlighted surface — its edge, glow, inner light and blur —
             // in the Spaces menu's light blue in place of its own wash.
             surface: { ...spec, blur: spec.blur || HIGHLIGHT_BLUR, fill: { angle: 180, stops: [{ color: HIGHLIGHT_TINT, opacity: HIGHLIGHT_TINT_OPACITY }] } },

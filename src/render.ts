@@ -37,11 +37,11 @@ import { GRAPHICS } from './graphics.generated.ts';
 import { BACKDROP_SLOT, figmaNativeGlass } from './figmaGlass.ts';
 import { FONT_FACES } from './font.generated.ts';
 import type { Doc, Element, Ink } from './document.ts';
-import { boundingBox, resolveLayout } from './autolayout.ts';
+import { boundingBox, measureElement, resolveLayout } from './autolayout.ts';
 import { reattach } from './attach.ts';
 import { paintOf } from './colors.ts';
 import { cssAngleLine } from './primitives/surface.ts';
-import { WHITE as DROPDOWN_WHITE } from './primitives/dropdown.ts';
+import { dropdownLayout, WHITE as DROPDOWN_WHITE } from './primitives/dropdown.ts';
 import { coverRect } from './imageCrop.ts';
 
 const r2 = (n: number) => Math.round(n * 100) / 100;
@@ -188,6 +188,16 @@ function dropZone(ctx: Ctx, box: { x: number; y: number; width: number; height: 
 }
 
 function renderElement(ctx: Ctx, el: Element, path?: string): VNode | null {
+  // Fully rounded: its corners at half its shorter side, at the size it is drawn.
+  if ((el as { rounded?: boolean }).rounded) {
+    const box = el as Element & { width?: number; height?: number };
+    const size = measureElement(el);
+    const w = typeof box.width === 'number' ? box.width : size.width;
+    const hgt = typeof box.height === 'number' ? box.height : size.height;
+    // A dropdown is rounded to its rows, so open it stays a menu, not an oval.
+    const full = el.type === 'dropdown' ? dropdownLayout(el).row / 2 : Math.min(w, hgt) / 2;
+    el = { ...el, radius: full } as Element;
+  }
   const restore = applyOverrides(ctx, el as { textColor?: string; accentColor?: string });
   let node: VNode | null;
   try {

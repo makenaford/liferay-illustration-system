@@ -1,5 +1,6 @@
 import { TYPE_ROLES } from '../src/primitives/text.ts';
 import { windowCard } from './dashboardGrid.ts';
+import { placeholder } from './placeholder.ts';
 import { STATUS_TONES } from '../src/primitives/badge.ts';
 import { PIE_GRADIENTS } from '../src/primitives/pieChart.ts';
 import { GLASS_ICONS } from '../src/glassIcons.generated.ts';
@@ -190,6 +191,7 @@ export const SCHEMA: {
       { key: 'surface', label: 'Surface', kind: 'select', options: ['', ...CARD_SURFACES], labels: SURFACE_OPTION_LABELS },
       { key: 'over', label: 'Over · what it sits on', kind: 'select', options: ['', 'dark', 'light'], labels: { '': 'The theme', dark: 'Something dark', light: 'Something light' } },
       { key: 'radius', label: 'Radius', kind: 'number', min: 0, default: 8 },
+      { key: 'rounded', label: 'Fully rounded · 100%', kind: 'boolean' },
       { key: 'clip', label: 'Clip content', kind: 'boolean' },
       { key: 'ink', label: 'Text', kind: 'select', options: ['', 'light', 'dark'], labels: { '': 'The theme’s', light: 'White', dark: 'Dark' } },
     ],
@@ -218,6 +220,7 @@ export const SCHEMA: {
       { key: 'surface', label: 'Surface', kind: 'select', options: ['', ...CARD_SURFACES], labels: SURFACE_OPTION_LABELS },
       { key: 'over', label: 'Over · what it sits on', kind: 'select', options: ['', 'dark', 'light'], labels: { '': 'The theme', dark: 'Something dark', light: 'Something light' } },
       { key: 'radius', label: 'Radius', kind: 'number', min: 0, default: 4 },
+      { key: 'rounded', label: 'Fully rounded · 100%', kind: 'boolean' },
       { key: 'clip', label: 'Clip content', kind: 'boolean' },
       { key: 'ink', label: 'Text', kind: 'select', options: ['', 'light', 'dark'], labels: { '': 'The theme’s', light: 'White', dark: 'Dark' } },
     ],
@@ -278,6 +281,7 @@ export const SCHEMA: {
       { key: 'surface', label: 'Surface · as cards, over the variant', kind: 'select', options: ['', ...SURFACES], labels: SURFACE_OPTION_LABELS },
       { key: 'fit', label: 'Fit width to label', kind: 'boolean' },
       { key: 'radius', label: 'Radius', kind: 'number', min: 0, default: 4 },
+      { key: 'rounded', label: 'Fully rounded · 100%', kind: 'boolean' },
       { key: 'padding', label: 'Padding', kind: 'number', min: 0, default: 12 },
     ],
   },
@@ -301,6 +305,7 @@ export const SCHEMA: {
       { key: 'surface', label: 'Surface', kind: 'select', options: ['white', ...GLASS_SURFACES, ...FIXED_SURFACES], labels: { white: 'White', ...SURFACE_LABELS } },
       { key: 'role', label: 'Type style', kind: 'select', options: ROLES, labels: ROLE_LABELS },
       { key: 'radius', label: 'Radius', kind: 'number', min: 0, default: 6 },
+      { key: 'rounded', label: 'Fully rounded · 100%', kind: 'boolean' },
       ...XY,
       { key: 'width', label: 'W', kind: 'number', min: 0 },
     ],
@@ -352,6 +357,7 @@ export const SCHEMA: {
       { key: 'icon', label: 'Icon', kind: 'icon' },
       { key: 'iconStyle', label: 'Icon style', kind: 'select', options: ICON_STYLES, labels: ICON_STYLE_LABELS },
       { key: 'radius', label: 'Radius', kind: 'number', min: 0, default: 6 },
+      { key: 'rounded', label: 'Fully rounded · 100%', kind: 'boolean' },
       { key: 'role', label: 'Type style', kind: 'select', options: ROLES, labels: ROLE_LABELS },
     ],
   },
@@ -743,7 +749,17 @@ export const PALETTE: {
 }[] = [
   // Group is not offered: a frame does the same with padding and a surface,
   // and groups still come from ⌘G and from documents that have them.
-  { group: 'Surfaces', types: ['card', 'subCard'] },
+  {
+    group: 'Surfaces',
+    types: ['card', 'subCard'],
+    extras: [
+      {
+        label: 'Image card',
+        title: 'A card with an image across its top and a label under it — choose the image in the Inspector',
+        make: () => imageCard(),
+      },
+    ],
+  },
   { group: 'Type', types: ['text', 'stat'] },
   {
     group: 'Controls',
@@ -777,3 +793,49 @@ export const PALETTE: {
   },
   { group: 'Imported', types: ['image', 'svg'] },
 ];
+
+/**
+ * IMAGE CARD — a picture across the top of a card and its label under it,
+ * as the Japan site hero images draw a product ("Speedwell", Figma
+ * yC6i3M1Iq1zPKxrZPB0vuO 286:9054): the image takes about 70% of the
+ * height, the card's corners cut it, the label is bold below. The card is
+ * Highlighted — a white edge, a blue glow — and clips what is in it, so the
+ * image and label are its own children to replace, retype and resize.
+ */
+export function imageCard(): Element {
+  const width = 160;
+  const image = 88;
+  return {
+    type: 'card',
+    x: 40,
+    y: 40,
+    width,
+    height: 124,
+    surface: 'glass-highlighted',
+    radius: 8,
+    clip: true,
+    layout: { direction: 'vertical', gap: 0, padding: 0, align: 'stretch' },
+    children: [
+      {
+        type: 'image',
+        x: 0,
+        y: 0,
+        width,
+        height: image,
+        fit: 'cover',
+        href: placeholder(width, image, 'Image'),
+        alt: 'Image — replace with a screenshot or photo',
+      },
+      {
+        type: 'group',
+        x: 0,
+        y: 0,
+        width,
+        height: 36,
+        grow: 1,
+        layout: { direction: 'horizontal', gap: 8, padding: [0, 12], align: 'center' },
+        children: [{ type: 'text', x: 0, y: 0, role: 'subheading', weight: 'bold', content: 'Speedwell' }],
+      },
+    ],
+  } as Element;
+}

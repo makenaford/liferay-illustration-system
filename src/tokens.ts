@@ -1019,8 +1019,16 @@ export const light: Tokens = {
       inset: [{ dy: 1, blur: 8, color: '#FFFFFF', opacity: 0.1 }],
       blur: GLASS_BLUR,
     },
-    /** Highlighted: over light, as the light theme draws it. See HIGHLIGHTED. */
-    'glass-highlighted': HIGHLIGHTED.overLight,
+    /**
+     * Highlighted, as the light theme draws it: the over-light card's edge,
+     * glow and blur, its wash white 20% into `#99BCFF` 65% — set in the Glass
+     * Surface Styles file (1:164) in place of the over-light card's darkening
+     * black-into-blue. The fixed over-light surface keeps that one.
+     */
+    'glass-highlighted': {
+      ...HIGHLIGHTED.overLight,
+      fill: { ...HIGHLIGHTED.overLight.fill!, stops: [{ color: '#FFFFFF', opacity: 0.2 }, { color: '#99BCFF', opacity: 0.65 }] },
+    },
     'glass-highlighted-over-dark': HIGHLIGHTED.overDark,
     'glass-highlighted-over-light': HIGHLIGHTED.overLight,
     /** Glass background: the large pane a composition sits on — see GLASS BACKGROUND. */

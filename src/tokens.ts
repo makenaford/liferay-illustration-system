@@ -1060,9 +1060,11 @@ export const light: Tokens = {
       line: { angle: 225, stops: [{ color: '#0B5FFF', opacity: 0.7 }, { color: '#0B5FFF', opacity: 0.45 }] },
     },
     /** Sunken: cut INTO its parent — inputs, log rows, wells. Glass too: it frosts what is behind it. */
+    // A brand-blue well, deepening downward, under a blue edge fading to light
+    // blue — set in the Glass Surface Styles file (1:160).
     sunken: {
-      fill: { angle: 180, stops: [{ color: INK, opacity: 0.06 }, { color: INK, opacity: 0.04 }] },
-      line: { angle: 225, stops: [{ color: INK, opacity: 0.1 }, { color: INK, opacity: 0.06 }] },
+      fill: { angle: 180, stops: [{ color: '#0B5FFF', opacity: 0.05 }, { color: '#0B5FFF', opacity: 0.1 }] },
+      line: { angle: 225, stops: [{ color: '#0B5FFF', opacity: 0.2 }, { color: '#99BCFF', opacity: 0.2 }] },
       inset: [{ dy: 1, blur: 3, color: INK, opacity: 0.12 }],
       blur: GLASS_BLUR,
     },

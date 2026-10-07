@@ -9,7 +9,7 @@ import { DOCS } from './docs.ts';
 import { Library } from './Library.tsx';
 import { save as saveToLibrary, backend, latest, namesOf, subscribe, type Saved } from './library.ts';
 import { copySelected, cutSelected, duplicateSelected, paste } from './clipboard.ts';
-import { copyText, saveFile } from './save.ts';
+import { copyText, fileStem, saveFile } from './save.ts';
 import { SourceModal } from './SourceModal.tsx';
 import { TranslateModal } from './TranslateModal.tsx';
 import { themesOf } from '../src/themes.ts';
@@ -455,7 +455,7 @@ export function App() {
   const exportSvg = async (which: 'dark' | 'light' | 'both') => {
     for (const t of which === 'both' ? themes : [which]) {
       // Exported without `annotate`, so no editor metadata ships.
-      const name = `${doc.id}.${t}.svg`;
+      const name = `${fileStem(doc)}.${t}.svg`;
       report(name, await saveFile(name, renderDocument(doc, t), 'image/svg+xml'));
     }
   };
@@ -466,7 +466,7 @@ export function App() {
    */
   const exportPng = async () => {
     const suffix = pngScale === 1 ? '' : `@${pngScale}x`;
-    const name = `${doc.id}.${theme}${suffix}.png`;
+    const name = `${fileStem(doc)}.${theme}${suffix}.png`;
     try {
       const png = await svgToPng(renderDocument(doc, theme), doc.canvas.width, doc.canvas.height, pngScale);
       report(name, await saveFile(name, png, 'image/png'));
@@ -492,7 +492,7 @@ export function App() {
 
   const showSource = () =>
     setSource({
-      filename: `${doc.id}.${theme}.svg`,
+      filename: `${fileStem(doc)}.${theme}.svg`,
       text: renderDocument(doc, theme),
     });
 
@@ -707,10 +707,10 @@ export function App() {
           type="button"
           onClick={() =>
             void saveFile(
-              `${doc.id}.json`,
+              `${fileStem(doc)}.json`,
               JSON.stringify(doc, null, 2),
               'application/json',
-            ).then((o) => report(`${doc.id}.json`, o))
+            ).then((o) => report(`${fileStem(doc)}.json`, o))
           }
           title="Save the document"
         >

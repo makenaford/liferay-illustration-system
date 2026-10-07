@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { renderDocument } from '../src/render.ts';
-import { copyText, saveFile } from '../editor/save.ts';
+import { copyText, fileStem, saveFile } from '../editor/save.ts';
 import { svgToPng } from '../editor/png.ts';
 import { draftAll, renderTranslated, tableFor, tableNow, translator } from '../editor/translate.ts';
 import { makeZip, type ZipFile } from '../editor/zip.ts';
@@ -855,6 +855,15 @@ export function App() {
     const lang = canTranslate && libLang !== 'en' ? libLang : null;
     const enc = new TextEncoder();
     const files: ZipFile[] = [];
+    // Two illustrations of the same name get "(2)", so neither overwrites the other in the zip.
+    const seen = new Map<string, number>();
+    const stems = new Map<string, string>();
+    for (const row of rows) {
+      const stem = fileStem(row.doc);
+      const n = (seen.get(stem) ?? 0) + 1;
+      seen.set(stem, n);
+      stems.set(row.id, n > 1 ? `${stem} (${n})` : stem);
+    }
     try {
       for (const [n, row] of rows.entries()) {
         setZipping(`Preparing ${n + 1} of ${rows.length}…`);
@@ -862,7 +871,7 @@ export function App() {
         // Only the themes it comes in.
         for (const t of themesFor(row.id, row.doc)) {
           const svg = lang && table ? await renderTranslated(row.doc, lang, table, t) : renderDocument(row.doc, t);
-          const base = `${row.id}${lang ? `.${lang}` : ''}.${t}`;
+          const base = `${stems.get(row.id)}${lang ? `.${lang}` : ''}.${t}`;
           if (format === 'svg') {
             files.push({ name: `${base}.svg`, data: enc.encode(svg) });
           } else {
@@ -1425,7 +1434,7 @@ function IllustrationDetail({
   const shown = useMemo(() => (table && lang !== 'en' ? localizedDoc(row.doc, lang, table) : row.doc), [row.doc, lang, table]);
   const preview = useMemo(() => renderDocument(shown, theme, { embedFont: false }), [shown, theme]);
   const { width, height } = row.doc.canvas;
-  const stem = table ? `${row.id}.${lang}` : row.id;
+  const stem = table ? `${fileStem(row.doc)}.${lang}` : fileStem(row.doc);
 
   useEffect(() => {
     const esc = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
@@ -1557,7 +1566,7 @@ function IllustrationDetail({
               <button
                 type="button"
                 title="The builder's own file — Import it in the builder to edit"
-                onClick={() => void offer(`${row.id}.json`, JSON.stringify(row.doc, null, 2), 'application/json', onToast)}
+                onClick={() => void offer(`${fileStem(row.doc)}.json`, JSON.stringify(row.doc, null, 2), 'application/json', onToast)}
               >
                 Builder file (.json)
               </button>

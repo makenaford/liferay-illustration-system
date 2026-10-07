@@ -64,6 +64,22 @@ const REASON: Record<string, string> = {
   transform_error: 'the viewer could not process the file',
 };
 
+/**
+ * The file name an illustration exports under: its name as written — spaces,
+ * accents and any script kept — with only what a file name cannot hold
+ * taken out. Its id only when it has no name. The id is fixed when the
+ * illustration is made, so a renamed copy would otherwise download under its
+ * original's name.
+ */
+export function fileStem(doc: { id: string; name?: string }): string {
+  const name = (doc.name ?? '')
+    .replace(/[\\/:*?"<>|\u0000-\u001f]+/g, '-')
+    .replace(/\s+/g, ' ')
+    .replace(/^[\s.-]+|[\s.-]+$/g, '')
+    .slice(0, 120);
+  return name || doc.id;
+}
+
 export async function saveFile(
   filename: string,
   text: string | Blob,

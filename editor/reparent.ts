@@ -64,10 +64,17 @@ export function planDrop(
   pointer: { x: number; y: number },
 ): DropPlan {
   const from = parentOf(dragged);
-  // An absolute item belongs to its card wherever it is dragged — over the
-  // card's edge or right outside it. To move it to another, take it off
-  // Absolute position first.
-  if (from && (elementAt(doc, dragged) as { absolute?: boolean } | null)?.absolute) {
+  // An absolute item stays where it belongs wherever it is dragged: one on
+  // the canvas is never taken into a card it is dropped over, and floats on
+  // top of it, as a cursor does; one in a card stays the card's, over its
+  // edge or right outside it. To move it into another, take it off Absolute
+  // position first.
+  if ((elementAt(doc, dragged) as { absolute?: boolean } | null)?.absolute) {
+    // On the canvas, dropped over a card drawn above it: brought to the
+    // front, so it floats on the card rather than vanishing under it.
+    const over = !from ? containerFor(resolved, box, dragged) : null;
+    const top = over ? Number(over.split('.')[0]) : -1;
+    if (!from && top > Number(dragged)) return { slot: { parent: null, index: doc.elements.length }, changes: true };
     return { slot: { parent: from }, changes: false };
   }
   const target = containerFor(resolved, box, dragged);

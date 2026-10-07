@@ -804,7 +804,8 @@ export function buildDocument(
    */
   const clipping = (doc.panels ?? []).filter((p) => p.clip);
   const panelOf = (el: Element) => {
-    if (!clipping.length || FLOATING.has(el.type)) return undefined;
+    // Absolute items float over the window's edge as callouts do.
+    if (!clipping.length || FLOATING.has(el.type) || (el as { absolute?: boolean }).absolute) return undefined;
     const b = boundingBox(el);
     if (!b) return undefined;
     const cx = b.x + b.width / 2;

@@ -179,7 +179,7 @@ export function Inspector() {
           </button>
         )}
       </div>
-      {inLayout && <AbsoluteToggle path={selected} />}
+      <AbsoluteToggle path={selected} inLayout={inLayout} />
       {autoPlaced && <ChildLayout path={selected} />}
       {inFreeContainer && (canFillOnce(el, 'w') || canFillOnce(el, 'h')) && <FillOnce path={selected} />}
       {isCard && <CardLayout path={selected} />}
@@ -268,7 +268,7 @@ function MultiSelection({ count, path }: { count: number; path: string }) {
  * flow last drew it, at the size it was drawn, so nothing jumps; turned off,
  * the flow places it again.
  */
-function AbsoluteToggle({ path }: { path: string }) {
+function AbsoluteToggle({ path, inLayout }: { path: string; inLayout: boolean }) {
   const doc = useEditor((s) => s.doc);
   const el = elementAt(doc, path) as (Element & { absolute?: boolean }) | null;
   if (!el) return null;
@@ -279,6 +279,11 @@ function AbsoluteToggle({ path }: { path: string }) {
     if (cur.absolute) {
       const { absolute: _, ...rest } = cur;
       commit(replaceAt(st.doc, path, rest as Element));
+      return;
+    }
+    // Placed by hand already: it only stops being taken into cards.
+    if (!inLayout) {
+      commit(replaceAt(st.doc, path, { ...cur, absolute: true } as Element));
       return;
     }
     // Where the flow draws it, in the document's own coordinates: the
@@ -304,13 +309,21 @@ function AbsoluteToggle({ path }: { path: string }) {
   };
   return (
     <div className="section">
-      <label className="field" style={{ display: 'flex', alignItems: 'center', gap: 6 }} title="Out of the auto layout: kept where you put it, moving with its card">
+      <label
+        className="field"
+        style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+        title={inLayout ? 'Out of the auto layout: kept where you put it, moving with its card' : 'Kept where you put it: never taken into a card it is dragged over, and never cut off by a clipping panel'}
+      >
         <input type="checkbox" checked={!!el.absolute} onChange={toggle} />
         <span>Absolute position</span>
       </label>
       {el.absolute && (
         <p className="panel-note" style={{ padding: '6px 0 0', border: 0 }}>
-          Out of the auto layout: drag it or set X and Y. It moves with its card, and the card’s other items flow as if it were not there.
+          {inLayout
+            ? 'Out of the auto layout: drag it or set X and Y. It moves with its card, and the card’s other items flow as if it were not there.'
+            : parentOfPath(path)
+              ? 'Kept where you put it: it stays in this card wherever you drag it, and is not cut off at the card’s edge.'
+              : 'Kept where you put it, like a cursor: dragged over a card it floats on top rather than going into it, and a clipping panel never cuts it off.'}
         </p>
       )}
     </div>

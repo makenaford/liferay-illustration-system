@@ -41,6 +41,7 @@ import { boundingBox, resolveLayout } from './autolayout.ts';
 import { reattach } from './attach.ts';
 import { paintOf } from './colors.ts';
 import { cssAngleLine } from './primitives/surface.ts';
+import { WHITE as DROPDOWN_WHITE } from './primitives/dropdown.ts';
 import { coverRect } from './imageCrop.ts';
 
 const r2 = (n: number) => Math.round(n * 100) / 100;
@@ -673,6 +674,17 @@ function glassBlurs(ctx: Ctx, el: Element): number[] {
   const walk = (e: Element) => {
     if (e.type === 'card' || e.type === 'subCard') {
       const spec = ctx.tokens.surfaces[e.surface ?? 'glass-default'];
+      if (spec?.blur && !spec.recessed) out.push(spec.blur);
+    }
+    // A control drawn on a card surface frosts what is beneath it as a card does.
+    if ((e.type === 'radio' || e.type === 'button') && e.surface) {
+      const spec = ctx.tokens.surfaces[e.surface];
+      if (spec?.blur && !spec.recessed) out.push(spec.blur);
+    }
+    // A dropdown is glass on every surface, white included.
+    if (e.type === 'dropdown') {
+      const s = e.surface ?? 'white';
+      const spec = s === 'white' ? DROPDOWN_WHITE : ctx.tokens.surfaces[s];
       if (spec?.blur && !spec.recessed) out.push(spec.blur);
     }
     // A table's background is glass only when it has one.

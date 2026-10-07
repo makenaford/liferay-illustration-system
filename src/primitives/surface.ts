@@ -166,10 +166,10 @@ export function Surface(ctx: Ctx, props: SurfaceProps): VNode {
     const caster = h('g', { filter: `url(#${id})`, 'data-el': 'elevation' }, [
       h('rect', { x, y, width, height, rx: radius, fill: tk.stage.bg }),
     ]);
-    if (ctx.transparent) {
+    if (ctx.transparent || !backdrop) {
       // Over no background the frosted pane is transparent too, so the opaque
-      // caster would show through the glass. Masked to outside the card, only
-      // its shadow is left.
+      // caster would show through the glass — as it would with no pane at all.
+      // Masked to outside the card, only its shadow is left.
       const maskId = ctx.uid('smask');
       const pad = Math.max(...spec.shadow.map((l) => l.blur + Math.max(Math.abs(l.dx ?? 0), Math.abs(l.dy)))) * 2 + 20;
       ctx.defs.push(

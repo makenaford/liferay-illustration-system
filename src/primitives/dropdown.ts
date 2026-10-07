@@ -65,22 +65,29 @@ const LEAD_GAP = 6;
 const rowHeight = (role: TypeRole) => Math.round((textStyle({ role }).size * 2.33) / 2) * 2;
 const leadSize = (role: TypeRole) => Math.round(textStyle({ role }).size * 1.33);
 
-/** The white menu: opaque, a light hairline, a soft shadow inside the shadow limits. */
-const WHITE: SurfaceSpec = {
-  fill: { angle: 180, stops: [{ color: '#FFFFFF', opacity: 1 }] },
+/**
+ * The white menu: white frosted glass — near opaque, so it reads as a
+ * product's own menu, with what is beneath blurred through it — a light
+ * hairline, and a soft shadow inside the shadow limits.
+ */
+export const WHITE: SurfaceSpec = {
+  fill: { angle: 180, stops: [{ color: '#FFFFFF', opacity: 0.85 }] },
+  blur: 20,
   line: { angle: 180, stops: [{ color: '#E7E7ED', opacity: 1 }] },
   shadow: [{ dx: 0, dy: 2, blur: 8, color: '#272833', opacity: 0.08 }],
 };
 
 /**
- * The picked row, as the Spaces menu draws it: `Primary L3` (#F0F5FF), a
- * Brand/Primary glow down and to the left, and a white inner edge along its top.
+ * The picked row: the Highlighted surface, lifted off the menu as the Spaces
+ * menu draws it — standing `OVERHANG` past the menu's sides. Over the white
+ * menu it is the fixed Highlighted over light, which is drawn for a light
+ * ground in either theme; over glass, the theme's own Highlighted. It
+ * frosts nothing itself: what is beneath it is the menu, and a blurred copy of
+ * the stage would cover that.
  */
-const SELECTED: SurfaceSpec = {
-  fill: { angle: 180, stops: [{ color: '#F0F5FF', opacity: 1 }] },
-  shadow: [{ dx: -0.7, dy: 1, blur: 3.4, color: '#0B5FFF', opacity: 0.9 }],
-  inset: [{ dx: 0, dy: 0.86, blur: 0.86, color: '#FFFFFF', opacity: 0.45 }],
-};
+export const OVERHANG = 4;
+export const highlightOf = (surface: DropdownSurface): SurfaceName =>
+  surface === 'white' ? 'glass-highlighted-over-light' : 'glass-highlighted';
 
 /** The menu's rows and its height — what the layout measures and the primitive draws. */
 export function dropdownLayout(p: Pick<DropdownProps, 'label' | 'items' | 'open' | 'role'>) {
@@ -135,8 +142,8 @@ export function Dropdown(ctx: Ctx, props: DropdownProps): VNode {
     let profiles = 0;
     items.forEach((item) => {
       const kind = item.lead ?? 'none';
-      // The picked row is drawn over the menu, edge to edge, so it lifts off it.
-      const rowInk = item.selected ? DARK_INK : ink;
+      // The picked row lifts off the menu, past its sides — see `OVERHANG`.
+      const rowInk = item.selected && white ? DARK_INK : ink;
       const parts: (VNode | null)[] = [];
       let tx = x + PAD_X;
       const ly = top + (row - lead) / 2;
@@ -157,7 +164,7 @@ export function Dropdown(ctx: Ctx, props: DropdownProps): VNode {
       );
       rows.push(
         item.selected
-          ? Surface(ctx, { x, y: top, width, height: row, radius: 0, surface: SELECTED, backdrop: false, children: parts })
+          ? Surface(ctx, { x: x - OVERHANG, y: top, width: width + OVERHANG * 2, height: row, radius: 4, surface: highlightOf(surface), backdrop: false, children: parts })
           : h('g', {}, parts),
       );
       top += row;

@@ -225,6 +225,15 @@ function recipeFor(ctx: Ctx, name: SurfaceName, el: { ink?: Ink; over?: 'dark' |
   return recipe === ctx.tokens.surfaces[name] ? name : recipe;
 }
 
+/**
+ * A card on a filled accent — Solid or Gradient — takes white text in either
+ * theme, as a button on one does, unless it sets its own `ink`.
+ */
+const ACCENT_FILLS: ReadonlySet<string> = new Set(['solid', 'gradient']);
+function onAccent<T extends { surface?: string; ink?: Ink }>(el: T): T {
+  return el.ink || !el.surface || !ACCENT_FILLS.has(el.surface) ? el : { ...el, ink: 'light' };
+}
+
 function renderElementInner(ctx: Ctx, el: Element, path?: string): VNode | null {
   const kid = (children: Element[] | undefined) =>
     (children ?? []).map((c, i) =>
@@ -265,7 +274,7 @@ function renderElementInner(ctx: Ctx, el: Element, path?: string): VNode | null 
         height: el.height,
         radius: el.radius,
         surface: recipeFor(ctx, el.surface ?? 'glass-default', el),
-        children: contents(el, el.radius ?? ctx.tokens.radius.panel),
+        children: contents(onAccent(el), el.radius ?? ctx.tokens.radius.panel),
       });
 
     case 'group':
@@ -281,7 +290,7 @@ function renderElementInner(ctx: Ctx, el: Element, path?: string): VNode | null 
         radius: el.radius,
         variant: el.variant,
         surface: recipeFor(ctx, el.surface ?? SUBCARD_ALIAS[el.variant ?? 'sheen'] ?? 'glass-default', el),
-        children: contents(el, el.radius ?? 4),
+        children: contents(onAccent(el), el.radius ?? 4),
       });
 
     case 'pill':

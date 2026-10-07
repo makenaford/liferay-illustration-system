@@ -187,7 +187,8 @@ export function DocumentPanel() {
                 </label>
               ))}
             </div>
-            {/* The surface set, as cards take it. Sheen is left in the schema, but
+            {/* The glass set, as cards take it — not the Solid and Gradient fills,
+                which are for cards and buttons. Sheen is left in the schema, but
                 has not changed a panel since surfaces became token data. */}
             <select
               aria-label={`Panel ${i + 1} surface`}
@@ -195,7 +196,7 @@ export function DocumentPanel() {
               value={p.surface ?? PANEL_SURFACE}
               onChange={(e) => setPanel(i, 'surface', e.target.value as SurfaceName)}
             >
-              {CARD_SURFACES.map((s) => (
+              {CARD_SURFACES.filter((s) => s !== 'solid' && s !== 'gradient').map((s) => (
                 <option key={s} value={s}>
                   {SURFACE_LABELS[s as SurfaceName]}
                 </option>

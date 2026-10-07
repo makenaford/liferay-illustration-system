@@ -11,7 +11,7 @@ export const SURFACES = Object.keys(darkTokens.surfaces);
  * What a card can take: the five glass surfaces, then the fixed highlighted
  * pair. Gradient, solid and outline are for buttons and controls.
  */
-export const CARD_SURFACES: string[] = [...GLASS_SURFACES, ...FIXED_SURFACES];
+export const CARD_SURFACES: string[] = [...GLASS_SURFACES, ...FIXED_SURFACES, 'solid', 'gradient'];
 const SURFACE_OPTION_LABELS: Record<string, string> = { '': 'Default', ...SURFACE_LABELS };
 import type { Element } from '../src/document.ts';
 import { LAYOUT } from '../src/tokens.ts';

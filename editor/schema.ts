@@ -170,7 +170,6 @@ export const SCHEMA: {
     fields: [
       { key: 'content', label: 'Content', kind: 'textarea' },
       ...XY,
-      { key: 'maxWidth', label: 'Max width · wraps', kind: 'number', min: 0 },
       { key: 'role', label: 'Size', kind: 'select', options: ROLES, labels: ROLE_LABELS },
       { key: 'weight', label: 'Weight', kind: 'select', options: ['', ...WEIGHTS] },
       { key: 'anchor', label: 'Align', kind: 'select', options: ['start', 'middle', 'end'] },

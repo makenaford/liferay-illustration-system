@@ -180,17 +180,90 @@ const round = (n: number) => Math.round(n * 100) / 100;
 type Container = Extract<Element, { type: 'card' | 'subCard' | 'group' }>;
 
 /**
- * A container's children, bounded by its `maxWidth`: in a column, text wraps
- * to the width inside its padding (centred when the column centres it), a
- * button's label breaks onto lines, and a container inside takes the same
- * bound. Without a `maxWidth`, as they are.
+ * A container's children, with their text wrapped where it would run past
+ * the container's edge.
+ *
+ * With a `maxWidth`, a column bounds everything in it to the width inside
+ * its padding: text wraps (centred when the column centres it), a button's
+ * label breaks onto lines, and a container inside takes the same bound.
+ *
+ * Without one, text wraps on its own, but only where it does not fit, so
+ * what fits is left exactly as it is: in a column at the width inside the
+ * padding; in a row in the room its other items leave, the longest text
+ * wrapping first; and a hugging container inside a column is held to the
+ * column. A container that hugs its width grows to its text instead.
  */
 function bounded(el: Container): Element[] {
   const kids = el.children ?? [];
   const spec = el.layout;
-  if (!el.maxWidth || !spec || spec.direction !== 'vertical') return kids;
+  if (!spec) return kids;
+  if (el.maxWidth && spec.direction === 'vertical') return boundedTo(el, spec, el.maxWidth);
+  if (spec.hugWidth) return kids;
   const p = pad(spec);
-  const outer = spec.hugWidth ? el.maxWidth : Math.min(el.width, el.maxWidth);
+  const inner = el.width - p.left - p.right;
+  if (!(inner > 0)) return kids;
+  const wraps = (k: Element): k is Extract<Element, { type: 'text' }> => k.type === 'text' && inFlow(k);
+  const over = (w: number, cap: number) => w > cap + 0.01;
+  // Wrapped on its own, text breaks between words, never inside one, as a
+  // page does: a word longer than the room stays whole. (Japanese, which has
+  // no spaces, still breaks between its characters.)
+  const atWords = (t: Extract<Element, { type: 'text' }>, cap: number) => Math.max(cap, longestWord(t));
+
+  if (spec.direction === 'vertical') {
+    return kids.map((k) => {
+      if (wraps(k)) {
+        const cap = Math.min(k.maxWidth ?? Infinity, atWords(k, inner));
+        if (!over(measureTextEl(k).width, cap)) return k;
+        const self = (k as { alignSelf?: LayoutSpec['align'] }).alignSelf ?? spec.align ?? 'start';
+        return { ...k, maxWidth: cap, anchor: self === 'center' ? 'middle' : k.anchor } as Element;
+      }
+      if (isContainer(k) && inFlow(k) && k.layout?.hugWidth && over(measureElement(k).width, inner)) {
+        return { ...k, maxWidth: Math.min(k.maxWidth ?? Infinity, inner) } as Element;
+      }
+      return k;
+    });
+  }
+
+  // A row: the room its other items leave, shared among its text. Each takes
+  // its own width while it fits its share; what is left is split evenly, so
+  // a short label beside a long one stays whole and the long one wraps.
+  const flow = kids.filter(inFlow);
+  const texts = flow.filter(wraps);
+  if (!texts.length) return kids;
+  const gap = spec.gap ?? LAYOUT.gap;
+  const fixed = flow.filter((k) => !wraps(k)).reduce((n, k) => n + measureElement(k).width, 0);
+  const room = inner - fixed - gap * Math.max(flow.length - 1, 0);
+  const widths = texts.map((t) => measureTextEl(t).width);
+  if (room <= 0 || !over(widths.reduce((a, b) => a + b, 0), room)) return kids;
+  const sorted = [...widths].sort((x, y) => x - y);
+  let left = room;
+  let cap = room;
+  for (let i = 0; i < sorted.length; i++) {
+    const share = left / (sorted.length - i);
+    if (sorted[i] <= share) left -= sorted[i];
+    else {
+      cap = share;
+      break;
+    }
+  }
+  return kids.map((k) =>
+    wraps(k) && over(measureTextEl(k).width, cap) ? ({ ...k, maxWidth: Math.min(k.maxWidth ?? Infinity, atWords(k, cap)) } as Element) : k,
+  );
+}
+
+/** The widest word of a text, as it is drawn — the least it wraps to on its own. */
+function longestWord(t: Extract<Element, { type: 'text' }>): number {
+  // Japanese and Chinese break between any two characters, so their "word" is one.
+  const cjk = /[\u3000-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff00-\uffef]/u;
+  const words = t.content.split(/\s+/).flatMap((w) => (cjk.test(w) ? [...w] : [w])).filter(Boolean);
+  return Math.max(0, ...words.map((w) => measureTextEl({ ...t, content: w, maxWidth: undefined }).width));
+}
+
+/** A column's children bounded to `maxWidth`: see `bounded`. */
+function boundedTo(el: Container, spec: LayoutSpec, maxWidth: number): Element[] {
+  const kids = el.children ?? [];
+  const p = pad(spec);
+  const outer = spec.hugWidth ? maxWidth : Math.min(el.width, maxWidth);
   const inner = outer - p.left - p.right;
   return kids.map((k) => {
     const self = (k as { alignSelf?: LayoutSpec['align'] }).alignSelf ?? spec.align ?? 'start';
@@ -213,6 +286,23 @@ function bounded(el: Container): Element[] {
     }
     if (isContainer(k)) return { ...k, maxWidth: Math.min(k.maxWidth ?? Infinity, inner) } as Element;
     return k;
+  });
+}
+
+/**
+ * A card laid out by hand: text that would run past its right edge wraps,
+ * keeping the margin it has on the left on the right too. Text that fits,
+ * and text not set from its left, is left as it is.
+ */
+function wrapInFreeCard(el: Container): Element[] {
+  const kids = el.children ?? [];
+  if (el.type === 'group') return kids;
+  return kids.map((k) => {
+    if (k.type !== 'text' || (k.anchor && k.anchor !== 'start')) return k;
+    const inset = Math.max(k.x - el.x, 0);
+    const cap = Math.min(k.maxWidth ?? Infinity, Math.max(el.x + el.width - inset - k.x, longestWord(k)));
+    if (!(cap > 0) || measureTextEl(k).width <= cap + 0.01) return k;
+    return { ...k, maxWidth: cap } as Element;
   });
 }
 
@@ -609,7 +699,8 @@ function hugged(el: Container) {
 /** Resolve one element, recursing into containers. */
 function resolveElement(el: Element): Element {
   if (isContainer(el) && el.layout) return layoutContainer(el);
-  const kids = (el as { children?: Element[] }).children;
+  const own = (el as { children?: Element[] }).children;
+  const kids = own?.length && isContainer(el) ? wrapInFreeCard(el) : own;
   if (kids?.length) {
     const next = { ...el, children: kids.map(resolveElement) } as Element;
     const fit = isContainer(next) ? hugged(next) : null;

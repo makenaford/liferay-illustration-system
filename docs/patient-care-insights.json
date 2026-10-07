@@ -65,7 +65,7 @@
               "x": -2,
               "y": 0,
               "width": 100,
-              "height": 74,
+              "height": 80,
               "surface": "glass-default",
               "layout": {
                 "direction": "vertical",
@@ -141,7 +141,7 @@
               "x": -2,
               "y": 0,
               "width": 100,
-              "height": 74,
+              "height": 80,
               "surface": "glass-default",
               "layout": {
                 "direction": "vertical",
@@ -209,7 +209,7 @@
               "x": -2,
               "y": 0,
               "width": 100,
-              "height": 74,
+              "height": 80,
               "surface": "glass-default",
               "layout": {
                 "direction": "vertical",
@@ -285,7 +285,7 @@
               "x": -2,
               "y": 0,
               "width": 100,
-              "height": 74,
+              "height": 80,
               "surface": "glass-default",
               "layout": {
                 "direction": "vertical",
@@ -516,7 +516,7 @@
               "x": -2,
               "y": 0,
               "width": 210,
-              "height": 104,
+              "height": 98,
               "surface": "glass-default",
               "layout": {
                 "direction": "vertical",
@@ -538,7 +538,7 @@
                   "x": -2,
                   "y": 0,
                   "width": 186,
-                  "height": 66,
+                  "height": 60,
                   "gridLines": 0,
                   "domain": [
                     0,
@@ -583,7 +583,7 @@
               "x": -2,
               "y": 0,
               "width": 210,
-              "height": 104,
+              "height": 98,
               "surface": "glass-default",
               "layout": {
                 "direction": "vertical",
@@ -605,7 +605,7 @@
                   "x": -2,
                   "y": 0,
                   "width": 186,
-                  "height": 66,
+                  "height": 60,
                   "data": [
                     0.72,
                     0.4,

@@ -42,7 +42,7 @@
           "type": "group",
           "x": -34,
           "y": -14,
-          "width": 104,
+          "width": 126,
           "height": 14,
           "layout": {
             "direction": "horizontal",
@@ -152,7 +152,7 @@
           "type": "group",
           "x": -10,
           "y": -14,
-          "width": 104,
+          "width": 126,
           "height": 14,
           "layout": {
             "direction": "horizontal",
@@ -261,7 +261,7 @@
           "type": "group",
           "x": 14,
           "y": -14,
-          "width": 104,
+          "width": 126,
           "height": 14,
           "layout": {
             "direction": "horizontal",

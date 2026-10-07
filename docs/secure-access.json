@@ -145,13 +145,14 @@
           "type": "group",
           "x": 294,
           "y": 114,
-          "width": 124,
+          "width": 132,
           "height": 10,
           "layout": {
             "direction": "horizontal",
-            "gap": 80,
+            "gap": 8,
             "padding": 0,
-            "align": "start"
+            "align": "start",
+            "justify": "between"
           },
           "children": [
             {

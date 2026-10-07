@@ -503,7 +503,7 @@
         "gap": 20,
         "padding": [
           20,
-          48
+          24
         ],
         "align": "start"
       },

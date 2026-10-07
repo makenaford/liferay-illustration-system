@@ -36,10 +36,14 @@ const SCALE = 0.58;
 const step = (dsSize: number) => Math.round(dsSize * SCALE * 10) / 10;
 
 export const TYPE_SIZES = {
+  /** `Size/Display/Display Lg` — the biggest hero figure. */
+  displayLarge: step(49),
   /** `Size/Display/Display Sm` — a hero number. */
   display: step(43),
   /** `Size/Heading/F1` — the title of a panel. */
   title: step(37),
+  /** `Size/Heading/F2` — between a panel's title and a card's. */
+  headline: step(32),
   /** `Size/Heading/F3` — a card's own title. */
   heading: step(28),
   /** `Size/Heading/F4` */
@@ -50,11 +54,19 @@ export const TYPE_SIZES = {
   bodySmall: step(18),
   /** `Size/Paragraph/Base` */
   caption: step(16),
+  /** `Size/Heading/F6` — the smallest heading: a group's title inside a card. */
+  smallHeading: step(14),
+  /** `Size/Paragraph/Small Caps` — an eyebrow over a title: capitals, tracked. */
+  eyebrow: step(14),
   /** `Size/Paragraph/Small` */
   label: step(13),
+  /** `Size/Paragraph/Small Caps XS` — a smaller eyebrow, a column head. */
+  eyebrowSmall: step(12),
   /** `Size/Paragraph/X-Small` — the smallest legible step. */
   micro: step(11),
 } as const;
+// Not taken: `Size/Paragraph/Tiny` (9) lands on 5.2px, below `micro`, the
+// smallest step that still reads in an exported illustration.
 
 export type TypeRole = keyof typeof TYPE_SIZES;
 
@@ -68,21 +80,28 @@ const WEIGHT_VALUE: Record<TypeWeight, number> = {
 
 /** The weight a step takes when none is given. */
 const DEFAULT_WEIGHT: Record<TypeRole, TypeWeight> = {
+  displayLarge: 'bold',
   display: 'bold',
   title: 'semibold',
+  headline: 'semibold',
   heading: 'semibold',
   subheading: 'semibold',
   body: 'regular',
   bodySmall: 'semibold',
   caption: 'regular',
+  smallHeading: 'semibold',
+  eyebrow: 'semibold',
   label: 'semibold',
+  eyebrowSmall: 'semibold',
   micro: 'regular',
 };
 
 /** Optical tracking: large type tightens, the smallest steps open up. */
 const TRACKING: Partial<Record<TypeRole, number>> = {
+  displayLarge: -0.5,
   display: -0.4,
   title: -0.2,
+  headline: -0.15,
   heading: -0.1,
 };
 
@@ -108,17 +127,23 @@ export function typeStyle(role: TypeRole, weight?: TypeWeight) {
  */
 const SMALL_CAPS_TRACKING = 0.06;
 
+/** Roles set in small caps unless the text says otherwise — the eyebrows. */
+const CAPS_ROLES: ReadonlySet<TypeRole> = new Set(['eyebrow', 'eyebrowSmall']);
+/** Whether text is in small caps: its own `smallCaps`, else its role's default. */
+const capsOf = (t: { role?: TypeRole; smallCaps?: boolean }) => t.smallCaps ?? (t.role ? CAPS_ROLES.has(t.role) : false);
+
 type Styled = { role: TypeRole; weight?: TypeWeight; smallCaps?: boolean; maxWidth?: number };
 
 /** `typeStyle`, with small caps applied: semibold unless the weight is set, and tracked. */
 export function textStyle(t: Styled) {
-  const base = typeStyle(t.role, t.weight ?? (t.smallCaps ? 'semibold' : undefined));
-  return t.smallCaps ? { ...base, tracking: Math.round(base.size * SMALL_CAPS_TRACKING * 100) / 100 } : base;
+  const caps = capsOf(t);
+  const base = typeStyle(t.role, t.weight ?? (caps ? 'semibold' : undefined));
+  return caps ? { ...base, tracking: Math.round(base.size * SMALL_CAPS_TRACKING * 100) / 100 } : base;
 }
 
 /** The characters actually drawn. */
-export function shownText(t: { content: string; smallCaps?: boolean }): string {
-  return t.smallCaps ? t.content.toUpperCase() : t.content;
+export function shownText(t: { content: string; role?: TypeRole; smallCaps?: boolean }): string {
+  return capsOf(t) ? t.content.toUpperCase() : t.content;
 }
 
 /**
@@ -130,7 +155,7 @@ export function measureTextEl(t: Styled & { content: string }) {
   const style = textStyle(t);
   const content = shownText(t);
   const tracked = (s: string) =>
-    measureText(s, style.size, style.weight) + (t.smallCaps ? style.tracking * [...s].length : 0);
+    measureText(s, style.size, style.weight) + (capsOf(t) ? style.tracking * [...s].length : 0);
   const lines = t.maxWidth ? wrapLines(content, tracked, t.maxWidth) : [content];
   const box = textBox(content, style.size, style.weight);
   const width = Math.max(...lines.map(tracked));

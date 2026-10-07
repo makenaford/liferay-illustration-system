@@ -114,6 +114,13 @@ type FieldKind<K extends string> =
   | { key: K; label: string; kind: 'graphic' };
 
 export const ROLES = Object.keys(TYPE_ROLES);
+/** The Size picker's names: the role in words, then its size — "Display large · 28.4px". */
+export const ROLE_LABELS: Record<string, string> = Object.fromEntries(
+  Object.entries(TYPE_ROLES).map(([role, st]) => [
+    role,
+    `${role.replace(/([A-Z])/g, ' $1').replace(/^./, (c) => c.toUpperCase()).replace(/ ([A-Z])/g, (_, c: string) => ' ' + c.toLowerCase())} · ${st.size}px`,
+  ]),
+);
 export const WEIGHTS = ['regular', 'semibold', 'bold'] as const;
 /** Outline or filled — the two styles every MingCute icon comes in. */
 export const ICON_STYLES = ['line', 'fill'] as const;
@@ -161,7 +168,7 @@ export const SCHEMA: {
       { key: 'content', label: 'Content', kind: 'textarea' },
       ...XY,
       { key: 'maxWidth', label: 'Max width · wraps', kind: 'number', min: 0 },
-      { key: 'role', label: 'Size', kind: 'select', options: ROLES },
+      { key: 'role', label: 'Size', kind: 'select', options: ROLES, labels: ROLE_LABELS },
       { key: 'weight', label: 'Weight', kind: 'select', options: ['', ...WEIGHTS] },
       { key: 'anchor', label: 'Align', kind: 'select', options: ['start', 'middle', 'end'] },
       { key: 'tone', label: 'Colour', kind: 'token' },
@@ -265,7 +272,7 @@ export const SCHEMA: {
       { key: 'align', label: 'Align', kind: 'select', options: ['center', 'left'] },
       { key: 'icon', label: 'Icon', kind: 'icon' },
       { key: 'iconStyle', label: 'Icon style', kind: 'select', options: ICON_STYLES, labels: ICON_STYLE_LABELS },
-      { key: 'role', label: 'Type style', kind: 'select', options: ROLES },
+      { key: 'role', label: 'Type style', kind: 'select', options: ROLES, labels: ROLE_LABELS },
       { key: 'surface', label: 'Surface · as cards, over the variant', kind: 'select', options: ['', ...SURFACES], labels: SURFACE_OPTION_LABELS },
       { key: 'fit', label: 'Fit width to label', kind: 'boolean' },
       { key: 'radius', label: 'Radius', kind: 'number', min: 0, default: 4 },
@@ -330,7 +337,7 @@ export const SCHEMA: {
       { key: 'icon', label: 'Icon', kind: 'icon' },
       { key: 'iconStyle', label: 'Icon style', kind: 'select', options: ICON_STYLES, labels: ICON_STYLE_LABELS },
       { key: 'radius', label: 'Radius', kind: 'number', min: 0, default: 6 },
-      { key: 'role', label: 'Type style', kind: 'select', options: ROLES },
+      { key: 'role', label: 'Type style', kind: 'select', options: ROLES, labels: ROLE_LABELS },
     ],
   },
   chat: {
@@ -435,8 +442,8 @@ export const SCHEMA: {
       { key: 'value', label: 'Value', kind: 'text' },
       { key: 'label', label: 'Label', kind: 'text' },
       ...XY,
-      { key: 'valueRole', label: 'Value style', kind: 'select', options: ROLES },
-      { key: 'labelRole', label: 'Label style', kind: 'select', options: ROLES },
+      { key: 'valueRole', label: 'Value style', kind: 'select', options: ROLES, labels: ROLE_LABELS },
+      { key: 'labelRole', label: 'Label style', kind: 'select', options: ROLES, labels: ROLE_LABELS },
       { key: 'labelSmallCaps', label: 'Label small caps', kind: 'boolean', default: true },
       { key: 'labelPosition', label: 'Label pos', kind: 'select', options: ['below', 'above'] },
       { key: 'anchor', label: 'Align', kind: 'select', options: ['start', 'middle', 'end'] },

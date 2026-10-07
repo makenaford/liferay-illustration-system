@@ -27,14 +27,19 @@ const SCALE = 0.6;
 const half = (n: number) => Math.round(n * SCALE * 2) / 2;
 
 const ROLE_DOWN: Record<TypeRole, TypeRole> = {
+  displayLarge: 'heading',
   display: 'subheading',
   title: 'body',
+  headline: 'body',
   heading: 'bodySmall',
   subheading: 'caption',
   body: 'caption',
   bodySmall: 'label',
   caption: 'micro',
+  smallHeading: 'micro',
+  eyebrow: 'eyebrowSmall',
   label: 'micro',
+  eyebrowSmall: 'micro',
   micro: 'micro',
 };
 const down = (r: TypeRole | undefined, fallback: TypeRole): TypeRole => ROLE_DOWN[r ?? fallback] ?? fallback;

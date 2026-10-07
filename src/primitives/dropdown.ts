@@ -82,12 +82,15 @@ export const WHITE: SurfaceSpec = {
  * menu draws it — light blue, standing `OVERHANG` past the menu's sides. Over the white
  * menu it is the fixed Highlighted over light, which is drawn for a light
  * ground in either theme; over glass, the theme's own Highlighted. It
- * frosts nothing itself: what is beneath it is the menu, and a blurred copy of
- * the stage would cover that.
+ * frosts the menu beneath it — see the end of `Dropdown`.
  */
 export const OVERHANG = 4;
 /** `Primary L3` (#F0F5FF), the row's colour in the Spaces menu. */
 const HIGHLIGHT_TINT = '#F0F5FF';
+/** Translucent enough that its blur shows: over the white menu it still reads as the Figma's blue. */
+const HIGHLIGHT_TINT_OPACITY = 0.75;
+/** The row's background blur where its surface has none. */
+const HIGHLIGHT_BLUR = 20;
 export const highlightOf = (surface: DropdownSurface): SurfaceName =>
   surface === 'white' ? 'glass-highlighted-over-light' : 'glass-highlighted';
 
@@ -139,6 +142,9 @@ export function Dropdown(ctx: Ctx, props: DropdownProps): VNode {
     top += row;
   }
 
+  // The picked rows, drawn after the menu so they can frost it — see below.
+  const lit: (() => VNode)[] = [];
+
   if (props.open !== false) {
     const order = Object.keys(PROFILE_COLORS) as ProfileColor[];
     let profiles = 0;
@@ -165,37 +171,59 @@ export function Dropdown(ctx: Ctx, props: DropdownProps): VNode {
           color: rowInk,
         }),
       );
-      rows.push(
-        item.selected
-          ? Surface(ctx, {
-              x: x - OVERHANG,
-              y: top,
-              width: width + OVERHANG * 2,
-              height: row,
-              radius: 4,
-              // The Highlighted surface's edge, glow and inner light, filled with
-              // the Spaces menu's light blue in place of its own wash.
-              surface: { ...tk.surfaces[highlightOf(surface)], fill: { angle: 180, stops: [{ color: HIGHLIGHT_TINT, opacity: 1 }] } },
-              backdrop: false,
-              children: parts,
-            })
-          : h('g', {}, parts),
-      );
+      const rowTop = top;
+      if (item.selected) {
+        const spec = tk.surfaces[highlightOf(surface)];
+        lit.push(() =>
+          Surface(ctx, {
+            x: x - OVERHANG,
+            y: rowTop,
+            width: width + OVERHANG * 2,
+            height: row,
+            radius: 4,
+            // The Highlighted surface — its edge, glow, inner light and blur —
+            // in the Spaces menu's light blue in place of its own wash.
+            surface: { ...spec, blur: spec.blur || HIGHLIGHT_BLUR, fill: { angle: 180, stops: [{ color: HIGHLIGHT_TINT, opacity: HIGHLIGHT_TINT_OPACITY }] } },
+            children: parts,
+          }),
+        );
+      } else {
+        rows.push(h('g', {}, parts));
+      }
       top += row;
     });
   }
 
-  return h('g', { 'data-el': `dropdown-${surface}` }, [
-    Surface(ctx, {
-      x,
-      y,
-      width,
-      height: L.height,
-      radius,
-      surface: white ? WHITE : surface,
-      children: rows,
-    }),
-  ]);
+  const menu = Surface(ctx, {
+    x,
+    y,
+    width,
+    height: L.height,
+    radius,
+    surface: white ? WHITE : surface,
+    children: rows,
+  });
+  if (!lit.length) return h('g', { 'data-el': `dropdown-${surface}` }, [menu]);
+
+  /*
+   * A picked row frosts the menu under it, not only what is under the menu:
+   * its backdrop is what lies beneath the dropdown with the menu drawn over
+   * it, by reference, so the menu is still drawn once. Where the row stands
+   * past the menu's sides, that is what is beneath.
+   */
+  const menuId = ctx.uid('ddmenu');
+  const under = ctx.backdropId;
+  let rowsLit: VNode[];
+  if (under) {
+    const bd = ctx.uid('ddbd');
+    ctx.defs.push(h('g', { id: bd }, [h('use', { href: `#${under}`, 'xlink:href': `#${under}` }), h('use', { href: `#${menuId}`, 'xlink:href': `#${menuId}` })]));
+    ctx.backdropId = bd;
+    rowsLit = lit.map((f) => f());
+    ctx.backdropId = under;
+  } else {
+    rowsLit = lit.map((f) => f());
+  }
+  return h('g', { 'data-el': `dropdown-${surface}` }, [h('g', { id: menuId }, [menu]), ...rowsLit]);
 }
 
 function leadMark(

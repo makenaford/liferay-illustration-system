@@ -686,6 +686,8 @@ function glassBlurs(ctx: Ctx, el: Element): number[] {
       const s = e.surface ?? 'white';
       const spec = s === 'white' ? DROPDOWN_WHITE : ctx.tokens.surfaces[s];
       if (spec?.blur && !spec.recessed) out.push(spec.blur);
+      // Its picked row frosts too, and stands past the menu's sides.
+      if (e.items.some((i) => i.selected)) out.push(ctx.tokens.surfaces[s === 'white' ? 'glass-highlighted-over-light' : 'glass-highlighted']?.blur || 20);
     }
     // A table's background is glass only when it has one.
     if (e.type === 'table' && e.surface) {

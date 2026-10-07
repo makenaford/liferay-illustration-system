@@ -1146,6 +1146,8 @@ button.mini.on { background: var(--accent); border-color: var(--accent); color: 
 }
 .iconpick-grid button:hover { background: #262b33; }
 .iconpick-grid button.on { background: #1d2c4d; border-color: var(--accent); }
+/* Glass icons are artwork, not glyphs: bigger cells, so they read. */
+.glasspick-grid { grid-template-columns: repeat(auto-fill, minmax(44px, 1fr)); gap: 4px; max-height: 320px; }
 
 .bg-accent { margin-top: 8px; }
 .bg-note { margin: 8px 0 0; font-size: 11px; color: var(--ink-faint); line-height: 1.45; }

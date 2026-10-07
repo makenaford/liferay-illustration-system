@@ -21,6 +21,7 @@ import patientCare from '../docs/patient-care-insights.json';
 import ordersOverview from '../docs/orders-overview.json';
 import permitApplication from '../docs/permit-application.json';
 import energyConsumption from '../docs/energy-consumption.json';
+import scaleFasterDxp from '../docs/scale-faster-dxp.json';
 
 /**
  * The nine ported illustrations plus anything built since, loaded as the
@@ -44,6 +45,7 @@ export const DOCS = [
   buildPortals,
   connectSystems,
   bringProduct,
+  scaleFasterDxp,
   // Image base, a photo left to fill: one glass panel of UI at its edge.
   patientCare,
   ordersOverview,

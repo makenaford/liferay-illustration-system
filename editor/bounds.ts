@@ -1,6 +1,6 @@
 import type { Doc, Element } from '../src/document.ts';
 import { LAYOUT } from '../src/tokens.ts';
-import { CURSOR_ASPECT } from '../src/primitives/cursor.ts';
+import { cursorAspect, cursorWidth } from '../src/primitives/cursor.ts';
 import { axisBand } from '../src/primitives/axisLabels.ts';
 import { tableLayout } from '../src/primitives/table.ts';
 import { formFieldLayout } from '../src/primitives/formField.ts';
@@ -50,8 +50,8 @@ export function boundsOf(el: Element, node: SVGGraphicsElement | null): Box | nu
       // The box takes in the labels, so they are selected and resized with it.
       return { x: el.x, y: el.y, width: el.width, height: el.height + axisBand(el) };
     case 'cursor': {
-      const w = el.size ?? 85.5953;
-      return { x: el.x, y: el.y, width: w, height: w * CURSOR_ASPECT };
+      const w = el.size ?? cursorWidth(el.variant);
+      return { x: el.x, y: el.y, width: w, height: w * cursorAspect(el.variant) };
     }
     case 'icon':
     case 'spotIcon': {

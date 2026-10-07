@@ -786,8 +786,8 @@ export const PALETTE: {
     extras: [
       {
         label: 'Hand drag',
-        title: 'An open hand for dragging, drawn as the cursor is — frosted glass in front, the blue gradient behind',
-        make: () => ({ type: 'cursor', x: 40, y: 40, size: 86, variant: 'hand' }) as Element,
+        title: 'An open hand for dragging — frosted glass with a white outline, blurring what is under it',
+        make: () => ({ type: 'cursor', x: 40, y: 40, size: 67, variant: 'hand' }) as Element,
       },
     ],
   },

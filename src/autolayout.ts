@@ -4,7 +4,7 @@ import { TYPE_ROLES, measureTextEl, wrapLines, lineLead, typeStyle } from './pri
 import { measureText } from './fontMetrics.generated.ts';
 import { badgeWidth } from './primitives/badge.ts';
 import { CHAT_HEIGHT } from './primitives/chatBubble.ts';
-import { CURSOR_ASPECT } from './primitives/cursor.ts';
+import { cursorAspect, cursorWidth } from './primitives/cursor.ts';
 import { axisBand } from './primitives/axisLabels.ts';
 import { tableLayout } from './primitives/table.ts';
 import { statLayout } from './primitives/statBlock.ts';
@@ -110,8 +110,8 @@ export function measureElement(el: Element): Size {
     case 'dropdown':
       return { width: el.width, height: dropdownLayout(el).height };
     case 'cursor': {
-      const w = el.size ?? 85.5953;
-      return { width: w, height: w * CURSOR_ASPECT };
+      const w = el.size ?? cursorWidth(el.variant);
+      return { width: w, height: w * cursorAspect(el.variant) };
     }
     case 'lineChart':
     case 'barChart':

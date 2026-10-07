@@ -129,6 +129,16 @@ function when(ms: number) {
   return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', ...(sameYear ? {} : { year: 'numeric' }) });
 }
 
+/** The address parameter a shared link opens an illustration by. */
+const LINK_PARAM = 'illustration';
+
+/** A link to this site that opens illustration `id`. */
+function illustrationLink(id: string): string {
+  const url = new URL(location.origin + location.pathname);
+  url.searchParams.set(LINK_PARAM, id);
+  return url.href;
+}
+
 export function App() {
   const [st, setSt] = useState<Store | null>(null);
   const [lib, setLib] = useState<Library>({ illustrations: [], sets: [], graphics: [], folders: { folders: [], assign: {} }, ready: false });
@@ -582,6 +592,36 @@ export function App() {
   };
 
   const openRow = lib.illustrations.find((i) => i.id === open) ?? null;
+
+  /*
+   * A shared link (`illustrationLink`) opens its illustration once the
+   * library has loaded. The open illustration is kept in the address, so the
+   * address bar's own link works as well as Copy link, and closing it clears
+   * it. A query, not a hash: the sign-in redirect keeps the query and loses
+   * a hash.
+   */
+  const linked = useRef(new URLSearchParams(location.search).get(LINK_PARAM));
+  useEffect(() => {
+    const id = linked.current;
+    if (!id || !lib.ready) return;
+    linked.current = null;
+    if (lib.illustrations.some((i) => i.id === id)) {
+      setTab('illustrations');
+      setOpen(id);
+    } else {
+      setToast('That link’s illustration is not in the library — it may have been removed.');
+      const url = new URL(location.href);
+      url.searchParams.delete(LINK_PARAM);
+      history.replaceState(history.state, '', url);
+    }
+  }, [lib.ready, lib.illustrations]);
+  useEffect(() => {
+    if (linked.current) return;
+    const url = new URL(location.href);
+    if (open) url.searchParams.set(LINK_PARAM, open);
+    else url.searchParams.delete(LINK_PARAM);
+    if (url.href !== location.href) history.replaceState(history.state, '', url);
+  }, [open]);
 
   // The builder, in place of the library, until its "‹ Library" button.
   /* ---------- Browse: the sidebar and toolbar for each tab ---------- */
@@ -1468,6 +1508,19 @@ function IllustrationDetail({
               {by ? ` by ${by}` : ''}
             </p>
           </div>
+          <button
+            type="button"
+            title="Copy a link that opens this illustration on this site"
+            onClick={() => {
+              const url = illustrationLink(row.id);
+              navigator.clipboard
+                .writeText(url)
+                .then(() => onToast('Link copied — it opens this illustration for anyone signed in to the site'))
+                .catch(() => onToast(`Copy this link: ${url}`));
+            }}
+          >
+            Copy link
+          </button>
           {writable && (
             <button type="button" onClick={onDuplicate}>
               Duplicate

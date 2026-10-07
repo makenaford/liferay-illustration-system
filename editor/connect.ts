@@ -49,8 +49,9 @@ export function connectTargets(resolved: Doc, docEl: HTMLElement | null, exclude
     els.forEach((el, i) => {
       const path = prefix ? `${prefix}.${i}` : String(i);
       if (path === exclude) return;
-      // Connecting to a connector is never the intent; its box is the whole route.
-      if (el.type !== 'connector') {
+      // Connecting to a connector is never the intent; its box is the whole
+      // route. An element set not to take connectors is passed by too.
+      if (el.type !== 'connector' && !(el as { noConnect?: boolean }).noConnect) {
         const node = docEl?.querySelector<SVGGraphicsElement>(`[data-path="${path}"]`) ?? null;
         const box = boundsOf(el, node);
         if (box && box.width > 0 && box.height > 0) out.push({ path, box });

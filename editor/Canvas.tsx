@@ -59,6 +59,14 @@ const SNAP = 10;
 
 const roundPt = ([x, y]: [number, number]): [number, number] => [Math.round(x * 100) / 100, Math.round(y * 100) / 100];
 
+/**
+ * Holding ⌘ (Ctrl elsewhere) while drawing a connector or dragging one of its
+ * ends places that end exactly under the pointer: no snapping to an anchor
+ * and no attaching to what it is over — the override for when the line
+ * should end beside an item, not on it.
+ */
+const freeEnd = (e: { metaKey: boolean; ctrlKey: boolean }) => e.metaKey || e.ctrlKey;
+
 /** The element at `path` given a uid if it has none — what an attachment refers to. */
 function withUid(doc: import('../src/document.ts').Doc, path: string): { doc: import('../src/document.ts').Doc; uid: string } {
   const el = elementAt(doc, path) as DocElement & { uid?: string };
@@ -327,7 +335,8 @@ export function Canvas() {
     // The connector tool: this press starts a line, snapped to what it is on.
     if (tool === 'connector' && at) {
       const targets = connectTargets(resolved, docRef.current, null);
-      const start = snapEnd(at, at, targets, SNAP / zoom);
+      // ⌘ (Ctrl): placed exactly, snapped to nothing — see `freeEnd`.
+      const start = freeEnd(e) ? { point: at } : snapEnd(at, at, targets, SNAP / zoom);
       drag.current = {
         mode: { kind: 'conn-draw', start, targets },
         startX: e.clientX,
@@ -452,7 +461,7 @@ export function Canvas() {
         const { start, targets } = d.mode;
         // Never onto the item it starts from.
         const others = start.target ? targets.filter((t) => t.path !== start.target!.path) : targets;
-        const endSnap = snapEnd(at, start.point, others, SNAP / zoom);
+        const endSnap = freeEnd(e) ? { point: at } : snapEnd(at, start.point, others, SNAP / zoom);
         // A start that was dropped on an item, not aimed at an anchor, turns to
         // face wherever the end is now.
         const s0 = start.target && !start.exact ? facing(start.target, endSnap.point) : start;
@@ -468,7 +477,7 @@ export function Canvas() {
       const { end, targets } = d.mode;
       const otherKey = end === 'from' ? 'to' : 'from';
       const otherEnd = el[otherKey];
-      let snapped = snapEnd(at, otherEnd, targets, SNAP / zoom);
+      let snapped: Snapped = freeEnd(e) ? { point: at } : snapEnd(at, otherEnd, targets, SNAP / zoom);
       // The other end, if it sits on an item, turns to face this one — so a
       // line never leaves the far side of a card and doubles back across it.
       const otherOn = targetOnAnchor(otherEnd, targets);

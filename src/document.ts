@@ -129,6 +129,11 @@ export interface LayoutChild {
    */
   absolute?: boolean;
   /**
+   * Connectors do not snap to this element or attach to it: a line drawn or
+   * dragged over it passes it by. Its children still take connectors.
+   */
+  noConnect?: boolean;
+  /**
    * Stable identity, for things that refer to this element — an attached
    * connector end. Paths change when anything is reordered or nested; this
    * does not. Set only when something needs it. See src/attach.ts.

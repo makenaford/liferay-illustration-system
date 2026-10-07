@@ -180,6 +180,7 @@ export function Inspector() {
         )}
       </div>
       <AbsoluteToggle path={selected} inLayout={inLayout} />
+      {el.type === 'connector' ? <ConnectorEnds path={selected} /> : <ConnectToggle path={selected} />}
       {autoPlaced && <ChildLayout path={selected} />}
       {inFreeContainer && (canFillOnce(el, 'w') || canFillOnce(el, 'h')) && <FillOnce path={selected} />}
       {isCard && <CardLayout path={selected} />}
@@ -326,6 +327,92 @@ function AbsoluteToggle({ path, inLayout }: { path: string; inLayout: boolean })
               : 'Kept where you put it, like a cursor: dragged over a card it floats on top rather than going into it, and a clipping panel never cuts it off.'}
         </p>
       )}
+    </div>
+  );
+}
+
+/** Whether connectors snap to and attach to this element — see `LayoutChild.noConnect`. */
+function ConnectToggle({ path }: { path: string }) {
+  const doc = useEditor((s) => s.doc);
+  const el = elementAt(doc, path) as (Element & { noConnect?: boolean }) | null;
+  if (!el) return null;
+  const toggle = () => {
+    const st = getState();
+    const cur = elementAt(st.doc, path) as (Element & { noConnect?: boolean }) | null;
+    if (!cur) return;
+    const { noConnect: _, ...rest } = cur;
+    commit(replaceAt(st.doc, path, (cur.noConnect ? rest : { ...cur, noConnect: true }) as Element));
+  };
+  return (
+    <div className="section">
+      <label
+        className="field"
+        style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+        title="Off: a connector drawn or dragged over this passes it by — it neither snaps to it nor attaches"
+      >
+        <input type="checkbox" checked={!el.noConnect} onChange={toggle} />
+        <span>Connectors snap to this</span>
+      </label>
+    </div>
+  );
+}
+
+/**
+ * A connector's ends: what each is attached to, with Detach to let it go —
+ * kept where it is, following nothing. Holding ⌘ while dragging an end
+ * places it without attaching in the first place.
+ */
+function ConnectorEnds({ path }: { path: string }) {
+  const doc = useEditor((s) => s.doc);
+  const el = elementAt(doc, path);
+  if (!el || el.type !== 'connector') return null;
+  const nameOf = (uid: string) => {
+    let found: Element | null = null;
+    const walk = (els: Element[]) => {
+      for (const e of els) {
+        if ((e as { uid?: string }).uid === uid) found = e;
+        const kids = (e as { children?: Element[] }).children;
+        if (kids) walk(kids);
+      }
+    };
+    walk(doc.elements);
+    const f = found as Element | null;
+    if (!f) return 'an item that is gone';
+    const text = (f as { label?: string; content?: string; name?: string }).label ?? (f as { content?: string }).content;
+    return `${SCHEMA[f.type]?.label ?? f.type}${text ? ` “${text}”` : ''}`;
+  };
+  const detach = (end: 'from' | 'to') => {
+    const st = getState();
+    const cur = elementAt(st.doc, path);
+    if (!cur || cur.type !== 'connector' || !cur.attach) return;
+    const attach = { ...cur.attach };
+    delete attach[end];
+    commit(replaceAt(st.doc, path, { ...cur, attach: attach.from || attach.to ? attach : undefined } as Element));
+  };
+  return (
+    <div className="section">
+      <div className="section-head">
+        <span>Ends</span>
+      </div>
+      {(['from', 'to'] as const).map((end) => {
+        const a = el.attach?.[end];
+        return (
+          <div key={end} className="field" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span className="field-label" style={{ width: 34 }}>{end === 'from' ? 'From' : 'To'}</span>
+            <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {a ? `Attached to ${nameOf(a.uid)}` : 'Free'}
+            </span>
+            {a && (
+              <button type="button" className="mini" onClick={() => detach(end)} title="Let this end go: it stays where it is and follows nothing">
+                Detach
+              </button>
+            )}
+          </div>
+        );
+      })}
+      <p className="panel-note" style={{ padding: '6px 0 0', border: 0 }}>
+        Hold ⌘ while drawing or dragging an end to place it without snapping to anything.
+      </p>
     </div>
   );
 }

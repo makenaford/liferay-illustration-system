@@ -79,13 +79,15 @@ export const WHITE: SurfaceSpec = {
 
 /**
  * The picked row: the Highlighted surface, lifted off the menu as the Spaces
- * menu draws it — standing `OVERHANG` past the menu's sides. Over the white
+ * menu draws it — light blue, standing `OVERHANG` past the menu's sides. Over the white
  * menu it is the fixed Highlighted over light, which is drawn for a light
  * ground in either theme; over glass, the theme's own Highlighted. It
  * frosts nothing itself: what is beneath it is the menu, and a blurred copy of
  * the stage would cover that.
  */
 export const OVERHANG = 4;
+/** `Primary L3` (#F0F5FF), the row's colour in the Spaces menu. */
+const HIGHLIGHT_TINT = '#F0F5FF';
 export const highlightOf = (surface: DropdownSurface): SurfaceName =>
   surface === 'white' ? 'glass-highlighted-over-light' : 'glass-highlighted';
 
@@ -143,7 +145,8 @@ export function Dropdown(ctx: Ctx, props: DropdownProps): VNode {
     items.forEach((item) => {
       const kind = item.lead ?? 'none';
       // The picked row lifts off the menu, past its sides — see `OVERHANG`.
-      const rowInk = item.selected && white ? DARK_INK : ink;
+      // The picked row is light blue on every menu, so its type is dark on every menu.
+      const rowInk = item.selected ? DARK_INK : ink;
       const parts: (VNode | null)[] = [];
       let tx = x + PAD_X;
       const ly = top + (row - lead) / 2;
@@ -164,7 +167,18 @@ export function Dropdown(ctx: Ctx, props: DropdownProps): VNode {
       );
       rows.push(
         item.selected
-          ? Surface(ctx, { x: x - OVERHANG, y: top, width: width + OVERHANG * 2, height: row, radius: 4, surface: highlightOf(surface), backdrop: false, children: parts })
+          ? Surface(ctx, {
+              x: x - OVERHANG,
+              y: top,
+              width: width + OVERHANG * 2,
+              height: row,
+              radius: 4,
+              // The Highlighted surface's edge, glow and inner light, filled with
+              // the Spaces menu's light blue in place of its own wash.
+              surface: { ...tk.surfaces[highlightOf(surface)], fill: { angle: 180, stops: [{ color: HIGHLIGHT_TINT, opacity: 1 }] } },
+              backdrop: false,
+              children: parts,
+            })
           : h('g', {}, parts),
       );
       top += row;

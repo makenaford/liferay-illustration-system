@@ -251,7 +251,8 @@ export function Canvas() {
     const parent = parentOf(path);
     if (!parent) return false;
     const p = elementAt(doc, parent);
-    return !!(p && isContainerEl(p) && p.layout);
+    // An absolute child keeps its own position: dragged, it moves.
+    return !!(p && isContainerEl(p) && p.layout) && !(elementAt(doc, path) as { absolute?: boolean } | null)?.absolute;
   };
 
   const tree = useMemo(() => {
@@ -816,9 +817,9 @@ export function Canvas() {
       if (!d) return;
       const parent = parentOf(st.selected);
       const p = parent ? elementAt(st.doc, parent) : null;
-      if (p && isContainerEl(p) && p.layout) return;
-      e.preventDefault();
       const el = elementAt(st.doc, st.selected);
+      if (p && isContainerEl(p) && p.layout && !(el as { absolute?: boolean } | null)?.absolute) return;
+      e.preventDefault();
       if (el) commit(replaceAt(st.doc, st.selected, movedDeep(el, d[0], d[1])));
     };
     window.addEventListener('keydown', onKey);

@@ -90,7 +90,7 @@ function walk(doc: Doc, el: Element, path: string, parent: Element | null, inFlo
 
   const flows = !!any.layout;
   (any.children as Element[] | undefined)?.forEach((c, i) =>
-    walk(doc, c, `${path}.${i}`, el, flows),
+    walk(doc, c, `${path}.${i}`, el, flows && !(c as { absolute?: boolean }).absolute),
   );
 }
 
@@ -234,6 +234,8 @@ function alignmentWalk(doc: Doc, el: Element, path: string) {
   const kids = (el as { children?: Element[] }).children;
   const p = el as unknown as Record<string, number>;
   for (const [i, c] of (kids ?? []).entries()) {
+    // An absolute child is placed on purpose, often over the edge — a corner badge.
+    if ((c as { absolute?: boolean }).absolute) continue;
     // Text carries no width, so measure it — otherwise a label that runs out
     // of its own card is invisible to this rule, which is exactly how three
     // share figures ended up printed below the overlay they belonged to.
@@ -382,6 +384,7 @@ function cardPadding(doc: Doc, el: Element, path: string) {
   if (el.type === 'card' || el.type === 'subCard') {
     const min = LAYOUT.cardPadding;
     kids.forEach((c, i) => {
+      if ((c as { absolute?: boolean }).absolute) return;
       const b = extent(c);
       if (!b) return;
       const sides = {

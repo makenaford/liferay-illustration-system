@@ -121,6 +121,14 @@ export interface LayoutChild {
   /** Override the container's cross-axis alignment for this child. */
   alignSelf?: 'start' | 'center' | 'end' | 'stretch' | 'baseline';
   /**
+   * Absolute position, as Figma has it: out of its auto-layout container's
+   * flow — neither placed by it nor counted in its size — and kept where it
+   * is set, moving with the container. A badge on a card's corner, a cursor
+   * over a row. Still the container's child, so it is clipped and drawn in
+   * its order. Ignored in a container laid out by hand, where every child is.
+   */
+  absolute?: boolean;
+  /**
    * Stable identity, for things that refer to this element — an attached
    * connector end. Paths change when anything is reordered or nested; this
    * does not. Set only when something needs it. See src/attach.ts.

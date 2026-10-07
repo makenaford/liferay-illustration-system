@@ -23,9 +23,10 @@ import {
   stackChildren,
 } from './layout.ts';
 import { snapTree } from './grid.ts';
+import { movedDeep } from './geometry.ts';
 import { LAYOUT, SPACE } from '../src/tokens.ts';
 import type { LayoutSpec } from '../src/document.ts';
-import { inferLayout, resolveLayout as resolveLayoutDoc } from '../src/autolayout.ts';
+import { boundingBox, inferLayout, resolveLayout as resolveLayoutDoc } from '../src/autolayout.ts';
 import { SCHEMA, type Field } from './schema.ts';
 import { TokenPicker } from './TokenPicker.tsx';
 import { PIE_COLORS, PIE_MAX } from '../src/primitives/pieChart.ts';
@@ -67,11 +68,13 @@ export function Inspector() {
 
   const parent = parentOfPath(selected);
   const parentEl = parent ? elementAt(doc, parent) : null;
-  const autoPlaced = !!(
+  const inLayout = !!(
     parentEl &&
     (parentEl.type === 'card' || parentEl.type === 'subCard' || parentEl.type === 'group') &&
     parentEl.layout
   );
+  // Absolute in a layout: placed by hand, like a child of a free card.
+  const autoPlaced = inLayout && !(el as { absolute?: boolean }).absolute;
   // Inside a card laid out by hand: filling it is a one-off resize.
   const inFreeContainer = !!(
     parentEl &&
@@ -176,6 +179,7 @@ export function Inspector() {
           </button>
         )}
       </div>
+      {inLayout && <AbsoluteToggle path={selected} />}
       {autoPlaced && <ChildLayout path={selected} />}
       {inFreeContainer && (canFillOnce(el, 'w') || canFillOnce(el, 'h')) && <FillOnce path={selected} />}
       {isCard && <CardLayout path={selected} />}
@@ -254,6 +258,61 @@ function MultiSelection({ count, path }: { count: number; path: string }) {
         {inFlow &&
           ' Arranging them wraps them in a group that lays itself out, inside this card’s own flow — the way to mix rows and columns in one card.'}
       </p>
+    </div>
+  );
+}
+
+/**
+ * ABSOLUTE POSITION — out of the container's flow and kept where it is, as
+ * Figma's "Absolute position". Turned on, the element is pinned where the
+ * flow last drew it, at the size it was drawn, so nothing jumps; turned off,
+ * the flow places it again.
+ */
+function AbsoluteToggle({ path }: { path: string }) {
+  const doc = useEditor((s) => s.doc);
+  const el = elementAt(doc, path) as (Element & { absolute?: boolean }) | null;
+  if (!el) return null;
+  const toggle = () => {
+    const st = getState();
+    const cur = elementAt(st.doc, path) as (Element & { absolute?: boolean; width?: number; height?: number }) | null;
+    if (!cur) return;
+    if (cur.absolute) {
+      const { absolute: _, ...rest } = cur;
+      commit(replaceAt(st.doc, path, rest as Element));
+      return;
+    }
+    // Where the flow draws it, in the document's own coordinates: the
+    // resolved position, less however far the flow has moved its container.
+    const resolved = resolveLayoutDoc(st.doc);
+    const at = elementAt(resolved, path) as (Element & { width?: number; height?: number }) | null;
+    const parent = parentOfPath(path);
+    const rawParent = parent ? (elementAt(st.doc, parent) as { x?: number; y?: number } | null) : null;
+    const resParent = parent ? (elementAt(resolved, parent) as { x?: number; y?: number } | null) : null;
+    const shown = at && boundingBox(at);
+    const own = boundingBox(cur);
+    let next: Element = { ...cur, absolute: true } as Element;
+    if (shown && own) {
+      const dx = shown.x - own.x - ((resParent?.x ?? 0) - (rawParent?.x ?? 0));
+      const dy = shown.y - own.y - ((resParent?.y ?? 0) - (rawParent?.y ?? 0));
+      next = movedDeep(next, dx, dy);
+      // Stretched or grown in the flow: it keeps the size it was drawn at.
+      const sized = next as Element & { width?: number; height?: number };
+      if (typeof sized.width === 'number' && typeof at.width === 'number') sized.width = at.width;
+      if (typeof sized.height === 'number' && typeof at.height === 'number') sized.height = at.height;
+    }
+    commit(replaceAt(st.doc, path, next));
+  };
+  return (
+    <div className="section">
+      <label className="field" style={{ display: 'flex', alignItems: 'center', gap: 6 }} title="Out of the auto layout: kept where you put it, moving with its card">
+        <input type="checkbox" checked={!!el.absolute} onChange={toggle} />
+        <span>Absolute position</span>
+      </label>
+      {el.absolute && (
+        <p className="panel-note" style={{ padding: '6px 0 0', border: 0 }}>
+          Out of the auto layout: drag it or set X and Y. It moves with its card, and the card’s other items flow as if it were not there.
+        </p>
+      )}
     </div>
   );
 }

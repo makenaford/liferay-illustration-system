@@ -216,10 +216,13 @@ function bounded(el: Container): Element[] {
   });
 }
 
+/** Whether a child is placed by its container's flow — not `absolute`. */
+export const inFlow = (k: Element) => !(k as { absolute?: boolean }).absolute;
+
 function containerSize(el: Container): Size {
   const spec = el.layout!;
   const p = pad(spec);
-  const kids = bounded(el);
+  const kids = bounded(el).filter(inFlow);
   const gap = spec.gap ?? LAYOUT.gap;
   const sizes = kids.map(measureElement);
 
@@ -272,6 +275,18 @@ function placeAt(el: Element, x: number, y: number, size: Size): Element {
     const anchorX =
       el.anchor === 'middle' ? x + size.width / 2 : el.anchor === 'end' ? x + size.width : x;
     return { ...el, x: round(anchorX), y: round(y + statLayout(el).baseline) };
+  }
+  if (isContainer(el) && el.layout && el.children?.some((c) => !inFlow(c))) {
+    // An auto-layout container's absolute children move with it, as a free
+    // container's all do; the flow places the rest.
+    const dx = x - (el.x ?? 0);
+    const dy = y - (el.y ?? 0);
+    return {
+      ...el,
+      x: round(x),
+      y: round(y),
+      children: el.children.map((c) => (inFlow(c) ? c : shifted(c, dx, dy))),
+    } as Element;
   }
   if (isContainer(el) && !el.layout && el.children?.length) {
     // A free container's children are absolute, so they move with it —
@@ -342,8 +357,10 @@ function layoutContainer(el: Container): Element {
    * contents stayed behind — silently, because the box is invisible.
    * Measuring does not need resolved children, so the order is free.
    */
-  const kids = bounded(el);
-  if (!kids.length) return { ...el, children: [] } as Element;
+  const all = bounded(el);
+  if (!all.length) return { ...el, children: [] } as Element;
+  // An absolute child is left where it is set, out of the flow — see `LayoutChild.absolute`.
+  const kids = all.filter(inFlow);
 
   const size = containerSize(el);
   const horizontal = spec.direction === 'horizontal';
@@ -449,11 +466,15 @@ function layoutContainer(el: Container): Element {
     return resolveElement(placeAt(next as Element, x, y, s));
   });
 
+  // Back in the children's own order, so paths and the draw order hold.
+  let next = 0;
+  const children = all.map((k) => (inFlow(k) ? placed[next++] : resolveElement(k)));
+
   return {
     ...el,
     width: round(size.width),
     height: round(size.height),
-    children: placed,
+    children,
   } as Element;
 }
 
@@ -477,7 +498,7 @@ function minAlong(el: Element, horizontal: boolean): number {
   if (isContainer(el) && el.layout) {
     const spec = el.layout;
     const p = pad(spec);
-    const kids = bounded(el);
+    const kids = bounded(el).filter(inFlow);
     const gap = spec.gap ?? LAYOUT.gap;
     const along = spec.direction === 'horizontal' === horizontal;
     const mins = kids.map((k) => minAlong(k, horizontal));
@@ -555,7 +576,7 @@ function growSizes(kids: Element[], measured: number[], grows: number[], space: 
 function fillsSpace(el: Element): boolean {
   if (el.type === 'lineChart' || el.type === 'barChart' || el.type === 'pieChart') return ((el as { grow?: number }).grow ?? 0) > 0;
   if (!isContainer(el)) return false;
-  const kids = el.children ?? [];
+  const kids = (el.children ?? []).filter(inFlow);
   return !kids.length || kids.some(fillsSpace);
 }
 

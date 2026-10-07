@@ -48,7 +48,7 @@
           "type": "text",
           "x": 66,
           "y": 122,
-          "role": "body",
+          "role": "bodySmall",
           "content": "SaSS",
           "anchor": "middle",
           "weight": "semibold"
@@ -65,7 +65,7 @@
           "type": "text",
           "x": 140,
           "y": 122,
-          "role": "body",
+          "role": "bodySmall",
           "content": "PaSS",
           "anchor": "middle",
           "weight": "semibold"
@@ -82,7 +82,7 @@
           "type": "text",
           "x": 214,
           "y": 122,
-          "role": "body",
+          "role": "bodySmall",
           "content": "Self Hosted",
           "anchor": "middle",
           "weight": "semibold"
@@ -119,7 +119,7 @@
           "type": "text",
           "x": 686,
           "y": 212,
-          "role": "heading",
+          "role": "subheading",
           "content": "Enterprise SSO Login",
           "anchor": "middle",
           "weight": "bold"

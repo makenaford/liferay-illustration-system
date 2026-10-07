@@ -27,14 +27,14 @@
       "type": "text",
       "x": 78,
       "y": 78,
-      "role": "title",
+      "role": "headline",
       "content": "Cloud Operations Dashboard"
     },
     {
       "type": "text",
       "x": 78,
       "y": 96,
-      "role": "body",
+      "role": "bodySmall",
       "content": "Traffic Volume & Auto-Scaling",
       "tone": "muted"
     },
@@ -104,7 +104,7 @@
       "type": "text",
       "x": 78,
       "y": 152,
-      "role": "display",
+      "role": "title",
       "content": "15x"
     },
     {
@@ -118,9 +118,9 @@
     },
     {
       "type": "card",
-      "x": 356,
+      "x": 358,
       "y": 56,
-      "width": 128,
+      "width": 126,
       "height": 72,
       "sheen": "linear",
       "children": [
@@ -150,14 +150,15 @@
               "type": "text",
               "x": 398,
               "y": 80,
-              "role": "bodySmall",
-              "content": "Uptime"
+              "role": "caption",
+              "content": "Uptime",
+              "weight": "semibold"
             },
             {
               "type": "text",
               "x": 398,
               "y": 103.85,
-              "role": "title",
+              "role": "heading",
               "content": "99.9%",
               "weight": "bold"
             }
@@ -203,7 +204,7 @@
               "type": "text",
               "x": 90,
               "y": 259.04,
-              "role": "heading",
+              "role": "subheading",
               "content": "Deploy Cadence",
               "alignSelf": "center"
             },
@@ -247,7 +248,7 @@
           "type": "text",
           "x": 224.14,
           "y": 279.83,
-          "role": "subheading",
+          "role": "body",
           "content": "Daily",
           "alignSelf": "end"
         },
@@ -262,7 +263,7 @@
       ],
       "layout": {
         "direction": "vertical",
-        "gap": 6,
+        "gap": 4,
         "padding": 12,
         "align": "start"
       },

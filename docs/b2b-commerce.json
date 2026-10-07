@@ -74,8 +74,9 @@
           "type": "text",
           "x": 90,
           "y": 101.7,
-          "role": "bodySmall",
-          "content": "Negotiated Contract Pricing Catalog"
+          "role": "caption",
+          "content": "Negotiated Contract Pricing Catalog",
+          "weight": "semibold"
         },
         {
           "type": "subCard",
@@ -90,7 +91,7 @@
               "x": 96,
               "y": 122.7248,
               "width": 148,
-              "height": 6,
+              "height": 8,
               "layout": {
                 "direction": "horizontal",
                 "gap": 8,
@@ -125,7 +126,7 @@
               "x": 96,
               "y": 136,
               "width": 160,
-              "height": 6,
+              "height": 8,
               "layout": {
                 "direction": "horizontal",
                 "gap": 8,
@@ -171,7 +172,7 @@
               "x": 96,
               "y": 150,
               "width": 160,
-              "height": 6,
+              "height": 8,
               "layout": {
                 "direction": "horizontal",
                 "gap": 8,
@@ -217,7 +218,7 @@
               "x": 96,
               "y": 166,
               "width": 160,
-              "height": 6,
+              "height": 8,
               "layout": {
                 "direction": "horizontal",
                 "gap": 8,
@@ -261,7 +262,7 @@
           ],
           "layout": {
             "direction": "vertical",
-            "gap": 10,
+            "gap": 8,
             "padding": [
               12,
               12
@@ -291,8 +292,9 @@
           "type": "text",
           "x": 296,
           "y": 101.7,
-          "role": "bodySmall",
-          "content": "Actions & Cart"
+          "role": "caption",
+          "content": "Actions & Cart",
+          "weight": "semibold"
         },
         {
           "type": "button",
@@ -320,7 +322,7 @@
           "type": "text",
           "x": 296,
           "y": 181.66,
-          "role": "title",
+          "role": "headline",
           "content": "$2,150.00",
           "weight": "bold"
         }
@@ -344,8 +346,9 @@
           "type": "text",
           "x": 90,
           "y": 233.7,
-          "role": "bodySmall",
-          "content": "Orders Placed by Time"
+          "role": "caption",
+          "content": "Orders Placed by Time",
+          "weight": "semibold"
         },
         {
           "type": "barChart",
@@ -382,8 +385,9 @@
           "type": "text",
           "x": 296,
           "y": 233.7,
-          "role": "bodySmall",
-          "content": "Orders by region"
+          "role": "caption",
+          "content": "Orders by region",
+          "weight": "semibold"
         },
         {
           "type": "map",

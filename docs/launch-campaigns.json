@@ -115,7 +115,7 @@
           "height": 32,
           "layout": {
             "direction": "vertical",
-            "gap": 8,
+            "gap": 6,
             "padding": [
               8,
               0,
@@ -139,8 +139,9 @@
               "type": "text",
               "x": 192,
               "y": 228.99,
-              "role": "bodySmall",
-              "content": "Website and Email Ready!"
+              "role": "caption",
+              "content": "Website and Email Ready!",
+              "weight": "semibold"
             }
           ]
         },

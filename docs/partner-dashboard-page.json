@@ -169,7 +169,7 @@
           "type": "text",
           "x": 62,
           "y": 134,
-          "role": "subheading",
+          "role": "body",
           "content": "Revenue Breakdown"
         },
         {
@@ -302,7 +302,7 @@
           "type": "text",
           "x": 312,
           "y": 134,
-          "role": "subheading",
+          "role": "body",
           "content": "Quarterly Revenue"
         },
         {
@@ -484,12 +484,12 @@
           "type": "text",
           "x": 62,
           "y": 256,
-          "role": "subheading",
+          "role": "body",
           "content": "Annual Growth"
         },
         {
           "type": "text",
-          "x": 80,
+          "x": 82,
           "y": 270,
           "role": "micro",
           "content": "100%",
@@ -498,7 +498,7 @@
         },
         {
           "type": "text",
-          "x": 80,
+          "x": 82,
           "y": 282,
           "role": "micro",
           "content": "75%",
@@ -507,7 +507,7 @@
         },
         {
           "type": "text",
-          "x": 80,
+          "x": 82,
           "y": 294,
           "role": "micro",
           "content": "50%",
@@ -516,7 +516,7 @@
         },
         {
           "type": "text",
-          "x": 80,
+          "x": 82,
           "y": 306,
           "role": "micro",
           "content": "25%",
@@ -525,7 +525,7 @@
         },
         {
           "type": "text",
-          "x": 80,
+          "x": 82,
           "y": 318,
           "role": "micro",
           "content": "0",
@@ -620,7 +620,7 @@
           "type": "text",
           "x": 312,
           "y": 256,
-          "role": "subheading",
+          "role": "body",
           "content": "Top opportunities"
         },
         {
@@ -739,8 +739,9 @@
           "type": "text",
           "x": 34,
           "y": 92,
-          "role": "bodySmall",
-          "content": "Services Opportunity"
+          "role": "caption",
+          "content": "Services Opportunity",
+          "weight": "semibold"
         },
         {
           "type": "group",
@@ -796,8 +797,9 @@
           "type": "text",
           "x": 462,
           "y": 238,
-          "role": "bodySmall",
-          "content": "Deal Pipelines"
+          "role": "caption",
+          "content": "Deal Pipelines",
+          "weight": "semibold"
         },
         {
           "type": "group",

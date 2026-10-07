@@ -2,70 +2,48 @@ import { h, text as textNode, type Ctx, type VNode } from '../vsvg.ts';
 import { measureText, textBox } from '../fontMetrics.generated.ts';
 
 /**
- * TYPE SCALE — nine sizes, from the design system's own scale.
+ * TYPE SCALE — fourteen steps, in whole even pixels, body at 14.
  *
- * This replaces seventeen ad-hoc roles that conflated three independent
- * things: size, weight and colour. `metricXL` and `tileValue` differed only
- * in weight; `sectionTitle` and `labelSmall` were the same size with
- * different names; `micro` and `rowLabel` were 0.4px apart. Splitting the
- * axes leaves nine steps a designer can actually hold in their head, with
- * `weight` and `tone` as separate props.
+ * Each step is named for the design system's own style it stands in for
+ * (`tokens/figma/typography.desktop.tokens.json`). The sizes were that scale
+ * x 0.58, which left every step on a fraction — body on 12.2px, a caption on
+ * 9.3 — that no one could name or match in Figma. They are now that ladder
+ * set with body on 14 (x 0.67) and each step on the nearest even pixel, so a
+ * size can be read off, typed into Figma, and lands on the 2px grid.
  *
- * SIZES come from `tokens/figma/typography.desktop.tokens.json`, multiplied
- * by 0.58, so the ladder is the site's ladder rather than a parallel
- * invention.
- *
- * The factor was 0.45, measured off a single hero title, and it made every
- * illustration read too small. Node `792:13843` in the Marketing UI Assets
- * Repo is the Figma source for `deploy-daily` — the same 560x372 canvas this
- * system renders — so its text nodes are a direct answer rather than an
- * inference:
- *
- *   "15x"            24px   was 19.4  (display)
- *   "Deploy Cadece"  16px   was 12.6  (heading)
- *   "Daily"          14px   was 10.8  (subheading)
- *
- * Three independent anchors agreeing on 1.24-1.30x is a scale error, not
- * three rounding accidents. 0.45 x 1.29 = 0.58, which lands display on 24.9,
- * heading on 16.2 and subheading on 13.9 — within a rounding step of all
- * three.
+ * Where two steps round to the same size they differ in weight or capitals.
  */
-const SCALE = 0.58;
-
-/** Rounded to 0.1px: the metrics table is a ratio, so this stays exact. */
-const step = (dsSize: number) => Math.round(dsSize * SCALE * 10) / 10;
-
 export const TYPE_SIZES = {
   /** `Size/Display/Display Lg` — the biggest hero figure. */
-  displayLarge: step(49),
+  displayLarge: 32,
   /** `Size/Display/Display Sm` — a hero number. */
-  display: step(43),
+  display: 28,
   /** `Size/Heading/F1` — the title of a panel. */
-  title: step(37),
+  title: 24,
   /** `Size/Heading/F2` — between a panel's title and a card's. */
-  headline: step(32),
+  headline: 22,
   /** `Size/Heading/F3` — a card's own title. */
-  heading: step(28),
+  heading: 18,
   /** `Size/Heading/F4` */
-  subheading: step(24),
-  /** `Size/Paragraph/Large` */
-  body: step(21),
+  subheading: 16,
+  /** `Size/Paragraph/Large` — the default for text. */
+  body: 14,
   /** `Size/Heading/F5` */
-  bodySmall: step(18),
+  bodySmall: 12,
   /** `Size/Paragraph/Base` */
-  caption: step(16),
+  caption: 10,
   /** `Size/Heading/F6` — the smallest heading: a group's title inside a card. */
-  smallHeading: step(14),
+  smallHeading: 10,
   /** `Size/Paragraph/Small Caps` — an eyebrow over a title: capitals, tracked. */
-  eyebrow: step(14),
+  eyebrow: 10,
   /** `Size/Paragraph/Small` */
-  label: step(13),
+  label: 8,
   /** `Size/Paragraph/Small Caps XS` — a smaller eyebrow, a column head. */
-  eyebrowSmall: step(12),
+  eyebrowSmall: 8,
   /** `Size/Paragraph/X-Small` — the smallest legible step. */
-  micro: step(11),
+  micro: 8,
 } as const;
-// Not taken: `Size/Paragraph/Tiny` (9) lands on 5.2px, below `micro`, the
+// Not taken: `Size/Paragraph/Tiny` (9), which would land below `micro`, the
 // smallest step that still reads in an exported illustration.
 
 export type TypeRole = keyof typeof TYPE_SIZES;

@@ -590,7 +590,7 @@ for (const [type, entry] of Object.entries(SCHEMA)) {
 
 /** Defaults used when adding from the palette. */
 export const DEFAULTS: Record<Element['type'], () => Element> = {
-  text: () => ({ type: 'text', x: 40, y: 40, role: 'heading', content: 'New text' }),
+  text: () => ({ type: 'text', x: 40, y: 40, role: 'body', content: 'New text' }),
   // Cards arrive as columns: whatever is added stacks at the card padding the
   // audit requires, instead of every addition landing on the same spot.
   // A frame arrives as a card does: the card padding and the Flat surface,

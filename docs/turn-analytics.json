@@ -89,7 +89,7 @@
               "type": "text",
               "x": 52,
               "y": 68.3,
-              "role": "heading",
+              "role": "subheading",
               "content": "12,847",
               "weight": "bold"
             },
@@ -198,7 +198,7 @@
               "type": "text",
               "x": 212,
               "y": 68.3,
-              "role": "heading",
+              "role": "subheading",
               "content": "3,456",
               "weight": "bold"
             },
@@ -308,7 +308,7 @@
               "type": "text",
               "x": 374,
               "y": 68.3,
-              "role": "heading",
+              "role": "subheading",
               "content": "645,789",
               "weight": "bold"
             },
@@ -587,7 +587,7 @@
           "x": -34,
           "y": 0,
           "width": 172,
-          "height": 10,
+          "height": 12,
           "layout": {
             "direction": "horizontal",
             "gap": 8,
@@ -619,7 +619,7 @@
           "x": 56,
           "y": 277.34,
           "width": 172,
-          "height": 56,
+          "height": 54,
           "gridLines": 8,
           "domain": [
             0,
@@ -662,7 +662,7 @@
           "x": 2,
           "y": 0,
           "width": 172,
-          "height": 10,
+          "height": 12,
           "layout": {
             "direction": "horizontal",
             "gap": 8,
@@ -693,7 +693,7 @@
           "x": 298,
           "y": 277.34,
           "width": 172,
-          "height": 46,
+          "height": 44,
           "spacing": 4,
           "markers": [
             [
@@ -715,7 +715,7 @@
           "x": 2,
           "y": 0,
           "width": 172,
-          "height": 6,
+          "height": 8,
           "layout": {
             "direction": "horizontal",
             "gap": 8,

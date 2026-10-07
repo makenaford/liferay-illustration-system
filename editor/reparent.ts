@@ -64,6 +64,12 @@ export function planDrop(
   pointer: { x: number; y: number },
 ): DropPlan {
   const from = parentOf(dragged);
+  // An absolute item belongs to its card wherever it is dragged — over the
+  // card's edge or right outside it. To move it to another, take it off
+  // Absolute position first.
+  if (from && (elementAt(doc, dragged) as { absolute?: boolean } | null)?.absolute) {
+    return { slot: { parent: from }, changes: false };
+  }
   const target = containerFor(resolved, box, dragged);
   const slot = target ? slotForDrop(doc, resolved, target, pointer) : { parent: null };
 

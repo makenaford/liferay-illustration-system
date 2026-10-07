@@ -255,7 +255,13 @@ function renderElementInner(ctx: Ctx, el: Element, path?: string): VNode | null 
     try {
       // An empty container, in the builder: somewhere to drop a component.
       if (path !== undefined && !c.children?.length) return [dropZone(ctx, c, radius)];
-      return c.clip ? [clipTo(ctx, { ...c, radius }, kid(c.children))] : kid(c.children);
+      if (!c.clip) return kid(c.children);
+      // An absolute child floats over the clip, so it can stand past the
+      // card's edge — a badge on its corner — drawn after what is clipped.
+      const all = kid(c.children);
+      const loose = (c.children ?? []).map((k) => !!(k as { absolute?: boolean }).absolute);
+      const clipped = all.filter((_, i) => !loose[i]);
+      return [clipTo(ctx, { ...c, radius }, clipped), ...all.filter((_, i) => loose[i])];
     } finally {
       undo();
       ctx.tokens = outer;

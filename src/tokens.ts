@@ -599,10 +599,15 @@ const GLASS_BLUR = 28;
 
 /**
  * How far any cast shadow may reach past its card: offset plus blur, in px.
- * Matches the 20px a card keeps from the canvas edge (the Image base card
- * guide), so no shadow is clipped there. Every `shadow` below stays within it.
+ * Matches the 16px a card keeps from the canvas edge (the card guide), so no
+ * shadow is clipped there. Every `shadow` below stays within it — the
+ * furthest, a Solid card's, reaches 14 below it (4 down, 10 of blur).
+ *
+ * It was 20, set before blurs were capped at 10, when the guide had to
+ * leave room for a 20px glow. Nothing reaches that far now, so the guide
+ * gave the 4px back to the drawing.
  */
-export const SHADOW_REACH = 20;
+export const SHADOW_REACH = 16;
 
 /** The most any cast shadow is blurred, in px — kept tight so a shadow reads as a contact glow, not a haze. */
 export const SHADOW_BLUR_MAX = 10;
@@ -1263,7 +1268,7 @@ export const LAYOUT = {
    * that is the edge a page actually crops against. Glows are exempt: they
    * are meant to bleed.
    */
-  canvasInset: 20,
+  canvasInset: 16,
   /** The snap grid. Half the 8-step, so 2, 4, 6 and 12 all land on it. */
   grid: 2,
   /** Offered in the editor's snap control. */

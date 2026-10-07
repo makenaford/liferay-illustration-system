@@ -578,14 +578,14 @@
     {
       "type": "subCard",
       "x": 44,
-      "y": 256,
+      "y": 260,
       "width": 196,
       "height": 96,
       "children": [
         {
           "type": "group",
           "x": -34,
-          "y": 0,
+          "y": 4,
           "width": 172,
           "height": 12,
           "layout": {
@@ -599,14 +599,14 @@
             {
               "type": "text",
               "x": 56,
-              "y": 273.7,
+              "y": 277.7,
               "role": "bodySmall",
               "content": "AI Visibility Score growth"
             },
             {
               "type": "text",
               "x": -34,
-              "y": 0,
+              "y": 4,
               "role": "caption",
               "content": "82 / 100",
               "tone": "success",
@@ -617,7 +617,7 @@
         {
           "type": "lineChart",
           "x": 56,
-          "y": 277.34,
+          "y": 281.34,
           "width": 172,
           "height": 54,
           "gridLines": 8,
@@ -653,14 +653,14 @@
     {
       "type": "subCard",
       "x": 286,
-      "y": 256,
+      "y": 260,
       "width": 196,
       "height": 96,
       "children": [
         {
           "type": "group",
           "x": 2,
-          "y": 0,
+          "y": 4,
           "width": 172,
           "height": 12,
           "layout": {
@@ -674,14 +674,14 @@
             {
               "type": "text",
               "x": 298,
-              "y": 273.7,
+              "y": 277.7,
               "role": "bodySmall",
               "content": "Sessions by region"
             },
             {
               "type": "text",
               "x": 2,
-              "y": 0,
+              "y": 4,
               "role": "caption",
               "content": "18.4K",
               "weight": "semibold"
@@ -691,7 +691,7 @@
         {
           "type": "map",
           "x": 298,
-          "y": 277.34,
+          "y": 281.34,
           "width": 172,
           "height": 44,
           "spacing": 4,
@@ -713,7 +713,7 @@
         {
           "type": "group",
           "x": 2,
-          "y": 0,
+          "y": 4,
           "width": 172,
           "height": 8,
           "layout": {
@@ -727,7 +727,7 @@
             {
               "type": "text",
               "x": 2,
-              "y": 0,
+              "y": 4,
               "role": "micro",
               "content": "N. America 42%",
               "tone": "muted"
@@ -735,7 +735,7 @@
             {
               "type": "text",
               "x": 2,
-              "y": 0,
+              "y": 4,
               "role": "micro",
               "content": "Europe 31%",
               "tone": "muted"
@@ -743,7 +743,7 @@
             {
               "type": "text",
               "x": 2,
-              "y": 0,
+              "y": 4,
               "role": "micro",
               "content": "APAC 19%",
               "tone": "muted"
@@ -777,7 +777,7 @@
     },
     {
       "type": "icon",
-      "x": 518,
+      "x": 522,
       "y": 152,
       "size": 22,
       "icon": "cursor",
@@ -786,9 +786,9 @@
   ],
   "panelSurfaces": 2,
   "cardArea": {
-    "x": 20,
-    "y": 20,
-    "width": 520,
-    "height": 332
+    "x": 16,
+    "y": 16,
+    "width": 528,
+    "height": 340
   }
 }

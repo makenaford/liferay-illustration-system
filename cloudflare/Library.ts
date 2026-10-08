@@ -15,6 +15,10 @@ import * as Effect from "effect/Effect";
  * the object pushes every write to all of them as it commits — `{ col, id,
  * body }`, `body` null for a delete. Sockets use the hibernation API, so an
  * idle library costs nothing while pages stay connected.
+ *
+ * CHANGES. A page keeps its copy of a collection between visits and asks
+ * only for what was written since (`changes`), rather than the whole
+ * library again — most of it embedded images.
  */
 
 /** A pushed change. `body` is null when the document was deleted. */
@@ -78,6 +82,31 @@ export default class Library extends Cloudflare.DurableObject<Library>()(
             );
             const rows = yield* cursor.toArray();
             return rows.map((r): Row => ({ id: r.id, body: JSON.parse(r.body) }));
+          }),
+
+        /**
+         * What changed in `col` since `since` (ms, this object's clock): the
+         * documents written after it, every id there is now — so a page
+         * holding a copy can drop what was deleted — and the latest write's
+         * time, the next `since`. A page with nothing new gets the ids alone.
+         */
+        changes: (col: string, since: number) =>
+          Effect.gen(function* () {
+            const changed = yield* (yield* sql.exec<{ id: string; body: string; updated_at: number }>(
+              "SELECT id, body, updated_at FROM docs WHERE col = ? AND updated_at > ? ORDER BY id",
+              col,
+              since,
+            )).toArray();
+            const all = yield* (yield* sql.exec<{ id: string; updated_at: number }>(
+              "SELECT id, updated_at FROM docs WHERE col = ?",
+              col,
+            )).toArray();
+            return {
+              rows: changed.map((r): Row => ({ id: r.id, body: JSON.parse(r.body) })),
+              ids: all.map((r) => r.id),
+              // Short of now, so a write later this same millisecond is not skipped.
+              at: Math.min(all.reduce((m, r) => Math.max(m, r.updated_at), since), Math.max(since, Date.now() - 1)),
+            };
           }),
 
         get: (col: string, id: string) =>

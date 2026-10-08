@@ -16,6 +16,7 @@ import { decodeTranslateRequest, FONT_WEIGHTS, notoSansJp, translate } from "./T
  *   GET    /api/me                { email }
  *   GET    /api/live              WebSocket: every change, as it commits
  *   GET    /api/docs?col=         [{ id, body }]
+ *   GET    /api/changes?col=&since= { rows: [{ id, body }], ids, at } — written after `since`
  *   GET    /api/doc?col=&id=      { body }  (body null when none)
  *   PUT    /api/doc?col=&id=      JSON body -> stored as is
  *   DELETE /api/doc?col=&id=
@@ -159,6 +160,11 @@ export default class Site extends Cloudflare.Worker<Site>()(
         if (!COL.test(col)) return yield* fail(400, "Bad collection.");
         if (route === "docs" && request.method === "GET") {
           return yield* HttpServerResponse.json(yield* library.list(col));
+        }
+        if (route === "changes" && request.method === "GET") {
+          const since = Number(url.searchParams.get("since") ?? 0);
+          if (!Number.isFinite(since) || since < 0) return yield* fail(400, "Bad since.");
+          return yield* HttpServerResponse.json(yield* library.changes(col, since));
         }
 
         if (route !== "doc" || !ID.test(id)) return yield* fail(404, "Not found.");

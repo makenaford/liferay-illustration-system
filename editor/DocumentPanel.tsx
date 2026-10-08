@@ -3,6 +3,7 @@ import { commit, getState, useEditor } from './state.ts';
 import { MESH_NAMES, PANEL_SURFACE, SURFACE_LABELS, type SurfaceName } from '../src/tokens.ts';
 import { CARD_SURFACES } from './schema.ts';
 import { TokenPicker } from './TokenPicker.tsx';
+import { hasStaticContainer, isStaticImage, setStaticContainer } from './docs.ts';
 
 /**
  * DOCUMENT PANEL — canvas, hero panels and ambient glows.
@@ -76,6 +77,28 @@ export function DocumentPanel() {
           />
         </label>
       </div>
+
+      {isStaticImage(doc) && (
+        <div className="section">
+          <div className="section-head">
+            <span>Container</span>
+          </div>
+          <div className="layout-actions two">
+            {([true, false] as const).map((on) => (
+              <button
+                key={String(on)}
+                type="button"
+                title={on ? 'The image 16px in, on a Blue tinted card' : 'The image fills the whole canvas'}
+                className={hasStaticContainer(doc) === on ? 'on' : ''}
+                aria-pressed={hasStaticContainer(doc) === on}
+                onClick={() => commit(setStaticContainer(getState().doc, on))}
+              >
+                {on ? 'Container' : 'No container'}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {doc.artboard && (
         <div className="section">

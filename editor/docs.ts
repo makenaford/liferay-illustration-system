@@ -209,6 +209,46 @@ export function fitCanvasToImage(doc: Doc, natural: { width: number; height: num
   };
 }
 
+/** Whether a static image sits on its Blue tinted card, or fills the canvas. */
+export function hasStaticContainer(doc: Doc): boolean {
+  return (doc.mockup?.x ?? 0) > 0;
+}
+
+/**
+ * A static image with or without its container, keeping the image's shape:
+ * with it, the image is STATIC_PAD in on a Blue tinted card filling the
+ * canvas; without it, the image fills the canvas and the card goes. The
+ * canvas keeps its width, and its height follows the image, to even pixels.
+ */
+export function setStaticContainer(doc: Doc, on: boolean): Doc {
+  const m = doc.mockup;
+  if (!m || hasStaticContainer(doc) === on) return doc;
+  const width = doc.canvas.width;
+  const p = on ? STATIC_PAD : 0;
+  const inner = width - 2 * p;
+  const imageH = Math.max(2, Math.round((m.height * inner) / m.width / 2) * 2);
+  const height = imageH + 2 * p;
+  const near = (a: number | undefined, b: number) => Math.abs((a ?? NaN) - b) < 1;
+  const isSlot = (el: Element) =>
+    el.type === 'image' && near(el.x, m.x) && near(el.y, m.y) && near(el.width, m.width) && near(el.height, m.height);
+  const isCard = (el: Element) =>
+    (el.type === 'card' || el.type === 'subCard') &&
+    near(el.x, 0) && near(el.y, 0) && near(el.width, doc.canvas.width) && near(el.height, doc.canvas.height);
+  const slot = { x: p, y: p, width: inner, height: imageH };
+  const elements = doc.elements
+    .filter((el) => on || !isCard(el))
+    .map((el) => (isSlot(el) ? ({ ...el, ...slot, radius: SLOT_RADIUS } as Element) : el));
+  if (on && !elements.some(isCard)) {
+    elements.unshift({ type: 'card', x: 0, y: 0, width, height, surface: 'glass-blue', radius: SLOT_RADIUS } as Element);
+  }
+  return {
+    ...doc,
+    canvas: { ...doc.canvas, width, height },
+    mockup: slot,
+    elements: elements.map((el) => (on && isCard(el) ? ({ ...el, width, height } as Element) : el)),
+  };
+}
+
 /**
  * DASHBOARD — a hero panel holding a grid of cards, as the set's dashboards
  * ("Turn analytics into action", "AI visibility") are drawn: a header, a row

@@ -1,7 +1,8 @@
 import type { Doc } from '../src/document.ts';
 import { fontWeights, renderDocument, type RenderOptions } from '../src/render.ts';
 import type { ThemeName } from '../src/tokens.ts';
-import { collectStrings, LANGUAGES, localizedDoc, type Lang, type Translations } from '../src/translate.ts';
+import { adoptLocalized, collectStrings, LANGUAGES, localizedDoc, withoutLocalized, writtenInJapanese, type Lang, type Translations } from '../src/translate.ts';
+import type { Follows } from './state.ts';
 
 /**
  * The translated export, on the page's side — see src/translate.ts for the
@@ -246,4 +247,16 @@ export function withTranslations(doc: Doc, additions: Additions): { doc: Doc; ad
     },
     added,
   };
+}
+
+/**
+ * An illustration opened for `lang`'s region, as it is edited there: in
+ * English, its `lang` always the automatic translation — a hand-edited
+ * version is left out, and saving drops it for good (`replacing`). One
+ * already written in Japanese (a translated copy) has no English to follow:
+ * its hand-edited version, what that region has been seeing, becomes it.
+ */
+export function openedFor(doc: Doc, lang: Lang): { doc: Doc; follows: Follows | null } {
+  if (lang === 'ja' && writtenInJapanese(doc)) return { doc: adoptLocalized(doc, lang), follows: null };
+  return { doc: withoutLocalized(doc, lang), follows: { lang, replacing: !!doc.localized?.[lang] } };
 }

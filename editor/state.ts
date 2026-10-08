@@ -75,6 +75,18 @@ export interface EditorState {
    * language), taken and cleared by the builder, which opens the version.
    */
   openIn: Lang | null;
+  /**
+   * The language this illustration is for, made from its English: opened
+   * from the Japan region, it is edited in English only, and the library
+   * shows and downloads the automatic translation of that English — never a
+   * separate hand-edited version (`Doc.localized`), which is dropped.
+   * `replacing`: it had one, which saving replaces.
+   */
+  follows: Follows | null;
+}
+export interface Follows {
+  lang: Lang;
+  replacing: boolean;
 }
 
 interface Store {
@@ -124,6 +136,7 @@ export function initStore(doc: Doc, base = 0) {
       tool: 'select',
       editLang: 'en',
       openIn: null,
+      follows: null,
       english: null,
     },
     past: [],

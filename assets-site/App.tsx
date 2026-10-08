@@ -2,7 +2,7 @@ import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { renderDocument } from '../src/render.ts';
 import { copyText, fileStem, saveFile } from '../editor/save.ts';
 import { svgToPng } from '../editor/png.ts';
-import { draftAll, renderTranslated, tableFor, tableNow, translator } from '../editor/translate.ts';
+import { draftAll, openedFor, renderTranslated, tableFor, tableNow, translator } from '../editor/translate.ts';
 import { makeZip, type ZipFile } from '../editor/zip.ts';
 import { LANGUAGES, localizedDoc, type Lang } from '../src/translate.ts';
 import { App as BuilderApp } from '../editor/App.tsx';
@@ -420,7 +420,7 @@ export function App() {
       setToast(`Could not move it — ${(e as Error).message}`);
     }
   };
-  const here = current !== 'all' && current !== 'unfiled' ? current : null;
+  const here = current !== 'all' && current !== 'recent' && current !== 'unfiled' ? current : null;
 
   /**
    * Open an illustration in the builder, from the library's own version — in
@@ -428,21 +428,29 @@ export function App() {
    */
   const edit = (row: { doc: Doc; updatedAt: number }, lang: Lang | 'en' = 'en') => {
     // Brought up to date as it opens — an older mockup gains its screenshot slot.
-    const doc = migrateDoc(structuredClone(row.doc));
+    const migrated = migrateDoc(structuredClone(row.doc));
+    // From the Japan region: edited in English, its Japanese always the
+    // translation of that English (see `openedFor`). Japan is light only.
+    const japan = region === 'jp' || lang === 'ja';
+    const { doc, follows } = japan ? openedFor(migrated, 'ja') : { doc: migrated, follows: null };
+    if (japan && !doc.onlyTheme) doc.onlyTheme = 'light';
     // Its folder's theme, written down, so the builder offers only that one
     // and a save keeps it with the illustration.
     const fromFolder = folderTheme(pathOf(folderOf(doc.id)));
     if (!doc.onlyTheme && fromFolder) doc.onlyTheme = fromFolder;
     initStore(doc, row.updatedAt);
-    setUI({ view: 'editor', selected: null, openIn: canTranslate && lang !== 'en' ? lang : null });
+    setUI({ view: 'editor', selected: null, openIn: null, follows });
     setOpen(null);
     setBuilding(true);
   };
   const create = async (template: TemplateName = 'simple') => {
     const doc = TEMPLATES[template].make();
     doc.id = freshId(doc.id, lib.illustrations.map((i) => i.id));
-    // Made inside a folder, it belongs to that folder once it is saved.
-    if (here) await file(doc.id, here);
+    // Made inside a folder, it belongs to that folder once it is saved. Made
+    // in the Japan region outside one, it goes in its first folder — unfiled
+    // is USA, where it would vanish from the view it was made in.
+    const into = here ?? (region === 'jp' ? lib.folders.folders.find((f) => !f.parent && regionOf(lib.folders, f.id) === 'jp')?.id : undefined);
+    if (into) await file(doc.id, into);
     edit({ doc, updatedAt: 0 });
   };
   /**

@@ -191,3 +191,14 @@ export function withoutLocalized(english: Doc, lang: Lang): Doc {
   const { localized: __, ...rest } = english;
   return Object.keys(others).length ? { ...rest, localized: others } : rest;
 }
+
+/** Whether the copy is itself Japanese — a translated copy, with no English to translate. */
+export const writtenInJapanese = (doc: Doc) => collectStrings(doc).some((s) => /[\u3040-\u30ff\u3400-\u9fff]/.test(s));
+
+/** `doc` with its `lang` version made the document itself, and that version gone. */
+export function adoptLocalized(doc: Doc, lang: Lang): Doc {
+  const own = doc.localized?.[lang];
+  if (!own) return doc;
+  const { from: _f, savedAt: _s, ...drawing } = own;
+  return { ...withoutLocalized(doc, lang), ...drawing };
+}

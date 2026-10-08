@@ -13,7 +13,7 @@ import { copyText, fileStem, saveFile } from './save.ts';
 import { SourceModal } from './SourceModal.tsx';
 import { TranslateModal } from './TranslateModal.tsx';
 import { themesOf } from '../src/themes.ts';
-import { draftMissing, tableFor, tableNow, withTranslations } from './translate.ts';
+import { draftMissing, openedFor, tableFor, tableNow, withTranslations } from './translate.ts';
 import { isStale, LANGUAGES, localizedDoc, withLocalized, withoutLocalized, type Lang } from '../src/translate.ts';
 import type { Doc } from '../src/document.ts';
 import { LAYOUT } from '../src/tokens.ts';
@@ -59,6 +59,7 @@ export function App() {
   const view = useEditor((s) => s.view);
   const dirty = useEditor((s) => s.dirty);
   const editLang = useEditor((s) => s.editLang);
+  const follows = useEditor((s) => s.follows);
   const english = useEditor((s) => s.english);
   // Going back to the automatic translation drops an edit everyone shares,
   // so it asks once more.
@@ -176,15 +177,17 @@ export function App() {
 
   /** Take the library's version, dropping the open edits — in the language being edited. */
   const loadTheirs = (theirs: Saved) => {
-    const lang = getState().editLang;
+    const { editLang: lang, follows } = getState();
     setConflict(null);
     setIncoming(null);
     if (lang !== 'en') {
       void openLanguage(lang, theirs.doc, theirs.updatedAt);
       return;
     }
-    initStore(theirs.doc, theirs.updatedAt);
-    setUI({ view: 'editor' });
+    // Still for its region: its English, as that region edits it.
+    const opened = follows ? openedFor(theirs.doc, follows.lang) : { doc: theirs.doc, follows: null };
+    initStore(opened.doc, theirs.updatedAt);
+    setUI({ view: 'editor', follows: opened.follows });
   };
 
   const saveDoc = async (overwrite = false) => {
@@ -684,7 +687,7 @@ export function App() {
             <option value={3}>3×</option>
           </select>
         </span>
-        <label className="edit-lang" title="Edit the illustration in another language — a save there is that language's own version, for everyone">
+        {!follows && <label className="edit-lang" title="Edit the illustration in another language — a save there is that language's own version, for everyone">
           <span>Editing</span>
           <select aria-label="Language being edited" value={editLang} onChange={(e) => switchLanguage(e.target.value as Lang | 'en')}>
             <option value="en">English</option>
@@ -694,7 +697,7 @@ export function App() {
               </option>
             ))}
           </select>
-        </label>
+        </label>}
         <button
           type="button"
           disabled={editLang !== 'en'}
@@ -736,6 +739,15 @@ export function App() {
         </aside>
 
         <main className="center">
+          {follows && (
+            <div className="sync-banner lang-banner" role="status">
+              <span>
+                For the <b>Japan</b> region: you edit the English, and everyone sees and downloads it in{' '}
+                {LANGUAGES[follows.lang].name}, translated from this English each time it is saved. Check or correct the wording in Translate….
+                {follows.replacing && ` It had a hand-edited ${LANGUAGES[follows.lang].name} version, left out here — saving replaces it with the translation.`}
+              </span>
+            </div>
+          )}
           {editLang !== 'en' && english && (
             <div className="sync-banner lang-banner" role="status">
               <span>

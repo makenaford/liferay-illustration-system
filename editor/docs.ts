@@ -128,55 +128,84 @@ export function mockupDoc(): Doc {
 }
 
 /**
- * PREBUILT MOCKUP — a mockup made elsewhere, brought in whole: the canvas is
- * one image and nothing else. Its screenshot slot (`Doc.mockup`) is the whole
- * canvas, so dropping an image on it, or choosing one in the Inspector, puts
- * it there — and the canvas takes the image's shape (`fitCanvasToImage`), so
- * a prebuilt mockup is never cropped or letterboxed.
+ * STATIC IMAGE — a finished image brought in whole (a prebuilt mockup, a
+ * screenshot), shown on a Blue tinted card: the card fills the canvas, and
+ * the image sits on it STATIC_PAD in from every edge, both with 16px corners.
+ * The image's slot (`Doc.mockup`) is that inset, so dropping an image on it,
+ * or choosing one in the Inspector, puts it there — and the canvas takes the
+ * image's shape plus the border (`fitCanvasToImage`), so it is never cropped
+ * or letterboxed.
  */
-export function prebuiltMockupDoc(): Doc {
+export const STATIC_PAD = 16;
+
+export function staticImageDoc(): Doc {
   const { canvas } = MOCKUP;
-  const slot = { x: 0, y: 0, width: canvas.width, height: canvas.height };
+  const p = STATIC_PAD;
+  const slot = { x: p, y: p, width: canvas.width - 2 * p, height: canvas.height - 2 * p };
   return {
-    id: 'untitled-mockup',
-    name: 'Untitled mockup',
+    id: 'untitled-static-image',
+    name: 'Untitled static image',
     layout: 'bare',
     canvas: { ...canvas },
     mockup: { ...slot },
+    background: 'none',
     panels: [],
     elements: [
+      { type: 'card', x: 0, y: 0, width: canvas.width, height: canvas.height, surface: 'glass-blue', radius: SLOT_RADIUS },
       {
         type: 'image',
         ...slot,
         fit: 'cover',
-        href: placeholder(slot.width, slot.height, 'Mockup — drop an image here'),
-        alt: 'Mockup — replace with a prebuilt mockup image',
+        radius: SLOT_RADIUS,
+        href: placeholder(slot.width, slot.height, 'Drop an image here'),
+        alt: 'Image — replace with a finished image or mockup',
       },
     ],
   };
 }
 
-/** Whether the document's screenshot slot is its whole canvas — a prebuilt mockup. */
-export const isWholeCanvasSlot = (doc: Doc) =>
-  !!doc.mockup && doc.mockup.x === 0 && doc.mockup.y === 0 && doc.mockup.width === doc.canvas.width && doc.mockup.height === doc.canvas.height;
+/**
+ * Whether a document is a static image: its slot inset the same on every
+ * side, with no card guide — this template's, or the earlier one's that
+ * filled the whole canvas.
+ */
+export function isStaticImage(doc: Doc): boolean {
+  const m = doc.mockup;
+  if (!m || doc.cardArea) return false;
+  const near = (a: number, b: number) => Math.abs(a - b) < 1;
+  const r = doc.canvas.width - m.x - m.width;
+  const bottom = doc.canvas.height - m.y - m.height;
+  return near(m.x, m.y) && near(m.x, r) && near(m.x, bottom);
+}
 
 /**
- * A prebuilt mockup's canvas reshaped to its image, at the canvas's width —
- * the height to the nearest even pixel, so it stays on the grid — with the
- * slot and every image filling it moved along.
+ * A static image's canvas reshaped to its image, at the canvas's width: the
+ * image's height from its own shape, the canvas the border taller, both to
+ * even pixels so they stay on the grid. The slot, the image filling it and
+ * the card filling the canvas follow.
  */
 export function fitCanvasToImage(doc: Doc, natural: { width: number; height: number }): Doc {
   const m = doc.mockup;
   if (!m || !natural.width || !natural.height) return doc;
+  const p = m.x;
   const width = doc.canvas.width;
-  const height = Math.max(2, Math.round((width * natural.height) / natural.width / 2) * 2);
-  const fills = (el: Doc['elements'][number]) =>
-    el.type === 'image' && el.x === m.x && el.y === m.y && el.width === m.width && el.height === m.height;
+  const inner = width - 2 * p;
+  const imageH = Math.max(2, Math.round((inner * natural.height) / natural.width / 2) * 2);
+  const height = imageH + 2 * p;
+  const same = (el: { x?: number; y?: number; width?: number; height?: number }, b: { x: number; y: number; width: number; height: number }) =>
+    el.x === b.x && el.y === b.y && el.width === b.width && el.height === b.height;
+  const whole = { x: 0, y: 0, width: doc.canvas.width, height: doc.canvas.height };
   return {
     ...doc,
     canvas: { ...doc.canvas, width, height },
-    mockup: { x: 0, y: 0, width, height },
-    elements: doc.elements.map((el) => (fills(el) ? { ...el, x: 0, y: 0, width, height } : el)),
+    mockup: { x: p, y: p, width: inner, height: imageH },
+    elements: doc.elements.map((el) =>
+      el.type === 'image' && same(el, m)
+        ? { ...el, x: p, y: p, width: inner, height: imageH }
+        : (el.type === 'card' || el.type === 'subCard') && same(el, whole)
+          ? { ...el, width, height }
+          : el,
+    ),
   };
 }
 
@@ -224,9 +253,9 @@ export const TEMPLATES = {
     make: mockupDoc,
   },
   mockup: {
-    label: 'Mockup',
-    description: 'A prebuilt mockup: one image upload that fills the canvas.',
-    make: prebuiltMockupDoc,
+    label: 'Static image',
+    description: 'A finished image on a Blue tinted card, 16px in — the canvas takes the image’s shape.',
+    make: staticImageDoc,
   },
   dashboard: {
     label: 'Dashboard',

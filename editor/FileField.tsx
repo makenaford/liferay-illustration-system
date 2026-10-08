@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { Element } from '../src/document.ts';
 import { pickFile, readAsset } from './pickFile.ts';
 import { commit, elementAt, getState, replaceAt } from './state.ts';
-import { fitCanvasToImage, isWholeCanvasSlot } from './docs.ts';
+import { fitCanvasToImage, isStaticImage } from './docs.ts';
 
 /**
  * The Inspector's file control for `image` and `svg` elements.
@@ -43,18 +43,18 @@ export function FileField({
       const height =
         filled && cover && box.height ? box.height : Math.round(width * (asset.size.height / asset.size.width));
 
-      // The image of a prebuilt mockup: the canvas takes the image's shape.
+      // The image of a static image: the canvas takes the image's shape.
       const doc = getState().doc;
       const path = getState().selected;
       const natural = (asset.patch as { natural?: { width: number; height: number } }).natural;
       const target = path ? elementAt(doc, path) : null;
       const m = doc.mockup;
       const isSlot = !!m && target?.type === 'image' && target.x === m.x && target.y === m.y && target.width === m.width && target.height === m.height;
-      if (asset.type === 'image' && natural && path && target && isSlot && isWholeCanvasSlot(doc)) {
+      if (asset.type === 'image' && natural && path && target && isSlot && isStaticImage(doc)) {
         const filled = replaceAt(doc, path, { ...target, fit: 'cover', ...asset.patch } as Element);
         const next = fitCanvasToImage(filled, natural);
         commit(next);
-        setNote(`${asset.note} · the canvas is now ${next.canvas.width} × ${next.canvas.height}, the image's shape`);
+        setNote(`${asset.note} · the canvas is now ${next.canvas.width} × ${next.canvas.height}, the image's shape plus its border`);
         return;
       }
       onPatch(

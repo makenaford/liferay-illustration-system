@@ -19,6 +19,8 @@ import { dashboard, windowCard } from './dashboardGrid.ts';
  */
 
 const PAD = LAYOUT.cardPadding;
+/** What every starter card is drawn on: Highlighted over light, as the Icon card first was. */
+const SURFACE = 'glass-highlighted-over-light';
 
 const column = (gap: number) =>
   ({ direction: 'vertical', gap, padding: PAD, align: 'start', hugHeight: true }) as const;
@@ -30,7 +32,7 @@ function card(width: number, gap: number, children: Element[]): Element {
     y: 0,
     width,
     height: 0,
-    surface: 'glass-default',
+    surface: SURFACE,
     radius: 8,
     layout: column(gap),
     children,
@@ -75,7 +77,7 @@ function phone(children: Element[]): Element {
     width: PHONE.width,
     maxWidth: PHONE.width,
     height: 0,
-    surface: 'glass-default',
+    surface: SURFACE,
     radius: PHONE.radius,
     layout: { direction: 'vertical', gap: PHONE.gap, padding: PHONE.padding, align: 'stretch', hugHeight: true },
     children,
@@ -115,27 +117,27 @@ function chatCard(): Element {
 }
 
 /**
- * The chat card at half size: half as wide, half the padding, gaps and
- * corners, and its bubbles condensed (src/primitives/chatBubble.ts) — the
- * type on the nearest step, never below `micro`.
+ * The chat card at ¾ size: ¾ as wide, its padding, gaps and corners at ¾ to
+ * the nearest whole pixel, and its bubbles condensed
+ * (src/primitives/chatBubble.ts).
  */
 function condensedChatCard(): Element {
-  const width = CHAT.width / 2;
-  const pad = PAD / 2;
+  const width = CHAT.width * 0.75;
+  const pad = 9;
   const inner = width - pad * 2;
   const bubble = (variant: 'sender' | 'receiver', name: string, message: string, initials: string): Element =>
-    ({ type: 'chat', x: 0, y: 0, width: inner, variant, name, message, initials, indent: CHAT.indent / 2, role: 'body', condensed: true }) as Element;
+    ({ type: 'chat', x: 0, y: 0, width: inner, variant, name, message, initials, indent: CHAT.indent * 0.75, role: 'body', condensed: true }) as Element;
   return {
     type: 'subCard',
     x: 0,
     y: 0,
     width,
     height: 0,
-    surface: 'glass-default',
-    radius: 8,
-    layout: { direction: 'vertical', gap: 5, padding: pad, align: 'stretch', hugHeight: true },
+    surface: SURFACE,
+    radius: 12,
+    layout: { direction: 'vertical', gap: 8, padding: pad, align: 'stretch', hugHeight: true },
     children: [
-      { type: 'text', x: 0, y: 0, role: 'smallHeading', content: 'AI Assistant' } as Element,
+      { type: 'text', x: 0, y: 0, role: 'body', weight: 'semibold', content: 'AI Assistant' } as Element,
       bubble('sender', 'Yuzuki Kimoto', 'Create a case study', 'YK'),
       bubble('receiver', 'AI Assistant', 'What is it about?', 'AI'),
       bubble('sender', 'Yuzuki Kimoto', 'About Acme Corporation', 'YK'),
@@ -182,13 +184,10 @@ export const CARD_PRESETS: { label: string; title: string; make: () => Element }
     label: 'Icon card',
     title: 'A 64px glass icon over its title',
     make: () =>
-      ({
-        ...card(180, 12, [
-          { type: 'spotIcon', x: 0, y: 0, name: 'composable', size: 64 } as Element,
-          t('subheading', 'Card title'),
-        ]),
-        surface: 'glass-highlighted-over-light',
-      }) as Element,
+      card(180, 12, [
+        { type: 'spotIcon', x: 0, y: 0, name: 'composable', size: 64 } as Element,
+        t('subheading', 'Card title'),
+      ]),
   },
   {
     label: 'Chat card',
@@ -197,7 +196,7 @@ export const CARD_PRESETS: { label: string; title: string; make: () => Element }
   },
   {
     label: 'Chat card · condensed',
-    title: 'The chat card at half size, its bubbles condensed',
+    title: 'The chat card at ¾ size, its bubbles condensed',
     make: condensedChatCard,
   },
   {

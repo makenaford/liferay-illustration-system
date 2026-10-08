@@ -20,7 +20,7 @@ export interface ChatBubbleProps {
   indent?: number;
   /** The message's type step; `subheading` unless set. */
   role?: TypeRole;
-  /** Drawn at half size: the bar, the avatar and the spacing, and the type a step to match. */
+  /** Drawn at ¾ size: the bar, the avatar and the spacing, and the type a step to match. */
   condensed?: boolean;
 }
 
@@ -30,27 +30,28 @@ export const CHAT_HEIGHT = 48.834;
 const NAME_ROLE: TypeRole = 'caption';
 const MESSAGE_ROLE: TypeRole = 'subheading';
 
-/** One role per size on the scale, smallest first — what a halved size lands on. */
+/** One role per size on the scale, smallest first — what a condensed size lands on. */
 const STEPS: TypeRole[] = ['micro', 'caption', 'bodySmall', 'body', 'subheading', 'heading', 'headline', 'title', 'display', 'displayLarge', 'number'];
 
+/** How much smaller a condensed bubble is drawn. */
+export const CHAT_CONDENSED = 0.75;
+
 /**
- * A role at half its size, on the scale: the largest step no bigger than
- * half, and never below `micro` (8px), the smallest that reads.
+ * A role condensed, on the scale: the smallest step at least ¾ its size —
+ * rounding up, so the words stay readable — and never below `micro` (8px).
  */
-export function halfRole(role: TypeRole): TypeRole {
-  const target = TYPE_ROLES[role].size / 2;
-  let best: TypeRole = 'micro';
-  for (const r of STEPS) if (TYPE_ROLES[r].size <= target) best = r;
-  return best;
+export function condensedRole(role: TypeRole): TypeRole {
+  const target = TYPE_ROLES[role].size * CHAT_CONDENSED;
+  return STEPS.find((r) => TYPE_ROLES[r].size >= target) ?? role;
 }
 
 type Sized = { height?: number; role?: TypeRole; variant?: ChatVariant; condensed?: boolean };
 
-/** Spacing, the bar and the avatar: whole, or halved when condensed. */
-const scaleOf = (el: Sized) => (el.condensed ? 0.5 : 1);
+/** Spacing, the bar and the avatar: whole, or ¾ when condensed. */
+const scaleOf = (el: Sized) => (el.condensed ? CHAT_CONDENSED : 1);
 const rolesOf = (el: Sized) => {
   const message = el.role ?? MESSAGE_ROLE;
-  return el.condensed ? { name: halfRole(NAME_ROLE), message: halfRole(message) } : { name: NAME_ROLE, message };
+  return el.condensed ? { name: condensedRole(NAME_ROLE), message: condensedRole(message) } : { name: NAME_ROLE, message };
 };
 
 /** The name over the message, as tall as they stand — at the sender's wider gap when `widest`. */
@@ -60,8 +61,8 @@ const textBlock = (el: Sized, widest = false) => {
 };
 
 /**
- * How tall a bubble is: its own height if set, else the standard bar (half
- * of it, condensed) — or taller, when its message size needs more.
+ * How tall a bubble is: its own height if set, else the standard bar (¾ of
+ * it, condensed) — or taller, when its message size needs more.
  */
 export function chatHeight(el: Sized): number {
   if (el.height !== undefined) return el.height;
@@ -97,9 +98,9 @@ export function chatNeed(
  * `caption` and `subheading` steps, since this system's canvas is the Figma
  * canvas. Colours come from `component.chat`.
  *
- * Condensed, it is the same bubble at half size: the bar, the avatar and
- * every gap halved, and the type the step nearest half its size — no smaller
- * than `micro`, so the words still read (see `halfRole`).
+ * Condensed, it is the same bubble at ¾ size: the bar, the avatar and every
+ * gap at ¾, and the type the step at or just above ¾ its size — no smaller
+ * than `micro`, so the words still read (see `condensedRole`).
  */
 export function ChatBubble(ctx: Ctx, props: ChatBubbleProps): VNode {
   const { y, name, message, initials, avatarHref } = props;

@@ -5,12 +5,13 @@ import type { Doc, Element } from './document.ts';
  *
  * An Image base illustration is a screenshot in a fixed slot (`Doc.mockup`)
  * with cards over it, all inside the card guide (`Doc.cardArea`). Both are
- * strict: the screenshot always fills its slot exactly, with 16px corners,
- * and nothing is placed past the guide — in the builder (editor/strict.ts),
- * and the corners in every drawing and export too.
+ * strict in the builder: the screenshot always fills its slot exactly, and
+ * nothing is placed past the guide (editor/strict.ts). A prebuilt mockup —
+ * one image filling the whole canvas — has no slot to hold it in, and is
+ * not held.
  *
- * A prebuilt mockup — one image filling the whole canvas — has no slot to
- * hold it in, and is left alone.
+ * Every screenshot has 16px corners, in every drawing and export: an Image
+ * base's, an older layout's and a prebuilt mockup's alike (`withSlotRadius`).
  */
 
 /** The screenshot's corners, always. */
@@ -35,10 +36,34 @@ export function slotIndex(doc: Pick<Doc, 'mockup' | 'elements'>): number {
   );
 }
 
-/** The document with its screenshot's corners at SLOT_RADIUS, if it is an Image base. */
+/**
+ * The top-level image that is a document's screenshot: the one filling its
+ * slot, else — for an older layout, drawn before slots were kept exact — the
+ * largest image covering most of the canvas. -1 when there is none.
+ */
+export function screenshotIndex(doc: Pick<Doc, 'mockup' | 'canvas' | 'elements'>): number {
+  const inSlot = slotIndex(doc);
+  if (inSlot >= 0) return inSlot;
+  const canvas = doc.canvas.width * doc.canvas.height;
+  let best = -1;
+  let area = canvas * 0.5;
+  doc.elements.forEach((e, i) => {
+    if (e.type !== 'image') return;
+    const a = e.width * e.height;
+    if (a >= area) {
+      area = a;
+      best = i;
+    }
+  });
+  return best;
+}
+
+/**
+ * The document with its screenshot's corners at SLOT_RADIUS — every
+ * illustration with one, Image base or older, and a prebuilt mockup's too.
+ */
 export function withSlotRadius<D extends Pick<Doc, 'mockup' | 'cardArea' | 'canvas' | 'elements'>>(doc: D): D {
-  if (!isImageBase(doc)) return doc;
-  const i = slotIndex(doc);
+  const i = screenshotIndex(doc);
   if (i < 0 || (doc.elements[i] as { radius?: number }).radius === SLOT_RADIUS) return doc;
   return { ...doc, elements: doc.elements.map((e, j) => (j === i ? ({ ...e, radius: SLOT_RADIUS } as Element) : e)) };
 }

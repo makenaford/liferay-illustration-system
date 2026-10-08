@@ -463,10 +463,22 @@ export async function moveFolder(id: string, parent: string | null): Promise<boo
   return true;
 }
 
+/**
+ * Rename a folder. A top-level folder in Japan by its name alone ("JP- Home")
+ * has that region written down first, so renaming it ("Home") does not move
+ * it, and everything in it, to USA.
+ */
 export async function renameFolder(id: string, name: string): Promise<void> {
   const b = await backend();
   const f = await b.folders();
-  await b.putFolders({ ...f, folders: f.folders.map((x) => (x.id === id ? { ...x, name: name.trim() || x.name } : x)) });
+  await b.putFolders({
+    ...f,
+    folders: f.folders.map((x) => {
+      if (x.id !== id) return x;
+      const renamed = { ...x, name: name.trim() || x.name };
+      return !x.region && !x.parent && regionOf(f, x.id) === 'jp' ? { ...renamed, region: 'jp' as const } : renamed;
+    }),
+  });
 }
 
 /**

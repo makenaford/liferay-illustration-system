@@ -15,7 +15,7 @@ import { measureText, textBox } from '../fontMetrics.generated.ts';
  */
 export const TYPE_SIZES = {
   /** A single big figure standing on its own — a headline number, above the scale. */
-  number: 64,
+  number: 48,
   /** `Size/Display/Display Lg` — the biggest hero figure. */
   displayLarge: 32,
   /** `Size/Display/Display Sm` — a hero number. */
@@ -79,7 +79,7 @@ const DEFAULT_WEIGHT: Record<TypeRole, TypeWeight> = {
 
 /** Optical tracking: large type tightens, the smallest steps open up. */
 const TRACKING: Partial<Record<TypeRole, number>> = {
-  number: -1,
+  number: -0.75,
   displayLarge: -0.5,
   display: -0.4,
   title: -0.2,

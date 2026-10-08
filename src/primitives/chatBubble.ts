@@ -1,12 +1,16 @@
 import { h, type Ctx, type VNode } from '../vsvg.ts';
-import { Text, TYPE_ROLES, type TypeRole } from './text.ts';
+import { Text, TYPE_ROLES, typeStyle, wrapLines, type TypeRole } from './text.ts';
 import { Avatar } from './avatar.ts';
+import { Surface } from './surface.ts';
+import { measureText } from '../fontMetrics.generated.ts';
+import type { SurfaceName } from '../tokens.ts';
 
 export type ChatVariant = 'receiver' | 'sender';
 
 export interface ChatBubbleProps {
   x: number;
   y: number;
+  /** The box: the widest the bubble grows to before its message wraps. */
   width: number;
   height?: number;
   /** `receiver`: glass, avatar leading. `sender`: blue, avatar trailing. */
@@ -16,12 +20,16 @@ export interface ChatBubbleProps {
   initials?: string;
   /** The avatar's photo — see `AvatarProps.href`. */
   avatarHref?: string;
-  /** Drawn this much in from the far side of the box: a sender's from the left, a receiver's from the right. */
+  /** Kept clear on the far side of the box: a sender's on the left, a receiver's on the right. */
   indent?: number;
   /** The message's type step; `subheading` unless set. */
   role?: TypeRole;
   /** Drawn at ¾ size: the bar, the avatar and the spacing; the name at 8px, the message at 12px. */
   condensed?: boolean;
+  /** Filling the box rather than hugging its words — the bubble as wide as the box allows. */
+  fill?: boolean;
+  /** Any surface in the card set, drawn as a card draws it, in place of the chat's own fill. */
+  surface?: SurfaceName;
 }
 
 /** 4px padding plus the 1px hairline, around a 38.834px avatar. */
@@ -33,7 +41,8 @@ const MESSAGE_ROLE: TypeRole = 'subheading';
 /** How much smaller a condensed bubble is drawn. */
 export const CHAT_CONDENSED = 0.75;
 
-type Sized = { height?: number; role?: TypeRole; variant?: ChatVariant; condensed?: boolean };
+type Sized = Pick<ChatBubbleProps, 'height' | 'role' | 'variant' | 'condensed'>;
+type Measured = Sized & Pick<ChatBubbleProps, 'width' | 'name' | 'message' | 'indent' | 'fill'>;
 
 /** Spacing, the bar and the avatar: whole, or ¾ when condensed. */
 const scaleOf = (el: Sized) => (el.condensed ? CHAT_CONDENSED : 1);
@@ -41,45 +50,78 @@ const scaleOf = (el: Sized) => (el.condensed ? CHAT_CONDENSED : 1);
 const CONDENSED_ROLES = { name: 'micro', message: 'bodySmall' } as const satisfies Record<string, TypeRole>;
 const rolesOf = (el: Sized) => (el.condensed ? CONDENSED_ROLES : { name: NAME_ROLE, message: el.role ?? MESSAGE_ROLE });
 
-/** The name over the message, as tall as they stand — at the sender's wider gap when `widest`. */
-const textBlock = (el: Sized, widest = false) => {
-  const { name, message } = rolesOf(el);
-  return TYPE_ROLES[name].size + (widest || el.variant === 'sender' ? 4 : 2) * scaleOf(el) + TYPE_ROLES[message].size * 1.2;
+const lineWidth = (s: string, role: TypeRole, weight: 'regular' | 'semibold') => {
+  const st = typeStyle(role, weight);
+  return measureText(s, st.size, st.weight);
 };
 
 /**
- * How tall a bubble is: its own height if set, else the standard bar (¾ of
- * it, condensed) — or taller, when its message size needs more.
+ * Where everything in a bubble goes, from its box: the words — the message
+ * wrapped to the room the box leaves it — and the bubble around them, as
+ * wide as they are (or the box, filling it) and as tall as they stand.
  */
-export function chatHeight(el: Sized): number {
-  if (el.height !== undefined) return el.height;
+export function chatLayout(el: Measured) {
   const k = scaleOf(el);
+  const roles = rolesOf(el);
+  const sender = el.variant === 'sender';
+  // The standard bar: its avatar, and the least a bubble is tall.
+  const bar = el.height ?? CHAT_HEIGHT * k;
+  const inset = 5 * k;
+  const r = (bar - inset * 2) / 2;
+  // Everything across that is not words: the avatar, its inset, the gap to
+  // the text and the margin past it.
+  const chrome = inset + r * 2 + 8 * k + 17 * k;
+  const room = Math.max(1, el.width - (el.indent ?? 0));
+  const lines = wrapLines(el.message, (s) => lineWidth(s, roles.message, 'regular'), Math.max(1, room - chrome));
+  const words = Math.max(lineWidth(el.name, roles.name, 'semibold'), ...lines.map((l) => lineWidth(l, roles.message, 'regular')));
+  const width = el.fill ? room : Math.min(room, Math.ceil(chrome + words));
+
+  const nameSize = TYPE_ROLES[roles.name].size;
+  const msgSize = TYPE_ROLES[roles.message].size;
+  const lead = msgSize * 1.2;
+  const gap = (sender ? 4 : 2) * k;
+  const block = nameSize + gap + lead * lines.length;
   // Measured at the sender's gap either way, so the two styles stay one height.
-  const need = textBlock(el, true) + 10 * k;
-  return Math.max(CHAT_HEIGHT * k, Math.ceil(need / 2) * 2);
+  const need = nameSize + 4 * k + lead * lines.length + 10 * k;
+  const height = el.height ?? Math.max(bar, Math.ceil(need / 2) * 2);
+  return { k, roles, sender, bar, inset, r, lines, width, height, nameSize, msgSize, lead, gap, block };
 }
 
-/** The width a bubble's own content needs — its avatar, padding and longer line — at `measure`. */
+/** How tall a bubble is: its own height if set, else the bar, or as its message needs. */
+export function chatHeight(el: Measured): number {
+  return chatLayout(el).height;
+}
+
+/** The width a bubble's content needs on one line — what a translation grows its box by. */
 export function chatNeed(
-  el: Sized & { name: string; message: string; indent?: number },
+  el: Measured,
   measure: (s: string, role: TypeRole, weight: 'regular' | 'semibold') => number,
 ): number {
   const k = scaleOf(el);
-  const { name, message } = rolesOf(el);
+  const roles = rolesOf(el);
   const bar = (el.height ?? CHAT_HEIGHT * k) - 10 * k;
-  const text = Math.max(measure(el.name, name, 'semibold'), measure(el.message, message, 'regular'));
+  const text = Math.max(measure(el.name, roles.name, 'semibold'), measure(el.message, roles.message, 'regular'));
   return 5 * k + bar + 8 * k + text + 17 * k + (el.indent ?? 0);
 }
 
+/** Surfaces a message reads on in white. */
+const ON_ACCENT: ReadonlySet<SurfaceName> = new Set(['solid', 'gradient']);
+
 /**
  * CHAT BUBBLE — the `Chat Bubble` component in the Marketing UI Assets file
- * (instances in node 268:5169): a fully rounded bar holding an avatar, a
- * sender name and one line of message.
+ * (instances in node 268:5169): a rounded bubble holding an avatar, a sender
+ * name and the message.
  *
  * The two styles are mirror images. The receiver's bubble is white glass
  * with the avatar leading and 8px from it to the text; the sender's is
  * `Blue Light` at 20% with the text 16px in from the leading edge and the
  * avatar trailing. The sender also opens the name-to-message gap from 2 to 4.
+ * Either can take any card surface instead (`surface`).
+ *
+ * Like a chat app's message, it hugs its words: the element's box is the
+ * most it grows to, the bubble sits against its own side of it — a sender's
+ * right, a receiver's left — and a message longer than the box wraps, the
+ * bubble growing taller. One line is a pill; more keep the bar's corners.
  *
  * Name is the component's 9px semibold and message its 14px regular — the
  * `caption` and `subheading` steps, since this system's canvas is the Figma
@@ -89,53 +131,57 @@ export function chatNeed(
  * gap at ¾, with the name at 8px and the message at 12px.
  */
 export function ChatBubble(ctx: Ctx, props: ChatBubbleProps): VNode {
-  const { y, name, message, initials, avatarHref } = props;
+  const { y, name, initials, avatarHref } = props;
   const variant = props.variant ?? 'receiver';
-  const sender = variant === 'sender';
-  const k = scaleOf(props);
-  const roles = rolesOf(props);
-  const height = chatHeight(props);
-  // Indented, the bubble is narrower, on its own side of the box.
-  const indent = Math.max(0, Math.min(props.indent ?? 0, props.width - height));
-  const x = sender ? props.x + indent : props.x;
-  const width = props.width - indent;
+  const L = chatLayout({ ...props, variant });
+  const { k, sender, inset, r, width, height } = L;
+  // Against its own side of the box.
+  const x = sender ? props.x + props.width - width : props.x;
   const c = ctx.tokens.component.chat;
+  const rx = L.lines.length > 1 ? L.bar / 2 : height / 2;
+
+  const avatarCx = sender ? x + width - inset - r : x + inset + r;
+  const textX = sender ? x + 17 * k : x + inset + r * 2 + 8 * k;
+  const ink = props.surface ? (ON_ACCENT.has(props.surface) ? ctx.tokens.text.onAccent : ctx.tokens.text.primary) : c.ink;
+
+  // Name on a 1.0 line, each message line on a 1.2 one, the lot centred.
+  const top = y + (height - L.block) / 2;
+  const nameBaseline = top + L.nameSize / 2 + L.nameSize * 0.355;
+  const firstLine = top + L.nameSize + L.gap + L.lead / 2 + L.msgSize * 0.355;
+
+  const content = [
+    Avatar(ctx, { cx: avatarCx, cy: y + height / 2, r, initials, href: avatarHref }),
+    Text(ctx, { x: textX, y: nameBaseline, role: L.roles.name, weight: 'semibold', content: name, color: ink }),
+    ...L.lines.map((line, i) =>
+      Text(ctx, { x: textX, y: firstLine + i * L.lead, role: L.roles.message, weight: 'regular', content: line, color: ink }),
+    ),
+  ];
+
+  if (props.surface) {
+    return h('g', { 'data-el': `chat-${variant}` }, [
+      Surface(ctx, { x, y, width, height, radius: rx, surface: props.surface, children: content }),
+    ]);
+  }
+
   const fill = sender ? c.senderFill : c.receiverFill;
   const fillOpacity = sender ? c.senderFillOpacity : c.receiverFillOpacity;
   const line = sender ? c.senderLine : c.receiverLine;
   const lineOpacity = sender ? c.senderLineOpacity : c.receiverLineOpacity;
-
-  const inset = 5 * k;
-  // The avatar is the bar's, however tall the message makes the bubble.
-  const r = ((props.height ?? CHAT_HEIGHT * k) - inset * 2) / 2;
-  const avatarCx = sender ? x + width - inset - r : x + inset + r;
-  const textX = sender ? x + 17 * k : x + inset + r * 2 + 8 * k;
-
-  // Name on a 1.0 line, message on a 1.2 line, the pair centred in the bar.
-  const nameSize = TYPE_ROLES[roles.name].size;
-  const msgSize = TYPE_ROLES[roles.message].size;
-  const gap = (sender ? 4 : 2) * k;
-  const block = textBlock(props);
-  const top = y + (height - block) / 2;
-  const nameBaseline = top + nameSize / 2 + nameSize * 0.355;
-  const msgBaseline = top + nameSize + gap + (msgSize * 1.2) / 2 + msgSize * 0.355;
   const hairline = 0.5 * Math.max(k, 0.5);
 
   return h('g', { 'data-el': `chat-${variant}` }, [
-    h('rect', { x, y, width, height, rx: height / 2, fill, 'fill-opacity': fillOpacity }),
+    h('rect', { x, y, width, height, rx, fill, 'fill-opacity': fillOpacity }),
     h('rect', {
       x: x + hairline,
       y: y + hairline,
       width: width - hairline * 2,
       height: height - hairline * 2,
-      rx: height / 2 - hairline,
+      rx: rx - hairline,
       fill: 'none',
       stroke: line,
       'stroke-opacity': lineOpacity,
       ...(k < 1 ? { 'stroke-width': hairline * 2 } : {}),
     }),
-    Avatar(ctx, { cx: avatarCx, cy: y + height / 2, r, initials, href: avatarHref }),
-    Text(ctx, { x: textX, y: nameBaseline, role: roles.name, weight: 'semibold', content: name, color: c.ink }),
-    Text(ctx, { x: textX, y: msgBaseline, role: roles.message, weight: 'regular', content: message, color: c.ink }),
+    ...content,
   ]);
 }

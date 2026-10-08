@@ -372,6 +372,10 @@ export interface ChatEl extends LayoutChild {
   role?: TypeRole;
   /** Drawn at ¾ size — see src/primitives/chatBubble.ts. */
   condensed?: boolean;
+  /** Filling its box rather than hugging its words. A hugging bubble's box is the most it grows to before wrapping. */
+  fill?: boolean;
+  /** Any surface in the card set, in place of the chat's own fill. */
+  surface?: SurfaceName;
 }
 
 export interface ChromeEl extends LayoutChild {

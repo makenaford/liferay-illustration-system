@@ -114,6 +114,36 @@ function chatCard(): Element {
   } as Element;
 }
 
+/**
+ * The chat card at half size: half as wide, half the padding, gaps and
+ * corners, and its bubbles condensed (src/primitives/chatBubble.ts) — the
+ * type on the nearest step, never below `micro`.
+ */
+function condensedChatCard(): Element {
+  const width = CHAT.width / 2;
+  const pad = PAD / 2;
+  const inner = width - pad * 2;
+  const bubble = (variant: 'sender' | 'receiver', name: string, message: string, initials: string): Element =>
+    ({ type: 'chat', x: 0, y: 0, width: inner, variant, name, message, initials, indent: CHAT.indent / 2, role: 'body', condensed: true }) as Element;
+  return {
+    type: 'subCard',
+    x: 0,
+    y: 0,
+    width,
+    height: 0,
+    surface: 'glass-default',
+    radius: 8,
+    layout: { direction: 'vertical', gap: 5, padding: pad, align: 'stretch', hugHeight: true },
+    children: [
+      { type: 'text', x: 0, y: 0, role: 'smallHeading', content: 'AI Assistant' } as Element,
+      bubble('sender', 'Yuzuki Kimoto', 'Create a case study', 'YK'),
+      bubble('receiver', 'AI Assistant', 'What is it about?', 'AI'),
+      bubble('sender', 'Yuzuki Kimoto', 'About Acme Corporation', 'YK'),
+      bubble('receiver', 'AI Assistant', 'Your content is ready!', 'AI'),
+    ],
+  } as Element;
+}
+
 export const CARD_PRESETS: { label: string; title: string; make: () => Element }[] = [
   {
     label: 'Dashboard · full page',
@@ -164,6 +194,11 @@ export const CARD_PRESETS: { label: string; title: string; make: () => Element }
     label: 'Chat card',
     title: 'An AI assistant conversation: staggered sender and receiver bubbles',
     make: chatCard,
+  },
+  {
+    label: 'Chat card · condensed',
+    title: 'The chat card at half size, its bubbles condensed',
+    make: condensedChatCard,
   },
   {
     label: 'Stat card',

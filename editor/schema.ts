@@ -374,6 +374,7 @@ export const SCHEMA: {
         labels: { receiver: 'Receiver — avatar left', sender: 'Sender — avatar right' },
       },
       { key: 'role', label: 'Message size', kind: 'select', options: ROLES, labels: ROLE_LABELS },
+      { key: 'condensed', label: 'Condensed · half size', kind: 'boolean' },
       { key: 'indent', label: 'Indent', kind: 'number', min: 0, default: 0 },
       ...XY,
       { key: 'width', label: 'W', kind: 'number', min: 1 },

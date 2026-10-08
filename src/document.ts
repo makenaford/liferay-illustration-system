@@ -370,6 +370,8 @@ export interface ChatEl extends LayoutChild {
   indent?: number;
   /** The message's step on the type scale. Defaults to `subheading`; a larger one makes the bubble taller. */
   role?: TypeRole;
+  /** Drawn at half size — see src/primitives/chatBubble.ts. */
+  condensed?: boolean;
 }
 
 export interface ChromeEl extends LayoutChild {

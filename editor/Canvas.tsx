@@ -31,6 +31,9 @@ import { newUid } from '../src/attach.ts';
 import { coverRect, dragCrop } from '../src/imageCrop.ts';
 import { naturalSize } from './pickFile.ts';
 
+/** The light page an illustration with no background sits on, for its preview. */
+const PAGE_LIGHT = '#FBFCFE';
+
 type DragMode =
   | { kind: 'move' }
   | { kind: 'resize'; corner: 'se' | 'sw' | 'ne' | 'nw' }
@@ -1017,6 +1020,9 @@ export function Canvas() {
           transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
           width,
           height,
+          // No background of its own: in light, shown on the page it will sit
+          // on (#FBFCFE), not the checkerboard. Only the preview; exports stay clear.
+          ...(theme === 'light' && doc.background === 'none' ? { background: PAGE_LIGHT } : {}),
         }}
       >
         <div

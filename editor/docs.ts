@@ -1,6 +1,7 @@
 import type { Doc, Element } from '../src/document.ts';
 import { dashboard } from './dashboardGrid.ts';
 import { placeholder } from './placeholder.ts';
+import { SLOT_RADIUS } from '../src/imageBase.ts';
 
 import aiVisibility from '../docs/ai-visibility-dashboard.json';
 import b2bCommerce from '../docs/b2b-commerce.json';
@@ -72,66 +73,39 @@ export function blankDoc(): Doc {
  * security, anywhere", "Turn your site into a B2B revenue engine"):
  *
  *   canvas   800 × 533, 3:2
- *   mockup   756 × 489, 22px in from every edge, 10px corners. It is the
+ *   mockup   756 × 489, 22px in from every edge, 16px corners. It is the
  *            document's screenshot slot (`Doc.mockup`): the builder shows
- *            it as a guide, and a screenshot dropped in it fills it.
+ *            it as a guide, a screenshot dropped in it fills it, and the
+ *            screenshot cannot be moved or resized off it.
  *   cards    776 × 509, 12px in from every edge — room for any card's drop
  *            shadow, which reaches at most `SHADOW_REACH` (12px), before
  *            the canvas clips it. The card guide
- *            (`Doc.cardArea`): the builder's safe area, which top-level
- *            cards snap to, and what the audit checks them against, in
- *            place of the 20px canvas inset.
- *   panels   glass, overlapping the mockup's edge and meeting the card
- *            guide; each holds a screenshot inset 12px
+ *            (`Doc.cardArea`): the builder's safe area, which nothing
+ *            on the canvas is placed past, and what the audit checks them
+ *            against, in place of the canvas inset.
+ *
+ * Both are held in the builder — see editor/strict.ts and src/imageBase.ts.
+ * A new one is the screenshot alone on no background; cards come from the
+ * Library.
  *
  * It was drawn at 1440 × 960 first and scaled to 800 wide; the illustrations
  * made from that keep its 720 × 480 slot.
  *
- * The images are placeholders to replace, not artwork.
+ * The screenshot is a placeholder to replace, not artwork.
  */
 export const MOCKUP = {
   canvas: { width: 800, height: 533 },
-  /** Space between a panel and its screenshot. */
-  pad: 12,
-  image: { x: 22, y: 22, width: 756, height: 489, radius: 10 },
+  image: { x: 22, y: 22, width: 756, height: 489, radius: SLOT_RADIUS },
   cards: { x: 12, y: 12, width: 776, height: 509 },
 } as const;
 
-/** A frame holding a screenshot inset by the pad. */
-function panel(x: number, y: number, width: number, height: number, label: string): Doc['elements'][number] {
-  const p = MOCKUP.pad;
-  return {
-    type: 'card',
-    x,
-    y,
-    width,
-    height,
-    surface: 'glass-highlighted',
-    sheen: 'radial',
-    radius: 8,
-    // Frosts the mockup beneath it, not just the stage.
-    frost: 'content',
-    children: [
-      {
-        type: 'image',
-        x: x + p,
-        y: y + p,
-        width: width - 2 * p,
-        height: height - 2 * p,
-        fit: 'cover',
-        radius: 4,
-        href: placeholder(width - 2 * p, height - 2 * p, label),
-        alt: `${label} — replace with a screenshot`,
-      },
-    ],
-  };
-}
-
-/** A new mockup illustration: the mockup image, and two frames at its edges. */
+/**
+ * A new Image base: the screenshot in its slot and nothing else, on no
+ * background — a page shows through it, as it will where it is used. Cards
+ * are added from the Library; the guides hold them (editor/strict.ts).
+ */
 export function mockupDoc(): Doc {
   const { canvas, image, cards } = MOCKUP;
-  const left = { width: 290, height: 155 };
-  const right = { width: 246, height: 140 };
   return {
     id: 'untitled-mockup',
     name: 'Untitled image base',
@@ -139,6 +113,7 @@ export function mockupDoc(): Doc {
     canvas: { ...canvas },
     mockup: { x: image.x, y: image.y, width: image.width, height: image.height },
     cardArea: { ...cards },
+    background: 'none',
     panels: [],
     elements: [
       {
@@ -148,10 +123,6 @@ export function mockupDoc(): Doc {
         href: placeholder(image.width, image.height, 'Screenshot'),
         alt: 'Screenshot — replace with a product screenshot',
       },
-      // Left: meets the card guide's left edge.
-      panel(cards.x, 169, left.width, left.height, 'Detail'),
-      // Right: meets its right edge the same way.
-      panel(cards.x + cards.width - right.width, 102, right.width, right.height, 'Detail'),
     ],
   };
 }
@@ -249,7 +220,7 @@ export const TEMPLATES = {
   },
   imageBase: {
     label: 'Image base',
-    description: 'An 800 × 533 product screenshot with frames meeting the edges.',
+    description: 'An 800 × 533 product screenshot, held in its slot, on no background — add cards from the Library.',
     make: mockupDoc,
   },
   mockup: {

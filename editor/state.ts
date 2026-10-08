@@ -1,4 +1,5 @@
 import type { Lang } from '../src/translate.ts';
+import { strict } from './strict.ts';
 import { useSyncExternalStore } from 'react';
 import type { Doc, Element } from '../src/document.ts';
 import { LAYOUT, type ThemeName } from '../src/tokens.ts';
@@ -162,6 +163,9 @@ export function setUI(patch: Partial<EditorState>) {
  * which is what makes a drag one undo step instead of sixty.
  */
 export function commit(next: Doc, coalesce = false) {
+  // An Image base keeps its screenshot in its slot and everything inside
+  // its card guide, whatever the edit was. See strict.ts.
+  next = strict(store.state.doc, next);
   // Attached connector ends follow their elements after every edit, so the
   // stored coordinates are always where the line is drawn. See attach.ts.
   next = reattach(next);

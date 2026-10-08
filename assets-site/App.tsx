@@ -138,6 +138,14 @@ function when(ms: number) {
 /** The address parameter a shared link opens an illustration by. */
 const LINK_PARAM = 'illustration';
 
+/**
+ * An illustration with no background of its own, previewed in light, on the
+ * page it will sit on (#FBFCFE) rather than the dark tile — as the builder
+ * shows it. Only the preview: downloads stay clear.
+ */
+const pageBehind = (doc: Doc, theme: Theme): { background?: string } =>
+  theme === 'light' && doc.background === 'none' ? { background: '#FBFCFE' } : {};
+
 /** The address parameter a shared link opens a kit by. */
 const KIT_PARAM = 'kit';
 
@@ -1488,7 +1496,7 @@ function IllustrationCard({
         onClick={select ? select.toggle : onOpen}
         aria-label={select ? `Select ${row.name}` : `Open ${row.name}`}
         aria-pressed={select ? select.on : undefined}
-        style={{ aspectRatio: `${width} / ${height}` }}
+        style={{ aspectRatio: `${width} / ${height}`, ...pageBehind(row.doc, theme) }}
       >
         {select && <span className="am-check" aria-hidden />}
         <span className="am-art" dangerouslySetInnerHTML={{ __html: svg }} />
@@ -1664,7 +1672,7 @@ function IllustrationDetail({
           </button>
         </div>
 
-        <div className="am-stage" style={{ aspectRatio: `${width} / ${height}` }}>
+        <div className="am-stage" style={{ aspectRatio: `${width} / ${height}`, ...pageBehind(row.doc, theme) }}>
           <span className="am-art" dangerouslySetInnerHTML={{ __html: preview }} />
         </div>
 

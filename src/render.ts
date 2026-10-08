@@ -43,6 +43,7 @@ import { paintOf } from './colors.ts';
 import { cssAngleLine } from './primitives/surface.ts';
 import { dropdownLayout, WHITE as DROPDOWN_WHITE } from './primitives/dropdown.ts';
 import { coverRect } from './imageCrop.ts';
+import { withSlotRadius } from './imageBase.ts';
 
 const r2 = (n: number) => Math.round(n * 100) / 100;
 
@@ -744,6 +745,8 @@ export function buildDocument(
   theme: ThemeName,
   options: RenderOptions = {},
 ): VNode {
+  // An Image base's screenshot always has its 16px corners — src/imageBase.ts.
+  doc = withSlotRadius(doc);
   // Auto-layout containers compute their children's positions, so the
   // document is resolved before anything is drawn from it.
   doc = resolveLayout(doc);

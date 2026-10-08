@@ -290,18 +290,26 @@ function boundedTo(el: Container, spec: LayoutSpec, maxWidth: number): Element[]
 }
 
 /**
- * A card laid out by hand: text that would run past its right edge wraps,
- * keeping the margin it has on the left on the right too. Text that fits,
- * and text not set from its left, is left as it is.
+ * A card laid out by hand: text that would run past its right edge wraps
+ * before it, a card's padding in (or the text's own margin on the left, when
+ * that is less). Text that fits, and text not set from its left, is left as
+ * it is.
+ *
+ * The margin was the text's whole left inset, mirrored. A line set well in
+ * from the left — a figure beside an avatar and a rating — was then given
+ * almost no room, and Japanese, which breaks between any characters, came
+ * out one character to a line.
  */
 function wrapInFreeCard(el: Container): Element[] {
   const kids = el.children ?? [];
   if (el.type === 'group') return kids;
   return kids.map((k) => {
     if (k.type !== 'text' || (k.anchor && k.anchor !== 'start')) return k;
-    const inset = Math.max(k.x - el.x, 0);
-    const cap = Math.min(k.maxWidth ?? Infinity, Math.max(el.x + el.width - inset - k.x, longestWord(k)));
-    if (!(cap > 0) || measureTextEl(k).width <= cap + 0.01) return k;
+    const margin = Math.min(Math.max(k.x - el.x, 0), LAYOUT.cardPadding);
+    const room = el.x + el.width - margin - k.x;
+    if (!(room > 0)) return k;
+    const cap = Math.min(k.maxWidth ?? Infinity, Math.max(room, longestWord(k)));
+    if (measureTextEl(k).width <= cap + 0.01) return k;
     return { ...k, maxWidth: cap } as Element;
   });
 }

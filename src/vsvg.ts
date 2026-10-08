@@ -85,6 +85,11 @@ export interface Ctx {
    * writes it, so it comes back as native effects instead of masks.
    */
   figma?: boolean;
+  /**
+   * The document comes in light alone (`Doc.onlyTheme`): its glass icons are
+   * the Light artwork, whatever artwork one was set to.
+   */
+  lightOnly?: boolean;
 }
 
 export function createCtx(

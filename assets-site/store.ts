@@ -8,8 +8,24 @@ import {
   save,
   savedAll,
   subscribe,
+  folderPath,
+  regionOf,
   type Folders,
 } from '../editor/library.ts';
+import { themesOf } from '../src/themes.ts';
+
+/**
+ * `doc` marked light only where it comes in light alone — in the Japan
+ * region, or set so by its folder — so everything that draws it, from a
+ * thumbnail to a download, treats it as light only: its glass icons the
+ * Light artwork (src/render.ts). The same rule as the library's themes.
+ */
+function lightOnly(doc: Doc, f: Folders, id: string): Doc {
+  if (doc.onlyTheme === 'light') return doc;
+  const folder = f.assign[id];
+  const light = regionOf(f, folder) === 'jp' || themesOf(doc, folder ? folderPath(f, folder) : []).join() === 'light';
+  return light ? { ...doc, onlyTheme: 'light' } : doc;
+}
 
 /**
  * THE ASSET STORE — where the team's finished assets live.
@@ -497,7 +513,7 @@ export function store(): Promise<Store> {
             illustrations = Object.entries(saved).map(([id, s]) => ({
               id,
               name: s.doc.name,
-              doc: s.doc,
+              doc: lightOnly(s.doc, f, id),
               updatedAt: s.updatedAt,
               updatedBy: s.updatedBy,
             }));

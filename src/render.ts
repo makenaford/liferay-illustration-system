@@ -561,7 +561,8 @@ function renderSpotIcon(
     ]);
   }
 
-  const art = (el.variant ?? ctx.tokens.name) === 'light' ? icon.light : icon.dark;
+  // A light-only document always draws the Light artwork.
+  const art = ctx.lightOnly || (el.variant ?? ctx.tokens.name) === 'light' ? icon.light : icon.dark;
   const [vx, vy, vw, vh] = art.viewBox;
   const scale = size / Math.max(vw, vh);
 
@@ -761,6 +762,7 @@ export function buildDocument(
   const fit = Math.min(out.width / width, out.height / height);
   const ctx = createCtx(themes[theme], `${doc.id}-${theme}`, { width, height });
   ctx.figma = options.figma;
+  ctx.lightOnly = doc.onlyTheme === 'light';
   const ns = `${doc.id}-${theme}`;
 
   const stageId = `${ns}-bd-stage`;

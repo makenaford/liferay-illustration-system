@@ -348,8 +348,13 @@ export function App() {
   };
   /** A folder's names from the top level down — what a nested folder is called in full. */
   const pathOf = (id: string | null) => (id ? folderPath(lib.folders, id) : []);
-  /** The themes an illustration comes in — its own setting, or the nearest folder's up the tree. See src/themes.ts. */
-  const themesFor = (id: string, doc: Doc) => themesOf(doc, pathOf(folderOf(id)));
+  /**
+   * The themes an illustration comes in — its own setting, or the nearest
+   * folder's up the tree (src/themes.ts). Japan is light only: everything in
+   * the Japan region is shown, downloaded and put in kits in light alone.
+   */
+  const themesFor = (id: string, doc: Doc): Theme[] =>
+    regionOf(lib.folders, folderOf(id)) === 'jp' ? ['light'] : themesOf(doc, pathOf(folderOf(id)));
   /** A folder shows what its subfolders hold too. */
   const shown = useMemo(
     () => (current === 'all' || current === 'recent' || current === 'unfiled' ? null : descendantsOf(lib.folders, current)),
@@ -479,6 +484,8 @@ export function App() {
         setTranslating({ ids, busy: `Translating ${n + 1} of ${rows.length}…` });
         const { table } = await tableFor(row.doc, 'ja');
         const copy = migrateDoc(structuredClone(localizedDoc(row.doc, 'ja', table)));
+        // Japan is light only.
+        copy.onlyTheme = 'light';
         copy.id = freshId(`${row.id}-ja`, taken);
         taken.add(copy.id);
         copy.name = /^\s*jp\b/i.test(row.name) ? row.name : `JP- ${row.name}`;

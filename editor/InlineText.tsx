@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef, useState } from 'react';
 import type { Element } from '../src/document.ts';
 import { commit, elementAt, getState, replaceAt, useEditor } from './state.ts';
+import { withTranslation } from './translate.ts';
 
 /**
  * INLINE TEXT EDITING — double-click words in the illustration and type.
@@ -114,7 +115,12 @@ export function InlineText({
   const [geom, setGeom] = useState<{ box: Box; style: React.CSSProperties; anchor: string; lines: number } | null>(null);
 
   const el = elementAt(doc, target.path) as (Element & Record<string, unknown>) | null;
-  const value = el ? String(el[target.field] ?? '') : '';
+  // Editing with translation, the words typed are this string's translation.
+  const showIn = useEditor((s) => s.showIn);
+  const source = el ? String(el[target.field] ?? '') : '';
+  const translated = showIn ? doc.translations?.[showIn]?.[source] : undefined;
+  const value = showIn ? (translated ?? source) : source;
+  const before = useRef(translated ?? '');
 
   // Re-measured after every change: the text reflows (and an auto-layout
   // card with it) as you type, and the input follows it.
@@ -173,6 +179,11 @@ export function InlineText({
     const st = getState();
     const current = elementAt(st.doc, target.path);
     if (!current) return;
+    if (showIn) {
+      commit(withTranslation(st.doc, showIn, source, next), edited.current);
+      edited.current = true;
+      return;
+    }
     // The first keystroke opens an undo step; the rest join it, so one edit
     // is one ⌘Z however long the typing.
     commit(replaceAt(st.doc, target.path, withText(current, target.field, next)), edited.current);
@@ -225,7 +236,7 @@ export function InlineText({
             onDone();
           }
           if (e.key === 'Escape') {
-            if (edited.current) write(target.original);
+            if (edited.current) write(showIn ? before.current : target.original);
             onDone();
           }
         }}

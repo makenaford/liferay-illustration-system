@@ -60,6 +60,7 @@ export function App() {
   const dirty = useEditor((s) => s.dirty);
   const editLang = useEditor((s) => s.editLang);
   const follows = useEditor((s) => s.follows);
+  const showIn = useEditor((s) => s.showIn);
   const english = useEditor((s) => s.english);
   // Going back to the automatic translation drops an edit everyone shares,
   // so it asks once more.
@@ -156,6 +157,60 @@ export function App() {
     void openLanguage(lang, st.editLang === 'en' ? st.doc : st.english!, st.base);
   };
 
+  /**
+   * Edit with translation, on or off — remembered between illustrations.
+   * Turned on, any string with no translation yet is drafted first, so the
+   * canvas shows Japanese throughout rather than English where one is missing.
+   */
+  const SHOW_KEY = 'builder-edit-with-translation';
+  const setShowTranslation = async (on: boolean) => {
+    const st = getState();
+    if (!st.follows) return;
+    try {
+      localStorage.setItem(SHOW_KEY, on ? '1' : '');
+    } catch {
+      // Not remembered; it still switches.
+    }
+    if (!on) {
+      setUI({ showIn: null });
+      return;
+    }
+    const lang = st.follows.lang;
+    setUI({ showIn: lang });
+    if (!tableNow(st.doc, lang).missing) return;
+    setFlash(`Translating into ${LANGUAGES[lang].name}…`);
+    try {
+      const additions = await draftMissing(st.doc);
+      const now = getState();
+      if (!additions) {
+        setFlash('Strings with no translation stay in English — translating is only available on the Marketing Assets site');
+        return;
+      }
+      if (now.doc.id !== st.doc.id) return;
+      const { doc, added } = withTranslations(now.doc, additions);
+      if (added) {
+        amendDoc(doc);
+        setFlash(`Translated ${added} strings — saving keeps them`);
+      } else setFlash(`Showing the ${LANGUAGES[lang].name} translation`);
+    } catch (e) {
+      setFlash(`Could not translate it — ${(e as Error).message}`);
+    }
+  };
+  // An illustration opened for its region shows its translation if it did last time.
+  const followsLang = useEditor((s) => s.follows?.lang ?? null);
+  const docId = useEditor((s) => s.doc.id);
+  useEffect(() => {
+    if (!followsLang) return;
+    let on = false;
+    try {
+      on = localStorage.getItem(SHOW_KEY) === '1';
+    } catch {
+      // Off, then.
+    }
+    if (on && !getState().showIn) void setShowTranslation(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [followsLang, docId]);
+
   /** Drop the open language's edited version, for everyone: back to the automatic translation. */
   const resetLanguage = async () => {
     const st = getState();
@@ -177,7 +232,7 @@ export function App() {
 
   /** Take the library's version, dropping the open edits — in the language being edited. */
   const loadTheirs = (theirs: Saved) => {
-    const { editLang: lang, follows } = getState();
+    const { editLang: lang, follows, showIn } = getState();
     setConflict(null);
     setIncoming(null);
     if (lang !== 'en') {
@@ -187,7 +242,7 @@ export function App() {
     // Still for its region: its English, as that region edits it.
     const opened = follows ? openedFor(theirs.doc, follows.lang) : { doc: theirs.doc, follows: null };
     initStore(opened.doc, theirs.updatedAt);
-    setUI({ view: 'editor', follows: opened.follows });
+    setUI({ view: 'editor', follows: opened.follows, showIn: opened.follows ? showIn : null });
   };
 
   const saveDoc = async (overwrite = false) => {
@@ -687,6 +742,17 @@ export function App() {
             <option value={3}>3×</option>
           </select>
         </span>
+        {follows && (
+          <button
+            type="button"
+            className={showIn ? 'on' : ''}
+            aria-pressed={!!showIn}
+            title={`Show the ${LANGUAGES[follows.lang].name} translation on the canvas while you edit: moving and sizing change the illustration's one layout, and text you type is its ${LANGUAGES[follows.lang].name}`}
+            onClick={() => void setShowTranslation(!showIn)}
+          >
+            Edit with translation
+          </button>
+        )}
         {!follows && <label className="edit-lang" title="Edit the illustration in another language — a save there is that language's own version, for everyone">
           <span>Editing</span>
           <select aria-label="Language being edited" value={editLang} onChange={(e) => switchLanguage(e.target.value as Lang | 'en')}>
@@ -742,8 +808,18 @@ export function App() {
           {follows && (
             <div className="sync-banner lang-banner" role="status">
               <span>
-                For the <b>Japan</b> region: you edit the English, and everyone sees and downloads it in{' '}
-                {LANGUAGES[follows.lang].name}, translated from this English each time it is saved. Check or correct the wording in Translate….
+                {showIn ? (
+                  <>
+                    Showing the <b>{LANGUAGES[follows.lang].name}</b> translation. Move and resize as you need — it changes the
+                    illustration&rsquo;s one layout — and double-click text to correct its {LANGUAGES[follows.lang].name}.
+                  </>
+                ) : (
+                  <>
+                    For the <b>Japan</b> region: you edit the English, and everyone sees and downloads it in{' '}
+                    {LANGUAGES[follows.lang].name}, translated from this English each time it is saved. Turn on Edit with translation to
+                    review it.
+                  </>
+                )}
                 {follows.replacing && ` It had a hand-edited ${LANGUAGES[follows.lang].name} version, left out here — saving replaces it with the translation.`}
               </span>
             </div>

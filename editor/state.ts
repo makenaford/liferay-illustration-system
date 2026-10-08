@@ -83,6 +83,13 @@ export interface EditorState {
    * `replacing`: it had one, which saving replaces.
    */
   follows: Follows | null;
+  /**
+   * Edit with translation: the canvas shows the document in this language —
+   * its automatic translation — while edits still go to the one document:
+   * moving and sizing change its layout, and text typed on the canvas is
+   * that string's translation. See editor/InlineText.tsx.
+   */
+  showIn: Lang | null;
 }
 export interface Follows {
   lang: Lang;
@@ -137,6 +144,7 @@ export function initStore(doc: Doc, base = 0) {
       editLang: 'en',
       openIn: null,
       follows: null,
+      showIn: null,
       english: null,
     },
     past: [],

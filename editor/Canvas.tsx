@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { buildDocument } from '../src/render.ts';
+import { translateDoc } from '../src/translate.ts';
 import { toReact, resetKeys } from './toReact.tsx';
 import {
   commit,
@@ -182,7 +183,11 @@ export function Canvas() {
    * this the selection box would land on the stale coordinates still sitting
    * in the source document rather than on where the element actually is.
    */
-  const resolved = useMemo(() => resolveLayout(doc), [doc]);
+  // Edit with translation: what is drawn, measured and hit-tested is the
+  // translation; what is edited is still the document (see `showIn`).
+  const showIn = useEditor((s) => s.showIn);
+  const shown = useMemo(() => (showIn ? translateDoc(doc, doc.translations?.[showIn] ?? {}) : doc), [doc, showIn]);
+  const resolved = useMemo(() => resolveLayout(shown), [shown]);
 
   /**
    * What a drag can align to: its siblings, the box that contains it, and
@@ -271,11 +276,11 @@ export function Canvas() {
     // The editor works in ARTBOARD space: elements, grid, selection and drag
     // all share one coordinate system, and only the export scales. So the
     // preview is built as if the artboard were the canvas.
-    const art = doc.artboard ?? doc.canvas;
+    const art = shown.artboard ?? shown.canvas;
     return toReact(
-      buildDocument({ ...doc, canvas: art, artboard: undefined }, theme, { annotate: true }),
+      buildDocument({ ...shown, canvas: art, artboard: undefined }, theme, { annotate: true }),
     );
-  }, [doc, theme]);
+  }, [shown, theme]);
 
   /* Selection box is re-measured after every render that could change it. */
   useLayoutEffect(() => {

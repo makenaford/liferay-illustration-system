@@ -260,3 +260,16 @@ export function openedFor(doc: Doc, lang: Lang): { doc: Doc; follows: Follows | 
   if (lang === 'ja' && writtenInJapanese(doc)) return { doc: adoptLocalized(doc, lang), follows: null };
   return { doc: withoutLocalized(doc, lang), follows: { lang, replacing: !!doc.localized?.[lang] } };
 }
+
+/** `doc` with `source`'s translation into `lang` set by hand — reviewed, no longer a draft. */
+export function withTranslation(doc: Doc, lang: Lang, source: string, text: string): Doc {
+  const table = { ...(doc.translations?.[lang] ?? {}) };
+  if (text.trim()) table[source] = text;
+  else delete table[source];
+  const drafted = (doc.machineTranslated?.[lang] ?? []).filter((s) => s !== source);
+  return {
+    ...doc,
+    translations: { ...doc.translations, [lang]: table },
+    machineTranslated: { ...doc.machineTranslated, [lang]: drafted },
+  };
+}

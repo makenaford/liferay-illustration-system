@@ -9,7 +9,7 @@ import { App as BuilderApp } from '../editor/App.tsx';
 import { TEMPLATES, type TemplateName } from '../editor/docs.ts';
 import { NewMenu } from '../editor/NewMenu.tsx';
 import { initStore, setUI, useEditor } from '../editor/state.ts';
-import { addFolder, descendantsOf, fileIn, folderPath, folderTree, freshId, moveFolder, removeFolder, renameFolder } from '../editor/library.ts';
+import { addFolder, descendantsOf, fileIn, folderPath, folderTree, freshId, moveFolder, regionOf, REGIONS, removeFolder, renameFolder, setFolderRegion, type Region } from '../editor/library.ts';
 import { Sidebar, Toolbar, type NavSection } from './Browse.tsx';
 import { recipeFor } from './glassLinks.ts';
 import { GLASS_FOLDERS, GLASS_ICON_FOLDERS, GLASS_WAS } from '../src/glassIconFolders.ts';
@@ -202,24 +202,26 @@ export function App() {
   const [glassing, setGlassing] = useState<false | { edit?: { setId: string; icon: IconRow } }>(false);
   const builderView = useEditor((s) => s.view);
   const [art, setArt] = useState<Theme>('dark');
-  // The language the whole library is shown in. Remembered in this browser;
-  // English is the illustrations as written.
-  const [libLang, setLibLangState] = useState<Lang | 'en'>(() => {
+  // The region the library shows — USA or Japan — and so the language its
+  // illustrations are shown and downloaded in. Remembered in this browser.
+  // See `regionOf` in editor/library.ts.
+  const [region, setRegionState] = useState<Region>(() => {
     try {
-      const v = localStorage.getItem('library-lang');
-      return v && v in LANGUAGES ? (v as Lang) : 'en';
+      return localStorage.getItem('library-region') === 'jp' ? 'jp' : 'us';
     } catch {
-      return 'en';
+      return 'us';
     }
   });
-  const setLibLang = (l: Lang | 'en') => {
-    setLibLangState(l);
+  const setRegion = (r: Region) => {
+    setRegionState(r);
+    setPlace('all');
     try {
-      localStorage.setItem('library-lang', l);
+      localStorage.setItem('library-region', r);
     } catch {
       /* not remembered: fine */
     }
   };
+  const libLang: Lang | 'en' = region === 'jp' ? 'ja' : 'en';
   const [canTranslate, setCanTranslate] = useState(false);
   useEffect(() => void translator().then((t) => setCanTranslate(!!t)), []);
   /** Strings still being translated for the library, and a tick per batch landed. */
@@ -354,8 +356,13 @@ export function App() {
     [lib.folders, current],
   );
   const recentSince = Date.now() - RECENT_MS;
+  /** The region an illustration is for: its folder's. */
+  const regionFor = (id: string) => regionOf(lib.folders, folderOf(id));
+  const inRegion = (i: IllustrationRow) => regionFor(i.id) === region;
   const inPlace = (i: IllustrationRow) =>
-    current === 'all'
+    !inRegion(i)
+      ? false
+      : current === 'all'
       ? true
       : current === 'recent'
         ? i.updatedAt >= recentSince
@@ -371,12 +378,13 @@ export function App() {
       [...lib.illustrations]
         .filter((i) => {
           if (!needle) return inPlace(i);
+          if (!inRegion(i)) return false;
           const folderName = pathOf(folderOf(i.id)).join(' / ');
           return i.name.toLowerCase().includes(needle) || folderName.toLowerCase().includes(needle);
         })
         .sort((a, b) => (illSort === 'az' ? a.name.localeCompare(b.name) : b.updatedAt - a.updatedAt)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [lib.illustrations, lib.folders, current, needle, illSort],
+    [lib.illustrations, lib.folders, current, needle, illSort, region],
   );
   const sets = useMemo(
     () =>
@@ -450,6 +458,41 @@ export function App() {
     } catch (e) {
       setToast(`Could not duplicate it — ${(e as Error).message}`);
       return null;
+    }
+  };
+  /** Translating a selection into Japanese copies: the sheet, then its progress. */
+  const [translating, setTranslating] = useState<{ ids: string[]; busy: string | null } | null>(null);
+  /**
+   * Japanese copies of USA illustrations, for the Japan region: each one's
+   * copy translated (its reviewed Japanese where it has one, the machine's
+   * for the rest) and refitted to the longer text, saved as an illustration
+   * of its own, named "JP- …", in a Japan folder. The originals are not
+   * touched. See `localizedDoc` in src/translate.ts.
+   */
+  const translateToJapanese = async (ids: string[], folderId: string) => {
+    if (!st) return;
+    const rows = lib.illustrations.filter((i) => ids.includes(i.id));
+    const taken = new Set(lib.illustrations.map((i) => i.id));
+    let made = 0;
+    try {
+      for (const [n, row] of rows.entries()) {
+        setTranslating({ ids, busy: `Translating ${n + 1} of ${rows.length}…` });
+        const { table } = await tableFor(row.doc, 'ja');
+        const copy = migrateDoc(structuredClone(localizedDoc(row.doc, 'ja', table)));
+        copy.id = freshId(`${row.id}-ja`, taken);
+        taken.add(copy.id);
+        copy.name = /^\s*jp\b/i.test(row.name) ? row.name : `JP- ${row.name}`;
+        await st.putIllustration(copy);
+        await fileIn(copy.id, folderId);
+        made++;
+      }
+      st.refresh();
+      setToast(`Made ${made} Japanese illustration${made === 1 ? '' : 's'} in ${folderName(folderId)} — they show under Japan. Review the wording in the builder.`);
+      setTranslating(null);
+      stopSelecting();
+    } catch (e) {
+      setToast(`Made ${made} of ${rows.length} — ${(e as Error).message}`);
+      setTranslating(null);
     }
   };
   // The builder's own "‹ Library" button comes back here.
@@ -678,15 +721,15 @@ export function App() {
         {
           key: 'views',
           items: [
-            { key: 'all', label: 'All illustrations', count: lib.illustrations.length },
-            { key: 'recent', label: 'Recently edited', count: lib.illustrations.filter((i) => i.updatedAt >= recentSince).length },
+            { key: 'all', label: 'All illustrations', count: lib.illustrations.filter(inRegion).length },
+            { key: 'recent', label: 'Recently edited', count: lib.illustrations.filter((i) => inRegion(i) && i.updatedAt >= recentSince).length },
           ],
         },
         {
           key: 'folders',
           title: 'Folders',
           items: [
-            ...folderTree(lib.folders).map(({ folder: f, depth }) => ({
+            ...folderTree(lib.folders).filter(({ folder: f }) => regionOf(lib.folders, f.id) === region).map(({ folder: f, depth }) => ({
               key: f.id,
               label: f.name,
               nested: true,
@@ -709,17 +752,29 @@ export function App() {
                 await st?.refresh();
                 setPlace(child.id);
               },
-              actions: f.parent
-                ? [
-                    {
-                      label: 'Move to top level',
-                      run: async () => {
-                        await moveFolder(f.id, null);
-                        await st?.refresh();
+              actions: [
+                ...(f.parent
+                  ? [
+                      {
+                        label: 'Move to top level',
+                        run: async () => {
+                          await moveFolder(f.id, null);
+                          await st?.refresh();
+                        },
                       },
-                    },
-                  ]
-                : [],
+                    ]
+                  : []),
+                // A folder's region: what it holds is shown under that region.
+                {
+                  label: region === 'jp' ? 'Move to the USA region' : 'Move to the Japan region',
+                  run: async () => {
+                    const to: Region = region === 'jp' ? 'us' : 'jp';
+                    await setFolderRegion(f.id, to);
+                    await st?.refresh();
+                    setToast(`${f.name} and what is in it now show under ${to === 'jp' ? 'Japan' : 'USA'}.`);
+                  },
+                },
+              ],
               movesTo: f.parent ? (lib.folders.folders.find((x) => x.id === f.parent)?.name ?? 'Unfiled') : 'Unfiled',
               onRename: async (name: string) => {
                 await renameFolder(f.id, name);
@@ -735,18 +790,25 @@ export function App() {
               },
               holds: ['illustration', 'illustrations'] as [string, string],
             })),
-            {
-              key: 'unfiled',
-              label: 'Unfiled',
-              nested: true,
-              quiet: true,
-              count: lib.illustrations.filter((i) => !folderOf(i.id)).length,
-              accepts: (t: readonly string[]) => t.includes(DRAG),
-              onDrop: (d: DataTransfer) => void file(d.getData(DRAG), null),
-            },
+            // Unfiled is USA's: in Japan, every illustration is in a Japan folder.
+            ...(region === 'us'
+              ? [
+                  {
+                    key: 'unfiled',
+                    label: 'Unfiled',
+                    nested: true,
+                    quiet: true,
+                    count: lib.illustrations.filter((i) => !folderOf(i.id)).length,
+                    accepts: (t: readonly string[]) => t.includes(DRAG),
+                    onDrop: (d: DataTransfer) => void file(d.getData(DRAG), null),
+                  },
+                ]
+              : []),
           ],
           onCreate: async (name) => {
             const f = await addFolder(name);
+            // Made in Japan, it is Japan's — unless its name says so already.
+            if (region === 'jp' && regionOf({ ...lib.folders, folders: [...lib.folders.folders, f] }, f.id) !== 'jp') await setFolderRegion(f.id, 'jp');
             await st?.refresh();
             setPlace(f.id);
           },
@@ -786,19 +848,14 @@ export function App() {
       }}
       preview={art}
       onPreview={setArt}
-      language={
-        canTranslate
-          ? {
-              value: libLang,
-              onChange: setLibLang,
-              options: [
-                { value: 'en', label: 'English' },
-                ...(Object.keys(LANGUAGES) as Lang[]).map((l) => ({ value: l, label: LANGUAGES[l].native })),
-              ],
-              busy: libLang !== 'en' && drafting.remaining > 0 ? `Translating ${drafting.remaining} strings…` : undefined,
-            }
-          : undefined
-      }
+      language={{
+        label: 'Region',
+        title: 'Show the illustrations for this region, in its language',
+        value: region,
+        onChange: setRegion,
+        options: REGIONS.map((r) => ({ value: r.value, label: r.label })),
+        busy: libLang !== 'en' && drafting.remaining > 0 ? `Translating ${drafting.remaining} strings…` : undefined,
+      }}
       scope={placeLabel ? { label: placeLabel, onClear: () => setPlace('all') } : undefined}
       count={illustrations.length}
       noun={['illustration', 'illustrations']}
@@ -1298,6 +1355,11 @@ export function App() {
           removing={removing}
           onClear={() => setSelected(new Set())}
           download={tab === 'illustrations' ? { busy: zipping, onDownload: (f) => void downloadSelected(f) } : undefined}
+          onTranslate={
+            writable && canTranslate && tab === 'illustrations' && region === 'us'
+              ? () => setTranslating({ ids: illustrations.filter((i) => selected.has(i.id)).map((i) => i.id), busy: null })
+              : undefined
+          }
           onMakeKit={
             writable && tab === 'illustrations'
               ? () => newKit(illustrations.filter((i) => selected.has(i.id)).map((i) => i.id))
@@ -1330,6 +1392,18 @@ export function App() {
               st.refresh();
             }
           }}
+        />
+      )}
+
+      {translating && (
+        <TranslateSheet
+          count={translating.ids.length}
+          busy={translating.busy}
+          folders={folderTree(lib.folders)
+            .filter(({ folder: f }) => regionOf(lib.folders, f.id) === 'jp')
+            .map(({ folder: f, depth }) => ({ id: f.id, label: `${'\u00a0\u00a0'.repeat(depth)}${f.name}` }))}
+          onGo={(folderId) => void translateToJapanese(translating.ids, folderId)}
+          onCancel={() => !translating.busy && setTranslating(null)}
         />
       )}
 
@@ -2126,6 +2200,7 @@ function SelectionBar({
   onRemove,
   download,
   onMakeKit,
+  onTranslate,
 }: {
   count: number;
   noun: string;
@@ -2138,6 +2213,8 @@ function SelectionBar({
   download?: { busy: string | null; onDownload: (format: 'svg' | 'png') => void };
   /** Editors, on illustrations: a kit made of the selection. */
   onMakeKit?: () => void;
+  /** Editors, on USA illustrations: Japanese copies of the selection, for the Japan region. */
+  onTranslate?: () => void;
 }) {
   const [armed, setArmed] = useState(false);
   useEffect(() => {
@@ -2175,6 +2252,11 @@ function SelectionBar({
             PNG @2x
           </button>
         </>
+      )}
+      {onTranslate && (
+        <button type="button" disabled={!count} onClick={onTranslate} title="Japanese copies of these, translated, for the Japan region — the originals stay as they are">
+          Translate to Japanese
+        </button>
       )}
       {onMakeKit && (
         <button type="button" disabled={!count} onClick={onMakeKit} title="A ready-made kit of these illustrations, for anyone to download in one go">
@@ -2528,6 +2610,68 @@ function GraphicsGrid({
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+/** Where Japanese copies of a selection go: a folder in the Japan region. */
+function TranslateSheet({
+  count,
+  busy,
+  folders,
+  onGo,
+  onCancel,
+}: {
+  count: number;
+  busy: string | null;
+  folders: { id: string; label: string }[];
+  onGo: (folderId: string) => void;
+  onCancel: () => void;
+}) {
+  const [to, setTo] = useState(folders[0]?.id ?? '');
+  useEffect(() => {
+    const esc = (e: KeyboardEvent) => e.key === 'Escape' && onCancel();
+    window.addEventListener('keydown', esc);
+    return () => window.removeEventListener('keydown', esc);
+  }, [onCancel]);
+  return (
+    <div className="am-scrim" onClick={onCancel}>
+      <div className="am-sheet am-small" role="dialog" aria-modal="true" aria-label="Translate to Japanese" onClick={(e) => e.stopPropagation()}>
+        <div className="am-sheet-head">
+          <div>
+            <h2>Translate {count} to Japanese</h2>
+            <p className="am-meta">Japanese copies, for the Japan region. The originals stay as they are.</p>
+          </div>
+        </div>
+        <div className="am-sheet-body">
+          {folders.length ? (
+            <label className="am-field">
+              <span>Save them in</span>
+              <select value={to} onChange={(e) => setTo(e.target.value)} disabled={!!busy}>
+                {folders.map((f) => (
+                  <option key={f.id} value={f.id}>
+                    {f.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : (
+            <p className="am-hint">There is no folder in the Japan region yet. Make one, or choose Move to the Japan region on a folder&rsquo;s menu, then come back.</p>
+          )}
+          <p className="am-hint">
+            Each copy takes the illustration&rsquo;s reviewed Japanese where it has one, and a machine translation for the rest, refitted to the longer
+            text. Check the wording in the builder before it goes out.
+          </p>
+          <div className="am-actions">
+            <button type="button" onClick={onCancel} disabled={!!busy}>
+              Cancel
+            </button>
+            <button type="button" className="am-primary" disabled={!folders.length || !to || !!busy} onClick={() => onGo(to)}>
+              {busy ?? `Make ${count} Japanese cop${count === 1 ? 'y' : 'ies'}`}
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

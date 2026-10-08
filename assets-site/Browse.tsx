@@ -329,7 +329,7 @@ export function Toolbar<S extends string, L extends string = string>({
    * it is the same kind of choice: how the art is shown, not what is listed.
    * `busy` says what is still being translated.
    */
-  language?: { value: L; onChange: (l: L) => void; options: { value: L; label: string }[]; busy?: string };
+  language?: { value: L; onChange: (l: L) => void; options: { value: L; label: string }[]; busy?: string; label?: string; title?: string };
   /** Where you are, when narrower than everything; the ✕ goes back to everything. */
   scope?: { label: string; onClear: () => void };
   count: number;
@@ -356,8 +356,8 @@ export function Toolbar<S extends string, L extends string = string>({
           </label>
         )}
         {language && (
-          <label className="am-sort am-lang-pick" title="Show every illustration with its text in this language">
-            <span>Language</span>
+          <label className="am-sort am-lang-pick" title={language.title ?? 'Show every illustration with its text in this language'}>
+            <span>{language.label ?? 'Language'}</span>
             <select value={language.value} onChange={(e) => language.onChange(e.target.value as L)}>
               {language.options.map((o) => (
                 <option key={o.value} value={o.value}>

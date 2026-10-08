@@ -97,6 +97,52 @@ export interface Folder {
   name: string;
   /** The folder this one sits in. Absent — or naming a folder that is gone — is the top level. */
   parent?: string;
+  /** The region its illustrations are for; a subfolder takes its parent's. See `regionOf`. */
+  region?: Region;
+}
+
+/**
+ * REGIONS — who an illustration is for. The library shows one region at a
+ * time: USA, the illustrations as written in English, or Japan, the
+ * Japanese ones. A folder sets it for everything in it and its subfolders
+ * (`Folder.region`); one that sets none takes its parent's, and a top-level
+ * folder named for Japan ("JP- Home") is Japan without being told. Anything
+ * else, unfiled included, is USA.
+ */
+export type Region = 'us' | 'jp';
+export const REGIONS: { value: Region; label: string; lang: 'en' | 'ja' }[] = [
+  { value: 'us', label: 'USA', lang: 'en' },
+  { value: 'jp', label: 'Japan', lang: 'ja' },
+];
+const NAMED_JAPAN = /^\s*(jp|ja|japan)\b|日本/i;
+
+/** The region of folder `id` and what is filed in it: its own, else its nearest parent's, else by its top folder's name. */
+export function regionOf(f: Folders, id: string | null | undefined): Region {
+  const seen = new Set<string>();
+  let top: Folder | undefined;
+  for (let at = id ?? undefined; at && !seen.has(at); ) {
+    seen.add(at);
+    const x = f.folders.find((y) => y.id === at);
+    if (!x) break;
+    if (x.region) return x.region;
+    top = x;
+    at = x.parent;
+  }
+  return top && NAMED_JAPAN.test(top.name) ? 'jp' : 'us';
+}
+
+/** Set folder `id`'s region (null: back to its parent's, or its name's). */
+export async function setFolderRegion(id: string, region: Region | null): Promise<void> {
+  const b = await backend();
+  const f = await b.folders();
+  await b.putFolders({
+    ...f,
+    folders: f.folders.map((x) => {
+      if (x.id !== id) return x;
+      const { region: _, ...rest } = x;
+      return region ? { ...rest, region } : rest;
+    }),
+  });
 }
 export interface Folders {
   folders: Folder[];

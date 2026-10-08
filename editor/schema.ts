@@ -114,7 +114,9 @@ type FieldKind<K extends string> =
   /** An icon from MingCute, searchable, drawn in the element's style. */
   | { key: K; label: string; kind: 'icon' }
   /** A graphic: built in, or from the Marketing Assets library. Patches several props. */
-  | { key: K; label: string; kind: 'graphic' };
+  | { key: K; label: string; kind: 'graphic' }
+  /** A button's size — small, medium or large: height, type and padding together. Patches several props. */
+  | { key: K; label: string; kind: 'buttonSize' };
 
 export const ROLES = Object.keys(TYPE_ROLES);
 /** The Size picker's names: the role in words, then its size — "Display large · 28.4px". */
@@ -263,6 +265,7 @@ export const SCHEMA: {
     label: 'Button',
     fields: [
       { key: 'label', label: 'Label', kind: 'text' },
+      { key: 'height', label: 'Size', kind: 'buttonSize' },
       ...XY,
       ...WH,
       {

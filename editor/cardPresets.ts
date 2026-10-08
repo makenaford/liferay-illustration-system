@@ -92,9 +92,8 @@ const phoneButton = (label: string, variant: 'solid' | 'outline'): Element =>
  * An AI assistant's conversation, after "AI Assistant" in the Japan site's
  * hero images (Figma 250:47376), drawn in this system's own parts: the
  * person's messages as sender bubbles, the assistant's as receiver bubbles,
- * each indented from the far side so the talk staggers, and its two actions
- * at the foot. The bubbles stretch across the card; their indent keeps the
- * stagger whatever its width.
+ * each indented from the far side so the talk staggers. The bubbles stretch
+ * across the card; their indent keeps the stagger whatever its width.
  */
 const CHAT = { width: 320, indent: 32 } as const;
 
@@ -102,8 +101,6 @@ function chatCard(): Element {
   const inner = CHAT.width - PAD * 2;
   const bubble = (variant: 'sender' | 'receiver', name: string, message: string, initials: string): Element =>
     ({ type: 'chat', x: 0, y: 0, width: inner, variant, name, message, initials, indent: CHAT.indent, role: 'body' }) as Element;
-  const action = (label: string, variant: 'solid' | 'outline', icon: string): Element =>
-    ({ type: 'button', x: 0, y: 0, width: 0, height: 28, label, variant, icon, role: 'bodySmall', fit: true, rounded: true }) as Element;
   return {
     ...card(CHAT.width, 10, [
       t('heading', 'AI Assistant'),
@@ -111,15 +108,6 @@ function chatCard(): Element {
       bubble('receiver', 'AI Assistant', 'What is it about?', 'AI'),
       bubble('sender', 'Yuzuki Kimoto', 'About Acme Corporation', 'YK'),
       bubble('receiver', 'AI Assistant', 'Your content is ready!', 'AI'),
-      {
-        type: 'group',
-        x: 0,
-        y: 0,
-        width: inner,
-        height: 28,
-        layout: { direction: 'horizontal', gap: 8, padding: 0, align: 'center', justify: 'end', hugHeight: true },
-        children: [action('Regenerate', 'outline', 'mc:back_2'), action('Save content', 'solid', 'mc:arrow_right')],
-      } as Element,
     ]),
     radius: 16,
     layout: { ...column(10), align: 'stretch' },
@@ -174,7 +162,7 @@ export const CARD_PRESETS: { label: string; title: string; make: () => Element }
   },
   {
     label: 'Chat card',
-    title: 'An AI assistant conversation: staggered sender and receiver bubbles, with Regenerate and Save content',
+    title: 'An AI assistant conversation: staggered sender and receiver bubbles',
     make: chatCard,
   },
   {

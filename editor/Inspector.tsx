@@ -30,6 +30,8 @@ import { boundingBox, inferLayout, resolveLayout as resolveLayoutDoc } from '../
 import { SCHEMA, type Field } from './schema.ts';
 import { TokenPicker } from './TokenPicker.tsx';
 import { PIE_COLORS, PIE_MAX } from '../src/primitives/pieChart.ts';
+import { BUTTON_SIZES, buttonSizeOf, type ButtonSize } from '../src/primitives/button.ts';
+import { TYPE_ROLES, type TypeRole } from '../src/primitives/text.ts';
 import { AlignGrid, GapPicker, PaddingPicker } from './LayoutControls.tsx';
 import { DocumentPanel } from './DocumentPanel.tsx';
 import { FileField } from './FileField.tsx';
@@ -820,6 +822,7 @@ function FieldRow({
     field.kind === 'icon' ||
     field.kind === 'iconSlots' ||
     field.kind === 'glassIcon' ||
+    field.kind === 'buttonSize' ||
     field.kind === 'iconList' ||
     field.kind === 'table' ||
     field.kind === 'menuItems' ||
@@ -829,7 +832,7 @@ function FieldRow({
 
   // A field holding several buttons is not a <label>: a click on its blank
   // space would press the first of them.
-  const Wrap = field.kind === 'menuItems' || field.kind === 'iconSlots' || field.kind === 'photo' || field.kind === 'table' || field.kind === 'grid' || field.kind === 'crop' ? 'div' : 'label';
+  const Wrap = field.kind === 'buttonSize' || field.kind === 'menuItems' || field.kind === 'iconSlots' || field.kind === 'photo' || field.kind === 'table' || field.kind === 'grid' || field.kind === 'crop' ? 'div' : 'label';
   return (
     <Wrap className={`field${wide ? ' wide' : ''}`}>
       <span className="field-label">{field.label}</span>
@@ -1052,6 +1055,26 @@ function Control({
 
     case 'glassIcon':
       return <GlassIconField el={el} onPatch={onPatch} />;
+
+    case 'buttonSize': {
+      const now = buttonSizeOf(el as { height: number; role?: TypeRole; padding?: number });
+      return (
+        <span className="layout-actions" role="group" aria-label={field.label}>
+          {(Object.keys(BUTTON_SIZES) as ButtonSize[]).map((size) => (
+            <button
+              key={size}
+              type="button"
+              className={now === size ? 'on' : ''}
+              aria-pressed={now === size}
+              title={`${BUTTON_SIZES[size].height}px tall, ${TYPE_ROLES[BUTTON_SIZES[size].role].size}px text, ${BUTTON_SIZES[size].padding}px padding`}
+              onClick={() => onPatch({ ...BUTTON_SIZES[size] })}
+            >
+              {size[0].toUpperCase() + size.slice(1)}
+            </button>
+          ))}
+        </span>
+      );
+    }
 
     case 'iconSlots':
       return <IconSlots el={el} onPatch={onPatch} />;

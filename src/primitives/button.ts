@@ -59,6 +59,28 @@ export function buttonFitWidth(p: Pick<ButtonProps, 'label' | 'lines' | 'role' |
 const ON_ACCENT: ReadonlySet<SurfaceName> = new Set(['solid', 'gradient']);
 
 /**
+ * BUTTON SIZES — three steps, each a height, a type step and a padding that
+ * belong together, set at once from the Inspector. Medium is the default
+ * button. Any of the three can still be changed on its own afterwards; the
+ * button is then a custom size.
+ */
+export const BUTTON_SIZES = {
+  // Semibold steps all three, as the design system's buttons are set.
+  small: { height: 24, role: 'smallHeading', padding: 8 },
+  medium: { height: 32, role: 'bodySmall', padding: 12 },
+  large: { height: 40, role: 'subheading', padding: 16 },
+} as const satisfies Record<string, { height: number; role: TypeRole; padding: number }>;
+export type ButtonSize = keyof typeof BUTTON_SIZES;
+
+/** Which size a button is, if it is one of the three. */
+export function buttonSizeOf(el: { height: number; role?: TypeRole; padding?: number }): ButtonSize | null {
+  for (const [name, s] of Object.entries(BUTTON_SIZES) as [ButtonSize, (typeof BUTTON_SIZES)[ButtonSize]][]) {
+    if (el.height === s.height && (el.role ?? 'subheading') === s.role && (el.padding ?? 12) === s.padding) return name;
+  }
+  return null;
+}
+
+/**
  * BUTTON — solid, outline, glass, and gradient variants.
  *
  * Separate from `Pill` on purpose: Pill is a *label* (a badge or tag), Button

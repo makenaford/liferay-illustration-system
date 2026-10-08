@@ -2,6 +2,7 @@ import type { Doc, Element } from '../src/document.ts';
 import { dashboard } from './dashboardGrid.ts';
 import { placeholder } from './placeholder.ts';
 import { SLOT_RADIUS } from '../src/imageBase.ts';
+import { CARD_PRESETS, placePreset } from './cardPresets.ts';
 
 import aiVisibility from '../docs/ai-visibility-dashboard.json';
 import b2bCommerce from '../docs/b2b-commerce.json';
@@ -100,12 +101,21 @@ export const MOCKUP = {
 } as const;
 
 /**
- * A new Image base: the screenshot in its slot and nothing else, on no
- * background — a page shows through it, as it will where it is used. Cards
- * are added from the Library; the guides hold them (editor/strict.ts).
+ * A new Image base, laid out as "Solution Partner" is: the screenshot in its
+ * slot on no background — a page shows through it, as it will where it is
+ * used — with a second image contained in a Highlighted card on the right,
+ * against the card guide's edge and centred, 12px in, and an Icon card over
+ * that card's left edge. The guides hold them (editor/strict.ts).
  */
+export const IMAGE_BASE_CARD = { x: 364, y: 128, width: 424, height: 278, pad: 12 } as const;
+
 export function mockupDoc(): Doc {
   const { canvas, image, cards } = MOCKUP;
+  const c = IMAGE_BASE_CARD;
+  const inner = { x: c.x + c.pad, y: c.y + c.pad, width: c.width - 2 * c.pad, height: c.height - 2 * c.pad };
+  const makeIcon = CARD_PRESETS.find((p) => p.label === 'Icon card')!.make;
+  const iconH = (placePreset(makeIcon(), { x: 0, y: 0 }) as { height: number }).height;
+  const iconY = Math.round((canvas.height - iconH) / 4) * 2;
   return {
     id: 'untitled-mockup',
     name: 'Untitled image base',
@@ -123,6 +133,31 @@ export function mockupDoc(): Doc {
         href: placeholder(image.width, image.height, 'Screenshot'),
         alt: 'Screenshot — replace with a product screenshot',
       },
+      {
+        type: 'card',
+        x: c.x,
+        y: c.y,
+        width: c.width,
+        height: c.height,
+        surface: 'glass-highlighted',
+        radius: 8,
+        hugWidth: true,
+        hugHeight: true,
+        children: [
+          {
+            type: 'image',
+            ...inner,
+            fit: 'cover',
+            radius: 4,
+            grow: 1,
+            absolute: true,
+            crop: { x: 0.5, y: 0, zoom: 1 },
+            href: placeholder(inner.width, inner.height, 'Image'),
+            alt: 'Image — replace with a product image',
+          },
+        ],
+      } as Element,
+      placePreset(makeIcon(), { x: 340, y: iconY }),
     ],
   };
 }
@@ -289,7 +324,7 @@ export const TEMPLATES = {
   },
   imageBase: {
     label: 'Image base',
-    description: 'An 800 × 533 product screenshot, held in its slot, on no background — add cards from the Library.',
+    description: 'An 800 × 533 product screenshot on no background, with an image in a Highlighted card on the right and an Icon card over it.',
     make: mockupDoc,
   },
   mockup: {

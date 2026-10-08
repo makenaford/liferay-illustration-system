@@ -2,7 +2,7 @@ import { h, text as textNode, type Ctx, type VNode } from '../vsvg.ts';
 import { measureText, textBox } from '../fontMetrics.generated.ts';
 
 /**
- * TYPE SCALE — fourteen steps, in whole even pixels, body at 14.
+ * TYPE SCALE — fifteen steps, in whole even pixels, body at 14.
  *
  * Each step is named for the design system's own style it stands in for
  * (`tokens/figma/typography.desktop.tokens.json`). The sizes were that scale
@@ -14,6 +14,8 @@ import { measureText, textBox } from '../fontMetrics.generated.ts';
  * Where two steps round to the same size they differ in weight or capitals.
  */
 export const TYPE_SIZES = {
+  /** A single big figure standing on its own — a headline number, above the scale. */
+  number: 64,
   /** `Size/Display/Display Lg` — the biggest hero figure. */
   displayLarge: 32,
   /** `Size/Display/Display Sm` — a hero number. */
@@ -58,6 +60,7 @@ const WEIGHT_VALUE: Record<TypeWeight, number> = {
 
 /** The weight a step takes when none is given. */
 const DEFAULT_WEIGHT: Record<TypeRole, TypeWeight> = {
+  number: 'bold',
   displayLarge: 'bold',
   display: 'bold',
   title: 'semibold',
@@ -76,6 +79,7 @@ const DEFAULT_WEIGHT: Record<TypeRole, TypeWeight> = {
 
 /** Optical tracking: large type tightens, the smallest steps open up. */
 const TRACKING: Partial<Record<TypeRole, number>> = {
+  number: -1,
   displayLarge: -0.5,
   display: -0.4,
   title: -0.2,

@@ -124,13 +124,15 @@ export const CARD_PRESETS: { label: string; title: string; make: () => Element }
   },
   {
     label: 'Icon card',
-    title: 'Glass icon, title and a line of copy',
+    title: 'A 64px glass icon over its title',
     make: () =>
-      card(180, 8, [
-        { type: 'spotIcon', x: 0, y: 0, name: 'composable', size: 32 } as Element,
-        t('subheading', 'Card title'),
-        t('caption', 'A line of supporting copy', 'muted'),
-      ]),
+      ({
+        ...card(180, 12, [
+          { type: 'spotIcon', x: 0, y: 0, name: 'composable', size: 64 } as Element,
+          t('subheading', 'Card title'),
+        ]),
+        surface: 'glass-highlighted-over-light',
+      }) as Element,
   },
   {
     label: 'Stat card',

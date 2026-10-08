@@ -27,6 +27,7 @@ const SCALE = 0.6;
 const half = (n: number) => Math.round(n * SCALE * 2) / 2;
 
 const ROLE_DOWN: Record<TypeRole, TypeRole> = {
+  number: 'displayLarge',
   displayLarge: 'heading',
   display: 'subheading',
   title: 'body',

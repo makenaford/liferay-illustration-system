@@ -370,6 +370,8 @@ export const SCHEMA: {
         options: ['receiver', 'sender'],
         labels: { receiver: 'Receiver — avatar left', sender: 'Sender — avatar right' },
       },
+      { key: 'role', label: 'Message size', kind: 'select', options: ROLES, labels: ROLE_LABELS },
+      { key: 'indent', label: 'Indent', kind: 'number', min: 0, default: 0 },
       ...XY,
       { key: 'width', label: 'W', kind: 'number', min: 1 },
       { key: 'initials', label: 'Initials', kind: 'text' },

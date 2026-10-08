@@ -3,7 +3,7 @@ import { dropdownLayout } from './primitives/dropdown.ts';
 import { TYPE_ROLES, measureTextEl, wrapLines, lineLead, typeStyle } from './primitives/text.ts';
 import { measureText } from './fontMetrics.generated.ts';
 import { badgeWidth } from './primitives/badge.ts';
-import { CHAT_HEIGHT } from './primitives/chatBubble.ts';
+import { chatHeight } from './primitives/chatBubble.ts';
 import { cursorAspect, cursorWidth } from './primitives/cursor.ts';
 import { axisBand } from './primitives/axisLabels.ts';
 import { tableLayout } from './primitives/table.ts';
@@ -118,7 +118,7 @@ export function measureElement(el: Element): Size {
       // The labels hang below the plot, inside the chart's box.
       return { width: el.width, height: el.height + axisBand(el) };
     case 'chat':
-      return { width: el.width, height: el.height ?? CHAT_HEIGHT };
+      return { width: el.width, height: chatHeight(el) };
     case 'field':
       // Taller than set when its wrapped label or text needs the room.
       return { width: el.width, height: formFieldLayout(el).height };

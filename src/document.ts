@@ -363,6 +363,13 @@ export interface ChatEl extends LayoutChild {
   initials?: string;
   /** The avatar's photo — see `AvatarEl.href`. */
   avatarHref?: string;
+  /**
+   * How far the bubble is drawn in from the far side of its box, so a
+   * conversation staggers: a sender's moves right, a receiver's stays left.
+   */
+  indent?: number;
+  /** The message's step on the type scale. Defaults to `subheading`; a larger one makes the bubble taller. */
+  role?: TypeRole;
 }
 
 export interface ChromeEl extends LayoutChild {

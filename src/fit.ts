@@ -65,8 +65,8 @@ function need(el: Element): { width: number; centred: boolean } | null {
       return el.width === undefined ? null : { width: badgeWidth(el.label, el.dot, el.tone), centred: !el.dot };
     case 'chat': {
       const height = el.height ?? CHAT_HEIGHT;
-      const text = Math.max(lineWidth(el.name, 'caption', 'semibold'), lineWidth(el.message, 'subheading', 'regular'));
-      return { width: 5 + (height - 10) + 8 + text + 17, centred: el.variant === 'sender' };
+      const text = Math.max(lineWidth(el.name, 'caption', 'semibold'), lineWidth(el.message, el.role ?? 'subheading', 'regular'));
+      return { width: 5 + (height - 10) + 8 + text + 17 + (el.indent ?? 0), centred: el.variant === 'sender' };
     }
     case 'table': {
       // Laid out at zero width, the flexible columns take nothing and every

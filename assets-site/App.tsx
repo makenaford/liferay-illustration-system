@@ -1662,6 +1662,27 @@ function IllustrationDetail({
 }) {
   const [theme, setTheme] = useState<Theme>(initialTheme);
   const [confirming, setConfirming] = useState(false);
+  /** The name being typed, while renaming. Saved for everyone on Enter or leaving the field. */
+  const [renaming, setRenaming] = useState<string | null>(null);
+  // Enter saves, and the field going away is a blur too: saved once.
+  const renamed = useRef(false);
+  const startRename = () => {
+    renamed.current = false;
+    setRenaming(row.name);
+  };
+  const rename = async () => {
+    if (renamed.current) return;
+    renamed.current = true;
+    const name = renaming?.trim();
+    setRenaming(null);
+    if (!st || !name || name === row.name) return;
+    try {
+      await st.putIllustration({ ...row.doc, name });
+      onToast(`Renamed to ${name}.`);
+    } catch (e) {
+      onToast(`Could not rename it — ${(e as Error).message}`);
+    }
+  };
   // The language the preview and every download are in. The illustration
   // itself is never changed: a translated copy is made on the way out.
   const [lang, setLang] = useState<Lang | 'en'>(initialLang);
@@ -1726,7 +1747,36 @@ function IllustrationDetail({
       <div className="am-sheet" role="dialog" aria-modal="true" aria-label={row.name} onClick={(e) => e.stopPropagation()}>
         <div className="am-sheet-head">
           <div>
-            <h2>{row.name}</h2>
+            {renaming !== null ? (
+              <input
+                className="am-rename"
+                aria-label="Illustration name"
+                autoFocus
+                value={renaming}
+                onChange={(e) => setRenaming(e.target.value)}
+                onFocus={(e) => e.target.select()}
+                onBlur={() => void rename()}
+                onKeyDown={(e) => {
+                  e.stopPropagation();
+                  if (e.key === 'Enter') void rename();
+                  if (e.key === 'Escape') {
+                    renamed.current = true;
+                    setRenaming(null);
+                  }
+                }}
+              />
+            ) : (
+              <h2>
+                {writable ? (
+                  <button type="button" className="am-rename-show" title="Rename" onClick={startRename}>
+                    {row.name}
+                    <span aria-hidden="true">✎</span>
+                  </button>
+                ) : (
+                  row.name
+                )}
+              </h2>
+            )}
             <p className="am-meta">
               {width} × {height}
               {row.updatedAt ? ` · saved ${when(row.updatedAt)}` : ''}

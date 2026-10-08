@@ -7,19 +7,19 @@
     "height": 533
   },
   "cardArea": {
-    "x": 16,
-    "y": 16,
-    "width": 768,
-    "height": 501
+    "x": 12,
+    "y": 12,
+    "width": 776,
+    "height": 509
   },
   "panels": [],
   "elements": [
     {
       "type": "card",
-      "x": 16,
-      "y": 16,
-      "width": 768,
-      "height": 500,
+      "x": 12,
+      "y": 12,
+      "width": 776,
+      "height": 508,
       "surface": "glass-background",
       "radius": 10,
       "layout": {
@@ -31,8 +31,8 @@
       "children": [
         {
           "type": "group",
-          "x": -4,
-          "y": -4,
+          "x": -8,
+          "y": -8,
           "width": 736,
           "height": 22,
           "layout": {
@@ -45,15 +45,15 @@
           "children": [
             {
               "type": "avatar",
-              "cx": -4,
-              "cy": -4,
+              "cx": -8,
+              "cy": -8,
               "r": 11,
               "href": "data:image/webp;base64,UklGRtoEAABXRUJQVlA4IM4EAACwGACdASpgAGAAPjEWiUMiISEUfAWwIAMEs4BqBC1laLfbgCaOch6Yn/Wei/8VpB/sT+M/In5q9ie1B/jvxx/G7jxOLfzP/M/k9c1p03+W/1n3Zez75e/3f+T+AH+Qf07/R/3L91/hu9h37VexP+wZ15uLtgWkPsPlWd6H+h6s8T9Ws+CrcF6/6ZHOXgkzZwdREHFPrB7zahTKuMJp6qSld6FPXYmj+H7yDx9xX5ZpUQvKGauk06LywG+GaWmUU3guiHDm/mF2LGJKi4EwAAD+/o00f280QvypPiz/IYerOnRoSHIbux9vN8HZHZArEz5mRUZR2//5NaYPArfgcMljno8I8zutwDbA+Wv4nPbHeMnlmtFdDvcEWKCMkTddpPs65KUDRbuPZBEa+JkvzzqQ/7zl41pkGWrxicQ0JEONEgtqHREir9GtSD3fOdg298QbXwDPJRR9KzYwoh4WeppGYvj/EfKCnilN8XeymCZ20fIc78rgCTdiN9w58/QwsQ3NzVxXaGgvVN/dPjH2PbyCKrluFKqG1z774bCpinr7bL3OqGIhMDw8H+KyDAn4PoYbTeTQGS77ed0qvcTmL1xfgG2K3MC4s9eF377fZ2KMBUMnkH0r3T5BA/p+9nZ87is+e49umUbRw3oimuQW9HAH3bUDWkWC3ZuqdPgx0lgbQwRWCOJ6K4PIiMS0gLTNDSY7wzoUdD1ejYHVe31zU6/Z1ahjf2NZfi/f34FTT8FTtEoRK+PSjkXrvj/DeQfB0NYKfSNaT6HkO75CO3wPSMy/A/zcf/4Oce2AcbxHLRdL92MTO9+38sQGYskqHntmqskZ6QqR/kV/w1/5YejrzQ4AnllO3RfdRxdUYM8nTXiWeVDdp5WJzPmZsU0Q+CtxMoEwlOyqP6HPnyq5rEFKUFCg0e+wYvEyi3sEOxD62K6SRyxgr3VJOPbGyY2EKKoaym3e1zl2twfTrRqLraHSfxtqfx5p2XedkuQD4Mc52PAO9u+E/K/mv+aR56j2kr/emm0HVu/KofgaQ/s5gY13AiT94B/k9C9oliayzXRwYZAII4dCtmOs6oLM/luja/4JIKUa701IHM//JxPjn4KLgvntxB4ym/o8//jJ6SKlqConv1petwMyn21UISswNPT7+96f+vw2MfWM+F7eDOe76Rw+9dT+uDji4eGtC8xpSELrHYjX1Gvm8KBHTfTavq/e5y3iva7NxMU4rXQDVIaYF0LogOJtW28xJssFW8/J+Z0AqSvwy47JZxzr41dOcaaEi/DhgdVaMTDciOHvRHzi45ZuusmJh7YBUUfGqdZJKwDXQNLr3ovsP2EzAetYFpvgXf3bRXZCVJWZWQIW3exPEZiqveOPU297tqk5AV2GD9C2Sx2Xqxzv5jND0E0LdnH6lsCkpe4vJDPx05BLSuMD9SvsyzElYwYv/VN4PPE2jVSRU/YhtGF/z7wC+S06Q3Gca5SkngkxTaoZqBOlqtiT5ngvi76vf8sbrs7Wjy9LAyOu3LTvCzX7U2UOV5JHp87XWfwhcnU2Gbm85UxAXhXO0iyRnhn0VaoqzWOnQn7P4UklpAhZIAxzgyqOKmJF0zMZyQzuO5Thl///5FIQJFsVGyOOBJy2/6vtefMqHba4AAA="
             },
             {
               "type": "text",
-              "x": -4,
-              "y": -4,
+              "x": -8,
+              "y": -8,
               "role": "bodySmall",
               "content": "Your Product 360",
               "weight": "bold",
@@ -63,8 +63,8 @@
         },
         {
           "type": "image",
-          "x": -4,
-          "y": -4,
+          "x": -8,
+          "y": -8,
           "width": 736,
           "height": 302,
           "grow": 1,
@@ -79,8 +79,8 @@
         },
         {
           "type": "subCard",
-          "x": -4,
-          "y": -4,
+          "x": -8,
+          "y": -8,
           "width": 736,
           "height": 128,
           "surface": "glass-blue",
@@ -95,8 +95,8 @@
           "children": [
             {
               "type": "group",
-              "x": -4,
-              "y": -4,
+              "x": -8,
+              "y": -8,
               "width": 712,
               "height": 22,
               "layout": {
@@ -109,15 +109,15 @@
               "children": [
                 {
                   "type": "spotIcon",
-                  "x": -4,
-                  "y": -4,
+                  "x": -8,
+                  "y": -8,
                   "size": 22,
                   "name": "dxp"
                 },
                 {
                   "type": "text",
-                  "x": -4,
-                  "y": -4,
+                  "x": -8,
+                  "y": -8,
                   "role": "bodySmall",
                   "content": "Powered by Liferay DXP",
                   "weight": "semibold",
@@ -127,8 +127,8 @@
             },
             {
               "type": "group",
-              "x": -4,
-              "y": -4,
+              "x": -8,
+              "y": -8,
               "width": 712,
               "height": 76,
               "layout": {
@@ -141,8 +141,8 @@
               "children": [
                 {
                   "type": "subCard",
-                  "x": -4,
-                  "y": -4,
+                  "x": -8,
+                  "y": -8,
                   "width": 132,
                   "height": 76,
                   "grow": 1,
@@ -158,15 +158,15 @@
                   "children": [
                     {
                       "type": "spotIcon",
-                      "x": -4,
-                      "y": -4,
+                      "x": -8,
+                      "y": -8,
                       "size": 36,
                       "name": "sites"
                     },
                     {
                       "type": "text",
-                      "x": -4,
-                      "y": -4,
+                      "x": -8,
+                      "y": -8,
                       "role": "body",
                       "content": "Sites",
                       "weight": "semibold"
@@ -175,8 +175,8 @@
                 },
                 {
                   "type": "subCard",
-                  "x": -4,
-                  "y": -4,
+                  "x": -8,
+                  "y": -8,
                   "width": 132,
                   "height": 76,
                   "grow": 1,
@@ -192,15 +192,15 @@
                   "children": [
                     {
                       "type": "spotIcon",
-                      "x": -4,
-                      "y": -4,
+                      "x": -8,
+                      "y": -8,
                       "size": 36,
                       "name": "content-management"
                     },
                     {
                       "type": "text",
-                      "x": -4,
-                      "y": -4,
+                      "x": -8,
+                      "y": -8,
                       "role": "body",
                       "content": "CMS",
                       "weight": "semibold"
@@ -209,8 +209,8 @@
                 },
                 {
                   "type": "subCard",
-                  "x": -4,
-                  "y": -4,
+                  "x": -8,
+                  "y": -8,
                   "width": 132,
                   "height": 76,
                   "grow": 1,
@@ -226,15 +226,15 @@
                   "children": [
                     {
                       "type": "spotIcon",
-                      "x": -4,
-                      "y": -4,
+                      "x": -8,
+                      "y": -8,
                       "size": 36,
                       "name": "commerce"
                     },
                     {
                       "type": "text",
-                      "x": -4,
-                      "y": -4,
+                      "x": -8,
+                      "y": -8,
                       "role": "body",
                       "content": "Commerce",
                       "weight": "semibold"
@@ -243,8 +243,8 @@
                 },
                 {
                   "type": "subCard",
-                  "x": -4,
-                  "y": -4,
+                  "x": -8,
+                  "y": -8,
                   "width": 132,
                   "height": 76,
                   "grow": 1,
@@ -260,15 +260,15 @@
                   "children": [
                     {
                       "type": "spotIcon",
-                      "x": -4,
-                      "y": -4,
+                      "x": -8,
+                      "y": -8,
                       "size": 36,
                       "name": "user"
                     },
                     {
                       "type": "text",
-                      "x": -4,
-                      "y": -4,
+                      "x": -8,
+                      "y": -8,
                       "role": "body",
                       "content": "Self-Service",
                       "weight": "semibold"
@@ -277,8 +277,8 @@
                 },
                 {
                   "type": "subCard",
-                  "x": -4,
-                  "y": -4,
+                  "x": -8,
+                  "y": -8,
                   "width": 132,
                   "height": 76,
                   "grow": 1,
@@ -294,15 +294,15 @@
                   "children": [
                     {
                       "type": "spotIcon",
-                      "x": -4,
-                      "y": -4,
+                      "x": -8,
+                      "y": -8,
                       "size": 36,
                       "name": "compliance"
                     },
                     {
                       "type": "text",
-                      "x": -4,
-                      "y": -4,
+                      "x": -8,
+                      "y": -8,
                       "role": "body",
                       "content": "Security",
                       "weight": "semibold"
@@ -317,7 +317,7 @@
     },
     {
       "type": "card",
-      "x": 646,
+      "x": 650,
       "y": 36,
       "width": 140,
       "height": 84,
@@ -335,7 +335,7 @@
       "children": [
         {
           "type": "text",
-          "x": 4,
+          "x": 8,
           "y": 0,
           "role": "body",
           "content": "Time to Market",
@@ -343,7 +343,7 @@
         },
         {
           "type": "group",
-          "x": 4,
+          "x": 8,
           "y": 0,
           "width": 120,
           "height": 36,
@@ -358,14 +358,14 @@
           "children": [
             {
               "type": "spotIcon",
-              "x": 4,
+              "x": 8,
               "y": 0,
               "size": 36,
               "name": "notifications"
             },
             {
               "type": "text",
-              "x": 4,
+              "x": 8,
               "y": 0,
               "role": "displayLarge",
               "content": "-50%",

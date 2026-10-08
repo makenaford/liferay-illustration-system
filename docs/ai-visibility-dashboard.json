@@ -800,21 +800,21 @@
     },
     {
       "type": "subCard",
-      "x": 344,
+      "x": 348,
       "y": 246,
       "width": 216,
       "height": 114,
       "children": [
         {
           "type": "text",
-          "x": 356,
+          "x": 360,
           "y": 265.7,
           "role": "bodySmall",
           "content": "AI Source Breakdown"
         },
         {
           "type": "text",
-          "x": 356,
+          "x": 360,
           "y": 278.61,
           "role": "micro",
           "content": "Growth contribution from top AI sources",
@@ -823,7 +823,7 @@
         },
         {
           "type": "group",
-          "x": 356,
+          "x": 360,
           "y": 295.83,
           "width": 192,
           "height": 14,
@@ -837,7 +837,7 @@
           "children": [
             {
               "type": "progress",
-              "x": 356,
+              "x": 360,
               "y": 295.83,
               "width": 140,
               "value": 0.5,
@@ -846,7 +846,7 @@
             },
             {
               "type": "text",
-              "x": 356,
+              "x": 360,
               "y": 295.83,
               "role": "micro",
               "content": "50%",
@@ -856,7 +856,7 @@
         },
         {
           "type": "group",
-          "x": 356,
+          "x": 360,
           "y": 315.1,
           "width": 192,
           "height": 14,
@@ -870,7 +870,7 @@
           "children": [
             {
               "type": "progress",
-              "x": 356,
+              "x": 360,
               "y": 315.1,
               "width": 140,
               "value": 0.3,
@@ -879,7 +879,7 @@
             },
             {
               "type": "text",
-              "x": 356,
+              "x": 360,
               "y": 315.1,
               "role": "micro",
               "content": "30%",
@@ -889,7 +889,7 @@
         },
         {
           "type": "group",
-          "x": 356,
+          "x": 360,
           "y": 334.38,
           "width": 192,
           "height": 14,
@@ -903,7 +903,7 @@
           "children": [
             {
               "type": "progress",
-              "x": 356,
+              "x": 360,
               "y": 334.38,
               "width": 140,
               "value": 0.15,
@@ -912,7 +912,7 @@
             },
             {
               "type": "text",
-              "x": 356,
+              "x": 360,
               "y": 334.38,
               "role": "micro",
               "content": "15%",
@@ -932,9 +932,9 @@
   ],
   "panelSurfaces": 2,
   "cardArea": {
-    "x": 20,
-    "y": 20,
-    "width": 540,
-    "height": 344
+    "x": 16,
+    "y": 16,
+    "width": 548,
+    "height": 352
   }
 }

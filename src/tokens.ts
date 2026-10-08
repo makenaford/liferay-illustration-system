@@ -599,15 +599,16 @@ const GLASS_BLUR = 28;
 
 /**
  * How far any cast shadow may reach past its card: offset plus blur, in px.
- * Matches the 16px a card keeps from the canvas edge (the card guide), so no
- * shadow is clipped there. Every `shadow` below stays within it — the
- * furthest, a Solid card's, reaches 14 below it (4 down, 10 of blur).
+ * Matches the 12px a card keeps from the canvas edge (the card guide), so no
+ * shadow is clipped there. Every surface's `shadow` below stays within it:
+ * Highlighted reaches 12 (2 across, 10 of blur), Solid, Gradient and light
+ * Background 12 below (2 down, 10 of blur — they dropped 4 when the limit
+ * was 16).
  *
  * It was 20, set before blurs were capped at 10, when the guide had to
- * leave room for a 20px glow. Nothing reaches that far now, so the guide
- * gave the 4px back to the drawing.
+ * leave room for a 20px glow; then 16, the furthest shadow (14) and spare.
  */
-export const SHADOW_REACH = 16;
+export const SHADOW_REACH = 12;
 
 /** The most any cast shadow is blurred, in px — kept tight so a shadow reads as a contact glow, not a haze. */
 export const SHADOW_BLUR_MAX = 10;
@@ -706,7 +707,7 @@ const glassBackground = {
     litEdge: { color: '#FFFFFF', opacity: 1 },
     // Was 14px down / 36px blur — cut to SHADOW_REACH, then to SHADOW_BLUR_MAX.
     shadow: [
-      { dy: 4, blur: 10, color: '#0B2E7A', opacity: 0.1 },
+      { dy: 2, blur: 10, color: '#0B2E7A', opacity: 0.1 },
       { dy: 2, blur: 6, color: '#0B5FFF', opacity: 0.1 },
     ],
     inset: [{ dy: 3, blur: 6, color: '#FFFFFF', opacity: 0.6 }],
@@ -790,12 +791,12 @@ export const dark: Tokens = {
           { color: D('accent-cyan'), offset: 1 },
         ],
       },
-      shadow: [{ dy: 4, blur: 10, color: D('brand-primary-primary'), opacity: 0.3 }],
+      shadow: [{ dy: 2, blur: 10, color: D('brand-primary-primary'), opacity: 0.3 }],
     },
     /** Opaque brand blue — a callout that is an action, not a container. */
     solid: {
       fill: { angle: 180, stops: [{ color: '#0B5FFF' }, { color: '#0B5FFF' }] },
-      shadow: [{ dy: 4, blur: 10, color: '#0B5FFF', opacity: 0.35 }],
+      shadow: [{ dy: 2, blur: 10, color: '#0B5FFF', opacity: 0.35 }],
     },
     /** No fill at all — structure without weight. */
     outline: {
@@ -1053,12 +1054,12 @@ export const light: Tokens = {
           { color: L('accent-cyan'), offset: 1 },
         ],
       },
-      shadow: [{ dy: 4, blur: 10, color: L('brand-primary-primary'), opacity: 0.22 }],
+      shadow: [{ dy: 2, blur: 10, color: L('brand-primary-primary'), opacity: 0.22 }],
     },
     /** Opaque brand blue — a callout that is an action, not a container. */
     solid: {
       fill: { angle: 180, stops: [{ color: '#0B5FFF' }, { color: '#0B5FFF' }] },
-      shadow: [{ dy: 4, blur: 10, color: '#0B5FFF', opacity: 0.24 }],
+      shadow: [{ dy: 2, blur: 10, color: '#0B5FFF', opacity: 0.24 }],
     },
     /** No fill at all — structure without weight. */
     outline: {
@@ -1268,7 +1269,7 @@ export const LAYOUT = {
    * that is the edge a page actually crops against. Glows are exempt: they
    * are meant to bleed.
    */
-  canvasInset: 16,
+  canvasInset: 12,
   /** The snap grid. Half the 8-step, so 2, 4, 6 and 12 all land on it. */
   grid: 2,
   /** Offered in the editor's snap control. */
@@ -1302,7 +1303,7 @@ export const GLASS_ON_LIGHT: Record<GlassSurface, SurfaceSpec> = {
   'glass-background': {
     fill: { angle: 0, radial: { cx: 1, cy: 0.02, rx: 1.31, ry: 1.51 }, stops: [{ color: '#0A1633', opacity: 0.66 }, { color: '#0A1633', opacity: 0.6 }] },
     line: { angle: 199, stops: [{ color: '#FFFFFF', opacity: 0.4 }, { color: '#FFFFFF', opacity: 0.12 }] },
-    shadow: [{ dy: 4, blur: 10, color: '#0B2E7A', opacity: 0.16 }],
+    shadow: [{ dy: 2, blur: 10, color: '#0B2E7A', opacity: 0.16 }],
     blur: GLASS_BLUR,
   },
   'glass-default': {

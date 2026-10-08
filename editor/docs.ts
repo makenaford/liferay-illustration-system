@@ -72,11 +72,11 @@ export function blankDoc(): Doc {
  * security, anywhere", "Turn your site into a B2B revenue engine"):
  *
  *   canvas   800 × 533, 3:2
- *   mockup   748 × 481, 26px in from every edge, 10px corners. It is the
+ *   mockup   756 × 489, 22px in from every edge, 10px corners. It is the
  *            document's screenshot slot (`Doc.mockup`): the builder shows
  *            it as a guide, and a screenshot dropped in it fills it.
- *   cards    768 × 501, 16px in from every edge — room for any card's drop
- *            shadow, which reaches at most `SHADOW_REACH` (16px), before
+ *   cards    776 × 509, 12px in from every edge — room for any card's drop
+ *            shadow, which reaches at most `SHADOW_REACH` (12px), before
  *            the canvas clips it. The card guide
  *            (`Doc.cardArea`): the builder's safe area, which top-level
  *            cards snap to, and what the audit checks them against, in
@@ -93,8 +93,8 @@ export const MOCKUP = {
   canvas: { width: 800, height: 533 },
   /** Space between a panel and its screenshot. */
   pad: 12,
-  image: { x: 26, y: 26, width: 748, height: 481, radius: 10 },
-  cards: { x: 16, y: 16, width: 768, height: 501 },
+  image: { x: 22, y: 22, width: 756, height: 489, radius: 10 },
+  cards: { x: 12, y: 12, width: 776, height: 509 },
 } as const;
 
 /** A frame holding a screenshot inset by the pad. */
@@ -229,13 +229,13 @@ export function dashboardDoc(): Doc {
       { cx: 13, cy: 42, rx: 86, ry: 84, blur: 100 },
       { cx: 501, cy: 243, rx: 147, ry: 144, blur: 100 },
     ],
-    // The guides the Image base follows: the panel 26px in from every edge,
-    // cards inside a card guide 16px in.
-    panels: [{ x: 26, y: 26, width: 508, height: 320 }],
-    cardArea: { x: 16, y: 16, width: 528, height: 340 },
+    // The guides the Image base follows: the panel 22px in from every edge,
+    // cards inside a card guide 12px in.
+    panels: [{ x: 22, y: 22, width: 516, height: 328 }],
+    cardArea: { x: 12, y: 12, width: 536, height: 348 },
     elements: [
       // The grid itself, inside the panel: rows and slots set under Grid.
-      { ...dashboard('full', 'group'), x: 38, y: 38, width: 484, height: 296 } as Element,
+      { ...dashboard('full', 'group'), x: 34, y: 34, width: 492, height: 304 } as Element,
     ],
   };
 }

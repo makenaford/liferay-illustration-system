@@ -55,6 +55,9 @@ export function setHug(doc: Doc, path: string, axis: Axis, on: boolean): Doc {
   return replaceAt(doc, path, next);
 }
 
+/** Where a stretched element sits once let go: its own side, for a chat bubble — a sender's the far one. */
+export const letGo = (el: Element) => (el.type === 'chat' && el.variant === 'sender' ? 'end' : 'start');
+
 /** The element's fill on `axis` of its auto-layout container, set — clearing its own hug there. */
 export function setFill(doc: Doc, path: string, axis: Axis, on: boolean): Doc {
   const flow = flowParent(doc, path);
@@ -63,7 +66,7 @@ export function setFill(doc: Doc, path: string, axis: Axis, on: boolean): Doc {
   const el = elementAt(doc, path) as Element & { grow?: number; alignSelf?: string; width?: number; height?: number };
   let next: Element & { width?: number; height?: number } = across(flow.spec, axis)
     ? // Stretching, or — where the container stretches everything — not.
-      { ...el, alignSelf: on ? 'stretch' : flow.spec.align === 'stretch' ? 'start' : undefined }
+      { ...el, alignSelf: on ? 'stretch' : flow.spec.align === 'stretch' ? letGo(el) : undefined }
     : { ...el, grow: on ? 1 : undefined };
   // Let go, it keeps the size it was filling to, rather than falling back to
   // whatever its own stored size was — a slot's chart stores next to none.

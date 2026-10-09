@@ -11,6 +11,7 @@ import {
   useEditor,
 } from './state.ts';
 import { isResizable, movedDeep, resizedTo } from './geometry.ts';
+import { fills, letGo } from './sizing.ts';
 import { boundsOf, safeArea, type Box } from './bounds.ts';
 import { snap } from './grid.ts';
 import { contentBox } from './layout.ts';
@@ -709,6 +710,9 @@ export function Canvas() {
       }
 
       let next = resizedTo(el, w, h);
+      // Resized, a chat bubble stretched across its column lets go of it, so
+      // the width it is dragged to is the one it keeps — on its own side.
+      if (next.type === 'chat' && fills(st.doc, st.selected, 'w')) next = { ...next, alignSelf: letGo(next) };
       const boxX = Math.min(anchorX, edgeX);
       const boxY = Math.min(anchorY, edgeY);
       next =

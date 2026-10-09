@@ -1,3 +1,4 @@
+import { inlineBlobs } from './blobs.ts';
 /**
  * PNG EXPORT — the rendered SVG, rasterised in the browser.
  *
@@ -10,6 +11,9 @@
  * marketing pages that are mostly viewed on high-density screens.
  */
 export async function svgToPng(svg: string, width: number, height: number, scale = 2): Promise<Blob> {
+  // Drawn as an image, the SVG can reach nothing outside itself: its stored
+  // images go in first (editor/blobs.ts).
+  svg = await inlineBlobs(svg);
   await loadEmbeddedFonts(svg);
   const img = new Image();
   img.decoding = 'async';

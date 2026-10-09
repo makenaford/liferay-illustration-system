@@ -4,7 +4,7 @@ import * as Schema from "effect/Schema";
 import { HttpServerRequest } from "effect/unstable/http/HttpServerRequest";
 import * as HttpServerResponse from "effect/unstable/http/HttpServerResponse";
 import { verifyAccessToken } from "./AccessToken.ts";
-import Library from "./Library.ts";
+import Library, { BLOB_HASH } from "./Library.ts";
 import { decodeTranslateRequest, FONT_WEIGHTS, notoSansJp, translate } from "./Translate.ts";
 
 /**
@@ -16,6 +16,7 @@ import { decodeTranslateRequest, FONT_WEIGHTS, notoSansJp, translate } from "./T
  *   GET    /api/me                { email }
  *   GET    /api/live              WebSocket: every change, as it commits
  *   GET    /api/docs?col=         [{ id, body }]
+ *   GET    /api/blob/<sha256>     an image documents point to (see cloudflare/Library.ts)
  *   GET    /api/changes?col=&since= { rows: [{ id, body }], ids, at } — written after `since`
  *   GET    /api/doc?col=&id=      { body }  (body null when none)
  *   PUT    /api/doc?col=&id=      JSON body -> stored as is
@@ -155,6 +156,18 @@ export default class Site extends Cloudflare.Worker<Site>()(
             ),
             Effect.catchTag("TranslateError", (e) => fail(502, e.message)),
           );
+        }
+
+        if (route.startsWith("blob/") && request.method === "GET") {
+          const hash = route.slice("blob/".length);
+          if (!BLOB_HASH.test(hash)) return yield* fail(404, "Not found.");
+          const blob = yield* library.blob(hash);
+          if (!blob) return yield* fail(404, "Not found.");
+          // Named by its content: the same address is always the same image.
+          return HttpServerResponse.uint8Array(blob.data, {
+            contentType: blob.mime,
+            headers: { "cache-control": "private, max-age=31536000, immutable", "x-content-type-options": "nosniff" },
+          });
         }
 
         if (!COL.test(col)) return yield* fail(400, "Bad collection.");

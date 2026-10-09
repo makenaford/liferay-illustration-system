@@ -80,12 +80,15 @@ interface Copy {
 const copies = new Map<string, Copy>();
 const syncing = new Map<string, Promise<Copy>>();
 
-const IDB = 'library-copy';
+// Renamed when what a copy holds changes: -2 holds images by address (editor/blobs.ts).
+const IDB = 'library-copy-2';
 const STORE = 'collections';
 let idb: Promise<IDBDatabase | null> | undefined;
 function openIdb(): Promise<IDBDatabase | null> {
   return (idb ??= new Promise((resolve) => {
     try {
+      // The copy before images were kept apart: several MB nothing reads now.
+      indexedDB.deleteDatabase('library-copy');
       const req = indexedDB.open(IDB, 1);
       req.onupgradeneeded = () => req.result.createObjectStore(STORE);
       req.onsuccess = () => resolve(req.result);

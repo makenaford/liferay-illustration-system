@@ -2,6 +2,7 @@ import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { renderDocument } from '../src/render.ts';
 import { copyText, fileStem, saveFile } from '../editor/save.ts';
 import { svgToPng } from '../editor/png.ts';
+import { inlineBlobs } from '../editor/blobs.ts';
 import { draftAll, openedFor, renderTranslated, tableFor, tableNow, translator } from '../editor/translate.ts';
 import { makeZip, type ZipFile } from '../editor/zip.ts';
 import { LANGUAGES, localizedDoc, type Lang } from '../src/translate.ts';
@@ -1020,7 +1021,7 @@ export function App() {
         const svg = lang && table ? await renderTranslated(row.doc, lang, table, t) : renderDocument(row.doc, t);
         const base = `${stems.get(row.id)}${lang ? `.${lang}` : ''}.${t}`;
         if (format === 'svg') {
-          files.push({ name: `${base}.svg`, data: enc.encode(svg) });
+          files.push({ name: `${base}.svg`, data: enc.encode(await inlineBlobs(svg)) });
         } else {
           const png = await svgToPng(svg, row.doc.canvas.width, row.doc.canvas.height, scale);
           files.push({ name: `${base}@${scale}x.png`, data: new Uint8Array(await png.arrayBuffer()) });

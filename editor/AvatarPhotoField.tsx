@@ -57,7 +57,8 @@ export function AvatarPhotoField({
 }) {
   const [note, setNote] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const embedded = !!value?.startsWith('data:');
+  // Embedded, or kept by the library on its behalf (editor/blobs.ts).
+  const embedded = !!value?.startsWith('data:') || !!value?.startsWith('/api/blob/');
 
   const choose = async () => {
     setBusy(true);

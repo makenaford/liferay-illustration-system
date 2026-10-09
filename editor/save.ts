@@ -1,3 +1,4 @@
+import { inlineBlobs } from './blobs.ts';
 /**
  * Saving files, in two very different environments.
  *
@@ -85,6 +86,8 @@ export async function saveFile(
   text: string | Blob,
   mime: string,
 ): Promise<SaveOutcome> {
+  // A file carries its images; the library only points to them (editor/blobs.ts).
+  if (typeof text === 'string') text = await inlineBlobs(text);
   const ns = await downloads();
 
   if (ns) {
@@ -118,6 +121,11 @@ export async function saveFile(
 
 /** Clipboard fallback that works everywhere, including the viewer sandbox. */
 export async function copyText(text: string): Promise<boolean> {
+  try {
+    text = await inlineBlobs(text);
+  } catch {
+    return false;
+  }
   try {
     await navigator.clipboard.writeText(text);
     return true;

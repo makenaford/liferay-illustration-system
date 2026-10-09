@@ -128,7 +128,7 @@ const ON_ACCENT: ReadonlySet<SurfaceName> = new Set(['solid', 'gradient']);
  * Like a chat app's message, it hugs its words: the element's box is the
  * most it grows to, the bubble sits against its own side of it — a sender's
  * right, a receiver's left — and a message longer than the box wraps, the
- * bubble growing taller. One line is a pill; more keep the bar's corners.
+ * bubble growing taller. It is fully rounded however tall.
  *
  * Name is the component's 9px semibold and message its 14px regular — the
  * `caption` and `subheading` steps, since this system's canvas is the Figma
@@ -145,7 +145,8 @@ export function ChatBubble(ctx: Ctx, props: ChatBubbleProps): VNode {
   // Against its own side of the box.
   const x = sender ? props.x + props.width - width : props.x;
   const c = ctx.tokens.component.chat;
-  const rx = L.lines.length > 1 ? L.bar / 2 : height / 2;
+  // Fully rounded, however many lines it holds.
+  const rx = height / 2;
 
   const avatarCx = sender ? x + width - inset - r : x + inset + r;
   const textX = sender ? x + 17 * k : x + inset + r * 2 + 8 * k;

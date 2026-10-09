@@ -220,6 +220,12 @@ function bounded(el: Container): Element[] {
       if (isContainer(k) && inFlow(k) && k.layout?.hugWidth && over(measureElement(k).width, inner)) {
         return { ...k, maxWidth: Math.min(k.maxWidth ?? Infinity, inner) } as Element;
       }
+      // A chat bubble stretched across the column wraps its message at the
+      // column's width — measured at its own, it would reserve lines it
+      // never draws, a gap under it and at the foot of the card.
+      if (k.type === 'chat' && inFlow(k) && ((k as { alignSelf?: LayoutSpec['align'] }).alignSelf ?? spec.align) === 'stretch') {
+        return k.width === inner ? k : ({ ...k, width: inner } as Element);
+      }
       return k;
     });
   }

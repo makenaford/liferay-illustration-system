@@ -29,8 +29,9 @@ import { slotIndex } from './imageBase.ts';
  * lays out its children measures them at their grown size. A card whose
  * children are placed by hand needs their resolved positions, so it is
  * fitted after: it extends on whichever side a child now spills further past
- * its padding than it did in the original, and what sits beside a child
- * that grew is pushed along. A hero panel is fitted the same way, around the
+ * its padding than it did in the original. Elements placed by hand keep
+ * their places — one that grew never moves or resizes another, so moving one
+ * never changes where the rest are drawn. A hero panel is fitted the same way, around the
  * elements that sit on it. Last, a translation that no longer fits the
  * canvas is scaled down onto it — see `fitCanvas`.
  */
@@ -139,118 +140,6 @@ function spill(card: Box, kids: Element[]) {
 }
 
 const boxOf = (e: Element): Box | null => (e.type === 'connector' ? null : boundingBox(e));
-const overlapY = (a: Box, b: Box) => a.y < b.y + b.height && b.y < a.y + a.height;
-const contains = (a: Box, b: Box) => a.x <= b.x && a.y <= b.y && a.x + a.width >= b.x + b.width && a.y + a.height >= b.y + b.height;
-
-/**
- * Siblings placed by hand, moved out of the way of one that grew. `o` and `r`
- * are the siblings resolved in the original and the translation, `a` the
- * translation as authored. An element that widened pushes what sits beside
- * it, on the same band, by as much as it grew on that side — whatever starts
- * past its middle goes with its right edge, whatever ends before it with its
- * left — so a toggle on a card's corner stays on the corner, and the next
- * card along keeps its gap. Pushes add up along a row. Something that holds
- * the grown element (a screenshot behind a frame) stays put, and so do the
- * ends of connectors that do not meet what moved.
- */
-function pushSiblings(o: Element[], r0: Element[], a0: Element[]): { r: Element[]; a: Element[] } {
-  let { r, a } = alignColumns(o, r0, a0);
-  const ob = o.map(boxOf);
-  const dx = o.map(() => 0);
-  o.forEach((_, i) => {
-    const before = ob[i];
-    const after = boxOf(r[i]);
-    if (!before || !after) return;
-    const left = before.x - after.x;
-    const right = after.x + after.width - (before.x + before.width);
-    if (left < 0.5 && right < 0.5) return;
-    const mid = before.x + before.width / 2;
-    ob.forEach((b, j) => {
-      if (j === i || !b || !overlapY(before, b) || contains(b, before)) return;
-      if (right >= 0.5 && b.x >= mid) dx[j] += right;
-      else if (left >= 0.5 && b.x + b.width <= mid) dx[j] -= left;
-    });
-  });
-  if (dx.every((d) => Math.abs(d) < 0.01)) return { r, a };
-  // A column moves as one: cards stacked with a shared edge take the largest
-  // push any of them got, so rows pushed by different amounts do not break it.
-  const stacked = (p: Box, q: Box) =>
-    !overlapY(p, q) && p.x < q.x + q.width && q.x < p.x + p.width &&
-    (Math.abs(p.x - q.x) < 1 || Math.abs(p.x + p.width - (q.x + q.width)) < 1);
-  const group = ob.map((_, i) => i);
-  const find = (i: number): number => (group[i] === i ? i : (group[i] = find(group[i])));
-  ob.forEach((p, i) => ob.forEach((q, j) => {
-    if (i < j && p && q && RESIZABLE.has(o[i].type) && RESIZABLE.has(o[j].type) && stacked(p, q)) group[find(i)] = find(j);
-  }));
-  const widest = new Map<number, number>();
-  dx.forEach((d, i) => {
-    const g = find(i);
-    if (Math.abs(d) > Math.abs(widest.get(g) ?? 0)) widest.set(g, d);
-  });
-  dx.forEach((_, i) => {
-    const w = widest.get(find(i));
-    if (w !== undefined) dx[i] = w;
-  });
-  // A free connector's end moves with the element it meets.
-  const endMove = (p: [number, number]): number => {
-    const j = ob.findIndex((b, k) => b && dx[k] && p[0] >= b.x - 2 && p[0] <= b.x + b.width + 2 && p[1] >= b.y - 2 && p[1] <= b.y + b.height + 2);
-    return j < 0 ? 0 : dx[j];
-  };
-  const move = (list: Element[]) =>
-    list.map((e, j) => {
-      if (e.type === 'connector') {
-        if (e.attach) return e;
-        const f = endMove(e.from);
-        const t = endMove(e.to);
-        return f || t ? { ...e, from: [round(e.from[0] + f), e.from[1]] as [number, number], to: [round(e.to[0] + t), e.to[1]] as [number, number] } : e;
-      }
-      return dx[j] ? shifted(e, round(dx[j]), 0) : e;
-    });
-  return { r: move(r), a: move(a) };
-}
-
-const RESIZABLE = new Set<Element['type']>(['card', 'subCard', 'group']);
-
-/**
- * Cards stacked in a column keep it straight: one that grew takes the cards
- * above and below it that shared the edge it grew from, so a column of cards
- * the same width stays the same width, rather than one sticking out. Only
- * cards and groups — what reflows or holds its children where they are — are
- * widened; text and controls are left to their own fitting.
- */
-function alignColumns(o: Element[], r: Element[], a: Element[]): { r: Element[]; a: Element[] } {
-  const ob = o.map(boxOf);
-  const grow = o.map(() => ({ left: 0, right: 0 }));
-  o.forEach((_, i) => {
-    const before = ob[i];
-    const after = boxOf(r[i]);
-    if (!before || !after) return;
-    const left = before.x - after.x;
-    const right = after.x + after.width - (before.x + before.width);
-    if (left < 0.5 && right < 0.5) return;
-    ob.forEach((b, j) => {
-      if (j === i || !b || !RESIZABLE.has(o[j].type) || overlapY(before, b)) return;
-      // Stacked: overlapping across, not side by side.
-      if (b.x >= before.x + before.width || before.x >= b.x + b.width) return;
-      if (right >= 0.5 && Math.abs(b.x + b.width - (before.x + before.width)) < 1) grow[j].right = Math.max(grow[j].right, right);
-      if (left >= 0.5 && Math.abs(b.x - before.x) < 1) grow[j].left = Math.max(grow[j].left, left);
-    });
-  });
-  if (grow.every((g) => !g.left && !g.right)) return { r, a };
-  const widen = (list: Element[]) =>
-    list.map((e, j) => {
-      const g = grow[j];
-      if (!g.left && !g.right) return e;
-      const b = e as Element & Box;
-      // Not already grown as far by its own content.
-      const bb = boxOf(r[j]);
-      const ob2 = ob[j]!;
-      const left = Math.max(0, g.left - (bb ? ob2.x - bb.x : 0));
-      const right = Math.max(0, g.right - (bb ? bb.x + bb.width - (ob2.x + ob2.width) : 0));
-      return left || right ? ({ ...b, x: round(b.x - left), width: round(b.width + left + right) } as Element) : e;
-    });
-  return { r: widen(r), a: widen(a) };
-}
 
 /**
  * Pass two: cards placed by hand, inside out. `or` and `tr` are the resolved
@@ -265,11 +154,9 @@ function fitFree(or: Element, tr: Element, ta: Element): { tr: Element; ta: Elem
   if (!ok || !rk || !ak || ok.length !== rk.length || rk.length !== ak.length) return { tr, ta };
 
   const fitted = rk.map((c, i) => fitFree(ok[i], c, ak[i]));
-  // Laid out by hand, a child that grew moves what is beside it.
+  // Placed by hand, each child keeps its own place: one that grew moves nothing else.
   const free = !(isContainer(tr) && tr.layout);
-  const kids = free
-    ? pushSiblings(ok, fitted.map((f) => f.tr), fitted.map((f) => f.ta))
-    : { r: fitted.map((f) => f.tr), a: fitted.map((f) => f.ta) };
+  const kids = { r: fitted.map((f) => f.tr), a: fitted.map((f) => f.ta) };
   tr = { ...tr, children: kids.r } as Element;
   ta = { ...ta, children: kids.a } as Element;
 
@@ -379,9 +266,8 @@ export function fitTranslation(original: Doc, translated: Doc, opts: { canvas?: 
   const or = resolveLayout(original);
   const tr = resolveLayout(sized);
   const fitted = sized.elements.map((ta, i) => fitFree(or.elements[i], tr.elements[i], ta));
-  // The top level is laid out by hand too.
-  const top = pushSiblings(or.elements, fitted.map((f) => f.tr), fitted.map((f) => f.ta));
-  const placed = fitPanels(original, { ...sized, elements: top.a });
+  // The top level is placed by hand too: each element where it was put.
+  const placed = fitPanels(original, { ...sized, elements: fitted.map((f) => f.ta) });
   /*
    * An image base (or static image) is drawn around its screenshot, which
    * fills its slot: nothing pushes the screenshot aside, and the drawing is

@@ -146,6 +146,8 @@ export function Canvas() {
     startX: number;
     startY: number;
     origin: Box | null;
+    /** Editing with translation, a resize's element as it was drawn when pressed — what the drag changes. */
+    own?: { x?: number; y?: number; width?: number; height?: number };
     moved: boolean;
     /** Boxes the drag can align to. Collected once, on pointer down. */
     targets: Target[];
@@ -404,6 +406,8 @@ export function Canvas() {
         startX: e.clientX,
         startY: e.clientY,
         origin: box,
+        // As drawn in the document's own language — stretched, hugging — not as stored.
+        own: selected && showIn ? ((elementAt(resolveLayout(getState().doc), selected) as unknown as { x?: number; y?: number; width?: number; height?: number }) ?? undefined) : undefined,
         moved: false,
         targets: selected ? alignTargets(selected) : [],
       };
@@ -710,12 +714,26 @@ export function Canvas() {
         hits.length = 0;
       }
 
+      let boxX = Math.min(anchorX, edgeX);
+      let boxY = Math.min(anchorY, edgeY);
+      /*
+       * Editing with translation, the box dragged is the translation's, which
+       * may be wider than the element's own (a label grown to its copy). The
+       * drag is the change: applied to the element's own size and place, so
+       * the edge follows the pointer instead of jumping by the translation's
+       * growth again.
+       */
+      if (showIn && d.own) {
+        const own = d.own;
+        if (typeof own.width === 'number') w = own.width + (w - d.origin.width);
+        if (typeof own.height === 'number') h = own.height + (h - d.origin.height);
+        if (typeof own.x === 'number') boxX = own.x + (boxX - d.origin.x);
+        if (typeof own.y === 'number') boxY = own.y + (boxY - d.origin.y);
+      }
       let next = resizedTo(el, w, h);
       // Resized, a chat bubble stretched across its column lets go of it, so
       // the width it is dragged to is the one it keeps — on its own side.
       if (next.type === 'chat' && fills(st.doc, st.selected, 'w')) next = { ...next, alignSelf: letGo(next) };
-      const boxX = Math.min(anchorX, edgeX);
-      const boxY = Math.min(anchorY, edgeY);
       next =
         next.type === 'avatar'
           ? { ...next, cx: Math.round((boxX + w / 2) * 100) / 100, cy: Math.round((boxY + h / 2) * 100) / 100 }

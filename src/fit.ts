@@ -3,7 +3,6 @@ import { measureText } from './fontMetrics.generated.ts';
 import { typeStyle, type TypeRole } from './primitives/text.ts';
 import { badgeWidth } from './primitives/badge.ts';
 import { tableLayout } from './primitives/table.ts';
-import { chatNeed } from './primitives/chatBubble.ts';
 import { boundingBox, isContainer, measureElement, resolveLayout, shifted } from './autolayout.ts';
 import { LAYOUT } from './tokens.ts';
 import { slotIndex } from './imageBase.ts';
@@ -65,8 +64,9 @@ function need(el: Element): { width: number; centred: boolean } | null {
     }
     case 'badge':
       return el.width === undefined ? null : { width: badgeWidth(el.label, el.dot, el.tone), centred: !el.dot };
+    // A chat bubble wraps its message instead: its box is not widened.
     case 'chat':
-      return { width: chatNeed(el, lineWidth), centred: el.variant === 'sender' };
+      return null;
     case 'table': {
       // Laid out at zero width, the flexible columns take nothing and every
       // text column its content: the narrowest the table can be.

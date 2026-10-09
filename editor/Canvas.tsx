@@ -187,7 +187,8 @@ export function Canvas() {
   // Edit with translation: what is drawn, measured and hit-tested is the
   // translation; what is edited is still the document (see `showIn`).
   const showIn = useEditor((s) => s.showIn);
-  const shown = useMemo(() => (showIn ? translateDoc(doc, doc.translations?.[showIn] ?? {}) : doc), [doc, showIn]);
+  // Not scaled to fit the canvas, as an export may be: drawn where it is dragged.
+  const shown = useMemo(() => (showIn ? translateDoc(doc, doc.translations?.[showIn] ?? {}, { canvas: false }) : doc), [doc, showIn]);
   const resolved = useMemo(() => resolveLayout(shown), [shown]);
 
   /**

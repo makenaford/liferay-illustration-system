@@ -6,6 +6,7 @@ import { tableLayout } from './primitives/table.ts';
 import { chatNeed } from './primitives/chatBubble.ts';
 import { boundingBox, isContainer, measureElement, resolveLayout, shifted } from './autolayout.ts';
 import { LAYOUT } from './tokens.ts';
+import { slotIndex } from './imageBase.ts';
 
 /**
  * GROW TO FIT, FOR A TRANSLATION — an element widens by as much as its copy
@@ -372,7 +373,7 @@ function fitPanels(original: Doc, translated: Doc): Doc {
  * The translated document `translated`, refitted against its `original` so
  * nothing in it is narrower than its copy. See the top of this file.
  */
-export function fitTranslation(original: Doc, translated: Doc): Doc {
+export function fitTranslation(original: Doc, translated: Doc, opts: { canvas?: boolean } = {}): Doc {
   if (original.elements.length !== translated.elements.length) return translated;
   const sized = { ...translated, elements: translated.elements.map((t, i) => fitSizes(original.elements[i], t)) };
   const or = resolveLayout(original);
@@ -380,7 +381,20 @@ export function fitTranslation(original: Doc, translated: Doc): Doc {
   const fitted = sized.elements.map((ta, i) => fitFree(or.elements[i], tr.elements[i], ta));
   // The top level is laid out by hand too.
   const top = pushSiblings(or.elements, fitted.map((f) => f.tr), fitted.map((f) => f.ta));
-  return fitCanvas(original, fitPanels(original, { ...sized, elements: top.a }));
+  const placed = fitPanels(original, { ...sized, elements: top.a });
+  /*
+   * An image base (or static image) is drawn around its screenshot, which
+   * fills its slot: nothing pushes the screenshot aside, and the drawing is
+   * never scaled down to fit — that would take the screenshot off its slot
+   * and every card off its guide. Its cards are held inside the card guide
+   * where they are placed (editor/strict.ts).
+   */
+  if (original.mockup) {
+    const at = slotIndex(original);
+    return at >= 0 ? { ...placed, elements: placed.elements.map((e, i) => (i === at ? original.elements[i] : e)) } : placed;
+  }
+  // Shown in the builder, the translation is drawn where it is edited: not scaled.
+  return opts.canvas === false ? placed : fitCanvas(original, placed);
 }
 
 /** The canvas's clear margin — the audit's `CANVAS-INSET`. */

@@ -109,10 +109,10 @@ export function collectStrings(doc: Doc): string[] {
  * Every element is refitted to its translated copy — a button whose label
  * got longer gets wider — see src/fit.ts.
  */
-export function translateDoc(doc: Doc, table: Record<string, string>): Doc {
+export function translateDoc(doc: Doc, table: Record<string, string>, opts: { canvas?: boolean } = {}): Doc {
   const f: Visit = (s) => table[s]?.trim() || s;
   const { translations: _, machineTranslated: __, localized: ___, ...rest } = doc;
-  return fitTranslation(rest, { ...rest, elements: doc.elements.map((el) => visitElement(el, f)) });
+  return fitTranslation(rest, { ...rest, elements: doc.elements.map((el) => visitElement(el, f)) }, opts);
 }
 
 /* ---- edited versions ----------------------------------------------------- */

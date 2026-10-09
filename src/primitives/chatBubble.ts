@@ -72,19 +72,24 @@ export function chatLayout(el: Measured) {
   // the text and the margin past it.
   const chrome = inset + r * 2 + 8 * k + 17 * k;
   const room = Math.max(1, el.width - (el.indent ?? 0));
-  const lines = wrapLines(el.message, (s) => lineWidth(s, roles.message, 'regular'), Math.max(1, room - chrome));
-  const words = Math.max(lineWidth(el.name, roles.name, 'semibold'), ...lines.map((l) => lineWidth(l, roles.message, 'regular')));
+  // A bubble may leave out its name — or, half-typed, its message.
+  const name = el.name ?? '';
+  const message = el.message ?? '';
+  const lines = message ? wrapLines(message, (s) => lineWidth(s, roles.message, 'regular'), Math.max(1, room - chrome)) : [];
+  const words = Math.max(name ? lineWidth(name, roles.name, 'semibold') : 0, ...lines.map((l) => lineWidth(l, roles.message, 'regular')));
   const width = el.fill ? room : Math.min(room, Math.ceil(chrome + words));
 
   const nameSize = TYPE_ROLES[roles.name].size;
   const msgSize = TYPE_ROLES[roles.message].size;
   const lead = msgSize * 1.2;
-  const gap = (sender ? 4 : 2) * k;
-  const block = nameSize + gap + lead * lines.length;
+  // With no name, the message alone, centred; with no message, the name alone.
+  const named = name ? nameSize : 0;
+  const gap = name && lines.length ? (sender ? 4 : 2) * k : 0;
+  const block = named + gap + lead * lines.length;
   // Measured at the sender's gap either way, so the two styles stay one height.
-  const need = nameSize + 4 * k + lead * lines.length + 10 * k;
+  const need = named + (name && lines.length ? 4 * k : 0) + lead * lines.length + 10 * k;
   const height = el.height ?? Math.max(bar, Math.ceil(need / 2) * 2);
-  return { k, roles, sender, bar, inset, r, lines, width, height, nameSize, msgSize, lead, gap, block };
+  return { k, roles, sender, bar, inset, r, lines, width, height, name, named, nameSize, msgSize, lead, gap, block };
 }
 
 /** How tall a bubble is: its own height if set, else the bar, or as its message needs. */
@@ -100,7 +105,7 @@ export function chatNeed(
   const k = scaleOf(el);
   const roles = rolesOf(el);
   const bar = (el.height ?? CHAT_HEIGHT * k) - 10 * k;
-  const text = Math.max(measure(el.name, roles.name, 'semibold'), measure(el.message, roles.message, 'regular'));
+  const text = Math.max(el.name ? measure(el.name, roles.name, 'semibold') : 0, el.message ? measure(el.message, roles.message, 'regular') : 0);
   return 5 * k + bar + 8 * k + text + 17 * k + (el.indent ?? 0);
 }
 
@@ -118,6 +123,8 @@ const ON_ACCENT: ReadonlySet<SurfaceName> = new Set(['solid', 'gradient']);
  * avatar trailing. The sender also opens the name-to-message gap from 2 to 4.
  * Either can take any card surface instead (`surface`).
  *
+ * The name can be left out, for the message alone.
+ *
  * Like a chat app's message, it hugs its words: the element's box is the
  * most it grows to, the bubble sits against its own side of it — a sender's
  * right, a receiver's left — and a message longer than the box wraps, the
@@ -131,7 +138,7 @@ const ON_ACCENT: ReadonlySet<SurfaceName> = new Set(['solid', 'gradient']);
  * gap at ¾, with the name at 8px and the message at 12px.
  */
 export function ChatBubble(ctx: Ctx, props: ChatBubbleProps): VNode {
-  const { y, name, initials, avatarHref } = props;
+  const { y, initials, avatarHref } = props;
   const variant = props.variant ?? 'receiver';
   const L = chatLayout({ ...props, variant });
   const { k, sender, inset, r, width, height } = L;
@@ -147,11 +154,11 @@ export function ChatBubble(ctx: Ctx, props: ChatBubbleProps): VNode {
   // Name on a 1.0 line, each message line on a 1.2 one, the lot centred.
   const top = y + (height - L.block) / 2;
   const nameBaseline = top + L.nameSize / 2 + L.nameSize * 0.355;
-  const firstLine = top + L.nameSize + L.gap + L.lead / 2 + L.msgSize * 0.355;
+  const firstLine = top + L.named + L.gap + L.lead / 2 + L.msgSize * 0.355;
 
   const content = [
     Avatar(ctx, { cx: avatarCx, cy: y + height / 2, r, initials, href: avatarHref }),
-    Text(ctx, { x: textX, y: nameBaseline, role: L.roles.name, weight: 'semibold', content: name, color: ink }),
+    L.name ? Text(ctx, { x: textX, y: nameBaseline, role: L.roles.name, weight: 'semibold', content: L.name, color: ink }) : null,
     ...L.lines.map((line, i) =>
       Text(ctx, { x: textX, y: firstLine + i * L.lead, role: L.roles.message, weight: 'regular', content: line, color: ink }),
     ),

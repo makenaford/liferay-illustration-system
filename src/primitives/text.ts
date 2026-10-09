@@ -163,6 +163,8 @@ const CJK = /[\u3000-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff00-\uffef]
  * line breaks where it must. One line when it fits.
  */
 export function wrapLines(text: string, width: (s: string) => number, max: number): string[] {
+  // Nothing to wrap: no copy yet, or a document saved without it.
+  if (!text) return [text ?? ''];
   if (width(text) <= max) return [text];
   const chars = [...text];
   const lines: string[] = [];

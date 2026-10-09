@@ -1566,8 +1566,14 @@ function IllustrationCard({
   select?: { on: boolean; toggle: () => void };
 }) {
   const svg = useMemo(() => {
-    const doc = lang === 'en' ? row.doc : localizedDoc(row.doc, lang, tableNow(row.doc, lang).table);
-    return renderDocument(doc, theme, { embedFont: false });
+    // One illustration that cannot be drawn shows as broken, not the whole library blank.
+    try {
+      const doc = lang === 'en' ? row.doc : localizedDoc(row.doc, lang, tableNow(row.doc, lang).table);
+      return renderDocument(doc, theme, { embedFont: false });
+    } catch (e) {
+      console.error(`Could not draw ${row.id}`, e);
+      return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${row.doc.canvas.width} ${row.doc.canvas.height}"><text x="50%" y="50%" text-anchor="middle" fill="#8791a3" font-size="16" font-family="sans-serif">Could not draw this illustration</text></svg>`;
+    }
     // `tick` stands for the drafts, which live outside React.
   }, [row.doc, theme, lang, tick]);
   const { width, height } = row.doc.canvas;
